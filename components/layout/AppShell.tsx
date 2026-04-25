@@ -23,23 +23,19 @@ export default function AppShell({ navItems, children }: AppShellProps) {
         className="w-64 flex-shrink-0 flex flex-col"
         style={{ backgroundColor: "#1A4A2E" }}
       >
-        <div className="px-6 py-6 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <svg width="28" height="28" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-              <rect width="36" height="36" rx="8" fill="#f0c040" />
-              <path
-                d="M18 8 L18 28 M12 14 Q18 8 24 14"
-                stroke="#1A4A2E"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </svg>
-            <span className="text-xl font-bold text-white">
-              Shepherd<span style={{ color: "#f0c040" }}>Well</span>
-            </span>
-          </div>
+        <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <img
+            src="/shepherdwell-logo.png"
+            alt="ShepherdWell"
+            style={{
+              width: '140px',
+              height: '140px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              border: '2px solid rgba(240,192,64,0.4)',
+            }}
+          />
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -51,7 +47,7 @@ export default function AppShell({ navItems, children }: AppShellProps) {
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
                 style={{
-                  backgroundColor: isActive ? "#f0c040" : "transparent",
+                  backgroundColor: isActive ? "#F28C28" : "transparent",
                   color: isActive ? "#1A4A2E" : "rgba(255,255,255,0.8)",
                 }}
               >

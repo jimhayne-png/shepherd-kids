@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/birthdays-anniversaries",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/visitor-sequences/process",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/children-parent-update",
+      "schedule": "0 18 * * 0"
+    }
+  ]
+}

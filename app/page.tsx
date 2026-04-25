@@ -35,14 +35,8 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md px-8 py-12 bg-white rounded-2xl shadow-lg">
         <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-              <rect width="36" height="36" rx="8" fill="#1A4A2E" />
-              <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="#f0c040" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </svg>
-            <span className="text-3xl font-bold" style={{ color: "#1A4A2E" }}>
-              Shepherd<span style={{ color: "#f0c040" }}>Well</span>
-            </span>
+          <div className="flex items-center justify-center mb-4">
+            <img src="/shepherdwell-logo.png" alt="ShepherdWell" style={{ width: "200px", height: "auto" }} />
           </div>
           <p className="text-gray-500 text-base mt-2">
             Grow your congregation. Care for every member.

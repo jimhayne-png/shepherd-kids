@@ -9,7 +9,18 @@
       "Bash(pkill -f \"next dev\")",
       "Bash(npm --prefix /c/Users/jimha/shepherd-well run dev)",
       "Bash(taskkill /PID 29380 /F)",
-      "Bash(cmd.exe /c \"taskkill /PID 29380 /F\")"
+      "Bash(cmd.exe /c \"taskkill /PID 29380 /F\")",
+      "Bash(npx vercel *)",
+      "Bash(npm install *)",
+      "Bash(mkdir -p \"C:/Users/jimha/shepherd-well/app/api/faith-milestones/[id]\")",
+      "Bash(mkdir -p \"C:/Users/jimha/shepherd-well/app/dashboard/members/[id]/faith-journey\")",
+      "Bash(xargs sed *)",
+      "Bash(mkdir -p \"C:/Users/jimha/shepherd-well/app/pray/[token]\")",
+      "Bash(mkdir -p \"C:/Users/jimha/shepherd-well/app/api/members/[id]/send-prayer-link\")",
+      "Bash(mkdir -p \"C:/Users/jimha/shepherd-well/app/api/members/[id]/regenerate-token\")",
+      "Bash(xargs grep *)",
+      "Bash(vercel *)",
+      "Bash(git add *)"
     ]
   }
 }

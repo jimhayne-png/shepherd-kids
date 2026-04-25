@@ -1,0 +1,13 @@
+{
+  "name": "Prayer Request",
+  "short_name": "Prayer",
+  "description": "Submit a prayer request to your church",
+  "start_url": "/pray/",
+  "display": "standalone",
+  "background_color": "#1A4A2E",
+  "theme_color": "#1A4A2E",
+  "icons": [
+    { "src": "/shepherdwell-logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/shepherdwell-logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
