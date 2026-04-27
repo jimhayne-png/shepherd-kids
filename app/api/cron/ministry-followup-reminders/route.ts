@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { MINISTRY_CONFIG } from '@/lib/ministry-config';
-import { getCurrentPeriod, getPeriodLabel } from '../../../ministry/[type]/followup/route';
+import { getCurrentPeriod, getPeriodLabel } from '@/lib/ministry-period';
 
 function adminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { MINISTRY_CONFIG } from '@/lib/ministry-config';
+import { getCurrentPeriod, getPeriodLabel } from '@/lib/ministry-period';
 
 function adminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -17,21 +18,6 @@ async function getChurchId(userId: string) {
   return data?.church_id ?? null;
 }
 
-export function getCurrentPeriod(frequency: string): { year: number; month: number } {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  return frequency === 'bimonthly' ? { year, month: Math.ceil(month / 2) } : { year, month };
-}
-
-export function getPeriodLabel(frequency: string, year: number, period: number): string {
-  const full = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  if (frequency === 'bimonthly') {
-    const s = (period - 1) * 2;
-    return `${full[s]}–${full[s + 1]} ${year}`;
-  }
-  return `${full[period - 1]} ${year}`;
-}
 
 async function getSettings(admin: ReturnType<typeof adminClient>, churchId: string, type: string) {
   const { data } = await admin

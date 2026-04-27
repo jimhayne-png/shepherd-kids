@@ -1,0 +1,91 @@
+import { createClient } from '@supabase/supabase-js';
+import { type NextRequest } from 'next/server';
+
+function adminClient() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+}
+async function getAuthUser(req: NextRequest) {
+  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) return null;
+  const { data: { user } } = await adminClient().auth.getUser(token);
+  return user ?? null;
+}
+async function getChurchId(userId: string) {
+  const { data } = await adminClient().from('church_users').select('church_id').eq('user_id', userId).maybeSingle();
+  return data?.church_id ?? null;
+}
+
+function weeksAttending(joinedDate: string | null): number {
+  if (!joinedDate) return 0;
+  const ms = Date.now() - new Date(joinedDate + 'T00:00:00').getTime();
+  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24 * 7)));
+}
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+  const { type } = await params;
+  const user = await getAuthUser(req);
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const churchId = await getChurchId(user.id);
+  if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
+
+  const admin = adminClient();
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  // Active roster with joined_date and pipeline_stage
+  const { data: roster, error } = await admin
+    .from('ministry_rosters')
+    .select('member_id, pipeline_stage, joined_date, status')
+    .eq('church_id', churchId)
+    .eq('ministry_type', type)
+    .eq('status', 'active');
+
+  if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (!roster?.length) return Response.json({ members: [], stage_counts: {}, total: 0 });
+
+  const memberIds = roster.map((r: any) => r.member_id);
+
+  // Member details
+  const { data: members } = await admin
+    .from('members')
+    .select('id, first_name, last_name, email')
+    .in('id', memberIds);
+  const memberMap: Record<string, any> = {};
+  for (const m of members ?? []) memberMap[m.id] = m;
+
+  // Last contact from followup log (current month)
+  const { data: logs } = await admin
+    .from('ministry_followup_log')
+    .select('member_id, touch1_date, touch2_date, touch3_date')
+    .eq('church_id', churchId)
+    .eq('ministry_type', type)
+    .eq('period_year', year)
+    .eq('period_month', month)
+    .in('member_id', memberIds);
+
+  const contactMap: Record<string, string | null> = {};
+  for (const l of logs ?? []) {
+    const dates = [l.touch1_date, l.touch2_date, l.touch3_date].filter(Boolean) as string[];
+    contactMap[l.member_id] = dates.sort().reverse()[0] ?? null;
+  }
+
+  const enriched = roster.map((r: any) => ({
+    id: r.member_id,
+    first_name: memberMap[r.member_id]?.first_name ?? '?',
+    last_name: memberMap[r.member_id]?.last_name ?? '?',
+    email: memberMap[r.member_id]?.email ?? null,
+    pipeline_stage: r.pipeline_stage ?? null,
+    joined_date: r.joined_date ?? null,
+    weeks_attending: weeksAttending(r.joined_date),
+    last_contact_date: contactMap[r.member_id] ?? null,
+  })).sort((a: any, b: any) => a.last_name.localeCompare(b.last_name));
+
+  const stageCounts: Record<string, number> = {};
+  for (const m of enriched) {
+    const stage = m.pipeline_stage ?? 'Unassigned';
+    stageCounts[stage] = (stageCounts[stage] ?? 0) + 1;
+  }
+
+  return Response.json({ members: enriched, stage_counts: stageCounts, total: enriched.length });
+}

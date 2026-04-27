@@ -4,54 +4,10 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_CONFIG, MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
+import MinistryShell from "@/components/layout/MinistryShell";
+import { MINISTRY_CONFIG } from "@/lib/ministry-config";
 
 const ACCENT = "#F28C28";
-
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Members", href: "/dashboard/members" },
-  { label: "Departments", href: "/dashboard/departments" },
-  { label: "Attendance", href: "/dashboard/attendance" },
-  { label: "Visitors", href: "/dashboard/visitors" },
-  { label: "Calendar", href: "/dashboard/calendar" },
-  { label: "Prayer", href: "/dashboard/prayer" },
-  { label: "Communication Hub", href: "/dashboard/communication" },
-  { label: "Visitation", href: "/dashboard/visitation" },
-  { label: "Shepherd Pipeline", href: "/dashboard/shepherd" },
-  { label: "Evangelism", href: "/dashboard/evangelism" },
-  { label: "Birthdays", href: "/dashboard/birthdays" },
-  { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
-  ...MINISTRY_NAV_ITEMS,
-  { label: "Settings", href: "/dashboard/settings" },
-];
-
-function SubNav({ type, active }: { type: string; active: string }) {
-  const cfg = MINISTRY_CONFIG[type];
-  const tabs = [
-    { label: "Overview", href: `/dashboard/ministry/${type}` },
-    { label: "Roster", href: `/dashboard/ministry/${type}/roster` },
-    { label: "Attendance", href: `/dashboard/ministry/${type}/attendance` },
-    { label: "Follow Up", href: `/dashboard/ministry/${type}/followup` },
-    { label: "Pipeline", href: `/dashboard/ministry/${type}/pipeline` },
-    { label: "Communication", href: `/dashboard/ministry/${type}/communication` },
-    ...(cfg?.hasShepherdGroups ? [
-      { label: "Shepherd Groups", href: `/dashboard/ministry/${type}/shepherd-groups` },
-      { label: "Team Challenge", href: `/dashboard/children-ministry` },
-    ] : []),
-  ];
-  return (
-    <div className="flex gap-1 px-8 pt-4 overflow-x-auto" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "white" }}>
-      {tabs.map(t => (
-        <Link key={t.href} href={t.href} className="px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-          style={{ borderColor: active === t.label ? ACCENT : "transparent", color: active === t.label ? ACCENT : "#6b7280" }}>
-          {t.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
 
 export default function MinistryOverviewPage({ params }: { params: Promise<{ type: string }> }) {
   const { type } = use(params);
@@ -110,11 +66,11 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   }, [type, router, cfg]);
 
   if (!cfg) return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type={type}>
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-gray-500">Ministry type "{type}" not found.</p>
       </div>
-    </AppShell>
+    </MinistryShell>
   );
 
   if (loading) return (
@@ -124,17 +80,15 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   );
 
   return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type={type}>
       {/* Hero */}
-      <div className="px-8 py-8" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Ministry Module</p>
+      <div className="px-8 py-8" style={{ background: `linear-gradient(135deg, #1a2e1a 0%, #2d5a2d 100%)` }}>
+        <p className="text-green-300 text-sm mb-1">Overview</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
           {cfg.emoji} {cfg.name}
         </h1>
-        <p className="text-orange-100 text-sm mt-1">This ministry is active</p>
+        <p className="text-green-200 text-sm mt-1">This ministry is active</p>
       </div>
-
-      <SubNav type={type} active="Overview" />
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
         {/* Stats */}
@@ -204,6 +158,6 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
           </div>
         </div>
       </div>
-    </AppShell>
+    </MinistryShell>
   );
 }

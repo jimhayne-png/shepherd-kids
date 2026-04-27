@@ -64,6 +64,12 @@ export default function ChildrenPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Edit child modal
+  const [editChild, setEditChild] = useState<Child | null>(null);
+  const [editForm, setEditForm] = useState<typeof form>({ firstName: "", lastName: "", grade: "3rd", dateOfBirth: "", allergies: "", medicalNotes: "", parent1Name: "", parent1Email: "", parent1Phone: "", parent2Name: "", parent2Email: "", parent2Phone: "", authorizedPickups: "", photoPermission: false, teamId: "" });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+
   async function load(t: string, sid: string) {
     const res = await fetch(`/api/children-ministry/children?season_id=${sid}`, { headers: { Authorization: `Bearer ${t}` } });
     const data = await res.json();
@@ -125,6 +131,39 @@ export default function ChildrenPage() {
     if (token && activeSeason) await load(token, activeSeason.id);
   }
 
+  function openEdit(child: Child, e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditChild(child);
+    setEditForm({
+      firstName: child.first_name, lastName: child.last_name, grade: child.grade,
+      dateOfBirth: "", allergies: child.allergies ?? "", medicalNotes: child.medical_notes ?? "",
+      parent1Name: child.parent1_name ?? "", parent1Email: child.parent1_email ?? "", parent1Phone: child.parent1_phone ?? "",
+      parent2Name: child.parent2_name ?? "", parent2Email: child.parent2_email ?? "", parent2Phone: child.parent2_phone ?? "",
+      authorizedPickups: (child.authorized_pickups ?? []).join(", "), photoPermission: child.photo_permission ?? false, teamId: "",
+    });
+    setEditError("");
+  }
+
+  async function saveEdit() {
+    if (!editChild || !editForm.firstName.trim() || !editForm.lastName.trim()) { setEditError("First and last name required"); return; }
+    setEditSaving(true); setEditError("");
+    const res = await fetch(`/api/children-ministry/children/${editChild.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        firstName: editForm.firstName, lastName: editForm.lastName, grade: editForm.grade,
+        allergies: editForm.allergies, medicalNotes: editForm.medicalNotes,
+        parent1Name: editForm.parent1Name, parent1Email: editForm.parent1Email, parent1Phone: editForm.parent1Phone,
+        parent2Name: editForm.parent2Name, parent2Email: editForm.parent2Email, parent2Phone: editForm.parent2Phone,
+        authorizedPickups: editForm.authorizedPickups.split(",").map((s: string) => s.trim()).filter(Boolean),
+        photoPermission: editForm.photoPermission,
+      }),
+    });
+    if (!res.ok) { const d = await res.json(); setEditError(d.error ?? "Error"); setEditSaving(false); return; }
+    setEditSaving(false); setEditChild(null);
+    if (token && activeSeason) await load(token, activeSeason.id);
+  }
+
   const filtered = children.filter(c =>
     `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -162,6 +201,7 @@ export default function ChildrenPage() {
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Grade</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Team</th>
                   <th className="text-right px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Season Pts</th>
+                  <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
@@ -188,6 +228,11 @@ export default function ChildrenPage() {
                     </td>
                     <td className="px-6 py-4 text-right text-sm font-bold" style={{ color: CM_ACCENT }}>
                       {(child.season_points ?? 0).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <button onClick={(e) => openEdit(child, e)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -376,6 +421,69 @@ export default function ChildrenPage() {
                 <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
                 <button onClick={addChild} disabled={saving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
                   {saving ? "Saving…" : "Add Child"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Child Modal */}
+      {editChild && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setEditChild(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100 sticky top-0 bg-white">
+              <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif" }}>Edit {editChild.first_name} {editChild.last_name}</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">First Name *</label>
+                  <input value={editForm.firstName} onChange={e => setEditForm(f => ({ ...f, firstName: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Last Name *</label>
+                  <input value={editForm.lastName} onChange={e => setEditForm(f => ({ ...f, lastName: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Grade *</label>
+                <select value={editForm.grade} onChange={e => setEditForm(f => ({ ...f, grade: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                  {GRADES.map(g => <option key={g} value={g}>{g} Grade</option>)}
+                </select>
+              </div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest pt-1">Parent / Guardian 1</p>
+              <input value={editForm.parent1Name} onChange={e => setEditForm(f => ({ ...f, parent1Name: e.target.value }))} placeholder="Full name" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="email" value={editForm.parent1Email} onChange={e => setEditForm(f => ({ ...f, parent1Email: e.target.value }))} placeholder="Email" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <input value={editForm.parent1Phone} onChange={e => setEditForm(f => ({ ...f, parent1Phone: e.target.value }))} placeholder="Phone" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest pt-1">Parent / Guardian 2</p>
+              <input value={editForm.parent2Name} onChange={e => setEditForm(f => ({ ...f, parent2Name: e.target.value }))} placeholder="Full name" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="email" value={editForm.parent2Email} onChange={e => setEditForm(f => ({ ...f, parent2Email: e.target.value }))} placeholder="Email" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <input value={editForm.parent2Phone} onChange={e => setEditForm(f => ({ ...f, parent2Phone: e.target.value }))} placeholder="Phone" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Allergies</label>
+                <input value={editForm.allergies} onChange={e => setEditForm(f => ({ ...f, allergies: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Medical Notes</label>
+                <textarea value={editForm.medicalNotes} onChange={e => setEditForm(f => ({ ...f, medicalNotes: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Authorized Pickups (comma-separated)</label>
+                <input value={editForm.authorizedPickups} onChange={e => setEditForm(f => ({ ...f, authorizedPickups: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.photoPermission} onChange={e => setEditForm(f => ({ ...f, photoPermission: e.target.checked }))} className="rounded" />
+                <span className="text-sm text-gray-700">Photo permission granted</span>
+              </label>
+              {editError && <p className="text-sm text-red-600">{editError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setEditChild(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={saveEdit} disabled={editSaving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
+                  {editSaving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
             </div>

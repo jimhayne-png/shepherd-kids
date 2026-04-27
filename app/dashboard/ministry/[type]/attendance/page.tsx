@@ -1,57 +1,14 @@
-"use client";
+﻿"use client";
 
 import { use, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_CONFIG, MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
+import MinistryShell from "@/components/layout/MinistryShell";
+import { MINISTRY_CONFIG } from "@/lib/ministry-config";
 
 const ACCENT = "#F28C28";
 
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Members", href: "/dashboard/members" },
-  { label: "Departments", href: "/dashboard/departments" },
-  { label: "Attendance", href: "/dashboard/attendance" },
-  { label: "Visitors", href: "/dashboard/visitors" },
-  { label: "Calendar", href: "/dashboard/calendar" },
-  { label: "Prayer", href: "/dashboard/prayer" },
-  { label: "Communication Hub", href: "/dashboard/communication" },
-  { label: "Visitation", href: "/dashboard/visitation" },
-  { label: "Shepherd Pipeline", href: "/dashboard/shepherd" },
-  { label: "Evangelism", href: "/dashboard/evangelism" },
-  { label: "Birthdays", href: "/dashboard/birthdays" },
-  { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
-  ...MINISTRY_NAV_ITEMS,
-  { label: "Settings", href: "/dashboard/settings" },
-];
-
-function SubNav({ type, active }: { type: string; active: string }) {
-  const cfg = MINISTRY_CONFIG[type];
-  const tabs = [
-    { label: "Overview", href: `/dashboard/ministry/${type}` },
-    { label: "Roster", href: `/dashboard/ministry/${type}/roster` },
-    { label: "Attendance", href: `/dashboard/ministry/${type}/attendance` },
-    { label: "Follow Up", href: `/dashboard/ministry/${type}/followup` },
-    { label: "Pipeline", href: `/dashboard/ministry/${type}/pipeline` },
-    { label: "Communication", href: `/dashboard/ministry/${type}/communication` },
-    ...(cfg?.hasShepherdGroups ? [
-      { label: "Shepherd Groups", href: `/dashboard/ministry/${type}/shepherd-groups` },
-      { label: "Team Challenge", href: `/dashboard/children-ministry` },
-    ] : []),
-  ];
-  return (
-    <div className="flex gap-1 px-8 pt-4 overflow-x-auto" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "white" }}>
-      {tabs.map(t => (
-        <Link key={t.href} href={t.href} className="px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-          style={{ borderColor: active === t.label ? ACCENT : "transparent", color: active === t.label ? ACCENT : "#6b7280" }}>
-          {t.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
 
 type AttendanceMember = { id: string; first_name: string; last_name: string; pipeline_stage: string | null };
 type AttendanceRecord = { member_id: string; session_date: string; present: boolean; consecutive_weeks: number };
@@ -164,11 +121,11 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
   const todayPresent = members.filter(m => attendanceMap[`${m.id}:${sessionDate}`] === true).length;
   const todayPct = members.length > 0 ? Math.round((todayPresent / members.length) * 100) : 0;
 
-  if (!cfg) return <AppShell navItems={navItems}><div className="p-8 text-gray-500">Ministry not found.</div></AppShell>;
+  if (!cfg) return <MinistryShell type={type}><div className="p-8 text-gray-500">Ministry not found.</div></MinistryShell>;
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
 
   return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type={type}>
       {/* Hero */}
       <div className="px-8 py-8" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
         <Link href={`/dashboard/ministry/${type}`} className="text-orange-200 text-xs mb-1 block hover:text-white">← {cfg.name}</Link>
@@ -186,7 +143,6 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
         </div>
       </div>
 
-      <SubNav type={type} active="Attendance" />
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
         {/* Stats bar */}
@@ -275,6 +231,6 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
           </div>
         )}
       </div>
-    </AppShell>
+    </MinistryShell>
   );
 }

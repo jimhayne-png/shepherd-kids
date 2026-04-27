@@ -61,6 +61,12 @@ export default function TeamsPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
+  // Edit team modal
+  const [editTeam, setEditTeam] = useState<Team | null>(null);
+  const [editTeamForm, setEditTeamForm] = useState({ name: "", color: "#EF4444", mascot: "", leaderName: "", leaderEmail: "", captainId: "", coCaptainId: "" });
+  const [editTeamSaving, setEditTeamSaving] = useState(false);
+  const [editTeamError, setEditTeamError] = useState("");
+
   // Split modal
   const [splitTeam, setSplitTeam] = useState<Team | null>(null);
   const [splitForm, setSplitForm] = useState({ name: "", color: "#3B82F6", mascot: "" });
@@ -114,6 +120,25 @@ export default function TeamsPage() {
     });
     if (!res.ok) { const d = await res.json(); setSaveError(d.error ?? "Error"); setSaving(false); return; }
     setSaving(false); setShowCreate(false);
+    if (token && activeSeason) await load(token, activeSeason.id);
+  }
+
+  function openEditTeam(team: Team) {
+    setEditTeam(team);
+    setEditTeamForm({ name: team.name, color: team.color, mascot: team.mascot ?? "", leaderName: team.volunteer_leader_name ?? "", leaderEmail: team.volunteer_leader_email ?? "", captainId: (team.captain as any)?.id ?? "", coCaptainId: (team.co_captain as any)?.id ?? "" });
+    setEditTeamError("");
+  }
+
+  async function saveEditTeam() {
+    if (!editTeam || !editTeamForm.name.trim()) { setEditTeamError("Team name required"); return; }
+    setEditTeamSaving(true); setEditTeamError("");
+    const res = await fetch(`/api/children-ministry/teams/${editTeam.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name: editTeamForm.name, color: editTeamForm.color, mascot: editTeamForm.mascot, volunteerLeaderName: editTeamForm.leaderName, volunteerLeaderEmail: editTeamForm.leaderEmail, captainChildId: editTeamForm.captainId || null, coCaptainChildId: editTeamForm.coCaptainId || null }),
+    });
+    if (!res.ok) { const d = await res.json(); setEditTeamError(d.error ?? "Error"); setEditTeamSaving(false); return; }
+    setEditTeamSaving(false); setEditTeam(null);
     if (token && activeSeason) await load(token, activeSeason.id);
   }
 
@@ -192,6 +217,9 @@ export default function TeamsPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => setAwardTeam(team)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
                       ⭐ Award
+                    </button>
+                    <button onClick={() => openEditTeam(team)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">
+                      Edit
                     </button>
                     {team.member_count >= 12 && (
                       <button onClick={() => setSplitTeam(team)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600">
@@ -352,6 +380,69 @@ export default function TeamsPage() {
                 <button onClick={() => setAwardTeam(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
                 <button onClick={awardTeamPoints} disabled={awarding} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
                   {awarding ? "Awarding…" : "⭐ Award"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit Team Modal */}
+      {editTeam && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setEditTeam(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif" }}>Edit {editTeam.name}</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Team Name *</label>
+                <input value={editTeamForm.name} onChange={e => setEditTeamForm(f => ({ ...f, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Team Color</label>
+                <div className="flex flex-wrap gap-2">
+                  {TEAM_COLORS.map(c => (
+                    <button key={c.value} onClick={() => setEditTeamForm(f => ({ ...f, color: c.value }))} className="w-8 h-8 rounded-full border-2" style={{ backgroundColor: c.value, borderColor: editTeamForm.color === c.value ? "#111" : "transparent" }} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Mascot</label>
+                <input value={editTeamForm.mascot} onChange={e => setEditTeamForm(f => ({ ...f, mascot: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Volunteer Leader</label>
+                  <input value={editTeamForm.leaderName} onChange={e => setEditTeamForm(f => ({ ...f, leaderName: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Leader Email</label>
+                  <input type="email" value={editTeamForm.leaderEmail} onChange={e => setEditTeamForm(f => ({ ...f, leaderEmail: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+              {children.length > 0 && (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Captain</label>
+                    <select value={editTeamForm.captainId} onChange={e => setEditTeamForm(f => ({ ...f, captainId: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                      <option value="">— None —</option>
+                      {children.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Co-Captain</label>
+                    <select value={editTeamForm.coCaptainId} onChange={e => setEditTeamForm(f => ({ ...f, coCaptainId: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                      <option value="">— None —</option>
+                      {children.filter(c => c.id !== editTeamForm.captainId).map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
+                    </select>
+                  </div>
+                </>
+              )}
+              {editTeamError && <p className="text-sm text-red-600">{editTeamError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setEditTeam(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={saveEditTeam} disabled={editTeamSaving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
+                  {editTeamSaving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
             </div>

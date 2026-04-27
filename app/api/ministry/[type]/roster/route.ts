@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
-import { MINISTRY_CONFIG, getAutoMinistries } from '@/lib/ministry-config';
+import { MINISTRY_CONFIG, getAutoMinistries, isInvitationOnly } from '@/lib/ministry-config';
 
 function adminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const admin = adminClient();
   const cfg = MINISTRY_CONFIG[type];
 
-  // Auto-populate: pull all active members and check ministry match (skip for drama)
-  if (type !== 'drama') {
+  // Invitation-only ministries (ushers, drama) — skip auto-population entirely
+  if (!isInvitationOnly(type)) {
     const { data: allMembers } = await admin
       .from('members')
       .select('id, gender, birthdate, member_type')

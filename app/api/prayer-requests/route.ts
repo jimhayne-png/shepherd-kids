@@ -122,15 +122,21 @@ export async function GET(request: NextRequest) {
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const { data, error } = await adminClient()
+  const ministryType = request.nextUrl.searchParams.get('ministry_type');
+
+  let query = adminClient()
     .from('prayer_requests')
     .select(`
       id, privacy_level, request_text, is_urgent, status,
-      submitted_at, pastor_notes, assigned_to,
+      submitted_at, pastor_notes, assigned_to, ministry_type,
       members(id, first_name, last_name)
     `)
     .eq('church_id', churchId)
     .order('submitted_at', { ascending: false });
+
+  if (ministryType) query = query.eq('ministry_type', ministryType);
+
+  const { data, error } = await query;
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
 

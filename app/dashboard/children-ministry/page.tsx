@@ -74,6 +74,17 @@ export default function ChildrenMinistryPage() {
   const [snSaving, setSnSaving] = useState(false);
   const [snError, setSnError] = useState("");
 
+  // Edit season modal
+  const [editSeason, setEditSeason] = useState<Season | null>(null);
+  const [esName, setEsName] = useState("");
+  const [esStart, setEsStart] = useState("");
+  const [esWeeks, setEsWeeks] = useState(8);
+  const [esReward, setEsReward] = useState("");
+  const [esRewardDate, setEsRewardDate] = useState("");
+  const [esStatus, setEsStatus] = useState("active");
+  const [esSaving, setEsSaving] = useState(false);
+  const [esError, setEsError] = useState("");
+
   function calcEndDate(start: string, weeks: number): string {
     if (!start) return "";
     const d = new Date(start + "T00:00:00");
@@ -123,6 +134,30 @@ export default function ChildrenMinistryPage() {
     }
     init();
   }, [router]);
+
+  function openEditSeason(s: Season) {
+    setEditSeason(s);
+    setEsName(s.name); setEsStart(s.start_date); setEsReward(s.reward_description ?? ""); setEsRewardDate(s.reward_date ?? ""); setEsStatus(s.status);
+    // Infer weeks from start/end if stored
+    const ms = new Date(s.end_date + "T00:00:00").getTime() - new Date(s.start_date + "T00:00:00").getTime();
+    const inferredWeeks = Math.round(ms / (7 * 24 * 60 * 60 * 1000)) + 1;
+    setEsWeeks([6, 8, 12].includes(inferredWeeks) ? inferredWeeks : 8);
+    setEsError("");
+  }
+
+  async function saveSeason() {
+    if (!editSeason || !esName.trim() || !esStart) { setEsError("Name and start date required"); return; }
+    setEsSaving(true); setEsError("");
+    const endDate = calcEndDate(esStart, esWeeks);
+    const res = await fetch("/api/children-ministry/seasons", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: editSeason.id, name: esName, startDate: esStart, endDate, rewardDescription: esReward, rewardDate: esRewardDate, status: esStatus }),
+    });
+    if (!res.ok) { const d = await res.json(); setEsError(d.error ?? "Error"); setEsSaving(false); return; }
+    setEsSaving(false); setEditSeason(null);
+    window.location.reload();
+  }
 
   async function createSeason() {
     if (!snName.trim() || !snStart) { setSnError("Name and start date required"); return; }
@@ -345,7 +380,91 @@ export default function ChildrenMinistryPage() {
             </div>
           </div>
         )}
+
+        {/* Seasons list */}
+        {seasons.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">All Seasons</h2>
+            <div className="bg-white rounded-2xl shadow overflow-hidden">
+              {seasons.map(s => (
+                <div key={s.id} className="flex items-center justify-between px-5 py-3.5 border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${s.status === 'active' ? 'bg-green-100 text-green-700' : s.status === 'upcoming' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {s.status}
+                    </span>
+                    <p className="text-sm font-medium text-gray-900">{s.name}</p>
+                    <p className="text-xs text-gray-400">{s.start_date} – {s.end_date}</p>
+                  </div>
+                  <button onClick={() => openEditSeason(s)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">
+                    Edit
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Edit Season Modal */}
+      {editSeason && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setEditSeason(null)}>
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-6" style={{ fontFamily: "Georgia, serif" }}>Edit Season</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Season Name *</label>
+                <input value={esName} onChange={e => setEsName(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">Season Length</label>
+                <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                  {([{ weeks: 6, label: "6 Weeks", sub: "Quick" }, { weeks: 8, label: "8 Weeks", sub: "Standard" }, { weeks: 12, label: "12 Weeks", sub: "Full" }] as const).map(opt => (
+                    <button key={opt.weeks} onClick={() => setEsWeeks(opt.weeks)} className="flex-1 py-2.5 px-2 text-center transition-colors" style={{ backgroundColor: esWeeks === opt.weeks ? CM_ACCENT : "white", color: esWeeks === opt.weeks ? "white" : "#374151" }}>
+                      <p className="text-xs font-bold">{opt.label}</p>
+                      <p className="text-xs opacity-75">{opt.sub}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Start Date *</label>
+                  <input type="date" value={esStart} onChange={e => setEsStart(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">End Date (calculated)</label>
+                  <div className="px-3 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 text-gray-500">
+                    {esStart ? new Date(calcEndDate(esStart, esWeeks) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Reward Trip</label>
+                <input value={esReward} onChange={e => setEsReward(e.target.value)} placeholder="Six Flags — June 14" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Reward Date</label>
+                <input type="date" value={esRewardDate} onChange={e => setEsRewardDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                <select value={esStatus} onChange={e => setEsStatus(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                  <option value="active">Active</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              {esError && <p className="text-sm text-red-600">{esError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setEditSeason(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={saveSeason} disabled={esSaving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
+                  {esSaving ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

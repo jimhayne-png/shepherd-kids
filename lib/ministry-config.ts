@@ -1,70 +1,184 @@
 export type MinistryConfig = {
+  // Kept for backward compat with existing pages (cfg.name, cfg.stages, cfg.hasShepherdGroups)
   name: string;
   emoji: string;
   stages: string[];
   hasShepherdGroups: boolean;
+
+  // New canonical fields
+  label: string;
+  ageRange?: string;
+  grades?: string[];
+  pipelineStages: string[];
+  hasTeamChallenge: boolean;
+  hasGrowthModule: boolean;
+  invitationOnly: boolean;
+  hasMetamorphosis: boolean;
+  metamorphosisRole?: 'sending' | 'receiving';
+  metamorphosisMentorGrades?: string[];
+  volunteerGrades?: string[];
+  autoPopulateGender?: 'male' | 'female';
+  autoPopulateMinAge?: number;
+  metamorphosisMentorEligible?: boolean;
 };
 
 export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
   childrens: {
-    name: "Children's Ministry",
+    name: "Children's Ministry",          // compat
+    label: "Children's Ministry",
     emoji: "🧒",
-    stages: ["Visitor", "Regular", "Engaged", "Memory Verse", "Faith Decision", "Baptism Ready"],
-    hasShepherdGroups: true,
-  },
-  preteen: {
-    name: "Pre-Teen Ministry",
-    emoji: "👦",
-    stages: ["Visitor", "Regular", "Engaged", "Captain Track", "Faith Decision", "Baptism Ready"],
-    hasShepherdGroups: true,
+    ageRange: "3rd–6th Grade",
+    grades: ["3rd", "4th", "5th", "6th"],
+    pipelineStages: ["Visitor", "Regular", "Engaged", "Memory Verse", "Faith Decision", "Baptism Ready"],
+    stages: ["Visitor", "Regular", "Engaged", "Memory Verse", "Faith Decision", "Baptism Ready"], // compat
+    hasShepherdGroups: true,              // compat
+    hasTeamChallenge: true,
+    hasGrowthModule: false,
+    invitationOnly: false,
+    hasMetamorphosis: true,
+    metamorphosisRole: 'sending',
+    volunteerGrades: [],
   },
   "middle-school": {
-    name: "Middle School",
+    name: "Middle School",                // compat
+    label: "Middle School",
     emoji: "🎒",
-    stages: ["Visitor", "Regular", "Team Member", "Co-Captain", "Captain", "Faith Decision"],
-    hasShepherdGroups: true,
+    ageRange: "7th–8th Grade",
+    grades: ["7th", "8th"],
+    pipelineStages: ["Visitor", "Regular", "Team Member", "Co-Captain", "Captain", "Faith Decision"],
+    stages: ["Visitor", "Regular", "Team Member", "Co-Captain", "Captain", "Faith Decision"], // compat
+    hasShepherdGroups: true,              // compat
+    hasTeamChallenge: true,
+    hasGrowthModule: false,
+    invitationOnly: false,
+    hasMetamorphosis: true,
+    metamorphosisRole: 'receiving',
+    volunteerGrades: [],
   },
-  youth: {
-    name: "Youth Group",
+  "high-school": {
+    name: "High School",                  // compat
+    label: "High School",
     emoji: "🎓",
-    stages: ["Visitor", "Regular", "Small Group", "Leadership Track", "Serving", "Mentoring"],
-    hasShepherdGroups: true,
+    ageRange: "9th–12th Grade",
+    grades: ["9th", "10th", "11th", "12th"],
+    pipelineStages: ["Visitor", "Regular", "Small Group", "Leadership Track", "Serving", "Mentoring"],
+    stages: ["Visitor", "Regular", "Small Group", "Leadership Track", "Serving", "Mentoring"], // compat
+    hasShepherdGroups: true,              // compat
+    hasTeamChallenge: true,
+    hasGrowthModule: false,
+    invitationOnly: false,
+    hasMetamorphosis: true,
+    metamorphosisRole: 'receiving',
+    metamorphosisMentorGrades: ["11th", "12th"],
+    volunteerGrades: ["11th", "12th"],
   },
   "young-adults": {
-    name: "Young Adults",
+    name: "Young Adults",                 // compat
+    label: "Young Adults",
     emoji: "🎉",
-    stages: ["Visitor", "Regular", "Connected", "Serving", "Leading", "Discipling"],
-    hasShepherdGroups: false,
+    ageRange: "Ages 18–30",
+    pipelineStages: ["Visitor", "Regular", "Connected", "Serving", "Leading", "Discipling"],
+    stages: ["Visitor", "Regular", "Connected", "Serving", "Leading", "Discipling"], // compat
+    hasShepherdGroups: false,             // compat
+    hasTeamChallenge: false,
+    hasGrowthModule: true,
+    invitationOnly: false,
+    hasMetamorphosis: false,
+    metamorphosisMentorEligible: true,
   },
   mens: {
-    name: "Men's Ministry",
+    name: "Men's Ministry",               // compat
+    label: "Men's Ministry",
     emoji: "👔",
-    stages: ["Visitor", "Regular", "Accountability Group", "Serving", "Mentoring", "Leading"],
-    hasShepherdGroups: false,
+    pipelineStages: ["Visitor", "Regular", "Accountability Group", "Serving", "Mentoring", "Leading"],
+    stages: ["Visitor", "Regular", "Accountability Group", "Serving", "Mentoring", "Leading"], // compat
+    hasShepherdGroups: false,             // compat
+    hasTeamChallenge: false,
+    hasGrowthModule: true,
+    invitationOnly: false,
+    hasMetamorphosis: false,
+    autoPopulateGender: 'male',
   },
   womens: {
-    name: "Women's Ministry",
+    name: "Women's Ministry",             // compat
+    label: "Women's Ministry",
     emoji: "👗",
-    stages: ["Visitor", "Regular", "Bible Study", "Serving", "Mentoring", "Leading"],
-    hasShepherdGroups: false,
+    pipelineStages: ["Visitor", "Regular", "Bible Study", "Serving", "Mentoring", "Leading"],
+    stages: ["Visitor", "Regular", "Bible Study", "Serving", "Mentoring", "Leading"], // compat
+    hasShepherdGroups: false,             // compat
+    hasTeamChallenge: false,
+    hasGrowthModule: true,
+    invitationOnly: false,
+    hasMetamorphosis: false,
+    autoPopulateGender: 'female',
   },
   seniors: {
-    name: "Senior Ministry",
+    name: "Senior Ministry",              // compat
+    label: "Senior Ministry",
     emoji: "🌟",
-    stages: ["Visitor", "Regular", "Connected", "Mentor", "Legacy"],
-    hasShepherdGroups: false,
+    ageRange: "Ages 55+",
+    pipelineStages: ["Visitor", "Regular", "Connected", "Mentor", "Legacy"],
+    stages: ["Visitor", "Regular", "Connected", "Mentor", "Legacy"], // compat
+    hasShepherdGroups: false,             // compat
+    hasTeamChallenge: false,
+    hasGrowthModule: true,
+    invitationOnly: false,
+    hasMetamorphosis: false,
+    autoPopulateMinAge: 55,
+  },
+  ushers: {
+    name: "Ushers Ministry",             // compat
+    label: "Ushers Ministry",
+    emoji: "🎩",
+    pipelineStages: ["New", "Training", "Active", "Senior Usher", "Head Usher"],
+    stages: ["New", "Training", "Active", "Senior Usher", "Head Usher"], // compat
+    hasShepherdGroups: false,             // compat
+    hasTeamChallenge: false,
+    hasGrowthModule: false,
+    invitationOnly: true,
+    hasMetamorphosis: false,
   },
   drama: {
-    name: "Drama & Skit Ministry",
+    name: "Drama & Skit Ministry",        // compat
+    label: "Drama & Skit Ministry",
     emoji: "🎭",
-    stages: ["Visitor", "Regular", "Ensemble", "Featured", "Lead", "Director Track"],
-    hasShepherdGroups: false,
+    pipelineStages: ["New", "Ensemble", "Featured", "Lead", "Director Track"],
+    stages: ["New", "Ensemble", "Featured", "Lead", "Director Track"], // compat
+    hasShepherdGroups: false,             // compat
+    hasTeamChallenge: false,
+    hasGrowthModule: false,
+    invitationOnly: true,
+    hasMetamorphosis: false,
   },
 };
 
+// ── Helper functions ──────────────────────────────────────────────────────────
+
+export function hasTeamChallenge(type: string): boolean {
+  return MINISTRY_CONFIG[type]?.hasTeamChallenge ?? false;
+}
+
+export function hasGrowthModule(type: string): boolean {
+  return MINISTRY_CONFIG[type]?.hasGrowthModule ?? false;
+}
+
+export function isInvitationOnly(type: string): boolean {
+  return MINISTRY_CONFIG[type]?.invitationOnly ?? false;
+}
+
+export function hasMetamorphosis(type: string): boolean {
+  return MINISTRY_CONFIG[type]?.hasMetamorphosis ?? false;
+}
+
+export function getMetamorphosisMentorGrades(type: string): string[] {
+  return MINISTRY_CONFIG[type]?.metamorphosisMentorGrades ?? [];
+}
+
+// ── Styling ───────────────────────────────────────────────────────────────────
+
 export const STAGE_COLORS = [
-  "#9ca3af", // 0 Visitor — gray
-  "#3b82f6", // 1 Regular — blue
+  "#9ca3af", // 0 — gray
+  "#3b82f6", // 1 — blue
   "#14b8a6", // 2 — teal
   "#f59e0b", // 3 — amber
   "#F28C28", // 4 — orange
@@ -76,6 +190,8 @@ export function stageColor(stages: string[], stage: string | null): string {
   const idx = stages.indexOf(stage);
   return STAGE_COLORS[Math.min(idx < 0 ? 0 : idx, STAGE_COLORS.length - 1)];
 }
+
+// ── Age / gender utilities ────────────────────────────────────────────────────
 
 export function ageFrom(birthdate: string | null | undefined): number | null {
   if (!birthdate) return null;
@@ -96,37 +212,39 @@ export function getAutoMinistries(member: {
   const types: string[] = [];
 
   if (age !== null) {
-    if (age >= 8 && age < 11) types.push('childrens');
-    if (age >= 11 && age < 12) types.push('preteen');
+    if (age >= 8 && age < 12)  types.push('childrens');
     if (age >= 12 && age < 14) types.push('middle-school');
-    if (age >= 14 && age < 18) types.push('youth');
+    if (age >= 14 && age < 18) types.push('high-school');
     if (age >= 18 && age < 30) types.push('young-adults');
-    if (age >= 55) types.push('seniors');
+    if (age >= 55)             types.push('seniors');
     // Gender-based only for adults not already in an age-specific ministry
     if (age >= 18) {
-      if (member.gender === 'male') types.push('mens');
+      if (member.gender === 'male')   types.push('mens');
       if (member.gender === 'female') types.push('womens');
     }
   } else {
-    // No birthdate — use gender and member_type only
-    if (member.gender === 'male') types.push('mens');
+    // No birthdate — use gender / member_type only
+    if (member.gender === 'male')   types.push('mens');
     if (member.gender === 'female') types.push('womens');
   }
 
-  // member_type=child fallback if no age match
+  // member_type=child fallback
   if (types.length === 0 && member.member_type === 'child') types.push('childrens');
 
   return types;
 }
 
+// ── Navigation ────────────────────────────────────────────────────────────────
+
 export const MINISTRY_NAV_ITEMS = [
   { label: "🧒 Children's Ministry", href: "/dashboard/ministry/childrens" },
-  { label: "👦 Pre-Teen", href: "/dashboard/ministry/preteen" },
-  { label: "🎒 Middle School", href: "/dashboard/ministry/middle-school" },
-  { label: "🎓 Youth Group", href: "/dashboard/ministry/youth" },
-  { label: "🎉 Young Adults", href: "/dashboard/ministry/young-adults" },
-  { label: "👔 Men's Ministry", href: "/dashboard/ministry/mens" },
-  { label: "👗 Women's Ministry", href: "/dashboard/ministry/womens" },
-  { label: "🌟 Senior Ministry", href: "/dashboard/ministry/seniors" },
-  { label: "🎭 Drama & Skit", href: "/dashboard/ministry/drama" },
+  { label: "🎒 Middle School",        href: "/dashboard/ministry/middle-school" },
+  { label: "🎓 High School",          href: "/dashboard/ministry/high-school" },
+  { label: "🎉 Young Adults",         href: "/dashboard/ministry/young-adults" },
+  { label: "👔 Men's Ministry",       href: "/dashboard/ministry/mens" },
+  { label: "👗 Women's Ministry",     href: "/dashboard/ministry/womens" },
+  { label: "🌟 Senior Ministry",      href: "/dashboard/ministry/seniors" },
+  { label: "🎩 Ushers Ministry",      href: "/dashboard/ministry/ushers" },
+  { label: "🎭 Drama & Skit",         href: "/dashboard/ministry/drama" },
+  { label: "🏠 Bible Study Pods",     href: "/dashboard/bible-study-pods" },
 ];

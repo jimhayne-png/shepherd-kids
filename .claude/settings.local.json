@@ -20,7 +20,8 @@
       "Bash(mkdir -p \"C:/Users/jimha/shepherd-well/app/api/members/[id]/regenerate-token\")",
       "Bash(xargs grep *)",
       "Bash(vercel *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(npx tsx *)"
     ]
   }
 }

@@ -1,57 +1,15 @@
-"use client";
+﻿"use client";
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_CONFIG, MINISTRY_NAV_ITEMS, stageColor } from "@/lib/ministry-config";
+import MinistryShell from "@/components/layout/MinistryShell";
+import { MINISTRY_CONFIG, stageColor, isInvitationOnly } from "@/lib/ministry-config";
 
 const ACCENT = "#F28C28";
 
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Members", href: "/dashboard/members" },
-  { label: "Departments", href: "/dashboard/departments" },
-  { label: "Attendance", href: "/dashboard/attendance" },
-  { label: "Visitors", href: "/dashboard/visitors" },
-  { label: "Calendar", href: "/dashboard/calendar" },
-  { label: "Prayer", href: "/dashboard/prayer" },
-  { label: "Communication Hub", href: "/dashboard/communication" },
-  { label: "Visitation", href: "/dashboard/visitation" },
-  { label: "Shepherd Pipeline", href: "/dashboard/shepherd" },
-  { label: "Evangelism", href: "/dashboard/evangelism" },
-  { label: "Birthdays", href: "/dashboard/birthdays" },
-  { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
-  ...MINISTRY_NAV_ITEMS,
-  { label: "Settings", href: "/dashboard/settings" },
-];
 
-function SubNav({ type, active }: { type: string; active: string }) {
-  const cfg = MINISTRY_CONFIG[type];
-  const tabs = [
-    { label: "Overview", href: `/dashboard/ministry/${type}` },
-    { label: "Roster", href: `/dashboard/ministry/${type}/roster` },
-    { label: "Attendance", href: `/dashboard/ministry/${type}/attendance` },
-    { label: "Follow Up", href: `/dashboard/ministry/${type}/followup` },
-    { label: "Pipeline", href: `/dashboard/ministry/${type}/pipeline` },
-    { label: "Communication", href: `/dashboard/ministry/${type}/communication` },
-    ...(cfg?.hasShepherdGroups ? [
-      { label: "Shepherd Groups", href: `/dashboard/ministry/${type}/shepherd-groups` },
-      { label: "Team Challenge", href: `/dashboard/children-ministry` },
-    ] : []),
-  ];
-  return (
-    <div className="flex gap-1 px-8 pt-4 overflow-x-auto" style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: "white" }}>
-      {tabs.map(t => (
-        <Link key={t.href} href={t.href} className="px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-          style={{ borderColor: active === t.label ? ACCENT : "transparent", color: active === t.label ? ACCENT : "#6b7280" }}>
-          {t.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
 
 type RosterEntry = {
   id: string;
@@ -73,6 +31,12 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [roster, setRoster] = useState<RosterEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<"members" | "visitors">("members");
+  const [visitors, setVisitors] = useState<any[]>([]);
+  const [showAddVisitor, setShowAddVisitor] = useState(false);
+  const [visitorForm, setVisitorForm] = useState({ first_name: "", last_name: "", email: "", phone: "" });
+  const [addingVisitor, setAddingVisitor] = useState(false);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<RosterEntry | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -98,6 +62,12 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
     setRoster(data.roster ?? []);
   }
 
+  async function loadVisitors(t: string) {
+    if (isInvitationOnly(type)) return;
+    const res = await fetch(`/api/ministry/${type}/visitors`, { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) { const d = await res.json(); setVisitors(d.visitors ?? []); }
+  }
+
   useEffect(() => {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -111,10 +81,39 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
       ]);
       const mData = await membersRes.json();
       setAllMembers(mData.members ?? []);
+      await loadVisitors(t);
       setLoading(false);
     }
     init();
   }, [type, router]);
+
+  async function addVisitor() {
+    if (!token || !visitorForm.first_name.trim() || !visitorForm.last_name.trim()) return;
+    setAddingVisitor(true);
+    const res = await fetch(`/api/ministry/${type}/visitors`, {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(visitorForm),
+    });
+    setAddingVisitor(false);
+    if (res.ok) { setShowAddVisitor(false); setVisitorForm({ first_name: "", last_name: "", email: "", phone: "" }); await loadVisitors(token); }
+  }
+
+  async function logVisit(visitorId: string) {
+    if (!token) return;
+    await fetch(`/api/ministry/${type}/visitors/${visitorId}/attend`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    await loadVisitors(token);
+  }
+
+  async function promoteVisitor(visitorId: string) {
+    if (!token) return;
+    setPromotingId(visitorId);
+    await fetch(`/api/ministry/${type}/visitors/${visitorId}/promote`, {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ also_add_to_members: false }),
+    });
+    setPromotingId(null);
+    await Promise.all([load(token), loadVisitors(token)]);
+  }
 
   const rosterMemberIds = new Set(roster.map(r => r.member_id));
 
@@ -175,11 +174,11 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
     await load(token);
   }
 
-  if (!cfg) return <AppShell navItems={navItems}><div className="p-8 text-gray-500">Ministry not found.</div></AppShell>;
+  if (!cfg) return <MinistryShell type={type}><div className="p-8 text-gray-500">Ministry not found.</div></MinistryShell>;
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
 
   return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type={type}>
       {/* Hero */}
       <div className="px-8 py-8" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
         <Link href={`/dashboard/ministry/${type}`} className="text-orange-200 text-xs mb-1 block hover:text-white">← {cfg.name}</Link>
@@ -194,9 +193,83 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
         </div>
       </div>
 
-      <SubNav type={type} active="Roster" />
+
+      {/* Tabs — only for non-invitation-only ministries */}
+      {!isInvitationOnly(type) && (
+        <div className="flex border-b border-gray-200 bg-white px-8">
+          {(["members", "visitors"] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className="px-5 py-3 text-sm font-medium border-b-2 transition-colors capitalize" style={{ borderColor: activeTab === tab ? ACCENT : "transparent", color: activeTab === tab ? ACCENT : "#6b7280" }}>
+              {tab === "members" ? `Members (${roster.length})` : `Visitors (${visitors.length})`}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
+
+        {/* ── VISITORS TAB ── */}
+        {activeTab === "visitors" && !isInvitationOnly(type) && (
+          <div>
+            <div className="flex justify-between items-center mb-5">
+              <p className="text-sm text-gray-500">Log visits and promote ready members to the roster.</p>
+              <button onClick={() => setShowAddVisitor(true)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>+ Add Visitor</button>
+            </div>
+            {visitors.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow p-10 text-center"><div className="text-5xl mb-3">🆕</div><p className="text-gray-400">No visitors yet. Add your first visitor above.</p></div>
+            ) : (
+              <div className="space-y-3">
+                {visitors.map(v => (
+                  <div key={v.id} className="bg-white rounded-2xl shadow px-5 py-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-bold text-gray-900">{v.first_name} {v.last_name}</p>
+                        {(v.status === "flagged" || v.visit_count >= 3) && (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">⭐ Ready to Promote</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        {v.visit_count} visit{v.visit_count !== 1 ? "s" : ""} · First: {v.first_visit_date} · Last: {v.last_visit_date}
+                        {v.email ? ` · ${v.email}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button onClick={() => logVisit(v.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">
+                        + Log Visit
+                      </button>
+                      <button onClick={() => promoteVisitor(v.id)} disabled={promotingId === v.id} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: ACCENT }}>
+                        {promotingId === v.id ? "Promoting…" : "→ Add to Roster"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showAddVisitor && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowAddVisitor(false)}>
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                  <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif" }}>Add Visitor</h2></div>
+                  <div className="p-6 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className="block text-xs font-medium text-gray-600 mb-1">First Name *</label><input value={visitorForm.first_name} onChange={e => setVisitorForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                      <div><label className="block text-xs font-medium text-gray-600 mb-1">Last Name *</label><input value={visitorForm.last_name} onChange={e => setVisitorForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                    </div>
+                    <div><label className="block text-xs font-medium text-gray-600 mb-1">Email</label><input type="email" value={visitorForm.email} onChange={e => setVisitorForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                    <div><label className="block text-xs font-medium text-gray-600 mb-1">Phone</label><input value={visitorForm.phone} onChange={e => setVisitorForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                    <div className="flex gap-3 pt-2">
+                      <button onClick={() => setShowAddVisitor(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                      <button onClick={addVisitor} disabled={addingVisitor} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{addingVisitor ? "Adding…" : "Add Visitor"}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── MEMBERS TAB ── */}
+        {(activeTab === "members" || isInvitationOnly(type)) && (
+          <div>
         {/* Search */}
         <div className="mb-6">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search members…" className="w-full max-w-sm px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white shadow-sm" />
@@ -266,6 +339,9 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
             </table>
           )}
         </div>
+        </div>
+        )}
+
       </div>
 
       {/* Add Member Modal */}
@@ -377,6 +453,6 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
           </div>
         </div>
       )}
-    </AppShell>
+    </MinistryShell>
   );
 }

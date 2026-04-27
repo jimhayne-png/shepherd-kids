@@ -11,6 +11,22 @@
     {
       "path": "/api/cron/children-parent-update",
       "schedule": "0 18 * * 0"
+    },
+    {
+      "path": "/api/cron/ministry-followup-reminders",
+      "schedule": "0 7 1 * *"
+    },
+    {
+      "path": "/api/cron/pastor-touch-weekly",
+      "schedule": "0 7 * * 1"
+    },
+    {
+      "path": "/api/cron/visitor-next-day",
+      "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/volunteer-reminders",
+      "schedule": "0 8 * * 0"
     }
   ]
 }
