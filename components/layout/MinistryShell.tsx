@@ -191,7 +191,7 @@ export default function MinistryShell({ type, children }: MinistryShellProps) {
       <style>{`
         @media (min-width: 768px) {
           .ms-sidebar-desktop { display: block !important; }
-          .ms-sidebar-mobile { position: relative !important; transform: none !important; transition: none !important; }
+          .ms-sidebar-mobile { display: none !important; }
           .ms-mobile-header { display: none !important; }
         }
         @media (max-width: 767px) {

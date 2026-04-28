@@ -21,7 +21,9 @@
       "Bash(xargs grep *)",
       "Bash(vercel *)",
       "Bash(git add *)",
-      "Bash(npx tsx *)"
+      "Bash(npx tsx *)",
+      "Bash(git commit -m 'Fix MinistryShell duplicate sidebar — hide mobile sidebar on desktop with display:none instead of position:relative *)",
+      "Bash(git push *)"
     ]
   }
 }
