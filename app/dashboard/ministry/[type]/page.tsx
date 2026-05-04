@@ -123,7 +123,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
             { label: "Total Members", value: totalMembers, emoji: "👥" },
             { label: "Present Last Session", value: presentLastSession ?? "—", emoji: "✅" },
             { label: "Active Follow Ups", value: 0, emoji: "📋" },
-            { label: "Pipeline Health", value: pipelineHealth !== null ? `${pipelineHealth}%` : "—", emoji: "📈" },
+            { label: "Shepherd Pipeline Health", value: pipelineHealth !== null ? `${pipelineHealth}%` : "—", emoji: "📈" },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-xl shadow-sm px-5 py-4 flex items-center gap-3 border border-gray-100">
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: ACCENT + "22" }}>

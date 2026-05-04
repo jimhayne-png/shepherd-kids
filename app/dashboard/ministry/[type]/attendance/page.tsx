@@ -103,7 +103,7 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
   }
 
   function exportCSV() {
-    const headers = ["Name", "Pipeline Stage", ...displaySessions.map(fmt), "Streak"];
+    const headers = ["Name", "Shepherd Pipeline Stage", ...displaySessions.map(fmt), "Streak"];
     const rows = members.map(m => [
       `${m.first_name} ${m.last_name}`,
       m.pipeline_stage ?? "",

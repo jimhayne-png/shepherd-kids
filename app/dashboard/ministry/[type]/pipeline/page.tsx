@@ -100,7 +100,7 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
     <MinistryShell type={type}>
       <div className="px-8 py-8" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
         <Link href={`/dashboard/ministry/${type}`} className="text-orange-200 text-xs mb-1 block hover:text-white">← {cfg.name}</Link>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Pipeline</h1>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Shepherd Pipeline</h1>
         <p className="text-orange-100 text-sm mt-1">{total} members · {cfg.stages.length} stages</p>
       </div>
 

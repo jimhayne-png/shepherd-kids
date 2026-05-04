@@ -222,7 +222,7 @@ export default function ShepherdOverviewPage() {
                           fontWeight: "bold",
                         }}
                       >
-                        View Pipeline
+                        View Shepherd Pipeline
                       </Link>
                       <Link
                         href={`/dashboard/shepherd/invite/${dept.id}`}

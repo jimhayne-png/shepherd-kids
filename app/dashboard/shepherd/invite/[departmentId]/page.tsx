@@ -142,7 +142,7 @@ export default function InviteLeaderPage({
               href="/dashboard/shepherd"
               style={{ display: "inline-block", padding: "12px 28px", background: "#1A4A2E", color: "white", borderRadius: "10px", textDecoration: "none", fontFamily: "Georgia, serif", fontSize: "15px" }}
             >
-              Back to Pipeline
+              Back to Shepherd Pipeline
             </Link>
           </div>
         ) : (

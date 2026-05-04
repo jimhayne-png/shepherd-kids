@@ -38,7 +38,7 @@ function buildNav(type: string) {
 
   items.push({ label: "✅ Attendance", href: `${base}/attendance` });
   items.push({ label: "🔄 Follow Up", href: `${base}/followup` });
-  items.push({ label: "📊 Pipeline", href: `${base}/pipeline` });
+  items.push({ label: "📊 Shepherd Pipeline", href: `${base}/pipeline` });
   items.push({ label: "📢 Communication", href: `${base}/communication` });
   items.push({ label: "🎂 Birthdays", href: `${base}/birthdays` });
   items.push({ label: "🙋 Prayer", href: `${base}/prayer` });

@@ -287,7 +287,7 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Name</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Pipeline Stage</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Shepherd Pipeline Stage</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Joined</th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest text-right">Actions</th>
@@ -406,7 +406,7 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Pipeline Stage</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Shepherd Pipeline Stage</label>
                 <select value={editStage} onChange={e => setEditStage(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
                   <option value="">— None —</option>
                   {cfg.stages.map(s => <option key={s} value={s}>{s}</option>)}
