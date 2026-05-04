@@ -11,7 +11,7 @@ const anonClient = createClient(
 );
 
 type LetterData = {
-  eventType: "birthday" | "anniversary";
+  eventType: "birthday" | "anniversary" | "spiritual_birthday";
   firstName: string;
   lastName: string;
   isMilestone: boolean;
@@ -51,6 +51,35 @@ You are a blessing to everyone around you, and we thank the Lord for the joy and
 May this coming year bring you great joy, good health, and an ever-deepening walk with the Lord.
 
 With love and blessings,`;
+}
+
+function buildSpiritualBirthdayLetter(data: LetterData): string {
+  const { firstName, isMilestone, milestoneYears, years, churchName } = data;
+
+  if (isMilestone && milestoneYears) {
+    return `Dear ${firstName},
+
+On behalf of your pastor and the entire ${churchName} family, we want to celebrate a truly sacred milestone with you — the ${getOrdinal(milestoneYears)} anniversary of the day you gave your life to Christ.
+
+${milestoneYears} years of walking with Jesus is a powerful testimony to His faithfulness and your steadfast commitment to Him. Your spiritual journey has been a blessing and an encouragement to everyone in our congregation, and we praise God for the transformation He has worked in your life.
+
+As you reflect on these ${milestoneYears} wonderful years of faith, may you be filled with gratitude for how far He has brought you, and with great anticipation for all He still has in store. We are praying that this anniversary deepens your love for God and strengthens your walk with Him.
+
+With great joy and admiration,`;
+  }
+
+  const yearsText = years ? `${years} ${years === 1 ? "year" : "years"} ago` : "on a special day";
+  return `Dear ${firstName},
+
+On behalf of your pastor and the entire ${churchName} family, we want to celebrate your Spiritual Birthday — the precious day ${yearsText} when you gave your life to Jesus Christ.
+
+This is one of the most significant days of your life, and we rejoice with you and with all of heaven in remembering it. The decision you made to follow Christ has forever changed your eternity, and your faith has been a light and a blessing to everyone around you.
+
+On this special anniversary of your walk with God, may you be reminded of His great love for you, His faithfulness throughout your journey, and His promise to never leave or forsake you.
+
+We are so grateful to have you as part of our church family.
+
+With much love and celebration,`;
 }
 
 function buildAnniversaryLetter(data: LetterData): string {
@@ -104,7 +133,7 @@ export default function LetterPage({ params }: { params: Promise<{ logId: string
 
       const { data: member } = await anonClient
         .from("members")
-        .select("first_name, last_name, birthdate, anniversary")
+        .select("first_name, last_name, birthdate, anniversary, spiritual_birthday")
         .eq("id", log.member_id)
         .maybeSingle();
 
@@ -163,7 +192,9 @@ export default function LetterPage({ params }: { params: Promise<{ logId: string
 
   const letterBody = letter.eventType === "birthday"
     ? buildBirthdayLetter(letter)
-    : buildAnniversaryLetter(letter);
+    : letter.eventType === "anniversary"
+    ? buildAnniversaryLetter(letter)
+    : buildSpiritualBirthdayLetter(letter);
 
   const dateStr = new Date(letter.eventDate + "T00:00:00").toLocaleDateString("en-US", {
     month: "long", day: "numeric", year: "numeric",
@@ -171,7 +202,9 @@ export default function LetterPage({ params }: { params: Promise<{ logId: string
 
   const eventLabel = letter.eventType === "birthday"
     ? (letter.isMilestone && letter.milestoneYears ? `${getOrdinal(letter.milestoneYears)} Birthday` : "Birthday")
-    : (letter.isMilestone && letter.milestoneYears ? `${getOrdinal(letter.milestoneYears)} Anniversary` : "Anniversary");
+    : letter.eventType === "anniversary"
+    ? (letter.isMilestone && letter.milestoneYears ? `${getOrdinal(letter.milestoneYears)} Anniversary` : "Anniversary")
+    : (letter.isMilestone && letter.milestoneYears ? `${letter.milestoneYears} Years in Faith` : "Spiritual Birthday");
 
   return (
     <>
@@ -258,7 +291,7 @@ export default function LetterPage({ params }: { params: Promise<{ logId: string
           {letter.isMilestone && letter.milestoneYears && (
             <div style={{ position: "absolute", right: "1in", bottom: "1.5in", width: "80px", height: "80px", borderRadius: "50%", border: "3px solid #F28C28", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
               <p style={{ margin: 0, fontSize: "18pt", fontWeight: "bold", color: "#F28C28", lineHeight: 1 }}>{letter.milestoneYears}</p>
-              <p style={{ margin: 0, fontSize: "7pt", color: "#F28C28", lineHeight: 1.2 }}>{letter.eventType === "birthday" ? "YEARS" : "YEARS"}</p>
+              <p style={{ margin: 0, fontSize: "7pt", color: "#F28C28", lineHeight: 1.2 }}>{letter.eventType === "spiritual_birthday" ? "IN FAITH" : "YEARS"}</p>
             </div>
           )}
         </div>

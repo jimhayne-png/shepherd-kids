@@ -2,8 +2,9 @@ import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
 import { Resend } from 'resend';
 
-const BIRTHDAY_MILESTONES = new Set([1, 5, 10, 16, 18, 21, 25, 30, 40, 50, 60, 70, 75, 80, 85, 90]);
-const ANNIVERSARY_MILESTONES = new Set([1, 5, 10, 15, 20, 25, 30, 40, 50]);
+const BIRTHDAY_MILESTONES           = new Set([1, 5, 10, 16, 18, 21, 25, 30, 40, 50, 60, 70, 75, 80, 85, 90]);
+const ANNIVERSARY_MILESTONES        = new Set([1, 5, 10, 15, 20, 25, 30, 40, 50]);
+const SPIRITUAL_BIRTHDAY_MILESTONES = new Set([1, 5, 10, 15, 20, 25, 30, 40, 50]);
 
 function adminClient() {
   return createClient(
@@ -30,7 +31,8 @@ async function getChurchId(userId: string) {
 
 function getMilestoneYears(eventType: string, years: number): number | null {
   if (eventType === 'birthday') return BIRTHDAY_MILESTONES.has(years) ? years : null;
-  return ANNIVERSARY_MILESTONES.has(years) ? years : null;
+  if (eventType === 'anniversary') return ANNIVERSARY_MILESTONES.has(years) ? years : null;
+  return SPIRITUAL_BIRTHDAY_MILESTONES.has(years) ? years : null;
 }
 
 async function getChurchAdminEmails(churchId: string): Promise<string[]> {
@@ -52,7 +54,7 @@ type EventEntry = {
   memberId: string;
   firstName: string;
   lastName: string;
-  eventType: 'birthday' | 'anniversary';
+  eventType: 'birthday' | 'anniversary' | 'spiritual_birthday';
   years: number | null;
   isMilestone: boolean;
   milestoneYears: number | null;
@@ -68,26 +70,26 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
   // Fetch all active members with birthdate or anniversary
   const { data: members } = await admin
     .from('members')
-    .select('id, first_name, last_name, birthdate, anniversary')
+    .select('id, first_name, last_name, birthdate, anniversary, spiritual_birthday')
     .eq('church_id', churchId)
     .eq('status', 'active');
 
   if (!members?.length) return 0;
 
-  // Find today's birthday/anniversary members
-  const todayEvents: { memberId: string; firstName: string; lastName: string; eventType: 'birthday' | 'anniversary'; originalDate: string }[] = [];
+  // Find today's birthday/anniversary/spiritual_birthday members
+  const todayEvents: { memberId: string; firstName: string; lastName: string; eventType: 'birthday' | 'anniversary' | 'spiritual_birthday'; originalDate: string }[] = [];
 
   for (const m of members) {
-    if (m.birthdate) {
-      const d = new Date(m.birthdate + 'T00:00:00');
+    const checks: Array<{ date: string | null; type: 'birthday' | 'anniversary' | 'spiritual_birthday' }> = [
+      { date: m.birthdate,         type: 'birthday' },
+      { date: m.anniversary,       type: 'anniversary' },
+      { date: m.spiritual_birthday, type: 'spiritual_birthday' },
+    ];
+    for (const { date, type } of checks) {
+      if (!date) continue;
+      const d = new Date(date + 'T00:00:00');
       if (d.getMonth() + 1 === month && d.getDate() === day) {
-        todayEvents.push({ memberId: m.id, firstName: m.first_name, lastName: m.last_name, eventType: 'birthday', originalDate: m.birthdate });
-      }
-    }
-    if (m.anniversary) {
-      const d = new Date(m.anniversary + 'T00:00:00');
-      if (d.getMonth() + 1 === month && d.getDate() === day) {
-        todayEvents.push({ memberId: m.id, firstName: m.first_name, lastName: m.last_name, eventType: 'anniversary', originalDate: m.anniversary });
+        todayEvents.push({ memberId: m.id, firstName: m.first_name, lastName: m.last_name, eventType: type, originalDate: date });
       }
     }
   }
@@ -157,8 +159,9 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
 
   if (adminEmails.length > 0) {
     const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const birthdays = newEntries.filter(e => e.eventType === 'birthday');
-    const anniversaries = newEntries.filter(e => e.eventType === 'anniversary');
+    const birthdays         = newEntries.filter(e => e.eventType === 'birthday');
+    const anniversaries     = newEntries.filter(e => e.eventType === 'anniversary');
+    const spiritualBirthdays = newEntries.filter(e => e.eventType === 'spiritual_birthday');
 
     const renderRow = (e: EventEntry) => {
       const letterUrl = `${baseUrl}/dashboard/birthdays/letter/${e.logId}`;
@@ -189,6 +192,11 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
             <h2 style="color:#1A4A2E;font-size:18px;margin:0 0 12px;">💍 Anniversaries Today</h2>
             <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
               ${anniversaries.map(renderRow).join('')}
+            </table>` : ''}
+          ${spiritualBirthdays.length > 0 ? `
+            <h2 style="color:#1A4A2E;font-size:18px;margin:0 0 12px;">✝️ Spiritual Birthdays Today</h2>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
+              ${spiritualBirthdays.map(renderRow).join('')}
             </table>` : ''}
           <p style="font-size:14px;color:#6b7280;line-height:1.6;">Click <strong>Print Letter</strong> next to each name to open a print-ready letter you can sign and mail. These letters are personalized and milestone-aware.</p>
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />

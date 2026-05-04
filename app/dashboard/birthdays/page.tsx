@@ -29,7 +29,7 @@ type BirthdayEvent = {
   memberId: string;
   firstName: string;
   lastName: string;
-  eventType: "birthday" | "anniversary";
+  eventType: "birthday" | "anniversary" | "spiritual_birthday";
   eventDate: string;
   years: number | null;
   isMilestone: boolean;
@@ -54,7 +54,7 @@ export default function BirthdaysPage() {
   const [token, setToken] = useState<string | null>(null);
   const [events, setEvents] = useState<BirthdayEvent[]>([]);
   const [stats, setStats] = useState<Stats>({ totalThisMonth: 0, milestonesThisMonth: 0, todayCount: 0 });
-  const [filter, setFilter] = useState<"all" | "birthday" | "anniversary">("all");
+  const [filter, setFilter] = useState<"all" | "birthday" | "anniversary" | "spiritual_birthday">("all");
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
@@ -191,15 +191,20 @@ export default function BirthdaysPage() {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-6">
-          {(["all", "birthday", "anniversary"] as const).map((f) => (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {([
+            { key: "all",              label: "All" },
+            { key: "birthday",         label: "🎂 Birthdays" },
+            { key: "anniversary",      label: "💍 Anniversaries" },
+            { key: "spiritual_birthday", label: "✝️ Spiritual Birthdays" },
+          ] as const).map(({ key, label }) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${filter === f ? "text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"}`}
-              style={filter === f ? { backgroundColor: "#F28C28" } : {}}
+              key={key}
+              onClick={() => setFilter(key)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${filter === key ? "text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"}`}
+              style={filter === key ? { backgroundColor: "#F28C28" } : {}}
             >
-              {f === "all" ? "All" : f === "birthday" ? "🎂 Birthdays" : "💍 Anniversaries"}
+              {label}
             </button>
           ))}
         </div>
@@ -208,9 +213,9 @@ export default function BirthdaysPage() {
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
             <div className="text-5xl mb-4">🎂</div>
             <p className="text-gray-500 font-medium" style={{ fontFamily: "Georgia, serif" }}>
-              No {filter === "all" ? "events" : filter === "birthday" ? "birthdays" : "anniversaries"} in the next 30 days
+              No {filter === "all" ? "events" : filter === "birthday" ? "birthdays" : filter === "anniversary" ? "anniversaries" : "spiritual birthdays"} in the next 30 days
             </p>
-            <p className="text-gray-400 text-sm mt-1">Add birthdates and anniversaries on member profiles.</p>
+            <p className="text-gray-400 text-sm mt-1">Add birthdates, anniversaries, and spiritual birthdays on member profiles.</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -245,9 +250,9 @@ export default function BirthdaysPage() {
                           {/* Event icon */}
                           <div
                             className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-                            style={{ backgroundColor: ev.eventType === "birthday" ? "#fef3c7" : "#fce7f3" }}
+                            style={{ backgroundColor: ev.eventType === "birthday" ? "#fef3c7" : ev.eventType === "anniversary" ? "#fce7f3" : "#ecfdf5" }}
                           >
-                            {ev.eventType === "birthday" ? "🎂" : "💍"}
+                            {ev.eventType === "birthday" ? "🎂" : ev.eventType === "anniversary" ? "💍" : "✝️"}
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -258,18 +263,18 @@ export default function BirthdaysPage() {
                               >
                                 {ev.firstName} {ev.lastName}
                               </Link>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ev.eventType === "birthday" ? "bg-amber-100 text-amber-700" : "bg-pink-100 text-pink-700"}`}>
-                                {ev.eventType === "birthday" ? "Birthday" : "Anniversary"}
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ev.eventType === "birthday" ? "bg-amber-100 text-amber-700" : ev.eventType === "anniversary" ? "bg-pink-100 text-pink-700" : "bg-green-100 text-green-700"}`}>
+                                {ev.eventType === "birthday" ? "Birthday" : ev.eventType === "anniversary" ? "Anniversary" : "Spiritual Birthday"}
                               </span>
                               {ev.isMilestone && (
                                 <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: "#F28C28" }}>
-                                  🎉 {ev.milestoneYears}{ev.eventType === "birthday" ? "th Birthday" : " Years"}
+                                  🎉 {ev.milestoneYears}{ev.eventType === "birthday" ? "th Birthday" : ev.eventType === "anniversary" ? " Years" : " Years in Faith"}
                                 </span>
                               )}
                             </div>
                             {ev.years !== null && !ev.isMilestone && (
                               <p className="text-xs text-gray-400 mt-0.5">
-                                {ev.eventType === "birthday" ? `Turning ${ev.years}` : `${ev.years} years together`}
+                                {ev.eventType === "birthday" ? `Turning ${ev.years}` : ev.eventType === "anniversary" ? `${ev.years} years together` : `${ev.years} years in faith`}
                               </p>
                             )}
                           </div>

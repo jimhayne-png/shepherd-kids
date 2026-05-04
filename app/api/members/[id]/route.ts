@@ -41,7 +41,7 @@ export async function GET(
     .select(`
       id, first_name, last_name, email, phone,
       address, city, state, zip,
-      birthdate, anniversary, gender,
+      birthdate, anniversary, spiritual_birthday, gender,
       member_type, status, notes, portal_token,
       member_departments(department_id)
     `)
@@ -68,7 +68,7 @@ export async function PATCH(
   const {
     firstName, lastName, email, phone,
     address, city, state, zip,
-    birthdate, anniversary, gender,
+    birthdate, anniversary, spiritualBirthday, gender,
     memberType, status, notes,
     departmentIds,
   } = body;
@@ -86,6 +86,7 @@ export async function PATCH(
   if (zip !== undefined) updates.zip = zip?.trim() || null;
   if (birthdate !== undefined) updates.birthdate = birthdate || null;
   if (anniversary !== undefined) updates.anniversary = anniversary || null;
+  if (spiritualBirthday !== undefined) updates.spiritual_birthday = spiritualBirthday || null;
   if (gender !== undefined) updates.gender = gender || null;
   if (memberType !== undefined) updates.member_type = memberType;
   if (status !== undefined) updates.status = status;

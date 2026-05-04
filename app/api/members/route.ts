@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     .select(`
       id, first_name, last_name, email, phone,
       address, city, state, zip,
-      birthdate, anniversary, gender,
+      birthdate, anniversary, spiritual_birthday, gender,
       member_type, status, notes, photo_url,
       created_at,
       member_departments(department_id, departments(id, name))
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   const {
     firstName, lastName, email, phone,
     address, city, state, zip,
-    birthdate, anniversary,
+    birthdate, anniversary, spiritualBirthday,
     memberType, status, notes,
     departmentIds,
   } = body;
@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       zip: zip?.trim() || null,
       birthdate: birthdate || null,
       anniversary: anniversary || null,
+      spiritual_birthday: spiritualBirthday || null,
       member_type: memberType || 'member',
       status: status || 'active',
       notes: notes?.trim() || null,

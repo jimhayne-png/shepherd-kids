@@ -46,6 +46,7 @@ type FormData = {
   zip: string;
   birthdate: string;
   anniversary: string;
+  spiritualBirthday: string;
   gender: string;
   memberType: string;
   status: string;
@@ -108,7 +109,7 @@ export default function EditMemberPage({
     firstName: "", lastName: "",
     email: "", phone: "",
     address: "", city: "", state: "", zip: "",
-    birthdate: "", anniversary: "", gender: "",
+    birthdate: "", anniversary: "", spiritualBirthday: "", gender: "",
     memberType: "member", status: "active",
     notes: "", departmentIds: [],
   });
@@ -163,6 +164,7 @@ export default function EditMemberPage({
           zip: m.zip ?? "",
           birthdate: m.birthdate ?? "",
           anniversary: m.anniversary ?? "",
+          spiritualBirthday: m.spiritual_birthday ?? "",
           gender: m.gender ?? "",
           memberType: m.member_type ?? "member",
           status: m.status ?? "active",
@@ -327,6 +329,9 @@ export default function EditMemberPage({
               </Field>
               <Field label="Anniversary">
                 <Input value={form.anniversary} onChange={(v) => set("anniversary", v)} type="date" />
+              </Field>
+              <Field label="Spiritual Birthday">
+                <Input value={form.spiritualBirthday} onChange={(v) => set("spiritualBirthday", v)} type="date" />
               </Field>
               <Field label="Gender">
                 <select
