@@ -27,8 +27,10 @@ function getAccent(type: string): string {
 function buildNav(type: string) {
   const items: { label: string; href: string }[] = [];
   const base = `/dashboard/ministry/${type}`;
+  // Children's Ministry uses its own dedicated hub as the Overview
+  const overviewHref = type === "childrens" ? "/dashboard/children-ministry" : base;
 
-  items.push({ label: "📋 Overview", href: base });
+  items.push({ label: "📋 Overview", href: overviewHref });
 
   if (isInvitationOnly(type)) {
     items.push({ label: "👥 Members", href: `${base}/roster` });
@@ -72,8 +74,10 @@ export default function MinistryShell({ type, children }: MinistryShellProps) {
   const accent = getAccent(type);
   const navItems = buildNav(type);
 
+  // The overview path must not prefix-match its own sub-pages
+  const overviewHref = type === "childrens" ? "/dashboard/children-ministry" : `/dashboard/ministry/${type}`;
   const isActive = (href: string) =>
-    pathname === href || (href !== `/dashboard/ministry/${type}` && pathname.startsWith(href));
+    pathname === href || (href !== overviewHref && pathname.startsWith(href));
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full" style={{ backgroundColor: "#1a2e1a" }}>

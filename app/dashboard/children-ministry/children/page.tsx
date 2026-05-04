@@ -3,24 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import MinistryShell from "@/components/layout/MinistryShell";
 
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Members", href: "/dashboard/members" },
-  { label: "Departments", href: "/dashboard/departments" },
-  { label: "Attendance", href: "/dashboard/attendance" },
-  { label: "Visitors", href: "/dashboard/visitors" },
-  { label: "Calendar", href: "/dashboard/calendar" },
-  { label: "Prayer", href: "/dashboard/prayer" },
-  { label: "Communication Hub", href: "/dashboard/communication" },
-  { label: "Visitation", href: "/dashboard/visitation" },
-  { label: "Shepherd Pipeline", href: "/dashboard/shepherd" },
-  { label: "Evangelism", href: "/dashboard/evangelism" },
-  { label: "Birthdays", href: "/dashboard/birthdays" },
-  { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
-  { label: "Settings", href: "/dashboard/settings" },
-];
 
 const CM_ACCENT = "#F28C28";
 
@@ -171,7 +155,7 @@ export default function ChildrenPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
 
   return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type="childrens">
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${CM_ACCENT} 100%)` }}>
         <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Children</h1>
@@ -490,6 +474,6 @@ export default function ChildrenPage() {
           </div>
         </div>
       )}
-    </AppShell>
+    </MinistryShell>
   );
 }

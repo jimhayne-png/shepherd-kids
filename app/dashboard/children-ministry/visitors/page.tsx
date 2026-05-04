@@ -3,29 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
+import MinistryShell from "@/components/layout/MinistryShell";
 
 const CM_ACCENT = "#F28C28";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shepherd-well.vercel.app";
 
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "People", href: "#", isSection: true },
-  { label: "👥 Members", href: "/dashboard/members" },
-  { label: "Engagement", href: "#", isSection: true },
-  { label: "✅ Attendance", href: "/dashboard/attendance" },
-  { label: "Ministry", href: "#", isSection: true },
-  { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
-  { label: "👦 Children", href: "/dashboard/children-ministry/children" },
-  { label: "🏆 Teams", href: "/dashboard/children-ministry/teams" },
-  { label: "⭐ Points", href: "/dashboard/children-ministry/points" },
-  { label: "📋 Attendance", href: "/dashboard/children-ministry/attendance" },
-  { label: "🆕 First-Time Visitors", href: "/dashboard/children-ministry/visitors" },
-  ...MINISTRY_NAV_ITEMS,
-  { label: "Settings", href: "#", isSection: true },
-  { label: "⚙️ Settings", href: "/dashboard/settings" },
-];
 
 type Family = {
   id: string; parent1_first_name: string; parent1_last_name: string;
@@ -149,7 +131,7 @@ export default function VisitorsPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
 
   return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type="childrens">
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${CM_ACCENT} 100%)` }}>
         <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>🆕 First-Time Visitors</h1>
@@ -342,6 +324,6 @@ export default function VisitorsPage() {
           )}
         </div>
       </div>
-    </AppShell>
+    </MinistryShell>
   );
 }

@@ -4,24 +4,10 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
+import MinistryShell from "@/components/layout/MinistryShell";
 
 const ACCENT = "#F28C28";
 
-const navItems: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Ministry", href: "#", isSection: true },
-  { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
-  { label: "👦 Children", href: "/dashboard/children-ministry/children" },
-  { label: "🏆 Teams", href: "/dashboard/children-ministry/teams" },
-  { label: "⭐ Points", href: "/dashboard/children-ministry/points" },
-  { label: "👥 Volunteers", href: "/dashboard/children-ministry/volunteers" },
-  { label: "🆕 First-Time Visitors", href: "/dashboard/children-ministry/visitors" },
-  ...MINISTRY_NAV_ITEMS,
-  { label: "Settings", href: "#", isSection: true },
-  { label: "⚙️ Settings", href: "/dashboard/settings" },
-];
 
 type Volunteer = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; roles: string[]; background_check_status: string; background_check_date: string | null; reliability_score: number; is_active: boolean; notes: string | null; assignment_count: number };
 type Role = { id: string; name: string; color: string; sort_order: number; is_active: boolean; description: string | null };
@@ -215,7 +201,7 @@ function VolunteersPageContent() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
 
   return (
-    <AppShell navItems={navItems}>
+    <MinistryShell type="childrens">
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
         <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>👥 Volunteer Scheduling</h1>
@@ -578,7 +564,7 @@ function VolunteersPageContent() {
           </div>
         </div>
       )}
-    </AppShell>
+    </MinistryShell>
   );
 }
 
