@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import MinistryShell from "@/components/layout/MinistryShell";
 import { MINISTRY_CONFIG } from "@/lib/ministry-config";
+import { ProLockedOverlay } from "@/components/ProLockedOverlay";
 
 const ACCENT = "#F28C28";
 
@@ -32,6 +33,7 @@ export default function MinistryMetamorphosisPage({ params }: { params: Promise<
   const info = COHORT_INFO[type];
 
   const [loading, setLoading] = useState(true);
+  const [hasPro, setHasPro] = useState<boolean | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [cohorts, setCohorts] = useState<any[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -45,8 +47,23 @@ export default function MinistryMetamorphosisPage({ params }: { params: Promise<
       if (!session) { router.replace("/"); return; }
       const t = session.access_token;
       setToken(t);
-      const res = await fetch(`/api/metamorphosis/cohorts?ministry_type=${type}`, { headers: { Authorization: `Bearer ${t}` } });
-      if (res.ok) { const d = await res.json(); setCohorts(d.cohorts ?? []); }
+
+      const gated = type === "middle-school" || type === "high-school";
+      const [proRes, cohortRes] = await Promise.all([
+        gated
+          ? fetch("/api/addons/ministry-pro", { headers: { Authorization: `Bearer ${t}` } })
+          : Promise.resolve(null),
+        fetch(`/api/metamorphosis/cohorts?ministry_type=${type}`, { headers: { Authorization: `Bearer ${t}` } }),
+      ]);
+
+      if (proRes) {
+        const pd = proRes.ok ? await proRes.json() : { active: false };
+        setHasPro(pd.active ?? false);
+      } else {
+        setHasPro(true);
+      }
+
+      if (cohortRes.ok) { const d = await cohortRes.json(); setCohorts(d.cohorts ?? []); }
       setLoading(false);
     }
     init();
@@ -89,6 +106,19 @@ export default function MinistryMetamorphosisPage({ params }: { params: Promise<
       <div className="p-8 text-gray-500">Metamorphosis is not available for this ministry type.</div>
     </MinistryShell>
   );
+
+  if (hasPro === false && (type === "middle-school" || type === "high-school")) {
+    return (
+      <MinistryShell type={type}>
+        <div className="px-8 py-8" style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d5a2d 100%)" }}>
+          <Link href={`/dashboard/ministry/${type}`} className="text-green-300 text-xs mb-1 block hover:text-white">← {cfg?.name}</Link>
+          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>🦋 {info.title}</h1>
+          <p className="text-green-200 text-sm mt-1">{info.desc}</p>
+        </div>
+        <ProLockedOverlay />
+      </MinistryShell>
+    );
+  }
 
   return (
     <MinistryShell type={type}>

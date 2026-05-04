@@ -1,13 +1,51 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import MinistryShell from "@/components/layout/MinistryShell";
 import { MINISTRY_CONFIG } from "@/lib/ministry-config";
+import { supabase } from "@/lib/supabase";
+import { ProLockedOverlay } from "@/components/ProLockedOverlay";
 
 export default function GrowthChallengePage({ params }: { params: Promise<{ type: string }> }) {
   const { type } = use(params);
   const cfg = MINISTRY_CONFIG[type];
+  const router = useRouter();
+  const [hasPro, setHasPro] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (type !== "childrens") { setHasPro(true); return; }
+    async function check() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.replace("/"); return; }
+      const res = await fetch("/api/addons/ministry-pro", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const d = res.ok ? await res.json() : { active: false };
+      setHasPro(d.active ?? false);
+    }
+    check();
+  }, [type, router]);
+
+  function childrensContent() {
+    if (hasPro === null) {
+      return <div className="flex items-center justify-center py-20"><div className="text-gray-400">Loading…</div></div>;
+    }
+    if (hasPro === false) {
+      return <ProLockedOverlay />;
+    }
+    return (
+      <div className="bg-white rounded-2xl shadow p-8 text-center max-w-lg mx-auto">
+        <div className="text-5xl mb-4">🏆</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-3" style={{ fontFamily: "Georgia, serif" }}>Growth Challenge is managed in the Children's Ministry module</h2>
+        <p className="text-gray-500 mb-6">Teams, points, seasons, attendance bonuses, and the leaderboard are all managed from the full Children's Ministry dashboard.</p>
+        <Link href="/dashboard/children-ministry" className="inline-block px-6 py-3 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: "#F28C28" }}>
+          Open Children's Ministry →
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <MinistryShell type={type}>
@@ -18,16 +56,7 @@ export default function GrowthChallengePage({ params }: { params: Promise<{ type
       </div>
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
-        {type === "childrens" ? (
-          <div className="bg-white rounded-2xl shadow p-8 text-center max-w-lg mx-auto">
-            <div className="text-5xl mb-4">🏆</div>
-            <h2 className="text-xl font-bold text-gray-800 mb-3" style={{ fontFamily: "Georgia, serif" }}>Growth Challenge is managed in the Children's Ministry module</h2>
-            <p className="text-gray-500 mb-6">Teams, points, seasons, attendance bonuses, and the leaderboard are all managed from the full Children's Ministry dashboard.</p>
-            <Link href="/dashboard/children-ministry" className="inline-block px-6 py-3 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: "#F28C28" }}>
-              Open Children's Ministry →
-            </Link>
-          </div>
-        ) : (
+        {type === "childrens" ? childrensContent() : (
           <div className="bg-white rounded-2xl shadow p-8 text-center max-w-lg mx-auto">
             <div className="text-5xl mb-4">🏆</div>
             <h2 className="text-xl font-bold text-gray-800 mb-3" style={{ fontFamily: "Georgia, serif" }}>Growth Challenge — {cfg?.name}</h2>

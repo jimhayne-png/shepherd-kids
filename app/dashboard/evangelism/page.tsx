@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import { ProLockedOverlay } from "@/components/ProLockedOverlay";
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -136,6 +137,7 @@ function timeAgo(iso: string) {
 export default function EvangelismPage() {
   const router = useRouter();
   const [authLoading, setAuthLoading] = useState(true);
+  const [hasPro, setHasPro] = useState<boolean | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [targets, setTargets] = useState<PrayerTarget[]>([]);
   const [celebrations, setCelebrations] = useState<Celebration[]>([]);
@@ -162,8 +164,13 @@ export default function EvangelismPage() {
       setToken(session.access_token);
       const { data: cu } = await supabase.from("church_users").select("church_id").eq("user_id", session.user.id).maybeSingle();
       if (!cu) { router.replace("/onboarding"); return; }
+      const [proRes] = await Promise.all([
+        fetch("/api/addons/ministry-pro", { headers: { Authorization: `Bearer ${session.access_token}` } }),
+        loadData(session.access_token),
+      ]);
+      const pd = proRes.ok ? await proRes.json() : { active: false };
+      setHasPro(pd.active ?? false);
       setAuthLoading(false);
-      await loadData(session.access_token);
     }
     init();
   }, [router, loadData]);
@@ -460,6 +467,29 @@ export default function EvangelismPage() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* Discipleship Team Growth — Ministry Pro */}
+        <section className="mb-12">
+          <h2 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+            🌱 Discipleship Team Growth
+          </h2>
+          <div className="relative">
+            <div
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 select-none pointer-events-none"
+              style={{ filter: hasPro ? "none" : "blur(3px)", opacity: hasPro ? 1 : 0.5 }}
+            >
+              <div className="grid md:grid-cols-3 gap-4">
+                {["Team Formation", "Weekly Milestones", "Growth Metrics"].map(label => (
+                  <div key={label} className="rounded-xl bg-gray-50 p-5">
+                    <p className="font-semibold text-gray-700 text-sm">{label}</p>
+                    <p className="text-xs text-gray-400 mt-1">Track your team's discipleship journey</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {hasPro === false && <ProLockedOverlay mode="section" />}
+          </div>
         </section>
 
         {/* Resource Section */}

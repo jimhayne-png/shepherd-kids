@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import { ProLockedOverlay } from "@/components/ProLockedOverlay";
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -48,6 +49,7 @@ type Team = {
 export default function TeamsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [hasPro, setHasPro] = useState<boolean | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
@@ -92,10 +94,13 @@ export default function TeamsPage() {
       const t = session.access_token;
       setToken(t);
 
-      const [sRes, cRes] = await Promise.all([
+      const [proRes, sRes, cRes] = await Promise.all([
+        fetch("/api/addons/ministry-pro", { headers: { Authorization: `Bearer ${t}` } }),
         fetch("/api/children-ministry/seasons", { headers: { Authorization: `Bearer ${t}` } }),
         fetch("/api/children-ministry/children", { headers: { Authorization: `Bearer ${t}` } }),
       ]);
+      const proData = proRes.ok ? await proRes.json() : { active: false };
+      setHasPro(proData.active ?? false);
       const sData = await sRes.json();
       const cData = await cRes.json();
       const allSeasons: Season[] = sData.seasons ?? [];
@@ -177,6 +182,9 @@ export default function TeamsPage() {
         {activeSeason && <p className="text-orange-100 text-sm mt-1">{activeSeason.name}</p>}
       </div>
 
+      {hasPro === false ? (
+        <ProLockedOverlay />
+      ) : (
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
         <div className="flex justify-end mb-6">
           <button onClick={() => setShowCreate(true)} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: CM_ACCENT }}>
@@ -260,6 +268,7 @@ export default function TeamsPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Create Team Modal */}
       {showCreate && (

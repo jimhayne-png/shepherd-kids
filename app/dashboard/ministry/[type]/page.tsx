@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import MinistryShell from "@/components/layout/MinistryShell";
 import { MINISTRY_CONFIG } from "@/lib/ministry-config";
+import { ProLockedOverlay } from "@/components/ProLockedOverlay";
 
 const ACCENT = "#F28C28";
 
@@ -15,6 +16,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   const cfg = MINISTRY_CONFIG[type];
 
   const [loading, setLoading] = useState(true);
+  const [hasPro, setHasPro] = useState<boolean | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [totalMembers, setTotalMembers] = useState(0);
   const [presentLastSession, setPresentLastSession] = useState<number | null>(null);
@@ -29,10 +31,20 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
       const t = session.access_token;
       setToken(t);
 
-      const [rosterRes, attRes] = await Promise.all([
+      const [proRes, rosterRes, attRes] = await Promise.all([
+        type === "drama"
+          ? fetch("/api/addons/ministry-pro", { headers: { Authorization: `Bearer ${t}` } })
+          : Promise.resolve(null),
         fetch(`/api/ministry/${type}/roster`, { headers: { Authorization: `Bearer ${t}` } }),
         fetch(`/api/ministry/${type}/attendance?sessions=1`, { headers: { Authorization: `Bearer ${t}` } }),
       ]);
+
+      if (proRes) {
+        const pd = proRes.ok ? await proRes.json() : { active: false };
+        setHasPro(pd.active ?? false);
+      } else {
+        setHasPro(true);
+      }
 
       const rosterData = await rosterRes.json();
       const attData = await attRes.json();
@@ -78,6 +90,20 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
       <div className="text-gray-400">Loading…</div>
     </div>
   );
+
+  if (hasPro === false && type === "drama") {
+    return (
+      <MinistryShell type={type}>
+        <div className="px-8 py-8" style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d5a2d 100%)" }}>
+          <p className="text-green-300 text-sm mb-1">Overview</p>
+          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
+            {cfg.emoji} {cfg.name}
+          </h1>
+        </div>
+        <ProLockedOverlay />
+      </MinistryShell>
+    );
+  }
 
   return (
     <MinistryShell type={type}>
