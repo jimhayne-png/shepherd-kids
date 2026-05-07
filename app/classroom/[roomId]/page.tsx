@@ -17,6 +17,7 @@ type CheckinRecord = {
   checked_in_at: string;
   checked_out_at: string | null;
   checked_out_by: string | null;
+  authorized_pickups: string | null;
 };
 
 type RoomInfo = { id: string; name: string };
