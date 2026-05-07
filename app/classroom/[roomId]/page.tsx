@@ -41,6 +41,8 @@ export default function ClassroomPage() {
   // Checkout modal
   const [checkoutRecord, setCheckoutRecord] = useState<CheckinRecord | null>(null);
   const [checkoutInput, setCheckoutInput] = useState("");
+  const [checkoutName, setCheckoutName] = useState("");
+  const [checkoutStep, setCheckoutStep] = useState<"enter" | "warn-nonparent" | "blocked">("enter");
   const [checkoutError, setCheckoutError] = useState("");
   const [checkingOut, setCheckingOut] = useState(false);
   const checkoutInputRef = useRef<HTMLInputElement>(null);
@@ -68,36 +70,52 @@ export default function ClassroomPage() {
     }
   }, [checkoutRecord]);
 
-  function verifyCheckout(record: CheckinRecord, input: string): boolean {
-    const normalized = input.replace(/\D/g, "");
-    return input.trim() === record.security_code ||
-      normalized === record.parent_phone ||
-      (normalized.length >= 4 && record.parent_phone.endsWith(normalized));
+  function isAuthorizedPickup(name: string, authorizedPickups: string | null): boolean {
+    if (!authorizedPickups?.trim()) return false;
+    const list = authorizedPickups.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    const normalized = name.trim().toLowerCase();
+    return list.some(e => e.includes(normalized) || normalized.includes(e));
   }
 
-  async function handleCheckout() {
+  async function doCheckout() {
     if (!checkoutRecord) return;
-    if (!verifyCheckout(checkoutRecord, checkoutInput)) {
-      setCheckoutError("Incorrect phone number or security code. Please try again.");
-      setCheckoutInput("");
-      checkoutInputRef.current?.focus();
-      return;
-    }
     setCheckingOut(true);
     const res = await fetch("/api/checkin/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recordId: checkoutRecord.id, checkedOutBy: "staff" }),
+      body: JSON.stringify({ recordId: checkoutRecord.id, checkedOutBy: checkoutName.trim() || "staff" }),
     });
     setCheckingOut(false);
     if (res.ok) {
       setCheckoutRecord(null);
       setCheckoutInput("");
+      setCheckoutName("");
+      setCheckoutStep("enter");
       setCheckoutError("");
       await fetchData();
     } else {
       const d = await res.json();
       setCheckoutError(d.error ?? "Checkout failed.");
+    }
+  }
+
+  async function handleVerify() {
+    if (!checkoutRecord) return;
+    if (checkoutInput.trim() !== checkoutRecord.security_code) {
+      setCheckoutError("Incorrect security code. Please try again.");
+      return;
+    }
+    if (!checkoutName.trim()) {
+      setCheckoutError("Please enter the pickup person's name.");
+      return;
+    }
+    setCheckoutError("");
+    if (checkoutName.trim().toLowerCase() === checkoutRecord.parent_name.trim().toLowerCase()) {
+      await doCheckout();
+    } else if (isAuthorizedPickup(checkoutName, checkoutRecord.authorized_pickups)) {
+      setCheckoutStep("warn-nonparent");
+    } else {
+      setCheckoutStep("blocked");
     }
   }
 
@@ -159,7 +177,7 @@ export default function ClassroomPage() {
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
               {checkedInRecords.map(r => (
-                <ChildCard key={r.id} record={r} onCheckout={() => { setCheckoutRecord(r); setCheckoutInput(""); setCheckoutError(""); }} />
+                <ChildCard key={r.id} record={r} onCheckout={() => { setCheckoutRecord(r); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} />
               ))}
             </div>
           </div>
@@ -191,29 +209,80 @@ export default function ClassroomPage() {
       {/* Checkout modal */}
       {checkoutRecord && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
-          <div style={{ backgroundColor: "white", borderRadius: 24, padding: 36, width: "100%", maxWidth: 440, boxShadow: "0 24px 60px rgba(0,0,0,0.35)" }}>
+          <div style={{ backgroundColor: "white", borderRadius: 24, padding: 36, width: "100%", maxWidth: 460, boxShadow: "0 24px 60px rgba(0,0,0,0.35)" }}>
             <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Check Out</h2>
             <p style={{ fontSize: 18, color: ACCENT, fontWeight: 700, marginBottom: 20 }}>{checkoutRecord.child_name}</p>
-            <p style={{ fontSize: 16, color: "#6b7280", marginBottom: 16 }}>Enter parent's phone number or family security code:</p>
-            <input
-              ref={checkoutInputRef}
-              type="text"
-              inputMode="numeric"
-              value={checkoutInput}
-              onChange={e => { setCheckoutInput(e.target.value); setCheckoutError(""); }}
-              onKeyDown={e => e.key === "Enter" && handleCheckout()}
-              placeholder="Phone or code"
-              style={{ width: "100%", fontSize: 28, textAlign: "center", padding: "18px 16px", borderRadius: 16, border: "2px solid #e5e7eb", boxSizing: "border-box" as const, marginBottom: 8 }}
-            />
-            {checkoutError && <p style={{ color: "#dc2626", fontSize: 14, textAlign: "center", marginBottom: 8 }}>{checkoutError}</p>}
-            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-              <button onClick={() => { setCheckoutRecord(null); setCheckoutInput(""); setCheckoutError(""); }} style={{ flex: 1, padding: "16px", borderRadius: 14, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button onClick={handleCheckout} disabled={!checkoutInput.trim() || checkingOut} style={{ flex: 2, padding: "16px", borderRadius: 14, border: "none", backgroundColor: ACCENT, color: "white", fontSize: 16, fontWeight: 800, cursor: "pointer", opacity: checkingOut ? 0.7 : 1 }}>
-                {checkingOut ? "Checking out…" : "Confirm Checkout"}
-              </button>
-            </div>
+
+            {checkoutStep === "enter" && (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>Security Code</label>
+                  <input
+                    ref={checkoutInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={checkoutInput}
+                    onChange={e => { setCheckoutInput(e.target.value.replace(/\D/g, "").slice(0, 4)); setCheckoutError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleVerify()}
+                    placeholder="4-digit code"
+                    style={{ width: "100%", fontSize: 32, textAlign: "center", padding: "16px", borderRadius: 14, border: "2px solid #e5e7eb", boxSizing: "border-box" as const, letterSpacing: "0.2em", fontFamily: "monospace" }}
+                  />
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: "#6b7280", marginBottom: 6 }}>Pickup Person's Name</label>
+                  <input
+                    type="text"
+                    value={checkoutName}
+                    onChange={e => { setCheckoutName(e.target.value); setCheckoutError(""); }}
+                    onKeyDown={e => e.key === "Enter" && handleVerify()}
+                    placeholder="Full name"
+                    style={{ width: "100%", fontSize: 20, padding: "14px 16px", borderRadius: 14, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }}
+                  />
+                </div>
+                {checkoutError && <p style={{ color: "#dc2626", fontSize: 14, textAlign: "center", marginBottom: 8 }}>{checkoutError}</p>}
+                <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+                  <button onClick={() => { setCheckoutRecord(null); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} style={{ flex: 1, padding: "16px", borderRadius: 14, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                  <button onClick={handleVerify} disabled={!checkoutInput.trim() || !checkoutName.trim() || checkingOut} style={{ flex: 2, padding: "16px", borderRadius: 14, border: "none", backgroundColor: ACCENT, color: "white", fontSize: 16, fontWeight: 800, cursor: "pointer", opacity: (!checkoutInput.trim() || !checkoutName.trim() || checkingOut) ? 0.5 : 1 }}>
+                    {checkingOut ? "Verifying…" : "Verify →"}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {checkoutStep === "warn-nonparent" && (
+              <>
+                <div style={{ backgroundColor: "#fef9c3", border: "2px solid #ca8a04", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+                  <p style={{ fontSize: 17, fontWeight: 800, color: "#92400e", marginBottom: 6 }}>⚠️ Non-parent pickup</p>
+                  <p style={{ fontSize: 14, color: "#78350f", marginBottom: 4 }}>Non-parent pickup — verify photo ID before releasing.</p>
+                  <p style={{ fontSize: 14, color: "#78350f" }}>Pickup person: <strong>{checkoutName}</strong></p>
+                </div>
+                {checkoutError && <p style={{ color: "#dc2626", fontSize: 14, textAlign: "center", marginBottom: 8 }}>{checkoutError}</p>}
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button onClick={() => { setCheckoutRecord(null); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} style={{ flex: 1, padding: "16px", borderRadius: 14, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+                    Cancel
+                  </button>
+                  <button onClick={doCheckout} disabled={checkingOut} style={{ flex: 2, padding: "16px", borderRadius: 14, border: "none", backgroundColor: "#ca8a04", color: "white", fontSize: 16, fontWeight: 800, cursor: "pointer", opacity: checkingOut ? 0.7 : 1 }}>
+                    {checkingOut ? "Releasing…" : "Confirm Release"}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {checkoutStep === "blocked" && (
+              <>
+                <div style={{ backgroundColor: "#fee2e2", border: "2px solid #dc2626", borderRadius: 14, padding: "16px 18px", marginBottom: 20 }}>
+                  <p style={{ fontSize: 17, fontWeight: 800, color: "#dc2626", marginBottom: 6 }}>🚫 Unauthorized Pickup</p>
+                  <p style={{ fontSize: 14, color: "#b91c1c", marginBottom: 4 }}>This person is not on the authorized pickup list. Cannot release child.</p>
+                  <p style={{ fontSize: 14, color: "#b91c1c" }}>Pickup person: <strong>{checkoutName}</strong></p>
+                </div>
+                <button onClick={() => { setCheckoutRecord(null); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} style={{ width: "100%", padding: "16px", borderRadius: 14, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+                  Cancel
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

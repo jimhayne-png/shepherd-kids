@@ -103,6 +103,17 @@ export default function CheckinSetupPage() {
     if (res.ok) { const d = await res.json(); setRooms(rs => rs.map(r => r.id === room.id ? d.room : r)); }
   }
 
+  async function deleteRoom(room: Room) {
+    if (!authToken) return;
+    if (!confirm(`Permanently delete "${room.name}"? This cannot be undone.`)) return;
+    const res = await fetch("/api/checkin/rooms", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ id: room.id }),
+    });
+    if (res.ok) { setRooms(rs => rs.filter(r => r.id !== room.id)); }
+  }
+
   async function saveTemplate() {
     if (!authToken || !tplForm.name.trim()) return;
     setSavingTemplate(true);
@@ -240,6 +251,11 @@ export default function CheckinSetupPage() {
                         <a href={`${APP_URL}/classroom/${room.id}`} target="_blank" rel="noopener noreferrer" className="flex-1 py-2 rounded-xl text-xs font-bold text-white text-center" style={{ backgroundColor: ACCENT }}>
                           Open Classroom ↗
                         </a>
+                      )}
+                      {!room.is_active && (
+                        <button onClick={() => deleteRoom(room)} className="py-2 px-3 rounded-xl text-xs font-bold border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+                          Delete
+                        </button>
                       )}
                     </div>
                   </div>

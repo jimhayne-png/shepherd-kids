@@ -99,6 +99,7 @@ export default function KioskPage() {
 
   // Confirm / print
   const [confirmedRecords, setConfirmedRecords] = useState<ConfirmedRecord[]>([]);
+  const [checkInParentName, setCheckInParentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // PIN exit
@@ -165,6 +166,7 @@ export default function KioskPage() {
 
     const pName = isReturning ? (returnChildren.find(c => c.selected)?.parentName ?? "") : parentName;
     const pPhone = isReturning ? phone.replace(/\D/g, "") : parentPhone.replace(/\D/g, "");
+    setCheckInParentName(pName);
 
     const res = await fetch("/api/checkin/checkin", {
       method: "POST",
@@ -196,6 +198,7 @@ export default function KioskPage() {
     setNewChildren([emptyChild()]);
     setReturnChildren([]);
     setConfirmedRecords([]);
+    setCheckInParentName("");
     setLookupError("");
   }
 
@@ -463,15 +466,19 @@ export default function KioskPage() {
 
       {/* Labels for screen preview */}
       <div className="no-print" style={{ flex: 1, padding: "32px", backgroundColor: "#f3f4f6" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
           {confirmedRecords.map((r, i) => <LabelCard key={i} record={r} />)}
         </div>
+        <ParentReceipt parentName={checkInParentName} serviceName={session.service_name} serviceDate={session.date} records={confirmedRecords} />
       </div>
 
       {/* Print-only layout */}
       <div className="print-only" style={{ display: "none" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, padding: 8 }}>
           {confirmedRecords.map((r, i) => <LabelCard key={i} record={r} forPrint />)}
+        </div>
+        <div style={{ padding: 8 }}>
+          <ParentReceipt parentName={checkInParentName} serviceName={session.service_name} serviceDate={session.date} records={confirmedRecords} forPrint />
         </div>
       </div>
 
@@ -525,6 +532,51 @@ function LabelCard({ record, forPrint }: { record: ConfirmedRecord; forPrint?: b
           ⚠️ ALLERGY ALERT: {allergyText}
         </div>
       )}
+    </div>
+  );
+}
+
+function ParentReceipt({ parentName, serviceName, serviceDate, records, forPrint }: {
+  parentName: string;
+  serviceName: string;
+  serviceDate: string;
+  records: ConfirmedRecord[];
+  forPrint?: boolean;
+}) {
+  const code = records[0]?.securityCode ?? "—";
+  const dateStr = new Date(serviceDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  return (
+    <div style={{
+      backgroundColor: "white",
+      border: "2px solid #111827",
+      borderRadius: forPrint ? 8 : 16,
+      padding: forPrint ? "14px 16px" : "24px",
+      pageBreakInside: "avoid",
+      breakInside: "avoid",
+    }}>
+      <div style={{ borderBottom: "2px solid #e5e7eb", paddingBottom: 10, marginBottom: 12 }}>
+        <div style={{ fontSize: forPrint ? 15 : 20, fontWeight: 900, color: "#111827" }}>📋 Pickup Receipt</div>
+        <div style={{ fontSize: forPrint ? 11 : 13, color: "#6b7280", marginTop: 2 }}>{serviceName} · {dateStr}</div>
+      </div>
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: forPrint ? 10 : 12, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Parent / Guardian</div>
+        <div style={{ fontSize: forPrint ? 14 : 18, fontWeight: 700, color: "#111827" }}>{parentName || "—"}</div>
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: forPrint ? 10 : 12, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Children</div>
+        {records.map((r, i) => (
+          <div key={i} style={{ fontSize: forPrint ? 12 : 15, color: "#374151", paddingLeft: 8, marginBottom: 2 }}>
+            • {r.childName} — {r.roomName ?? "Room TBD"}
+          </div>
+        ))}
+      </div>
+      <div style={{ backgroundColor: "#f0fdf4", border: "2px solid #22c55e", borderRadius: 10, padding: "10px 14px", textAlign: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: forPrint ? 10 : 12, fontWeight: 600, color: "#16a34a", marginBottom: 2 }}>Security Code</div>
+        <div style={{ fontSize: forPrint ? 34 : 44, fontWeight: 900, color: "#111827", letterSpacing: "0.18em", fontFamily: "monospace", lineHeight: 1 }}>{code}</div>
+      </div>
+      <div style={{ fontSize: forPrint ? 9 : 12, color: "#6b7280", textAlign: "center", lineHeight: 1.5 }}>
+        Present this security code at pickup. A photo ID may be required for non-parent pickups.
+      </div>
     </div>
   );
 }
