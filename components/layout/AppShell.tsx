@@ -102,6 +102,7 @@ export default function AppShell(props: AppShellProps) {
   const { children } = props;
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [cmOpen, setCmOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -113,6 +114,9 @@ export default function AppShell(props: AppShellProps) {
       next[cat.key] = hasActive ? false : (stored[cat.key] ?? true);
     }
     setCollapsed(next);
+    const youthCat = CATEGORIES.find(c => c.key === "youth");
+    const cmActive = (youthCat?.items ?? []).some(item => pathActive(pathname, item.href));
+    setCmOpen(cmActive);
     setMounted(true);
   }, [pathname]);
 
@@ -122,6 +126,22 @@ export default function AppShell(props: AppShellProps) {
       saveCollapsed(next);
       return next;
     });
+  }
+
+  function nestedItemStyle(active: boolean): React.CSSProperties {
+    return {
+      backgroundColor: active ? "#F28C28" : "transparent",
+      color: active ? "#1A4A2E" : "rgba(255,255,255,0.70)",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      padding: "6px 12px 6px 28px",
+      borderRadius: "8px",
+      fontSize: "12px",
+      fontWeight: active ? 600 : 400,
+      textDecoration: "none",
+      transition: "background-color 0.15s",
+    };
   }
 
   function itemStyle(active: boolean): React.CSSProperties {
@@ -251,22 +271,92 @@ export default function AppShell(props: AppShellProps) {
                 </button>
 
                 {/* Collapsible items */}
-                <div
-                  style={{
-                    overflow: "hidden",
-                    maxHeight: isCollapsed ? "0px" : `${cat.items.length * 36}px`,
-                    transition: "max-height 0.22s ease, opacity 0.15s ease",
-                    opacity: isCollapsed ? 0 : 1,
-                  }}
-                >
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1px", paddingBottom: "4px" }}>
-                    {cat.items.map(item => (
-                      <Link key={item.href} href={item.href} style={itemStyle(pathActive(pathname, item.href))}>
-                        {item.label}
-                      </Link>
-                    ))}
+                {cat.key === "youth" ? (
+                  /* Youth & Children — nested Children's Ministry sub-dropdown */
+                  <div
+                    style={{
+                      overflow: "hidden",
+                      maxHeight: isCollapsed ? "0px" : "260px",
+                      transition: "max-height 0.22s ease, opacity 0.15s ease",
+                      opacity: isCollapsed ? 0 : 1,
+                    }}
+                  >
+                    <div style={{ paddingBottom: "4px" }}>
+                      {/* CM sub-dropdown toggle */}
+                      <button
+                        onClick={() => setCmOpen(o => !o)}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "7px 12px 7px 18px",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: hasActive ? "#F28C28" : "rgba(255,255,255,0.78)",
+                          fontSize: "13px",
+                          fontWeight: hasActive ? 600 : 400,
+                          borderRadius: "8px",
+                          textAlign: "left",
+                        }}
+                      >
+                        <span>🧒 Children's Ministry</span>
+                        <svg
+                          width="10" height="10" viewBox="0 0 10 10" fill="none"
+                          style={{
+                            flexShrink: 0,
+                            transform: cmOpen ? "rotate(0deg)" : "rotate(-90deg)",
+                            transition: "transform 0.2s ease",
+                            opacity: 0.55,
+                          }}
+                        >
+                          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+
+                      {/* CM nested items */}
+                      <div
+                        style={{
+                          overflow: "hidden",
+                          maxHeight: cmOpen ? `${cat.items.length * 34}px` : "0px",
+                          transition: "max-height 0.22s ease, opacity 0.15s ease",
+                          opacity: cmOpen ? 1 : 0,
+                        }}
+                      >
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1px", paddingBottom: "4px" }}>
+                          {cat.items.map(item => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              style={nestedItemStyle(pathActive(pathname, item.href))}
+                            >
+                              {item.href === "/dashboard/children-ministry" ? "📋 Overview" : item.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Standard flat items for all other categories */
+                  <div
+                    style={{
+                      overflow: "hidden",
+                      maxHeight: isCollapsed ? "0px" : `${cat.items.length * 36}px`,
+                      transition: "max-height 0.22s ease, opacity 0.15s ease",
+                      opacity: isCollapsed ? 0 : 1,
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1px", paddingBottom: "4px" }}>
+                      {cat.items.map(item => (
+                        <Link key={item.href} href={item.href} style={itemStyle(pathActive(pathname, item.href))}>
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
