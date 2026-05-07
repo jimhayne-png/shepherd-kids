@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import MinistryShell from "@/components/layout/MinistryShell";
 
 const ACCENT = "#F28C28";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "");
 
 type Room = { id: string; name: string; min_age: number | null; max_age: number | null; capacity: number | null; is_active: boolean };
 type Template = { id: string; name: string; typical_day: string | null; typical_time: string | null; is_active: boolean };
