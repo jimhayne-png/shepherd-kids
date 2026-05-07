@@ -171,7 +171,7 @@ export default function AppShell(props: AppShellProps) {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <aside style={{ width: 256, flexShrink: 0, backgroundColor: "#1A4A2E", display: "flex", flexDirection: "column" }}>
+      <aside style={{ width: 256, flexShrink: 0, height: "100vh", overflow: "hidden", backgroundColor: "#1A4A2E", display: "flex", flexDirection: "column" }}>
         <LogoBlock />
 
         <nav style={{ flex: 1, minHeight: 0, padding: "10px 8px 8px", overflowY: "auto", scrollbarWidth: "none" }}>
@@ -273,7 +273,7 @@ export default function AppShell(props: AppShellProps) {
         </nav>
 
         {/* Settings + Billing — outside categories, always visible */}
-        <div style={{ padding: "8px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "1px" }}>
+        <div style={{ flexShrink: 0, padding: "8px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "1px" }}>
           <Link href="/dashboard/settings" style={bottomLinkStyle(pathActive(pathname, "/dashboard/settings"))}>
             ⚙️ Settings
           </Link>
