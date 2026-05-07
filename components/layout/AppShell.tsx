@@ -174,7 +174,7 @@ export default function AppShell(props: AppShellProps) {
       <aside style={{ width: 256, flexShrink: 0, backgroundColor: "#1A4A2E", display: "flex", flexDirection: "column" }}>
         <LogoBlock />
 
-        <nav style={{ flex: 1, padding: "10px 8px 8px", overflowY: "auto", scrollbarWidth: "none" }}>
+        <nav style={{ flex: 1, minHeight: 0, padding: "10px 8px 8px", overflowY: "auto", scrollbarWidth: "none" }}>
 
           {/* Dashboard root link */}
           <Link
