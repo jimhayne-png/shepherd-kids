@@ -74,6 +74,7 @@ const CATEGORIES: Category[] = [
     label: "Youth & Children",
     items: [
       { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
+      { label: "📋 Check-In Setup",      href: "/dashboard/children-ministry/checkin-setup" },
       { label: "🎒 Middle School",       href: "/dashboard/ministry/middle-school" },
       { label: "🎓 High School",         href: "/dashboard/ministry/high-school" },
     ],
