@@ -476,8 +476,6 @@ export default function KioskPage() {
       <div className="print-only" style={{ display: "none" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, padding: 8 }}>
           {confirmedRecords.map((r, i) => <LabelCard key={i} record={r} forPrint />)}
-        </div>
-        <div style={{ padding: 8 }}>
           <ParentReceipt parentName={checkInParentName} serviceName={session.service_name} serviceDate={session.date} records={confirmedRecords} forPrint />
         </div>
       </div>

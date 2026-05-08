@@ -75,6 +75,8 @@ const CATEGORIES: Category[] = [
     items: [
       { label: "🧒 Children's Ministry", href: "/dashboard/children-ministry" },
       { label: "📋 Check-In Setup",      href: "/dashboard/children-ministry/checkin-setup" },
+      { label: "⚡ Live Check-In",       href: "/dashboard/children-ministry/live-checkin" },
+      { label: "📊 Attendance Reports",  href: "/dashboard/children-ministry/attendance-report" },
       { label: "🎒 Middle School",       href: "/dashboard/ministry/middle-school" },
       { label: "🎓 High School",         href: "/dashboard/ministry/high-school" },
     ],
@@ -276,7 +278,7 @@ export default function AppShell(props: AppShellProps) {
                   <div
                     style={{
                       overflow: "hidden",
-                      maxHeight: isCollapsed ? "0px" : "260px",
+                      maxHeight: isCollapsed ? "0px" : "380px",
                       transition: "max-height 0.22s ease, opacity 0.15s ease",
                       opacity: isCollapsed ? 0 : 1,
                     }}

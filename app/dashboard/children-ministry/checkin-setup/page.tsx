@@ -11,6 +11,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined
 type Room = { id: string; name: string; min_age: number | null; max_age: number | null; capacity: number | null; is_active: boolean };
 type Template = { id: string; name: string; typical_day: string | null; typical_time: string | null; is_active: boolean };
 type Session = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string; kiosk_pin: string };
+type NVChild = { id: string; child_name: string; room_id: string | null; room_name: string | null; checked_in_at: string };
+type NVFamily = { parentName: string; parentPhone: string; primaryRecordId: string; children: NVChild[]; followupLog: { id: string; status: string; follow_up_type: string; sent_at: string | null; parent_email: string | null } | null; visitCount: number };
+type NVSession = { session: { id: string; service_name: string; date: string; auto_followup: boolean }; families: NVFamily[] };
 
 function fmtDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
@@ -35,7 +38,7 @@ export default function CheckinSetupPage() {
   const router = useRouter();
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions">("rooms");
+  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "visitors">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -56,6 +59,65 @@ export default function CheckinSetupPage() {
   const [sessionForm, setSessionForm] = useState({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "" });
   const [savingSession, setSavingSession] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  // New Visitors tab
+  const [nvSessions, setNvSessions] = useState<NVSession[]>([]);
+  const [nvLoaded, setNvLoaded] = useState(false);
+  const [nvLoading, setNvLoading] = useState(false);
+  const [nvEmails, setNvEmails] = useState<Record<string, string>>({});
+  const [nvPersonalize, setNvPersonalize] = useState<Record<string, string>>({});
+  const [nvPersonalizeOpen, setNvPersonalizeOpen] = useState<Record<string, boolean>>({});
+  const [nvSending, setNvSending] = useState<Record<string, string>>({});
+
+  async function loadVisitors(token: string) {
+    setNvLoading(true);
+    const res = await fetch("/api/checkin/new-visitors", { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { const d = await res.json(); setNvSessions(d.sessions ?? []); }
+    setNvLoading(false);
+  }
+
+  useEffect(() => {
+    if (tab === "visitors" && authToken && !nvLoaded) {
+      setNvLoaded(true);
+      loadVisitors(authToken);
+    }
+  }, [tab, authToken, nvLoaded]);
+
+  async function toggleAutoFollowup(sessionId: string, current: boolean) {
+    if (!authToken) return;
+    await fetch("/api/checkin/sessions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ id: sessionId, autoFollowup: !current }),
+    });
+    setNvSessions(ss => ss.map(s => s.session.id === sessionId ? { ...s, session: { ...s.session, auto_followup: !current } } : s));
+  }
+
+  async function sendFollowup(sessionId: string, family: NVFamily, type: "email" | "letter" | "both" | "skip") {
+    const key = `${sessionId}-${family.parentPhone}`;
+    const email = (nvEmails[key] ?? "").trim();
+    if ((type === "email" || type === "both") && !email) { alert("Enter an email address to send."); return; }
+    if (type === "letter" || type === "both") {
+      window.open(`/api/checkin/followup/letter/${family.primaryRecordId}`, "_blank");
+    }
+    if (!authToken) return;
+    setNvSending(s => ({ ...s, [key]: type }));
+    await fetch("/api/checkin/followup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({
+        sessionId,
+        recordIds: family.children.map(c => c.id),
+        parentName: family.parentName,
+        parentEmail: email || null,
+        childNames: family.children.map(c => c.child_name),
+        followUpType: type,
+        personalizedMessage: nvPersonalize[key] || null,
+      }),
+    });
+    setNvSending(s => { const n = { ...s }; delete n[key]; return n; });
+    if (authToken) await loadVisitors(authToken);
+  }
 
   async function load(token: string) {
     const headers = { Authorization: `Bearer ${token}` };
@@ -183,9 +245,9 @@ export default function CheckinSetupPage() {
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
-          {(["rooms", "templates", "sessions"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors capitalize" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#6b7280" }}>
-              {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Service Templates" : "🔑 Sessions"}
+          {(["rooms", "templates", "sessions", "visitors"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#6b7280" }}>
+              {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Service Templates" : t === "sessions" ? "🔑 Sessions" : "🆕 New Visitors"}
             </button>
           ))}
         </div>
@@ -448,6 +510,146 @@ export default function CheckinSetupPage() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── NEW VISITORS TAB ── */}
+        {tab === "visitors" && (
+          <div>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>New Visitor Follow-Up</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Send welcome emails or print letters for first-time families</p>
+              </div>
+              {authToken && <button onClick={() => loadVisitors(authToken)} className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-500">↻ Refresh</button>}
+            </div>
+
+            {nvLoading && <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-gray-400">Loading new visitors…</div></div>}
+
+            {!nvLoading && nvSessions.length === 0 && (
+              <div className="bg-white rounded-2xl shadow p-12 text-center">
+                <div className="text-5xl mb-4">🎉</div>
+                <p className="text-gray-500 font-semibold">No new visitors recorded yet.</p>
+                <p className="text-xs text-gray-400 mt-1">New families who check in for the first time will appear here.</p>
+              </div>
+            )}
+
+            {!nvLoading && nvSessions.map(({ session: sess, families }) => (
+              <div key={sess.id} className="bg-white rounded-2xl shadow border border-gray-100 mb-6 overflow-hidden">
+                {/* Session header */}
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-gray-900">{sess.service_name}</h3>
+                    <p className="text-sm text-gray-500">{fmtDate(sess.date)} · {families.length} new {families.length === 1 ? "family" : "families"}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {sess.auto_followup && (
+                      <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-green-100 text-green-700">⚡ Auto 24hr follow-up active</span>
+                    )}
+                    <button
+                      onClick={() => toggleAutoFollowup(sess.id, sess.auto_followup)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold border"
+                      style={{ borderColor: sess.auto_followup ? "#dc2626" : ACCENT, color: sess.auto_followup ? "#dc2626" : ACCENT, backgroundColor: sess.auto_followup ? "#fee2e2" : ACCENT + "11" }}
+                    >
+                      {sess.auto_followup ? "Disable Auto-Send" : "Enable Auto-Send"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Family cards */}
+                <div className="divide-y divide-gray-50">
+                  {families.map(family => {
+                    const key = `${sess.id}-${family.parentPhone}`;
+                    const log = family.followupLog;
+                    const isSent = log?.status === "sent";
+                    const isSkipped = log?.status === "skipped";
+                    const sending = nvSending[key];
+                    const personalizeOn = nvPersonalizeOpen[key] ?? false;
+
+                    return (
+                      <div key={family.parentPhone} className="px-6 py-5">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <div className="font-bold text-gray-900 text-base">{family.parentName}</div>
+                              <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: family.visitCount === 1 ? "#3b82f6" : family.visitCount === 2 ? "#8b5cf6" : family.visitCount === 3 ? ACCENT : "#16a34a" }}>
+                                {family.visitCount === 1 ? "1st Visit" : family.visitCount === 2 ? "2nd Visit" : family.visitCount === 3 ? "3rd Visit" : "4+ Visits"}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-500">{family.parentPhone}</div>
+                            <div className="mt-1 space-y-0.5">
+                              {family.children.map(c => (
+                                <div key={c.id} className="text-sm text-gray-600">
+                                  🧒 {c.child_name}{c.room_name ? ` — ${c.room_name}` : ""}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            {isSent && (
+                              <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-green-100 text-green-700 block mb-1">
+                                ✅ {log!.follow_up_type === "email" ? "Email sent" : log!.follow_up_type === "letter" ? "Letter printed" : "Both sent"}
+                              </span>
+                            )}
+                            {isSkipped && (
+                              <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-500 block mb-1">Skipped</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {!isSent && !isSkipped && (
+                          <>
+                            <div className="flex gap-2 mb-2 flex-wrap">
+                              <input
+                                type="email"
+                                value={nvEmails[key] ?? ""}
+                                onChange={e => setNvEmails(m => ({ ...m, [key]: e.target.value }))}
+                                placeholder="Parent email address"
+                                className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                              />
+                              <button
+                                onClick={() => setNvPersonalizeOpen(m => ({ ...m, [key]: !m[key] }))}
+                                className="px-3 py-2 rounded-xl text-xs font-bold border"
+                                style={{ borderColor: personalizeOn ? ACCENT : "#e5e7eb", color: personalizeOn ? ACCENT : "#6b7280", backgroundColor: personalizeOn ? ACCENT + "11" : "white" }}
+                              >
+                                ✏️ Personalize
+                              </button>
+                            </div>
+                            {personalizeOn && (
+                              <textarea
+                                value={nvPersonalize[key] ?? ""}
+                                onChange={e => setNvPersonalize(m => ({ ...m, [key]: e.target.value }))}
+                                placeholder="Add a personal note that will appear in the email or letter…"
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none mb-2"
+                              />
+                            )}
+                            <div className="flex gap-2 flex-wrap">
+                              {(["email", "letter", "both", "skip"] as const).map(type => (
+                                <button
+                                  key={type}
+                                  onClick={() => sendFollowup(sess.id, family, type)}
+                                  disabled={!!sending}
+                                  className="px-4 py-2 rounded-xl text-xs font-bold border transition-colors"
+                                  style={{
+                                    backgroundColor: sending === type ? ACCENT : type === "skip" ? "white" : ACCENT,
+                                    color: type === "skip" ? "#6b7280" : "white",
+                                    borderColor: type === "skip" ? "#e5e7eb" : ACCENT,
+                                    opacity: sending && sending !== type ? 0.5 : 1,
+                                  }}
+                                >
+                                  {sending === type ? "…" : type === "email" ? "📧 Send Email" : type === "letter" ? "🖨️ Print Letter" : type === "both" ? "📧🖨️ Both" : "Skip"}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

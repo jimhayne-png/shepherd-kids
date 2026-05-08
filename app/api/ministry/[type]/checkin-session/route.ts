@@ -16,28 +16,28 @@ async function getAuth(request: NextRequest) {
   return { userId: user.id, churchId: data.church_id as string };
 }
 
-export async function GET(request: NextRequest) {
-  const sessionId = request.nextUrl.searchParams.get('id');
-
-  // Kiosk: fetch single session by ID without auth (needed for PIN verification and session info)
-  if (sessionId) {
-    const { data, error } = await adminClient()
-      .from('cm_checkin_sessions')
-      .select('id, service_name, date, scheduled_time, status, kiosk_pin, church_id')
-      .eq('id', sessionId)
-      .maybeSingle();
-    if (error || !data) return Response.json({ error: 'Session not found' }, { status: 404 });
-    return Response.json({ session: data });
-  }
-
-  // Admin: list sessions for church
+export async function GET(request: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+  const { type } = await params;
   const auth = await getAuth(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data, error } = await adminClient()
-    .from('cm_checkin_sessions')
+  const sessionId = request.nextUrl.searchParams.get('sessionId');
+  const admin = adminClient();
+
+  if (sessionId) {
+    const { data: records } = await admin
+      .from('ministry_checkin_records')
+      .select('id, member_id, visitor_name')
+      .eq('session_id', sessionId)
+      .eq('church_id', auth.churchId);
+    return Response.json({ records: records ?? [] });
+  }
+
+  const { data, error } = await admin
+    .from('ministry_checkin_sessions')
     .select('*')
     .eq('church_id', auth.churchId)
+    .eq('ministry_type', type)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(50);
@@ -46,29 +46,17 @@ export async function GET(request: NextRequest) {
   return Response.json({ sessions: data ?? [] });
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+  const { type } = await params;
   const auth = await getAuth(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { serviceName, serviceTemplateId, date, scheduledTime, kioskPin } = await request.json();
-  if (!serviceName || !date || !kioskPin) {
-    return Response.json({ error: 'serviceName, date, and kioskPin required' }, { status: 400 });
-  }
-  if (!/^\d{4}$/.test(kioskPin)) {
-    return Response.json({ error: 'kioskPin must be exactly 4 digits' }, { status: 400 });
-  }
+  const { serviceName, date } = await request.json();
+  if (!serviceName || !date) return Response.json({ error: 'serviceName and date required' }, { status: 400 });
 
   const { data, error } = await adminClient()
-    .from('cm_checkin_sessions')
-    .insert({
-      church_id: auth.churchId,
-      service_name: serviceName,
-      service_template_id: serviceTemplateId ?? null,
-      date,
-      scheduled_time: scheduledTime ?? null,
-      kiosk_pin: kioskPin,
-      status: 'open',
-    })
+    .from('ministry_checkin_sessions')
+    .insert({ church_id: auth.churchId, ministry_type: type, service_name: serviceName, date, status: 'open' })
     .select('*')
     .single();
 
@@ -76,13 +64,13 @@ export async function POST(request: NextRequest) {
   return Response.json({ session: data });
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+  const { type } = await params;
   const auth = await getAuth(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id, status, autoFollowup } = await request.json();
   if (!id) return Response.json({ error: 'id required' }, { status: 400 });
-  if (status !== undefined && !['open', 'closed'].includes(status)) return Response.json({ error: 'status must be open or closed' }, { status: 400 });
 
   const updates: Record<string, unknown> = {};
   if (status !== undefined) updates.status = status;
@@ -90,10 +78,11 @@ export async function PATCH(request: NextRequest) {
   if (!Object.keys(updates).length) return Response.json({ error: 'nothing to update' }, { status: 400 });
 
   const { data, error } = await adminClient()
-    .from('cm_checkin_sessions')
+    .from('ministry_checkin_sessions')
     .update(updates)
     .eq('id', id)
     .eq('church_id', auth.churchId)
+    .eq('ministry_type', type)
     .select('*')
     .single();
 
