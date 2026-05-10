@@ -95,6 +95,7 @@ export default function KioskPage() {
   // New family
   const [parentName, setParentName] = useState("");
   const [parentPhone, setParentPhone] = useState("");
+  const [parentEmail, setParentEmail] = useState("");
   const [newChildren, setNewChildren] = useState<NewChildForm[]>([emptyChild()]);
 
   // Confirm / print
@@ -172,7 +173,7 @@ export default function KioskPage() {
     const res = await fetch("/api/checkin/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, parentName: pName, parentPhone: pPhone, isReturning, children }),
+      body: JSON.stringify({ sessionId, parentName: pName, parentPhone: pPhone, parentEmail: isReturning ? undefined : parentEmail || undefined, isReturning, children }),
     });
     const d = await res.json();
     setSubmitting(false);
@@ -197,6 +198,7 @@ export default function KioskPage() {
     setPhone("");
     setParentName("");
     setParentPhone("");
+    setParentEmail("");
     setNewChildren([emptyChild()]);
     setReturnChildren([]);
     setConfirmedRecords([]);
@@ -332,6 +334,10 @@ export default function KioskPage() {
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: "block", fontSize: 16, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Phone Number *</label>
           <input type="tel" inputMode="numeric" value={parentPhone} onChange={e => setParentPhone(e.target.value)} placeholder="555-000-0000" style={{ width: "100%", fontSize: 22, padding: "18px 20px", borderRadius: 16, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }} />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: "block", fontSize: 16, fontWeight: 700, color: "#374151", marginBottom: 8 }}>Email (optional)</label>
+          <input type="email" value={parentEmail} onChange={e => setParentEmail(e.target.value)} placeholder="jane@example.com" style={{ width: "100%", fontSize: 22, padding: "18px 20px", borderRadius: 16, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }} />
         </div>
         <button
           onClick={() => setStep("new-children")}
