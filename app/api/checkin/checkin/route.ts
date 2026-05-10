@@ -95,6 +95,16 @@ export async function POST(request: NextRequest) {
   const roomNameMap: Record<string, string> = {};
   for (const r of rooms) roomNameMap[r.id] = r.name;
 
+  // Fetch existing records for this session + phone to detect duplicates
+  const { data: existingRecords } = await admin
+    .from('cm_checkin_records')
+    .select('child_name')
+    .eq('session_id', sessionId)
+    .eq('parent_phone', normalizedPhone);
+
+  const existingChildNames = new Set((existingRecords ?? []).map((r) => r.child_name));
+  const duplicates: string[] = [];
+
   const inserts: object[] = [];
   const resultMeta: { childName: string; roomId: string | null; roomName: string | null; allergies: string[]; allergyOther: string | null }[] = [];
 
@@ -123,6 +133,11 @@ export async function POST(request: NextRequest) {
       allergyOther = nc.allergyOther ?? null;
     }
 
+    if (existingChildNames.has(childName)) {
+      duplicates.push(childName);
+      continue;
+    }
+
     inserts.push({
       session_id: sessionId,
       church_id: session.church_id,
@@ -139,23 +154,27 @@ export async function POST(request: NextRequest) {
     resultMeta.push({ childName, roomId, roomName, allergies, allergyOther });
   }
 
-  const { data: created, error } = await admin
-    .from('cm_checkin_records')
-    .insert(inserts)
-    .select('id');
+  let records: object[] = [];
 
-  if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (inserts.length > 0) {
+    const { data: created, error } = await admin
+      .from('cm_checkin_records')
+      .insert(inserts)
+      .select('id');
 
-  const records = (created ?? []).map((r, i) => ({
-    id: r.id,
-    childName: resultMeta[i].childName,
-    roomId: resultMeta[i].roomId,
-    roomName: resultMeta[i].roomName,
-    securityCode,
-    isNewVisitor,
-    allergies: resultMeta[i].allergies,
-    allergyOther: resultMeta[i].allergyOther,
-  }));
+    if (error) return Response.json({ error: error.message }, { status: 400 });
 
-  return Response.json({ records, securityCode, isNewVisitor });
+    records = (created ?? []).map((r, i) => ({
+      id: r.id,
+      childName: resultMeta[i].childName,
+      roomId: resultMeta[i].roomId,
+      roomName: resultMeta[i].roomName,
+      securityCode,
+      isNewVisitor,
+      allergies: resultMeta[i].allergies,
+      allergyOther: resultMeta[i].allergyOther,
+    }));
+  }
+
+  return Response.json({ records, securityCode, isNewVisitor, duplicates });
 }

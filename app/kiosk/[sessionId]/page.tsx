@@ -101,6 +101,7 @@ export default function KioskPage() {
   const [confirmedRecords, setConfirmedRecords] = useState<ConfirmedRecord[]>([]);
   const [checkInParentName, setCheckInParentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [duplicates, setDuplicates] = useState<string[]>([]);
 
   // PIN exit
   const [showPin, setShowPin] = useState(false);
@@ -177,6 +178,7 @@ export default function KioskPage() {
     setSubmitting(false);
     if (!res.ok) { alert(d.error ?? "Check-in failed"); return; }
     setConfirmedRecords(d.records ?? []);
+    setDuplicates(d.duplicates ?? []);
     setStep("confirm");
   }
 
@@ -198,6 +200,7 @@ export default function KioskPage() {
     setNewChildren([emptyChild()]);
     setReturnChildren([]);
     setConfirmedRecords([]);
+    setDuplicates([]);
     setCheckInParentName("");
     setLookupError("");
   }
@@ -420,6 +423,14 @@ export default function KioskPage() {
           <p className="text-white text-sm opacity-75">Check-in complete</p>
         </div>
         <div style={{ flex: 1, padding: "40px 32px", maxWidth: 600, margin: "0 auto", width: "100%" }}>
+          {duplicates.length > 0 && (
+            <div style={{ backgroundColor: "#fefce8", border: "2px solid #facc15", borderRadius: 16, padding: "14px 20px", marginBottom: 20 }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "#92400e", margin: 0 }}>
+                Already checked in today: {duplicates.join(", ")}
+              </p>
+            </div>
+          )}
+
           <div style={{ backgroundColor: "#f0fdf4", border: "3px solid #22c55e", borderRadius: 20, padding: "24px", textAlign: "center", marginBottom: 32 }}>
             <p style={{ fontSize: 16, fontWeight: 600, color: "#16a34a", marginBottom: 4 }}>Family Security Code</p>
             <p style={{ fontSize: 56, fontWeight: 900, color: "#111827", letterSpacing: "0.15em", fontFamily: "monospace" }}>{code}</p>
