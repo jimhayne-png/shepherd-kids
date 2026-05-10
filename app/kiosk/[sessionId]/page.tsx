@@ -565,29 +565,29 @@ function ParentReceipt({ parentName, serviceName, serviceDate, records, forPrint
       backgroundColor: "white",
       border: "2px solid #111827",
       borderRadius: forPrint ? 8 : 16,
-      padding: forPrint ? "14px 16px" : "24px",
+      padding: forPrint ? "12px 16px" : "24px",
       pageBreakInside: "avoid",
       breakInside: "avoid",
     }}>
-      <div style={{ borderBottom: "2px solid #e5e7eb", paddingBottom: 10, marginBottom: 12 }}>
-        <div style={{ fontSize: forPrint ? 15 : 20, fontWeight: 900, color: "#111827" }}>📋 Pickup Receipt</div>
+      <div style={{ borderBottom: "2px solid #e5e7eb", paddingBottom: forPrint ? 6 : 10, marginBottom: forPrint ? 6 : 12 }}>
+        <div style={{ fontSize: forPrint ? 24 : 20, fontWeight: 900, color: "#111827" }}>📋 Pickup Receipt</div>
         <div style={{ fontSize: forPrint ? 11 : 13, color: "#6b7280", marginTop: 2 }}>{serviceName} · {dateStr}</div>
       </div>
-      <div style={{ marginBottom: 10 }}>
+      <div style={{ marginBottom: forPrint ? 4 : 10 }}>
         <div style={{ fontSize: forPrint ? 10 : 12, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Parent / Guardian</div>
         <div style={{ fontSize: forPrint ? 14 : 18, fontWeight: 700, color: "#111827" }}>{parentName || "—"}</div>
       </div>
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: forPrint ? 10 : 12, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>Children</div>
+      <div style={{ marginBottom: forPrint ? 4 : 14 }}>
+        <div style={{ fontSize: forPrint ? 10 : 12, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: forPrint ? 2 : 4 }}>Children</div>
         {records.map((r, i) => (
           <div key={i} style={{ fontSize: forPrint ? 12 : 15, color: "#374151", paddingLeft: 8, marginBottom: 2 }}>
             • {r.childName} — {r.roomName ?? "Room TBD"}
           </div>
         ))}
       </div>
-      <div style={{ backgroundColor: "#f0fdf4", border: "2px solid #22c55e", borderRadius: 10, padding: "10px 14px", textAlign: "center", marginBottom: 12 }}>
+      <div style={{ backgroundColor: "#f0fdf4", border: "2px solid #22c55e", borderRadius: forPrint ? 8 : 10, padding: forPrint ? "6px 12px" : "10px 14px", textAlign: "center", marginBottom: forPrint ? 4 : 12 }}>
         <div style={{ fontSize: forPrint ? 10 : 12, fontWeight: 600, color: "#16a34a", marginBottom: 2 }}>Security Code</div>
-        <div style={{ fontSize: forPrint ? 34 : 44, fontWeight: 900, color: "#111827", letterSpacing: "0.18em", fontFamily: "monospace", lineHeight: 1 }}>{code}</div>
+        <div style={{ fontSize: forPrint ? 22 : 44, fontWeight: 900, color: "#111827", letterSpacing: "0.18em", fontFamily: "monospace", lineHeight: 1 }}>{code}</div>
       </div>
       <div style={{ fontSize: forPrint ? 9 : 12, color: "#6b7280", textAlign: "center", lineHeight: 1.5 }}>
         Present this security code at pickup. A photo ID may be required for non-parent pickups.
