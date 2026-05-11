@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
       is_new_visitor: r.is_new_visitor,
       allergies: r.allergies ?? [],
       allergy_other: r.allergy_other ?? null,
+      date_of_birth: r.date_of_birth ?? null,
       visit_count: visitCounts[r.parent_phone] ?? 1,
     });
   }

@@ -153,6 +153,7 @@ export async function POST(request: NextRequest) {
       is_new_visitor: isNewVisitor,
       allergies,
       allergy_other: allergyOther ?? null,
+      date_of_birth: dateOfBirth ?? null,
     });
 
     resultMeta.push({ childName, dateOfBirth, roomId, roomName, allergies, allergyOther });
@@ -284,6 +285,30 @@ export async function POST(request: NextRequest) {
           last_visit_date: today,
           promoted_to_member: false,
           status: 'visitor',
+        });
+    }
+
+    // Upsert parent into members table — skip if already exists
+    const { data: existingMember } = await admin
+      .from('members')
+      .select('id')
+      .eq('church_id', session.church_id)
+      .eq('phone', normalizedPhone)
+      .maybeSingle();
+
+    if (!existingMember) {
+      await admin
+        .from('members')
+        .insert({
+          church_id: session.church_id,
+          first_name: mvFirst,
+          last_name: mvLast,
+          phone: normalizedPhone,
+          email: parentEmail ?? null,
+          member_type: 'visitor',
+          status: 'visitor',
+          is_active: true,
+          joined_at: new Date().toISOString(),
         });
     }
   }

@@ -8,7 +8,7 @@ import MinistryShell from "@/components/layout/MinistryShell";
 const ACCENT = "#F28C28";
 
 type SessionOption = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string };
-type ReportChild = { id: string; room_id: string | null; child_name: string; parent_name: string; parent_phone: string; checked_in_at: string; checked_out_at: string | null; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; visit_count: number };
+type ReportChild = { id: string; room_id: string | null; child_name: string; parent_name: string; parent_phone: string; checked_in_at: string; checked_out_at: string | null; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; date_of_birth: string | null; visit_count: number };
 type ReportRoom = { room_id: string; room_name: string; children: ReportChild[] };
 type Report = {
   session: SessionOption;
@@ -23,6 +23,16 @@ function fmtDate(d: string) {
 }
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+function calcAge(dob: string): number {
+  const d = new Date(dob + "T00:00:00");
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  if (today.getMonth() < d.getMonth() || (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())) age--;
+  return age;
+}
+function fmtBirthday(dob: string): string {
+  return "Birthday: " + new Date(dob + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 function visitLabel(count: number) {
   if (count === 1) return "1st";
@@ -230,6 +240,9 @@ export default function AttendanceReportPage() {
                           <div className="text-xs text-gray-400 mt-0.5">{child.parent_name} · {fmtTime(child.checked_in_at)}{child.checked_out_at ? ` → ${fmtTime(child.checked_out_at)}` : " (still checked in)"}</div>
                           {(child.allergies.length > 0 || child.allergy_other) && (
                             <div className="text-xs text-red-500 font-semibold mt-0.5">⚠️ {[...child.allergies, child.allergy_other].filter(Boolean).join(", ")}</div>
+                          )}
+                          {child.date_of_birth && (
+                            <div className="text-xs text-gray-400 mt-0.5">{calcAge(child.date_of_birth)} years old · {fmtBirthday(child.date_of_birth)}</div>
                           )}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
