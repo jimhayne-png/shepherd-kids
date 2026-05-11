@@ -390,7 +390,7 @@ export default function KioskPage() {
             </div>
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Date of Birth</label>
-              <input type="date" value={child.dateOfBirth} onChange={e => setNewChildren(cs => cs.map((c, j) => j === i ? { ...c, dateOfBirth: e.target.value } : c))} style={{ width: "100%", fontSize: 20, padding: "14px 16px", borderRadius: 12, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }} />
+              <input type="date" value={child.dateOfBirth} min="2000-01-01" max={new Date().toISOString().slice(0, 10)} onChange={e => setNewChildren(cs => cs.map((c, j) => j === i ? { ...c, dateOfBirth: e.target.value } : c))} style={{ width: "100%", fontSize: 20, padding: "14px 16px", borderRadius: 12, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 10 }}>Allergies</label>
