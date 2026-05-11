@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
           first_visit_date: today,
           last_visit_date: today,
           promoted_to_member: false,
-          status: 'new',
+          status: 'visitor',
         });
     }
   }
