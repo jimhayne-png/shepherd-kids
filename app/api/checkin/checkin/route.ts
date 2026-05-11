@@ -34,10 +34,11 @@ type ReturningChild = {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { sessionId, parentName, parentPhone, isReturning, children } = body as {
+  const { sessionId, parentName, parentPhone, parentEmail, isReturning, children } = body as {
     sessionId: string;
     parentName: string;
     parentPhone: string;
+    parentEmail?: string;
     isReturning?: boolean;
     children: (NewChild | ReturningChild)[];
   };
@@ -175,6 +176,75 @@ export async function POST(request: NextRequest) {
       allergies: resultMeta[i].allergies,
       allergyOther: resultMeta[i].allergyOther,
     }));
+  }
+
+  // For new visitor families, sync into the visitor roster
+  if (isNewVisitor && resultMeta.length > 0) {
+    const splitName = (full: string) => {
+      const parts = full.trim().split(/\s+/);
+      return parts.length === 1
+        ? { firstName: parts[0], lastName: '' }
+        : { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+    };
+
+    // Find existing family record by phone, or create one
+    const { data: existingFamilies } = await admin
+      .from('cm_visitor_families')
+      .select('id')
+      .eq('church_id', session.church_id)
+      .eq('parent1_phone', normalizedPhone)
+      .limit(1);
+
+    let familyId: string | null = null;
+
+    if (existingFamilies && existingFamilies.length > 0) {
+      familyId = existingFamilies[0].id;
+    } else {
+      const { firstName: p1First, lastName: p1Last } = splitName(parentName);
+      const { data: newFamily } = await admin
+        .from('cm_visitor_families')
+        .insert({
+          church_id: session.church_id,
+          parent1_first_name: p1First,
+          parent1_last_name: p1Last,
+          parent1_phone: normalizedPhone,
+          parent1_email: parentEmail ?? null,
+          visit_date: new Date().toISOString().slice(0, 10),
+          status: 'new',
+        })
+        .select('id')
+        .single();
+      if (newFamily) familyId = newFamily.id;
+    }
+
+    if (familyId) {
+      // Fetch children already in the roster for this family
+      const { data: existingVisitorChildren } = await admin
+        .from('cm_visitor_children')
+        .select('first_name, last_name')
+        .eq('family_id', familyId);
+
+      const existingNames = new Set(
+        (existingVisitorChildren ?? []).map(c => `${c.first_name} ${c.last_name}`.toLowerCase().trim())
+      );
+
+      const childInserts = resultMeta
+        .map(r => {
+          const { firstName, lastName } = splitName(r.childName);
+          return { firstName, lastName, key: r.childName.toLowerCase().trim() };
+        })
+        .filter(c => !existingNames.has(c.key))
+        .map(c => ({
+          church_id: session.church_id,
+          family_id: familyId as string,
+          first_name: c.firstName,
+          last_name: c.lastName,
+        }));
+
+      if (childInserts.length > 0) {
+        await admin.from('cm_visitor_children').insert(childInserts);
+      }
+    }
   }
 
   return Response.json({ records, securityCode, isNewVisitor, duplicates });
