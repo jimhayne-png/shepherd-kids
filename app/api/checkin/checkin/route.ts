@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
       childName = `${nc.firstName} ${nc.lastName}`.trim();
       const age = nc.dateOfBirth ? calcAge(nc.dateOfBirth) : null;
       const assigned = assignRoom(age);
+      console.log('[checkin] room assignment:', { childName, dob: nc.dateOfBirth ?? null, age, room: assigned ?? null });
       roomId = assigned?.id ?? null;
       roomName = assigned?.name ?? null;
       allergies = nc.allergies ?? [];
