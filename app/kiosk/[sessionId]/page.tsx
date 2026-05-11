@@ -518,10 +518,10 @@ export default function KioskPage() {
 
       {/* Labels for screen preview */}
       <div className="no-print" style={{ flex: 1, padding: "32px", backgroundColor: "#f3f4f6" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
           {confirmedRecords.map((r, i) => <LabelCard key={i} record={r} />)}
+          <ParentReceipt parentName={checkInParentName} serviceName={session.service_name} serviceDate={session.date} records={confirmedRecords} />
         </div>
-        <ParentReceipt parentName={checkInParentName} serviceName={session.service_name} serviceDate={session.date} records={confirmedRecords} />
       </div>
 
       {/* Print-only layout */}
