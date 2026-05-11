@@ -10,7 +10,7 @@ const ALLERGY_OPTIONS = [
   "Wheat/Gluten", "Soy", "Fish", "Shellfish", "Bee Stings", "Latex",
 ];
 
-type Step = "phone" | "select" | "new-parent" | "new-children" | "confirm" | "print";
+type Step = "phone" | "select" | "new-parent" | "new-children" | "confirm" | "print" | "already-checked-in";
 
 type ReturnChild = {
   childName: string;
@@ -178,9 +178,15 @@ export default function KioskPage() {
     const d = await res.json();
     setSubmitting(false);
     if (!res.ok) { alert(d.error ?? "Check-in failed"); return; }
-    setConfirmedRecords(d.records ?? []);
-    setDuplicates(d.duplicates ?? []);
-    setStep("confirm");
+    const records = d.records ?? [];
+    const dupes = d.duplicates ?? [];
+    setConfirmedRecords(records);
+    setDuplicates(dupes);
+    if (records.length === 0 && dupes.length > 0) {
+      setStep("already-checked-in");
+    } else {
+      setStep("confirm");
+    }
   }
 
   function handlePinExit() {
@@ -413,6 +419,35 @@ export default function KioskPage() {
         <button onClick={() => setStep("new-parent")} style={{ width: "100%", padding: "16px", borderRadius: 20, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 18, fontWeight: 600, cursor: "pointer" }}>
           ← Back
         </button>
+      </div>
+      <PinExitButton onTap={() => { setShowPin(true); setPinInput(""); setPinError(""); }} />
+      {showPin && <PinModal pin={pinInput} error={pinError} inputRef={pinRef} onChange={p => { setPinInput(p); setPinError(""); }} onConfirm={handlePinExit} onCancel={() => setShowPin(false)} />}
+    </div>
+  );
+
+  // ── ALREADY CHECKED IN ──
+  if (step === "already-checked-in") return (
+    <div style={containerStyle}>
+      <div style={{ backgroundColor: "#16a34a", padding: "24px 32px" }}>
+        <p className="text-white font-bold text-lg">Children's Check-In</p>
+        <p className="text-white text-sm opacity-75">{session.service_name} · {fmtDate(session.date)}</p>
+      </div>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 32px" }}>
+        <div style={{ width: "100%", maxWidth: 480, textAlign: "center" }}>
+          <div style={{ fontSize: 96, lineHeight: 1, marginBottom: 24 }}>✅</div>
+          <h1 style={{ fontSize: 32, fontWeight: 900, color: "#111827", marginBottom: 12 }}>Your family is already checked in today!</h1>
+          <p style={{ fontSize: 18, color: "#6b7280", marginBottom: 32 }}>These children were already checked in for this service:</p>
+          <div style={{ backgroundColor: "#f0fdf4", border: "2px solid #22c55e", borderRadius: 20, padding: "20px 24px", marginBottom: 40 }}>
+            {duplicates.map((name, i) => (
+              <div key={i} style={{ fontSize: 24, fontWeight: 700, color: "#111827", padding: "8px 0", borderBottom: i < duplicates.length - 1 ? "1px solid #dcfce7" : "none" }}>
+                {name}
+              </div>
+            ))}
+          </div>
+          <button onClick={reset} style={{ width: "100%", padding: "22px", borderRadius: 20, border: "none", backgroundColor: "#16a34a", color: "white", fontSize: 24, fontWeight: 800, cursor: "pointer" }}>
+            Done
+          </button>
+        </div>
       </div>
       <PinExitButton onTap={() => { setShowPin(true); setPinInput(""); setPinError(""); }} />
       {showPin && <PinModal pin={pinInput} error={pinError} inputRef={pinRef} onChange={p => { setPinInput(p); setPinError(""); }} onConfirm={handlePinExit} onCancel={() => setShowPin(false)} />}
