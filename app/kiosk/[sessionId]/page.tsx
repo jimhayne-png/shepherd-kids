@@ -170,6 +170,7 @@ export default function KioskPage() {
     const pPhone = isReturning ? phone.replace(/\D/g, "") : parentPhone.replace(/\D/g, "");
     setCheckInParentName(pName);
 
+    console.log('[kiosk] children to check in:', children);
     const res = await fetch("/api/checkin/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
