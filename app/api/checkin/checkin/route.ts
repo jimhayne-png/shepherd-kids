@@ -107,10 +107,11 @@ export async function POST(request: NextRequest) {
   const duplicates: string[] = [];
 
   const inserts: object[] = [];
-  const resultMeta: { childName: string; roomId: string | null; roomName: string | null; allergies: string[]; allergyOther: string | null }[] = [];
+  const resultMeta: { childName: string; dateOfBirth: string | null; roomId: string | null; roomName: string | null; allergies: string[]; allergyOther: string | null }[] = [];
 
   for (const child of children) {
     let childName: string;
+    let dateOfBirth: string | null = null;
     let roomId: string | null = null;
     let roomName: string | null = null;
     let allergies: string[] = [];
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
     } else {
       const nc = child as NewChild;
       childName = `${nc.firstName} ${nc.lastName}`.trim();
+      dateOfBirth = nc.dateOfBirth ?? null;
       const age = nc.dateOfBirth ? calcAge(nc.dateOfBirth) : null;
       const assigned = assignRoom(age);
       console.log('[checkin] room assignment:', { childName, dob: nc.dateOfBirth ?? null, age, room: assigned ?? null });
@@ -153,7 +155,7 @@ export async function POST(request: NextRequest) {
       allergy_other: allergyOther ?? null,
     });
 
-    resultMeta.push({ childName, roomId, roomName, allergies, allergyOther });
+    resultMeta.push({ childName, dateOfBirth, roomId, roomName, allergies, allergyOther });
   }
 
   let records: object[] = [];
@@ -187,7 +189,7 @@ export async function POST(request: NextRequest) {
         : { firstName: parts[0], lastName: parts.slice(1).join(' ') };
     };
 
-    // Find existing family record by phone, or create one
+    // Upsert family: find by (church_id, parent1_phone); on conflict do nothing, return existing id
     const { data: existingFamilies } = await admin
       .from('cm_visitor_families')
       .select('id')
@@ -211,6 +213,8 @@ export async function POST(request: NextRequest) {
           parent1_email: parentEmail ?? null,
           visit_date: new Date().toISOString().slice(0, 10),
           status: 'new',
+          follow_up_sent: false,
+          next_day_sent: false,
         })
         .select('id')
         .single();
@@ -218,27 +222,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (familyId) {
-      // Fetch children already in the roster for this family
+      // Fetch first names already in the roster for this family
       const { data: existingVisitorChildren } = await admin
         .from('cm_visitor_children')
-        .select('first_name, last_name')
+        .select('first_name')
         .eq('family_id', familyId);
 
-      const existingNames = new Set(
-        (existingVisitorChildren ?? []).map(c => `${c.first_name} ${c.last_name}`.toLowerCase().trim())
+      const existingFirstNames = new Set(
+        (existingVisitorChildren ?? []).map(c => c.first_name.toLowerCase().trim())
       );
 
       const childInserts = resultMeta
         .map(r => {
           const { firstName, lastName } = splitName(r.childName);
-          return { firstName, lastName, key: r.childName.toLowerCase().trim() };
+          return { firstName, lastName, dateOfBirth: r.dateOfBirth };
         })
-        .filter(c => !existingNames.has(c.key))
+        .filter(c => !existingFirstNames.has(c.firstName.toLowerCase().trim()))
         .map(c => ({
           church_id: session.church_id,
           family_id: familyId as string,
           first_name: c.firstName,
           last_name: c.lastName,
+          date_of_birth: c.dateOfBirth ?? null,
+          grade: null,
         }));
 
       if (childInserts.length > 0) {
