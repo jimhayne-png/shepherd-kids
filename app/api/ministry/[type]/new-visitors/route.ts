@@ -23,63 +23,45 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const admin = adminClient();
 
-  const { data: records, error } = await admin
-    .from('ministry_checkin_records')
-    .select('*')
+  const { data: visitors, error } = await admin
+    .from('ministry_visitors')
+    .select('id, first_name, last_name, email, phone, visit_count, first_visit_date, last_visit_date, status, notes')
     .eq('church_id', auth.churchId)
     .eq('ministry_type', type)
-    .eq('is_new_visitor', true)
-    .order('checked_in_at', { ascending: false })
-    .limit(500);
+    .eq('promoted_to_member', false)
+    .order('last_visit_date', { ascending: false });
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
-  if (!records?.length) return Response.json({ sessions: [] });
 
-  const sessionIds = [...new Set(records.map((r: any) => r.session_id as string))];
+  const visitorIds = (visitors ?? []).map((v: any) => v.id as string);
 
-  const { data: sessions } = await admin
-    .from('ministry_checkin_sessions')
-    .select('id, service_name, date, auto_followup')
-    .in('id', sessionIds)
-    .order('date', { ascending: false });
+  const { data: attendance } = visitorIds.length
+    ? await admin
+        .from('ministry_visitor_attendance')
+        .select('visitor_id, session_date')
+        .in('visitor_id', visitorIds)
+        .order('session_date', { ascending: false })
+    : { data: [] };
 
-  const sessionMap: Record<string, any> = {};
-  for (const s of sessions ?? []) sessionMap[s.id] = s;
-
-  // Followup logs for these records
-  const recordIds = records.map((r: any) => r.id as string);
-  const { data: logs } = await admin
-    .from('ministry_visitor_followup_log')
-    .select('id, record_id, status, follow_up_type, sent_at')
-    .in('record_id', recordIds)
-    .order('created_at', { ascending: false });
-
-  const logMap: Record<string, any> = {};
-  for (const log of logs ?? []) {
-    if (!logMap[log.record_id]) logMap[log.record_id] = log;
+  const attendanceMap: Record<string, string[]> = {};
+  for (const a of attendance ?? []) {
+    if (!attendanceMap[a.visitor_id]) attendanceMap[a.visitor_id] = [];
+    attendanceMap[a.visitor_id].push(a.session_date);
   }
 
-  // Group by session → individual visitors (each record is one person)
-  const grouped: Record<string, any[]> = {};
-  for (const r of records) {
-    if (!grouped[r.session_id]) grouped[r.session_id] = [];
-    grouped[r.session_id].push(r);
-  }
+  const result = (visitors ?? []).map((v: any) => ({
+    id: v.id,
+    first_name: v.first_name,
+    last_name: v.last_name,
+    email: v.email,
+    phone: v.phone,
+    visit_count: v.visit_count,
+    first_visit_date: v.first_visit_date,
+    last_visit_date: v.last_visit_date,
+    status: v.status,
+    notes: v.notes,
+    attendance: attendanceMap[v.id] ?? [],
+  }));
 
-  const result = sessionIds
-    .filter(sid => sessionMap[sid])
-    .map(sid => ({
-      session: sessionMap[sid],
-      visitors: (grouped[sid] ?? []).map((r: any) => ({
-        visitorName: r.visitor_name ?? 'Unknown',
-        visitorPhone: r.visitor_phone ?? null,
-        visitorEmail: r.visitor_email ?? null,
-        primaryRecordId: r.id,
-        visitCount: r.visit_count ?? 1,
-        checkedInAt: r.checked_in_at,
-        followupLog: logMap[r.id] ?? null,
-      })),
-    }));
-
-  return Response.json({ sessions: result });
+  return Response.json(result);
 }

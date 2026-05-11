@@ -16,11 +16,11 @@ type AttendanceRecord = { member_id: string; session_date: string; present: bool
 // ── New types ──
 type MCRecord = { id: string; member_id: string | null; visitor_name: string | null };
 type NVVisitor = {
-  visitorName: string; visitorPhone: string | null; visitorEmail: string | null;
-  primaryRecordId: string; visitCount: number; checkedInAt: string;
-  followupLog: { status: string; follow_up_type: string; sent_at: string | null } | null;
+  id: string; first_name: string; last_name: string;
+  email: string | null; phone: string | null;
+  visit_count: number; first_visit_date: string; last_visit_date: string;
+  status: string; notes: string | null; attendance: string[];
 };
-type NVSession = { session: { id: string; service_name: string; date: string; auto_followup: boolean }; visitors: NVVisitor[] };
 
 function fmt(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -63,7 +63,7 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
   const [togglingCheckin, setTogglingCheckin] = useState<string | null>(null);
 
   // ── New state: new visitors tab ──
-  const [nvSessions, setNvSessions] = useState<NVSession[]>([]);
+  const [nvSessions, setNvSessions] = useState<any[]>([]);
   const [nvLoaded, setNvLoaded] = useState(false);
   const [nvLoading, setNvLoading] = useState(false);
   const [nvEmails, setNvEmails] = useState<Record<string, string>>({});
@@ -223,7 +223,7 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
   async function loadVisitors(t: string) {
     setNvLoading(true);
     const res = await fetch(`/api/ministry/${type}/new-visitors`, { headers: { Authorization: `Bearer ${t}` } });
-    if (res.ok) { const d = await res.json(); setNvSessions(d.sessions ?? []); }
+    if (res.ok) { const d = await res.json(); setNvSessions(d ?? []); }
     setNvLoading(false);
   }
 
@@ -238,18 +238,18 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
   }
 
   async function sendFollowup(sessionId: string, visitor: NVVisitor, followType: "email" | "letter" | "both" | "skip") {
-    const key = `${sessionId}-${visitor.primaryRecordId}`;
+    const key = visitor.id;
     const email = (nvEmails[key] ?? "").trim();
     if ((followType === "email" || followType === "both") && !email) { alert("Enter an email address to send."); return; }
     if (followType === "letter" || followType === "both") {
-      window.open(`/dashboard/ministry/${type}/visitor-letter/${visitor.primaryRecordId}`, "_blank");
+      window.open(`/dashboard/ministry/${type}/visitor-letter/${visitor.id}`, "_blank");
     }
     if (!token) return;
     setNvSending(s => ({ ...s, [key]: followType }));
     await fetch(`/api/ministry/${type}/visitor-followup`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ sessionId, recordId: visitor.primaryRecordId, visitorName: visitor.visitorName, visitorEmail: email || null, visitorPhone: visitor.visitorPhone || null, followUpType: followType, personalizedMessage: nvPersonalize[key] || null }),
+      body: JSON.stringify({ sessionId, recordId: visitor.id, visitorName: `${visitor.first_name} ${visitor.last_name}`, visitorEmail: email || null, visitorPhone: visitor.phone || null, followUpType: followType, personalizedMessage: nvPersonalize[key] || null }),
     });
     setNvSending(s => { const n = { ...s }; delete n[key]; return n; });
     if (token) await loadVisitors(token);
@@ -477,100 +477,67 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
             </div>
           )}
 
-          {!nvLoading && nvSessions.map(({ session: sess, visitors }) => (
-            <div key={sess.id} className="bg-white rounded-2xl shadow border border-gray-100 mb-6 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-gray-900">{sess.service_name}</h3>
-                  <p className="text-sm text-gray-500">{fmtDate(sess.date)} · {visitors.length} new {visitors.length === 1 ? "visitor" : "visitors"}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {sess.auto_followup && <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-green-100 text-green-700">⚡ Auto 24hr active</span>}
-                  <button
-                    onClick={() => toggleAutoFollowup(sess.id, sess.auto_followup)}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold border"
-                    style={{ borderColor: sess.auto_followup ? "#dc2626" : ACCENT, color: sess.auto_followup ? "#dc2626" : ACCENT, backgroundColor: sess.auto_followup ? "#fee2e2" : ACCENT + "11" }}
-                  >
-                    {sess.auto_followup ? "Disable Auto-Send" : "Enable Auto-Send"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="divide-y divide-gray-50">
-                {visitors.map(visitor => {
-                  const key = `${sess.id}-${visitor.primaryRecordId}`;
-                  const log = visitor.followupLog;
-                  const isSent = log?.status === "sent";
-                  const isSkipped = log?.status === "skipped";
-                  const sending = nvSending[key];
-                  const personalizeOn = nvPersonalizeOpen[key] ?? false;
-
-                  return (
-                    <div key={visitor.primaryRecordId} className="px-6 py-5">
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div>
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <div className="font-bold text-gray-900">{visitor.visitorName}</div>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: visitColor(visitor.visitCount) }}>
-                              {visitBadge(visitor.visitCount)}
-                            </span>
-                          </div>
-                          {visitor.visitorPhone && <div className="text-sm text-gray-500">{visitor.visitorPhone}</div>}
-                        </div>
-                        <div className="flex-shrink-0 text-right">
-                          {isSent && <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-green-100 text-green-700 block mb-1">✅ {log!.follow_up_type === "email" ? "Email sent" : log!.follow_up_type === "letter" ? "Letter printed" : "Both sent"}</span>}
-                          {isSkipped && <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-500 block mb-1">Skipped</span>}
-                        </div>
+          {!nvLoading && nvSessions.map((visitor: NVVisitor) => {
+            const key = visitor.id;
+            const sending = nvSending[key];
+            const personalizeOn = nvPersonalizeOpen[key] ?? false;
+            return (
+              <div key={visitor.id} className="bg-white rounded-2xl shadow border border-gray-100 mb-4 overflow-hidden">
+                <div className="px-6 py-5">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <div className="font-bold text-gray-900">{visitor.first_name} {visitor.last_name}</div>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: visitColor(visitor.visit_count) }}>
+                          {visitBadge(visitor.visit_count)}
+                        </span>
                       </div>
-
-                      {!isSent && !isSkipped && (
-                        <>
-                          <div className="flex gap-2 mb-2 flex-wrap">
-                            <input
-                              type="email"
-                              value={nvEmails[key] ?? (visitor.visitorEmail ?? "")}
-                              onChange={e => setNvEmails(m => ({ ...m, [key]: e.target.value }))}
-                              placeholder="Email address"
-                              className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-xl text-sm"
-                            />
-                            <button
-                              onClick={() => setNvPersonalizeOpen(m => ({ ...m, [key]: !m[key] }))}
-                              className="px-3 py-2 rounded-xl text-xs font-bold border"
-                              style={{ borderColor: personalizeOn ? ACCENT : "#e5e7eb", color: personalizeOn ? ACCENT : "#6b7280", backgroundColor: personalizeOn ? ACCENT + "11" : "white" }}
-                            >
-                              ✏️ Personalize
-                            </button>
-                          </div>
-                          {personalizeOn && (
-                            <textarea
-                              value={nvPersonalize[key] ?? ""}
-                              onChange={e => setNvPersonalize(m => ({ ...m, [key]: e.target.value }))}
-                              placeholder="Add a personal note…"
-                              rows={2}
-                              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none mb-2"
-                            />
-                          )}
-                          <div className="flex gap-2 flex-wrap">
-                            {(["email", "letter", "both", "skip"] as const).map(t => (
-                              <button
-                                key={t}
-                                onClick={() => sendFollowup(sess.id, visitor, t)}
-                                disabled={!!sending}
-                                className="px-4 py-2 rounded-xl text-xs font-bold border transition-colors"
-                                style={{ backgroundColor: sending === t ? ACCENT : t === "skip" ? "white" : ACCENT, color: t === "skip" ? "#6b7280" : "white", borderColor: t === "skip" ? "#e5e7eb" : ACCENT, opacity: sending && sending !== t ? 0.5 : 1 }}
-                              >
-                                {sending === t ? "…" : t === "email" ? "📧 Send Email" : t === "letter" ? "🖨️ Print Letter" : t === "both" ? "📧🖨️ Both" : "Skip"}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
+                      {visitor.phone && <div className="text-sm text-gray-500">{visitor.phone}</div>}
+                      <div className="text-xs text-gray-400 mt-0.5">First visit: {fmtDate(visitor.first_visit_date)}</div>
                     </div>
-                  );
-                })}
+                  </div>
+                  <div className="flex gap-2 mb-2 flex-wrap">
+                    <input
+                      type="email"
+                      value={nvEmails[key] ?? (visitor.email ?? "")}
+                      onChange={e => setNvEmails(m => ({ ...m, [key]: e.target.value }))}
+                      placeholder="Email address"
+                      className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                    />
+                    <button
+                      onClick={() => setNvPersonalizeOpen(m => ({ ...m, [key]: !m[key] }))}
+                      className="px-3 py-2 rounded-xl text-xs font-bold border"
+                      style={{ borderColor: personalizeOn ? ACCENT : "#e5e7eb", color: personalizeOn ? ACCENT : "#6b7280", backgroundColor: personalizeOn ? ACCENT + "11" : "white" }}
+                    >
+                      ✏️ Personalize
+                    </button>
+                  </div>
+                  {personalizeOn && (
+                    <textarea
+                      value={nvPersonalize[key] ?? ""}
+                      onChange={e => setNvPersonalize(m => ({ ...m, [key]: e.target.value }))}
+                      placeholder="Add a personal note…"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none mb-2"
+                    />
+                  )}
+                  <div className="flex gap-2 flex-wrap">
+                    {(["email", "letter", "both", "skip"] as const).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => sendFollowup(visitor.id, visitor, t)}
+                        disabled={!!sending}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border transition-colors"
+                        style={{ backgroundColor: sending === t ? ACCENT : t === "skip" ? "white" : ACCENT, color: t === "skip" ? "#6b7280" : "white", borderColor: t === "skip" ? "#e5e7eb" : ACCENT, opacity: sending && sending !== t ? 0.5 : 1 }}
+                      >
+                        {sending === t ? "…" : t === "email" ? "📧 Send Email" : t === "letter" ? "🖨️ Print Letter" : t === "both" ? "📧🖨️ Both" : "Skip"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </MinistryShell>
