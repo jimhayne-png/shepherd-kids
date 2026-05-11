@@ -251,6 +251,41 @@ export async function POST(request: NextRequest) {
         await admin.from('cm_visitor_children').insert(childInserts);
       }
     }
+
+    // Upsert parent into ministry_visitors so they appear in the Roster
+    const today = new Date().toISOString().slice(0, 10);
+    const { firstName: mvFirst, lastName: mvLast } = splitName(parentName);
+
+    const { data: existingMv } = await admin
+      .from('ministry_visitors')
+      .select('id, visit_count')
+      .eq('church_id', session.church_id)
+      .eq('ministry_type', 'childrens')
+      .eq('phone', normalizedPhone)
+      .maybeSingle();
+
+    if (existingMv) {
+      await admin
+        .from('ministry_visitors')
+        .update({ visit_count: (existingMv.visit_count ?? 1) + 1, last_visit_date: today })
+        .eq('id', existingMv.id);
+    } else {
+      await admin
+        .from('ministry_visitors')
+        .insert({
+          church_id: session.church_id,
+          ministry_type: 'childrens',
+          first_name: mvFirst,
+          last_name: mvLast,
+          phone: normalizedPhone,
+          email: parentEmail ?? null,
+          visit_count: 1,
+          first_visit_date: today,
+          last_visit_date: today,
+          promoted_to_member: false,
+          status: 'new',
+        });
+    }
   }
 
   return Response.json({ records, securityCode, isNewVisitor, duplicates });
