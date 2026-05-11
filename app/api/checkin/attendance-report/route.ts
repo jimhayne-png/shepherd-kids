@@ -92,6 +92,8 @@ export async function GET(request: NextRequest) {
       };
     }
     roomGroups[key].children.push({
+      id: r.id,
+      room_id: r.room_id ?? null,
       child_name: r.child_name,
       parent_name: r.parent_name,
       parent_phone: r.parent_phone,

@@ -10,6 +10,7 @@ const ACCENT = "#F28C28";
 type LiveChild = { id: string; child_name: string; parent_name: string; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; checked_in_at: string };
 type LiveRoom = { room_id: string; room_name: string; children: LiveChild[] };
 type LiveSession = { id: string; service_name: string; date: string; scheduled_time: string | null };
+type Room = { id: string; name: string };
 
 function fmtDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -26,6 +27,11 @@ export default function LiveCheckinPage() {
   const [totalCheckedIn, setTotalCheckedIn] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [allRooms, setAllRooms] = useState<Room[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRoomId, setEditRoomId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchLive = useCallback(async (token: string) => {
     const res = await fetch("/api/checkin/live", { headers: { Authorization: `Bearer ${token}` } });
@@ -45,6 +51,8 @@ export default function LiveCheckinPage() {
       const token = authSession.access_token;
       setAuthToken(token);
       await fetchLive(token);
+      const roomsRes = await fetch("/api/checkin/update-record", { headers: { Authorization: `Bearer ${token}` } });
+      if (roomsRes.ok) { const d = await roomsRes.json(); setAllRooms(d.rooms ?? []); }
     }
     init();
   }, [router, fetchLive]);
@@ -54,6 +62,31 @@ export default function LiveCheckinPage() {
     const interval = setInterval(() => fetchLive(authToken), 30000);
     return () => clearInterval(interval);
   }, [authToken, fetchLive]);
+
+  async function handleSaveRoom(recordId: string) {
+    if (!authToken) return;
+    setSaving(true);
+    await fetch("/api/checkin/update-record", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ recordId, roomId: editRoomId || null }),
+    });
+    setSaving(false);
+    setEditingId(null);
+    fetchLive(authToken);
+  }
+
+  async function handleDelete(recordId: string) {
+    if (!authToken || !window.confirm("Remove this check-in record?")) return;
+    setDeletingId(recordId);
+    await fetch("/api/checkin/update-record", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ recordId }),
+    });
+    setDeletingId(null);
+    fetchLive(authToken);
+  }
 
   return (
     <MinistryShell type="childrens">
@@ -111,16 +144,52 @@ export default function LiveCheckinPage() {
                       const allergyText = [...child.allergies, child.allergy_other].filter(Boolean).join(", ");
                       return (
                         <div key={child.id} className="px-5 py-3">
-                          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                            <span className="font-bold text-gray-900">{child.child_name}</span>
-                            {child.is_new_visitor && (
-                              <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: ACCENT }}>🆕 NEW</span>
-                            )}
+                          <div className="flex items-start justify-between gap-2 mb-0.5">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-gray-900">{child.child_name}</span>
+                              {child.is_new_visitor && (
+                                <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: ACCENT }}>🆕 NEW</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button
+                                onClick={() => { setEditingId(child.id); setEditRoomId(room.room_id === "unassigned" ? "" : room.room_id); }}
+                                className="text-xs px-2 py-0.5 rounded font-semibold border"
+                                style={{ borderColor: ACCENT, color: ACCENT }}
+                              >Edit</button>
+                              <button
+                                onClick={() => handleDelete(child.id)}
+                                disabled={deletingId === child.id}
+                                className="text-xs px-2 py-0.5 rounded font-semibold border border-red-300 text-red-500"
+                              >{deletingId === child.id ? "…" : "Delete"}</button>
+                            </div>
                           </div>
                           <div className="text-xs text-gray-400">{child.parent_name} · in {fmtTime(child.checked_in_at)}</div>
                           {hasAllergy && (
                             <div className="text-xs font-bold text-white mt-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "#dc2626" }}>
                               ⚠️ {allergyText}
+                            </div>
+                          )}
+                          {editingId === child.id && (
+                            <div className="mt-2 flex items-center gap-1.5">
+                              <select
+                                value={editRoomId}
+                                onChange={e => setEditRoomId(e.target.value)}
+                                className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+                              >
+                                <option value="">— No Room —</option>
+                                {allRooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                              </select>
+                              <button
+                                onClick={() => handleSaveRoom(child.id)}
+                                disabled={saving}
+                                className="text-xs px-2.5 py-1.5 rounded-lg font-bold text-white flex-shrink-0"
+                                style={{ backgroundColor: ACCENT }}
+                              >{saving ? "…" : "Save"}</button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="text-xs px-2.5 py-1.5 rounded-lg font-semibold text-gray-500 border border-gray-200 flex-shrink-0"
+                              >Cancel</button>
                             </div>
                           )}
                         </div>

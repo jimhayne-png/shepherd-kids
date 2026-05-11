@@ -8,7 +8,7 @@ import MinistryShell from "@/components/layout/MinistryShell";
 const ACCENT = "#F28C28";
 
 type SessionOption = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string };
-type ReportChild = { child_name: string; parent_name: string; parent_phone: string; checked_in_at: string; checked_out_at: string | null; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; visit_count: number };
+type ReportChild = { id: string; room_id: string | null; child_name: string; parent_name: string; parent_phone: string; checked_in_at: string; checked_out_at: string | null; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; visit_count: number };
 type ReportRoom = { room_id: string; room_name: string; children: ReportChild[] };
 type Report = {
   session: SessionOption;
@@ -16,6 +16,7 @@ type Report = {
   rooms: ReportRoom[];
   visitorJourney: { new: number; returning: number; regular: number };
 };
+type Room = { id: string; name: string };
 
 function fmtDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
@@ -69,6 +70,11 @@ export default function AttendanceReportPage() {
   const [selectedId, setSelectedId] = useState("");
   const [report, setReport] = useState<Report | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
+  const [allRooms, setAllRooms] = useState<Room[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRoomId, setEditRoomId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -78,6 +84,8 @@ export default function AttendanceReportPage() {
       setAuthToken(token);
       const res = await fetch("/api/checkin/attendance-report", { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const d = await res.json(); setSessions(d.sessions ?? []); }
+      const roomsRes = await fetch("/api/checkin/update-record", { headers: { Authorization: `Bearer ${token}` } });
+      if (roomsRes.ok) { const d = await roomsRes.json(); setAllRooms(d.rooms ?? []); }
     }
     init();
   }, [router]);
@@ -86,9 +94,35 @@ export default function AttendanceReportPage() {
     if (!authToken || !sessionId) return;
     setLoadingReport(true);
     setReport(null);
+    setEditingId(null);
     const res = await fetch(`/api/checkin/attendance-report?sessionId=${sessionId}`, { headers: { Authorization: `Bearer ${authToken}` } });
     if (res.ok) { const d = await res.json(); setReport(d); }
     setLoadingReport(false);
+  }
+
+  async function handleSaveRoom(recordId: string) {
+    if (!authToken) return;
+    setSaving(true);
+    await fetch("/api/checkin/update-record", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ recordId, roomId: editRoomId || null }),
+    });
+    setSaving(false);
+    setEditingId(null);
+    loadReport(selectedId);
+  }
+
+  async function handleDelete(recordId: string) {
+    if (!authToken || !window.confirm("Remove this check-in record?")) return;
+    setDeletingId(recordId);
+    await fetch("/api/checkin/update-record", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify({ recordId }),
+    });
+    setDeletingId(null);
+    loadReport(selectedId);
   }
 
   return (
@@ -120,9 +154,7 @@ export default function AttendanceReportPage() {
                 onClick={() => exportCSV(report)}
                 className="px-5 py-3 rounded-xl text-sm font-bold text-white"
                 style={{ backgroundColor: ACCENT }}
-              >
-                ⬇ Export CSV
-              </button>
+              >⬇ Export CSV</button>
             )}
           </div>
         </div>
@@ -184,21 +216,57 @@ export default function AttendanceReportPage() {
                   </span>
                 </div>
                 <div className="divide-y divide-gray-50">
-                  {room.children.map((child, i) => (
-                    <div key={i} className="px-6 py-3 flex items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900 text-sm">{child.child_name}</span>
-                          {child.is_new_visitor && <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: ACCENT }}>🆕 NEW</span>}
-                          <span className="text-xs px-1.5 py-0.5 rounded font-bold text-white" style={{ backgroundColor: visitColor(child.visit_count) }}>
-                            {visitLabel(child.visit_count)}
-                          </span>
+                  {room.children.map(child => (
+                    <div key={child.id} className="px-6 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-gray-900 text-sm">{child.child_name}</span>
+                            {child.is_new_visitor && <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: ACCENT }}>🆕 NEW</span>}
+                            <span className="text-xs px-1.5 py-0.5 rounded font-bold text-white" style={{ backgroundColor: visitColor(child.visit_count) }}>
+                              {visitLabel(child.visit_count)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-400 mt-0.5">{child.parent_name} · {fmtTime(child.checked_in_at)}{child.checked_out_at ? ` → ${fmtTime(child.checked_out_at)}` : " (still checked in)"}</div>
+                          {(child.allergies.length > 0 || child.allergy_other) && (
+                            <div className="text-xs text-red-500 font-semibold mt-0.5">⚠️ {[...child.allergies, child.allergy_other].filter(Boolean).join(", ")}</div>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-400 mt-0.5">{child.parent_name} · {fmtTime(child.checked_in_at)}{child.checked_out_at ? ` → ${fmtTime(child.checked_out_at)}` : " (still checked in)"}</div>
-                        {(child.allergies.length > 0 || child.allergy_other) && (
-                          <div className="text-xs text-red-500 font-semibold mt-0.5">⚠️ {[...child.allergies, child.allergy_other].filter(Boolean).join(", ")}</div>
-                        )}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => { setEditingId(child.id); setEditRoomId(room.room_id === "unassigned" ? "" : room.room_id); }}
+                            className="text-xs px-2 py-0.5 rounded font-semibold border"
+                            style={{ borderColor: ACCENT, color: ACCENT }}
+                          >Edit</button>
+                          <button
+                            onClick={() => handleDelete(child.id)}
+                            disabled={deletingId === child.id}
+                            className="text-xs px-2 py-0.5 rounded font-semibold border border-red-300 text-red-500"
+                          >{deletingId === child.id ? "…" : "Delete"}</button>
+                        </div>
                       </div>
+                      {editingId === child.id && (
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <select
+                            value={editRoomId}
+                            onChange={e => setEditRoomId(e.target.value)}
+                            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+                          >
+                            <option value="">— No Room —</option>
+                            {allRooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                          </select>
+                          <button
+                            onClick={() => handleSaveRoom(child.id)}
+                            disabled={saving}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold text-white flex-shrink-0"
+                            style={{ backgroundColor: ACCENT }}
+                          >{saving ? "…" : "Save"}</button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="text-xs px-2.5 py-1.5 rounded-lg font-semibold text-gray-500 border border-gray-200 flex-shrink-0"
+                          >Cancel</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
