@@ -46,23 +46,63 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const period = getCurrentPeriod(settings.frequency);
   const periodLabel = getPeriodLabel(settings.frequency, period.year, period.month);
 
-  // Get active roster members + member details
-  const { data: roster } = await admin
-    .from('ministry_rosters')
-    .select('member_id, pipeline_stage')
-    .eq('church_id', churchId)
-    .eq('ministry_type', type)
-    .eq('status', 'active');
+  let memberIds: string[] = [];
+  const memberMap: Record<string, any> = {};
 
-  const memberIds = (roster ?? []).map((r: any) => r.member_id);
+  if (type === 'childrens') {
+    const { data: children } = await admin
+      .from('cm_visitor_children')
+      .select('id, first_name, last_name, family_id')
+      .eq('church_id', churchId)
+      .order('created_at', { ascending: false });
+
+    const familyIds = [...new Set((children ?? []).map((c: any) => c.family_id as string).filter(Boolean))];
+
+    const { data: families } = familyIds.length
+      ? await admin
+          .from('cm_visitor_families')
+          .select('id, parent1_email, parent1_phone')
+          .in('id', familyIds)
+      : { data: [] };
+
+    const familyMap: Record<string, any> = {};
+    for (const f of families ?? []) familyMap[f.id] = f;
+
+    for (const c of children ?? []) {
+      const fam = familyMap[c.family_id] ?? {};
+      memberMap[c.id] = {
+        id: c.id,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        email: fam.parent1_email ?? null,
+        phone: fam.parent1_phone ?? null,
+      };
+    }
+
+    memberIds = Object.keys(memberMap);
+  } else {
+    // Get active roster members + member details
+    const { data: roster } = await admin
+      .from('ministry_rosters')
+      .select('member_id, pipeline_stage')
+      .eq('church_id', churchId)
+      .eq('ministry_type', type)
+      .eq('status', 'active');
+
+    memberIds = (roster ?? []).map((r: any) => r.member_id);
+
+    if (memberIds.length) {
+      const { data: members } = await admin
+        .from('members')
+        .select('id, first_name, last_name, email, phone')
+        .in('id', memberIds);
+      for (const m of members ?? []) memberMap[m.id] = m;
+    }
+  }
+
   if (!memberIds.length) {
     return Response.json({ members: [], settings, period: { ...period, label: periodLabel }, summary: { total: 0, complete: 0, partial: 0, none: 0 } });
   }
-
-  const { data: members } = await admin
-    .from('members')
-    .select('id, first_name, last_name, email, phone')
-    .in('id', memberIds);
 
   // Get followup logs for current period
   const { data: logs } = await admin
@@ -76,9 +116,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const logMap: Record<string, any> = {};
   for (const l of logs ?? []) logMap[l.member_id] = l;
-
-  const memberMap: Record<string, any> = {};
-  for (const m of members ?? []) memberMap[m.id] = m;
 
   let complete = 0, partial = 0, none = 0;
 
