@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         .order('created_at')
     : { data: [] };
 
-  const childMap: Record<string, { first_name: string; last_name: string; date_of_birth: string | null }[]> = {};
+  const childMap: Record<string, { id: string; first_name: string; last_name: string; date_of_birth: string | null }[]> = {};
   for (const c of children ?? []) {
     if (!childMap[c.family_id]) childMap[c.family_id] = [];
     childMap[c.family_id].push({
