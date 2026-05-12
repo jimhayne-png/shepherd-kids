@@ -481,6 +481,33 @@ export default function AttendancePage({ params }: { params: Promise<{ type: str
             const key = visitor.id;
             const sending = nvSending[key];
             const personalizeOn = nvPersonalizeOpen[key] ?? false;
+            const v = visitor as any;
+
+            if (type === "childrens") {
+              return (
+                <div key={v.id} className="bg-white rounded-2xl shadow border border-gray-100 mb-4 overflow-hidden">
+                  <div className="px-6 py-5">
+                    <div className="font-bold text-gray-900 mb-1">{v.first_name} {v.last_name}</div>
+                    {v.date_of_birth && (
+                      <div className="text-xs text-gray-500 mb-1">
+                        DOB: {new Date(v.date_of_birth + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                    )}
+                    {v.visit_date && (
+                      <div className="text-xs text-gray-400 mb-2">{fmtDate(v.visit_date)}</div>
+                    )}
+                    {(v.parent_name || v.parent_phone || v.parent_email) && (
+                      <div className="mt-2 pt-2 border-t border-gray-50">
+                        {v.parent_name && <div className="text-sm text-gray-500">{v.parent_name}</div>}
+                        {v.parent_phone && <div className="text-xs text-gray-400">{v.parent_phone}</div>}
+                        {v.parent_email && <div className="text-xs text-gray-400">{v.parent_email}</div>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={visitor.id} className="bg-white rounded-2xl shadow border border-gray-100 mb-4 overflow-hidden">
                 <div className="px-6 py-5">
