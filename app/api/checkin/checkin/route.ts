@@ -311,6 +311,37 @@ export async function POST(request: NextRequest) {
           joined_at: new Date().toISOString(),
         });
     }
+
+    // Insert parent into ministry_rosters if not already there
+    const { data: rosterMember } = await admin
+      .from('members')
+      .select('id')
+      .eq('church_id', session.church_id)
+      .eq('phone', normalizedPhone)
+      .maybeSingle();
+
+    if (rosterMember) {
+      const { data: existingRoster } = await admin
+        .from('ministry_rosters')
+        .select('id')
+        .eq('church_id', session.church_id)
+        .eq('ministry_type', 'childrens')
+        .eq('member_id', rosterMember.id)
+        .maybeSingle();
+
+      if (!existingRoster) {
+        await admin
+          .from('ministry_rosters')
+          .insert({
+            church_id: session.church_id,
+            ministry_type: 'childrens',
+            member_id: rosterMember.id,
+            joined_date: today,
+            status: 'active',
+            pipeline_stage: 'visitor',
+          });
+      }
+    }
   }
 
   return Response.json({ records, securityCode, isNewVisitor, duplicates });
