@@ -181,15 +181,16 @@ export async function POST(request: NextRequest) {
     }));
   }
 
+  const splitName = (full: string) => {
+    const parts = full.trim().split(/\s+/);
+    return parts.length === 1
+      ? { firstName: parts[0], lastName: '' }
+      : { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+  };
+  const today = new Date().toISOString().slice(0, 10);
+
   // For new visitor families, sync into the visitor roster
   if (isNewVisitor && resultMeta.length > 0) {
-    const splitName = (full: string) => {
-      const parts = full.trim().split(/\s+/);
-      return parts.length === 1
-        ? { firstName: parts[0], lastName: '' }
-        : { firstName: parts[0], lastName: parts.slice(1).join(' ') };
-    };
-
     // Upsert family: find by (church_id, parent1_phone); on conflict do nothing, return existing id
     const { data: existingFamilies } = await admin
       .from('cm_visitor_families')
@@ -254,7 +255,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert parent into ministry_visitors so they appear in the Roster
-    const today = new Date().toISOString().slice(0, 10);
     const { firstName: mvFirst, lastName: mvLast } = splitName(parentName);
 
     const { data: existingMv } = await admin
@@ -311,68 +311,68 @@ export async function POST(request: NextRequest) {
           joined_at: new Date().toISOString(),
         });
     }
+  }
 
-    // Upsert each child into children_ministry_children
-    for (const r of resultMeta) {
-      const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
+  // Upsert each child into children_ministry_children (every check-in)
+  for (const r of resultMeta) {
+    const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
 
-      const { data: existingChild } = await admin
+    const { data: existingChild } = await admin
+      .from('children_ministry_children')
+      .select('id')
+      .eq('church_id', session.church_id)
+      .eq('first_name', cFirst)
+      .eq('last_name', cLast)
+      .maybeSingle();
+
+    if (!existingChild) {
+      await admin
         .from('children_ministry_children')
+        .insert({
+          church_id: session.church_id,
+          first_name: cFirst,
+          last_name: cLast,
+          date_of_birth: r.dateOfBirth ?? null,
+          parent1_name: parentName,
+          parent1_phone: normalizedPhone,
+          parent1_email: parentEmail ?? null,
+          active: true,
+        });
+    }
+  }
+
+  // Add each child to ministry_rosters (every check-in)
+  for (const r of resultMeta) {
+    const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
+
+    const { data: childRecord } = await admin
+      .from('children_ministry_children')
+      .select('id')
+      .eq('church_id', session.church_id)
+      .eq('first_name', cFirst)
+      .eq('last_name', cLast)
+      .maybeSingle();
+
+    if (childRecord) {
+      const { data: existingRoster } = await admin
+        .from('ministry_rosters')
         .select('id')
         .eq('church_id', session.church_id)
-        .eq('first_name', cFirst)
-        .eq('last_name', cLast)
+        .eq('ministry_type', 'childrens')
+        .eq('member_id', childRecord.id)
         .maybeSingle();
 
-      if (!existingChild) {
+      if (!existingRoster) {
         await admin
-          .from('children_ministry_children')
+          .from('ministry_rosters')
           .insert({
             church_id: session.church_id,
-            first_name: cFirst,
-            last_name: cLast,
-            date_of_birth: r.dateOfBirth ?? null,
-            parent1_name: parentName,
-            parent1_phone: normalizedPhone,
-            parent1_email: parentEmail ?? null,
-            active: true,
+            ministry_type: 'childrens',
+            member_id: childRecord.id,
+            joined_date: today,
+            status: 'active',
+            pipeline_stage: 'visitor',
           });
-      }
-    }
-
-    // Add each child to ministry_rosters
-    for (const r of resultMeta) {
-      const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
-
-      const { data: childRecord } = await admin
-        .from('children_ministry_children')
-        .select('id')
-        .eq('church_id', session.church_id)
-        .eq('first_name', cFirst)
-        .eq('last_name', cLast)
-        .maybeSingle();
-
-      if (childRecord) {
-        const { data: existingRoster } = await admin
-          .from('ministry_rosters')
-          .select('id')
-          .eq('church_id', session.church_id)
-          .eq('ministry_type', 'childrens')
-          .eq('member_id', childRecord.id)
-          .maybeSingle();
-
-        if (!existingRoster) {
-          await admin
-            .from('ministry_rosters')
-            .insert({
-              church_id: session.church_id,
-              ministry_type: 'childrens',
-              member_id: childRecord.id,
-              joined_date: today,
-              status: 'active',
-              pipeline_stage: 'visitor',
-            });
-        }
       }
     }
   }
