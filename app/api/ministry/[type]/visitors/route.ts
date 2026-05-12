@@ -20,7 +20,49 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const { data, error } = await adminClient()
+  const admin = adminClient();
+
+  if (type === 'childrens') {
+    const { data: children, error } = await admin
+      .from('cm_visitor_children')
+      .select('id, first_name, last_name, date_of_birth, family_id')
+      .eq('church_id', churchId)
+      .order('created_at', { ascending: false });
+
+    if (error) return Response.json({ error: error.message }, { status: 400 });
+
+    const familyIds = [...new Set((children ?? []).map((c: any) => c.family_id as string).filter(Boolean))];
+
+    const { data: families } = familyIds.length
+      ? await admin
+          .from('cm_visitor_families')
+          .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, visit_date, status')
+          .in('id', familyIds)
+      : { data: [] };
+
+    const familyMap: Record<string, any> = {};
+    for (const f of families ?? []) familyMap[f.id] = f;
+
+    const result = (children ?? []).map((c: any) => {
+      const fam = familyMap[c.family_id] ?? {};
+      return {
+        id: c.id,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        date_of_birth: c.date_of_birth ?? null,
+        family_id: c.family_id,
+        parent_name: [fam.parent1_first_name, fam.parent1_last_name].filter(Boolean).join(' ') || null,
+        parent_phone: fam.parent1_phone ?? null,
+        parent_email: fam.parent1_email ?? null,
+        visit_date: fam.visit_date ?? null,
+        status: fam.status ?? null,
+      };
+    });
+
+    return Response.json({ visitors: result });
+  }
+
+  const { data, error } = await admin
     .from('ministry_visitors')
     .select('*')
     .eq('church_id', churchId)

@@ -23,52 +23,43 @@ export async function GET(request: NextRequest) {
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const seasonId = request.nextUrl.searchParams.get('season_id');
   const admin = adminClient();
 
   const { data: children, error } = await admin
-    .from('children_ministry_children')
-    .select('*')
+    .from('cm_visitor_children')
+    .select('id, first_name, last_name, date_of_birth, family_id')
     .eq('church_id', churchId)
-    .eq('active', true)
-    .order('last_name', { ascending: true });
+    .order('created_at', { ascending: false });
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
 
-  if (!seasonId) return Response.json({ children: children ?? [] });
+  const familyIds = [...new Set((children ?? []).map((c: any) => c.family_id as string).filter(Boolean))];
 
-  // Enrich with team and season points
-  const childIds = (children ?? []).map((c: any) => c.id);
+  const { data: families } = familyIds.length
+    ? await admin
+        .from('cm_visitor_families')
+        .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, visit_date')
+        .in('id', familyIds)
+    : { data: [] };
 
-  const [membershipsRes, pointsRes] = await Promise.all([
-    admin.from('children_ministry_team_members')
-      .select('child_id, team_id, children_ministry_teams(id, name, color)')
-      .eq('season_id', seasonId)
-      .in('child_id', childIds),
-    admin.from('children_ministry_points')
-      .select('child_id, points')
-      .eq('season_id', seasonId)
-      .eq('church_id', churchId)
-      .not('child_id', 'is', null),
-  ]);
+  const familyMap: Record<string, any> = {};
+  for (const f of families ?? []) familyMap[f.id] = f;
 
-  const teamMap: Record<string, any> = {};
-  for (const m of membershipsRes.data ?? []) {
-    teamMap[m.child_id] = m.children_ministry_teams;
-  }
+  const result = (children ?? []).map((c: any) => {
+    const fam = familyMap[c.family_id] ?? {};
+    return {
+      id: c.id,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      date_of_birth: c.date_of_birth ?? null,
+      parent_name: [fam.parent1_first_name, fam.parent1_last_name].filter(Boolean).join(' ') || null,
+      parent_phone: fam.parent1_phone ?? null,
+      parent_email: fam.parent1_email ?? null,
+      visit_date: fam.visit_date ?? null,
+    };
+  });
 
-  const pointsMap: Record<string, number> = {};
-  for (const p of pointsRes.data ?? []) {
-    if (p.child_id) pointsMap[p.child_id] = (pointsMap[p.child_id] ?? 0) + Number(p.points);
-  }
-
-  const enriched = (children ?? []).map((c: any) => ({
-    ...c,
-    team: teamMap[c.id] ?? null,
-    season_points: pointsMap[c.id] ?? 0,
-  }));
-
-  return Response.json({ children: enriched });
+  return Response.json({ children: result });
 }
 
 export async function POST(request: NextRequest) {
