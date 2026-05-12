@@ -314,6 +314,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Upsert each child into children_ministry_children (every check-in)
+  console.log('[checkin] resultMeta:', JSON.stringify(resultMeta));
   for (const r of resultMeta) {
     const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
 
@@ -325,6 +326,7 @@ export async function POST(request: NextRequest) {
       .eq('last_name', cLast)
       .maybeSingle();
 
+    console.log('[checkin] child insert attempt:', cFirst, cLast, 'exists:', !!existingChild);
     if (!existingChild) {
       await admin
         .from('children_ministry_children')
@@ -338,6 +340,7 @@ export async function POST(request: NextRequest) {
           parent1_email: parentEmail ?? null,
           active: true,
         });
+      console.log('[checkin] child inserted');
     }
   }
 
