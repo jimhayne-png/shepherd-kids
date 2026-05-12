@@ -30,7 +30,7 @@ export async function PATCH(
 
   const { data, error } = await adminClient()
     .from('ministry_rosters')
-    .update({ pipeline_stage, notes: note ? `Stage → ${pipeline_stage}: ${note.trim()}` : undefined })
+    .update({ pipeline_stage: pipeline_stage.toLowerCase(), notes: note ? `Stage → ${pipeline_stage}: ${note.trim()}` : undefined })
     .eq('church_id', churchId)
     .eq('ministry_type', type)
     .eq('member_id', memberId)
