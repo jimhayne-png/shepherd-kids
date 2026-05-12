@@ -117,7 +117,12 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
               <div className="flex items-center justify-between mb-3 px-1">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
-                  <span className="text-sm font-bold text-gray-700">{col.stage}</span>
+                  <div>
+                    <span className="text-sm font-bold text-gray-700">{col.stage}</span>
+                    {cfg.stageDescriptions?.[col.stage] && (
+                      <p className="text-xs text-gray-400 italic">{cfg.stageDescriptions[col.stage]}</p>
+                    )}
+                  </div>
                 </div>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: col.color }}>
                   {col.members.length}

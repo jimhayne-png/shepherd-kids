@@ -29,6 +29,13 @@ const STATUS_COLORS: Record<string, string> = {
 function fmtDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+function calcAge(dob: string): number {
+  const d = new Date(dob + "T00:00:00");
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  if (today.getMonth() < d.getMonth() || (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())) age--;
+  return age;
+}
 
 export default function VisitorsPage() {
   const router = useRouter();
@@ -218,17 +225,18 @@ export default function VisitorsPage() {
                       {/* Children */}
                       {fam.children.length > 0 && (
                         <div className="mb-4">
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Children</p>
-                          <div className="space-y-1">
-                            {fam.children.map((c: any) => (
-                              <div key={c.id} className="flex items-center gap-2 text-sm text-gray-700">
-                                <span>🧒</span>
-                                <span className="font-medium">{c.first_name} {c.last_name}</span>
-                                {c.grade && <span className="text-xs text-gray-400">· {c.grade}</span>}
-                                {c.allergies && <span className="text-xs text-red-400">⚠ {c.allergies}</span>}
-                              </div>
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Children:</p>
+                          <ul className="space-y-1 pl-1">
+                            {fam.children.map((c: any, i: number) => (
+                              <li key={c.id ?? i} className="text-sm text-gray-600 flex items-baseline gap-1.5">
+                                <span className="text-gray-400 flex-shrink-0">•</span>
+                                <span>
+                                  {c.first_name} {c.last_name}
+                                  {c.date_of_birth ? ` · ${calcAge(c.date_of_birth)} yrs old` : ""}
+                                </span>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
                       )}
 

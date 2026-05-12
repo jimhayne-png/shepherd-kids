@@ -14,6 +14,7 @@ export type MinistryConfig = {
   hasGrowthModule: boolean;
   invitationOnly: boolean;
   hasMetamorphosis: boolean;
+  stageDescriptions?: Record<string, string>;
   metamorphosisRole?: 'sending' | 'receiving';
   metamorphosisMentorGrades?: string[];
   volunteerGrades?: string[];
@@ -38,6 +39,14 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     hasMetamorphosis: true,
     metamorphosisRole: 'sending',
     volunteerGrades: [],
+    stageDescriptions: {
+      "Visitor": "First time guest",
+      "Regular": "4+ visits",
+      "Engaged": "Consistent & active participant",
+      "Memory Verse": "Achieved memory verse challenge",
+      "Faith Decision": "Made a decision for Christ",
+      "Baptism Ready": "Ready for baptism",
+    },
   },
   "middle-school": {
     name: "Middle School",                // compat
