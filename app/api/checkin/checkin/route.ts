@@ -312,34 +312,67 @@ export async function POST(request: NextRequest) {
         });
     }
 
-    // Insert parent into ministry_rosters if not already there
-    const { data: rosterMember } = await admin
-      .from('members')
-      .select('id')
-      .eq('church_id', session.church_id)
-      .eq('phone', normalizedPhone)
-      .maybeSingle();
+    // Upsert each child into children_ministry_children
+    for (const r of resultMeta) {
+      const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
 
-    if (rosterMember) {
-      const { data: existingRoster } = await admin
-        .from('ministry_rosters')
+      const { data: existingChild } = await admin
+        .from('children_ministry_children')
         .select('id')
         .eq('church_id', session.church_id)
-        .eq('ministry_type', 'childrens')
-        .eq('member_id', rosterMember.id)
+        .eq('first_name', cFirst)
+        .eq('last_name', cLast)
         .maybeSingle();
 
-      if (!existingRoster) {
+      if (!existingChild) {
         await admin
-          .from('ministry_rosters')
+          .from('children_ministry_children')
           .insert({
             church_id: session.church_id,
-            ministry_type: 'childrens',
-            member_id: rosterMember.id,
-            joined_date: today,
-            status: 'active',
-            pipeline_stage: 'visitor',
+            first_name: cFirst,
+            last_name: cLast,
+            date_of_birth: r.dateOfBirth ?? null,
+            parent1_name: parentName,
+            parent1_phone: normalizedPhone,
+            parent1_email: parentEmail ?? null,
+            active: true,
           });
+      }
+    }
+
+    // Add each child to ministry_rosters
+    for (const r of resultMeta) {
+      const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
+
+      const { data: childRecord } = await admin
+        .from('children_ministry_children')
+        .select('id')
+        .eq('church_id', session.church_id)
+        .eq('first_name', cFirst)
+        .eq('last_name', cLast)
+        .maybeSingle();
+
+      if (childRecord) {
+        const { data: existingRoster } = await admin
+          .from('ministry_rosters')
+          .select('id')
+          .eq('church_id', session.church_id)
+          .eq('ministry_type', 'childrens')
+          .eq('member_id', childRecord.id)
+          .maybeSingle();
+
+        if (!existingRoster) {
+          await admin
+            .from('ministry_rosters')
+            .insert({
+              church_id: session.church_id,
+              ministry_type: 'childrens',
+              member_id: childRecord.id,
+              joined_date: today,
+              status: 'active',
+              pipeline_stage: 'visitor',
+            });
+        }
       }
     }
   }

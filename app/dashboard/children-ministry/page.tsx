@@ -27,13 +27,11 @@ function upcomingBirthdays(children: Child[], days = 30) {
 }
 
 const SECTIONS = [
-  { label: "⚡ Live Check-In", href: "/dashboard/children-ministry/live-checkin", desc: "View who's checked in now" },
   { label: "📋 Check-In Setup", href: "/dashboard/children-ministry/checkin-setup", desc: "Manage sessions & rooms" },
+  { label: "⚡ Live Check-In", href: "/dashboard/children-ministry/live-checkin", desc: "View who's checked in now" },
   { label: "📊 Attendance Reports", href: "/dashboard/children-ministry/attendance-report", desc: "Historical attendance data" },
-  { label: "🏆 Growth Challenge", href: "/dashboard/ministry/childrens/growth-challenge", desc: "Teams, points & leaderboard" },
   { label: "🧒 Children", href: "/dashboard/children-ministry/children", desc: "Child directory & profiles" },
-  { label: "👥 Teams", href: "/dashboard/children-ministry/teams", desc: "Manage competition teams" },
-  { label: "⭐ Points", href: "/dashboard/children-ministry/points", desc: "Award & track points" },
+  { label: "👨‍👩‍👧 Parents", href: "/dashboard/children-ministry/parents", desc: "All registered families" },
   { label: "📧 Parent Update", href: "/dashboard/children-ministry/parent-update", desc: "Send family communications" },
 ];
 
