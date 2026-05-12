@@ -83,7 +83,9 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
   for (const stage of cfg.stages) stageGroups[stage] = [];
   stageGroups["Unassigned"] = [];
   for (const m of members) {
-    const stage = m.pipeline_stage && cfg.stages.includes(m.pipeline_stage) ? m.pipeline_stage : "Unassigned";
+    const stage = m.pipeline_stage && cfg.stages.find(s => s.toLowerCase() === m.pipeline_stage.toLowerCase())
+      ? cfg.stages.find(s => s.toLowerCase() === m.pipeline_stage.toLowerCase())!
+      : "Unassigned";
     stageGroups[stage].push(m);
   }
 
