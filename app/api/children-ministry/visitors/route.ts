@@ -22,52 +22,45 @@ export async function GET(req: NextRequest) {
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
   const admin = adminClient();
-  const status = req.nextUrl.searchParams.get('status');
-  const dateFilter = req.nextUrl.searchParams.get('date');
 
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const monthAgo = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-
-  let query = admin
+  const { data: families, error } = await admin
     .from('cm_visitor_families')
-    .select('*')
+    .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, visit_date, status')
     .eq('church_id', churchId)
-    .order('visit_date', { ascending: false })
     .order('created_at', { ascending: false });
 
-  if (status) query = query.eq('status', status);
-  if (dateFilter === 'today') query = query.eq('visit_date', today);
-
-  const { data: families, error } = await query;
   if (error) return Response.json({ error: error.message }, { status: 400 });
 
-  const familyIds = (families ?? []).map((f: any) => f.id);
+  const familyIds = (families ?? []).map((f: any) => f.id as string);
+
   const { data: children } = familyIds.length
-    ? await admin.from('cm_visitor_children').select('*').in('family_id', familyIds).order('created_at')
+    ? await admin
+        .from('cm_visitor_children')
+        .select('family_id, first_name, last_name, date_of_birth')
+        .in('family_id', familyIds)
+        .order('created_at')
     : { data: [] };
 
-  const childMap: Record<string, any[]> = {};
+  const childMap: Record<string, { first_name: string; last_name: string; date_of_birth: string | null }[]> = {};
   for (const c of children ?? []) {
     if (!childMap[c.family_id]) childMap[c.family_id] = [];
-    childMap[c.family_id].push(c);
+    childMap[c.family_id].push({
+      first_name: c.first_name,
+      last_name: c.last_name,
+      date_of_birth: c.date_of_birth ?? null,
+    });
   }
 
-  const enriched = (families ?? []).map((f: any) => ({
-    ...f,
+  const result = (families ?? []).map((f: any) => ({
+    id: f.id,
+    parent1_first_name: f.parent1_first_name,
+    parent1_last_name: f.parent1_last_name,
+    parent1_phone: f.parent1_phone ?? null,
+    parent1_email: f.parent1_email ?? null,
+    visit_date: f.visit_date,
+    status: f.status,
     children: childMap[f.id] ?? [],
   }));
 
-  // Stats
-  const allFamilies = await admin.from('cm_visitor_families').select('visit_date, status').eq('church_id', churchId);
-  const all = allFamilies.data ?? [];
-  const stats = {
-    today: all.filter((f: any) => f.visit_date === today).length,
-    this_week: all.filter((f: any) => f.visit_date >= weekAgo).length,
-    this_month: all.filter((f: any) => f.visit_date >= monthAgo).length,
-    converted: all.filter((f: any) => f.status === 'converted').length,
-  };
-
-  return Response.json({ families: enriched, stats });
+  return Response.json({ families: result });
 }

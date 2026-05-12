@@ -29,6 +29,48 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
   const admin = adminClient();
+
+  // Children's Ministry: query cm_visitor_children joined with cm_visitor_families
+  if (type === 'childrens') {
+    const { data: children, error } = await admin
+      .from('cm_visitor_children')
+      .select('id, first_name, last_name, family_id, created_at')
+      .eq('church_id', churchId)
+      .order('created_at', { ascending: false });
+
+    if (error) return Response.json({ error: error.message }, { status: 400 });
+
+    const familyIds = [...new Set((children ?? []).map((c: any) => c.family_id as string).filter(Boolean))];
+
+    const { data: families } = familyIds.length
+      ? await admin
+          .from('cm_visitor_families')
+          .select('id, parent1_email, visit_date')
+          .in('id', familyIds)
+      : { data: [] };
+
+    const familyMap: Record<string, any> = {};
+    for (const f of families ?? []) familyMap[f.id] = f;
+
+    const enriched = (children ?? []).map((c: any) => {
+      const fam = familyMap[c.family_id] ?? {};
+      const joinedDate = fam.visit_date ?? null;
+      return {
+        id: c.id,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        email: fam.parent1_email ?? null,
+        pipeline_stage: 'visitor',
+        joined_date: joinedDate,
+        weeks_attending: weeksAttending(joinedDate),
+        last_contact_date: null,
+      };
+    }).sort((a: any, b: any) => a.last_name.localeCompare(b.last_name));
+
+    const stageCounts: Record<string, number> = { visitor: enriched.length };
+    return Response.json({ members: enriched, stage_counts: stageCounts, total: enriched.length });
+  }
+
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;

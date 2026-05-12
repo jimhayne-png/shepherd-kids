@@ -224,33 +224,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (familyId) {
-      // Fetch first names already in the roster for this family
-      const { data: existingVisitorChildren } = await admin
-        .from('cm_visitor_children')
-        .select('first_name')
-        .eq('family_id', familyId);
+      for (const r of resultMeta) {
+        const { firstName, lastName } = splitName(r.childName);
 
-      const existingFirstNames = new Set(
-        (existingVisitorChildren ?? []).map(c => c.first_name.toLowerCase().trim())
-      );
+        const { data: existingChild } = await admin
+          .from('cm_visitor_children')
+          .select('id')
+          .eq('family_id', familyId)
+          .eq('first_name', firstName)
+          .maybeSingle();
 
-      const childInserts = resultMeta
-        .map(r => {
-          const { firstName, lastName } = splitName(r.childName);
-          return { firstName, lastName, dateOfBirth: r.dateOfBirth };
-        })
-        .filter(c => !existingFirstNames.has(c.firstName.toLowerCase().trim()))
-        .map(c => ({
-          church_id: session.church_id,
-          family_id: familyId as string,
-          first_name: c.firstName,
-          last_name: c.lastName,
-          date_of_birth: c.dateOfBirth ?? null,
-          grade: null,
-        }));
-
-      if (childInserts.length > 0) {
-        await admin.from('cm_visitor_children').insert(childInserts);
+        if (!existingChild) {
+          await admin
+            .from('cm_visitor_children')
+            .insert({
+              church_id: session.church_id,
+              family_id: familyId,
+              first_name: firstName,
+              last_name: lastName,
+              date_of_birth: r.dateOfBirth ?? null,
+            });
+        }
       }
     }
 
