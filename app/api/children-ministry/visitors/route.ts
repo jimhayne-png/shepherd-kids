@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const { data: children } = familyIds.length
     ? await admin
         .from('cm_visitor_children')
-        .select('family_id, first_name, last_name, date_of_birth')
+        .select('id, family_id, first_name, last_name, date_of_birth')
         .in('family_id', familyIds)
         .order('created_at')
     : { data: [] };
@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
   for (const c of children ?? []) {
     if (!childMap[c.family_id]) childMap[c.family_id] = [];
     childMap[c.family_id].push({
+      id: c.id,
       first_name: c.first_name,
       last_name: c.last_name,
       date_of_birth: c.date_of_birth ?? null,

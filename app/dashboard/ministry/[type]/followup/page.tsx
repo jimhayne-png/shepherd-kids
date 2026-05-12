@@ -27,6 +27,16 @@ function fmt(iso: string | null) {
   if (!iso) return "";
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+function fmtVisitDate(d: string) {
+  return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+function calcAge(dob: string): number {
+  const d = new Date(dob + "T00:00:00");
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  if (today.getMonth() < d.getMonth() || (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())) age--;
+  return age;
+}
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -166,6 +176,7 @@ export default function FollowUpPage({ params }: { params: Promise<{ type: strin
     );
   }
 
+  if (type === 'childrens') return <ChildrensFollowUpPage type={type} />;
   if (!cfg) return <MinistryShell type={type}><div className="p-8 text-gray-500">Ministry not found.</div></MinistryShell>;
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
 
@@ -353,6 +364,203 @@ export default function FollowUpPage({ params }: { params: Promise<{ type: strin
           </div>
         </div>
       )}
+    </MinistryShell>
+  );
+}
+
+function ChildrensFollowUpPage({ type }: { type: string }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const [pendingParents, setPendingParents] = useState<any[]>([]);
+  const [sendingLetter, setSendingLetter] = useState<string | null>(null);
+  const [families, setFamilies] = useState<any[]>([]);
+  const [followupMap, setFollowupMap] = useState<Record<string, any>>({});
+  const [loggingTouch, setLoggingTouch] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function init() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.replace("/"); return; }
+      const t = session.access_token;
+      setToken(t);
+      const headers = { Authorization: `Bearer ${t}` };
+      const [parentsRes, familiesRes, followupRes] = await Promise.all([
+        fetch('/api/children-ministry/parents', { headers }),
+        fetch('/api/children-ministry/visitors', { headers }),
+        fetch('/api/ministry/childrens/followup', { headers }),
+      ]);
+      if (parentsRes.ok) { const d = await parentsRes.json(); setPendingParents((d.parents ?? []).filter((p: any) => !p.follow_up_sent)); }
+      if (familiesRes.ok) { const d = await familiesRes.json(); setFamilies(d.families ?? []); }
+      if (followupRes.ok) {
+        const d = await followupRes.json();
+        const map: Record<string, any> = {};
+        for (const m of d.members ?? []) map[m.id] = m;
+        setFollowupMap(map);
+      }
+      setLoading(false);
+    }
+    init();
+  }, [router]);
+
+  async function sendLetter(fam: any) {
+    if (!token) return;
+    setSendingLetter(fam.id);
+    window.open(`/dashboard/ministry/childrens/visitor-letter/${fam.id}`, '_blank');
+    await fetch(`/api/children-ministry/parents/${fam.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ follow_up_sent: true }),
+    });
+    setSendingLetter(null);
+    setPendingParents(ps => ps.filter((p: any) => p.id !== fam.id));
+  }
+
+  async function logTouch(childId: string, touch: 1 | 2 | 3) {
+    if (!token) return;
+    const key = `${childId}-${touch}`;
+    setLoggingTouch(key);
+    setFollowupMap(m => ({
+      ...m,
+      [childId]: { ...m[childId], [`touch${touch}_completed`]: true, [`touch${touch}_date`]: new Date().toISOString().slice(0, 10) },
+    }));
+    await fetch(`/api/ministry/childrens/followup/${childId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ touch, date: new Date().toISOString().slice(0, 10) }),
+    });
+    setLoggingTouch(null);
+  }
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-gray-400">Loading…</div>
+    </div>
+  );
+
+  return (
+    <MinistryShell type={type}>
+      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
+        <Link href="/dashboard/children-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Children's Ministry</Link>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Follow Up</h1>
+        <p className="text-orange-100 text-sm mt-1">First visit letters &amp; shepherd touches</p>
+      </div>
+
+      <div className="px-8 py-8 bg-gray-50 min-h-screen space-y-8">
+
+        {/* SECTION 1 — Parent First Visit Follow Up */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 bg-amber-100 border-b border-amber-200">
+            <h2 className="font-bold text-amber-900 text-lg" style={{ fontFamily: "Georgia, serif" }}>✉️ Parent First Visit Follow Up</h2>
+            <p className="text-xs text-amber-700 mt-0.5">Send a welcome letter to each new family</p>
+          </div>
+          {pendingParents.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <div className="text-3xl mb-2">✅</div>
+              <p className="font-semibold text-amber-800">All first visit letters sent!</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-amber-100">
+              {pendingParents.map((fam: any) => (
+                <div key={fam.id} className="px-6 py-4 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-900">{fam.parent1_first_name} {fam.parent1_last_name}</p>
+                    <div className="flex flex-wrap gap-3 mt-0.5">
+                      {fam.parent1_phone && <span className="text-xs text-gray-500">{fam.parent1_phone}</span>}
+                      {fam.parent1_email && <span className="text-xs text-gray-500">{fam.parent1_email}</span>}
+                      {fam.visit_date && <span className="text-xs text-gray-400">{fmtVisitDate(fam.visit_date)}</span>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => sendLetter(fam)}
+                    disabled={sendingLetter === fam.id}
+                    className="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0"
+                    style={{ backgroundColor: ACCENT, opacity: sendingLetter === fam.id ? 0.7 : 1 }}
+                  >
+                    {sendingLetter === fam.id ? "Opening…" : "📄 Send Letter"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 2 — Child Shepherd Follow Up */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>🧒 Child Shepherd Follow Up</h2>
+          {families.length === 0 || families.every((f: any) => f.children.length === 0) ? (
+            <div className="bg-white rounded-2xl shadow p-12 text-center border border-gray-100">
+              <p className="text-gray-400">No children to follow up with yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {families.flatMap((fam: any) =>
+                fam.children.map((child: any) => {
+                  const log = followupMap[child.id] ?? {};
+                  const t1 = !!(log.touch1_completed);
+                  const t2 = !!(log.touch2_completed);
+                  const t3 = !!(log.touch3_completed);
+                  const allDone = t1 && t2 && t3;
+                  const parentLabel = [fam.parent1_first_name, fam.parent1_last_name].filter(Boolean).join(' ');
+                  return (
+                    <div key={child.id ?? `${fam.id}-${child.first_name}`} className="bg-white rounded-2xl shadow border border-gray-100 p-5">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <div>
+                          <p className="font-bold text-gray-900">{child.first_name} {child.last_name}</p>
+                          {child.date_of_birth && (
+                            <p className="text-xs text-gray-400">{calcAge(child.date_of_birth)} yrs old</p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {parentLabel}{fam.parent1_phone ? ` · ${fam.parent1_phone}` : ""}
+                          </p>
+                        </div>
+                        {allDone && (
+                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700 flex-shrink-0 whitespace-nowrap">
+                            ✅ Ready for Shepherd Group
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1.5 mt-3 pt-3 border-t border-gray-50">
+                        {([
+                          { n: 1 as const, label: "Phone Call" },
+                          { n: 2 as const, label: "Written Letter" },
+                          { n: 3 as const, label: "In-Person Visit" },
+                        ]).map(({ n, label }) => {
+                          const done = !!(log[`touch${n}_completed`]);
+                          const touchKey = `${child.id}-${n}`;
+                          const saving = loggingTouch === touchKey;
+                          return (
+                            <button
+                              key={n}
+                              onClick={() => !done && child.id && logTouch(child.id, n)}
+                              disabled={done || saving || !child.id}
+                              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left"
+                              style={{ backgroundColor: done ? "#f0fdf4" : "#f9fafb", cursor: done ? "default" : "pointer" }}
+                            >
+                              <span
+                                className="flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold"
+                                style={{ borderColor: done ? "#22c55e" : "#d1d5db", backgroundColor: done ? "#22c55e" : "white", color: "white" }}
+                              >
+                                {done && "✓"}
+                              </span>
+                              <span className="text-sm" style={{ color: done ? "#166534" : "#374151" }}>
+                                {saving ? "Saving…" : label}
+                              </span>
+                              {done && log[`touch${n}_date`] && (
+                                <span className="ml-auto text-xs text-gray-400">{fmt(log[`touch${n}_date`])}</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </MinistryShell>
   );
 }
