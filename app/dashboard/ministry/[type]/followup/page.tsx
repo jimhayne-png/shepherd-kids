@@ -373,8 +373,12 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [pendingParents, setPendingParents] = useState<any[]>([]);
-  const [sendingLetter, setSendingLetter] = useState<string | null>(null);
   const [families, setFamilies] = useState<any[]>([]);
+  const [letterModal, setLetterModal] = useState<{ fam: any } | null>(null);
+  const [letterSubject, setLetterSubject] = useState("");
+  const [letterBody, setLetterBody] = useState("");
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [markingSent, setMarkingSent] = useState(false);
   const [followupMap, setFollowupMap] = useState<Record<string, any>>({});
   const [loggingTouch, setLoggingTouch] = useState<string | null>(null);
 
@@ -403,17 +407,50 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
     init();
   }, [router]);
 
-  async function sendLetter(fam: any) {
+  async function openLetterModal(fam: any) {
     if (!token) return;
-    setSendingLetter(fam.id);
-    window.open(`/dashboard/ministry/childrens/visitor-letter/${fam.id}`, '_blank');
-    await fetch(`/api/children-ministry/parents/${fam.id}`, {
+    setLetterModal({ fam });
+    setLoadingTemplate(true);
+    const res = await fetch('/api/children-ministry/letter-template', { headers: { Authorization: `Bearer ${token}` } });
+    const d = res.ok ? await res.json() : { template: { subject: '', body_html: '' } };
+    const tmpl = d.template;
+    const familyWithChildren = families.find((f: any) => f.id === fam.id);
+    const firstChild = familyWithChildren?.children?.[0];
+    const parentName = `${fam.parent1_first_name ?? ''} ${fam.parent1_last_name ?? ''}`.trim();
+    const childName = firstChild?.first_name ?? 'your child';
+    const childAge = firstChild?.date_of_birth ? `${calcAge(firstChild.date_of_birth)}` : '';
+    const visitDate = fam.visit_date ? fmtVisitDate(fam.visit_date) : '';
+    const fill = (s: string) => s
+      .replace(/{parent_name}/g, parentName)
+      .replace(/{child_name}/g, childName)
+      .replace(/{child_age}/g, childAge)
+      .replace(/{visit_date}/g, visitDate)
+      .replace(/{church_name}/g, 'our church')
+      .replace(/{pastor_name}/g, 'Pastor');
+    setLetterSubject(fill(tmpl.subject ?? ''));
+    setLetterBody(fill(tmpl.body_html ?? ''));
+    setLoadingTemplate(false);
+  }
+
+  function printLetter() {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head><title>Letter</title><style>body{font-family:Georgia,serif;max-width:680px;margin:48px auto;color:#1f2937;padding:0 32px}p{line-height:1.8;margin-bottom:16px}</style></head><body>${letterBody}</body></html>`);
+    win.document.close();
+    win.print();
+  }
+
+  async function markAsSent() {
+    if (!token || !letterModal) return;
+    setMarkingSent(true);
+    await fetch(`/api/children-ministry/parents/${letterModal.fam.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ follow_up_sent: true }),
     });
-    setSendingLetter(null);
-    setPendingParents(ps => ps.filter((p: any) => p.id !== fam.id));
+    setMarkingSent(false);
+    setPendingParents(ps => ps.filter((p: any) => p.id !== letterModal.fam.id));
+    setLetterModal(null);
   }
 
   async function logTouch(childId: string, touch: 1 | 2 | 3) {
@@ -472,12 +509,11 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
                     </div>
                   </div>
                   <button
-                    onClick={() => sendLetter(fam)}
-                    disabled={sendingLetter === fam.id}
+                    onClick={() => openLetterModal(fam)}
                     className="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0"
-                    style={{ backgroundColor: ACCENT, opacity: sendingLetter === fam.id ? 0.7 : 1 }}
+                    style={{ backgroundColor: ACCENT }}
                   >
-                    {sendingLetter === fam.id ? "Opening…" : "📄 Send Letter"}
+                    📄 Personalize &amp; Send
                   </button>
                 </div>
               ))}
@@ -561,6 +597,66 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
           )}
         </div>
       </div>
+
+      {/* Letter Personalize Modal */}
+      {letterModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setLetterModal(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: "Georgia, serif" }}>Welcome Letter</h2>
+                <p className="text-xs text-gray-400 mt-0.5">{letterModal.fam.parent1_first_name} {letterModal.fam.parent1_last_name}</p>
+              </div>
+              <button onClick={() => setLetterModal(null)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            {loadingTemplate ? (
+              <div className="flex-1 flex items-center justify-center p-12">
+                <div className="text-gray-400">Loading template…</div>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Subject</label>
+                  <input
+                    value={letterSubject}
+                    onChange={e => setLetterSubject(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Letter Body</label>
+                  <textarea
+                    value={letterBody}
+                    onChange={e => setLetterBody(e.target.value)}
+                    rows={14}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono resize-none"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setLetterModal(null)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">
+                Cancel
+              </button>
+              <button
+                onClick={printLetter}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold border"
+                style={{ borderColor: ACCENT, color: ACCENT }}
+              >
+                🖨️ Print Letter
+              </button>
+              <button
+                onClick={markAsSent}
+                disabled={markingSent}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: ACCENT, opacity: markingSent ? 0.7 : 1 }}
+              >
+                {markingSent ? "Saving…" : "✅ Send & Mark Sent"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MinistryShell>
   );
 }
