@@ -274,19 +274,7 @@ export default function SettingsPage() {
             </Link>
           </section>
 
-          {/* Section 4 — Danger Zone */}
-          <section className="rounded-xl border border-gray-200 p-6">
-            <h2 className="text-base font-semibold text-gray-700 mb-1">Danger Zone</h2>
-            <p className="text-sm text-gray-500">
-              To make changes to your account, delete your church profile, or transfer ownership, please{" "}
-              <a href="mailto:support@shepherdwell.com" className="text-green-800 underline hover:text-green-700">
-                contact support
-              </a>
-              .
-            </p>
-          </section>
-
-          {/* Section 5 — Youth Ministry Settings */}
+          {/* Section 4 — Youth Ministry Settings */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">Youth Ministry Settings</h2>
             <p className="text-sm text-gray-500 mb-5">Configure pastors and preferences for Middle School and Senior High ministries.</p>
@@ -342,6 +330,18 @@ export default function SettingsPage() {
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
               />
             </div>
+          </section>
+
+          {/* Section 5 — Danger Zone */}
+          <section className="rounded-xl border border-gray-200 p-6">
+            <h2 className="text-base font-semibold text-gray-700 mb-1">Danger Zone</h2>
+            <p className="text-sm text-gray-500">
+              To make changes to your account, delete your church profile, or transfer ownership, please{" "}
+              <a href="mailto:support@shepherdwell.com" className="text-green-800 underline hover:text-green-700">
+                contact support
+              </a>
+              .
+            </p>
           </section>
 
           {/* Save */}

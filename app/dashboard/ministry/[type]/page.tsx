@@ -25,6 +25,11 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   const [recentJoins, setRecentJoins] = useState<any[]>([]);
 
   useEffect(() => {
+    if (type === 'middle_school' || type === 'senior_high') {
+      router.replace('/dashboard/youth-ministry');
+      return;
+    }
+
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.replace("/"); return; }
