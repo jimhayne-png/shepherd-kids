@@ -127,11 +127,11 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
     init();
   }, [type, router, cfg]);
 
-  // ── Custom Youth overview ───────────────────────────────────────────────────
+  // ── Custom Youth overview (mirrors children-ministry/page.tsx exactly) ───────
   if (type === 'middle_school' || type === 'senior_high') {
-    const ministryName  = type === 'middle_school' ? 'Middle School' : 'Senior High';
-    const gradeRange    = type === 'middle_school' ? '6th–8th Grade' : '9th–12th Grade';
-    const birthdays     = calcUpcomingBirthdays(youthStudents);
+    const ministryName = type === 'middle_school' ? 'Middle School Ministry' : 'Senior High Ministry';
+    const gradeRange   = type === 'middle_school' ? '6th–8th Grade' : '9th–12th Grade';
+    const birthdays    = calcUpcomingBirthdays(youthStudents);
     const recentCheckins = youthSessions.slice(0, 4);
 
     if (youthLoading) return (
@@ -149,12 +149,12 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
         </div>
 
         <div className="px-8 py-8 bg-gray-50 min-h-screen">
-          {/* Stat cards */}
+          {/* Stat cards — identical markup to children-ministry/page.tsx */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             {[
-              { label: "Total Students",      value: youthStudents.length, emoji: "👤" },
-              { label: "Upcoming Birthdays",  value: birthdays.length,     emoji: "🎂", sub: "next 30 days" },
-              { label: "Recent Sessions",     value: recentCheckins.length, emoji: "📋" },
+              { label: "Total Students",     value: youthStudents.length,  emoji: "👤" },
+              { label: "Upcoming Birthdays", value: birthdays.length,       emoji: "🎂", sub: "next 30 days" },
+              { label: "Recent Sessions",    value: recentCheckins.length,  emoji: "📋" },
             ].map(card => (
               <div key={card.label} className="bg-white rounded-xl shadow-md px-5 py-4 flex items-center gap-3 border border-gray-100">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: ACCENT + "22" }}>
@@ -168,7 +168,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
             ))}
           </div>
 
-          {/* Sections grid */}
+          {/* Quick Links — identical markup to children-ministry/page.tsx */}
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Sections</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
             {YOUTH_SECTIONS.map(s => (
@@ -184,7 +184,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Upcoming Birthdays */}
+            {/* Upcoming Birthdays — identical markup to children-ministry/page.tsx */}
             <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
               <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>🎂 Upcoming Birthdays</h2>
               {birthdays.length === 0 ? (
@@ -209,7 +209,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
               )}
             </div>
 
-            {/* Recent Check-In Sessions */}
+            {/* Recent Check-Ins — identical markup to children-ministry/page.tsx */}
             <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>📋 Recent Check-Ins</h2>
@@ -243,7 +243,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
       </MinistryShell>
     );
   }
-  // ────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
 
   if (!cfg) return (
     <MinistryShell type={type}>
