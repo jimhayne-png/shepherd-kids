@@ -5,8 +5,39 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import MinistryShell from "@/components/layout/MinistryShell";
-import { MINISTRY_CONFIG } from "@/lib/ministry-config";
+import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import { MINISTRY_CONFIG, MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 import { ProLockedOverlay } from "@/components/ProLockedOverlay";
+
+const YOUTH_NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Church Family", href: "#", isSection: true },
+  { label: "👥 Members", href: "/dashboard/members" },
+  { label: "🏛️ Departments", href: "/dashboard/departments" },
+  { label: "🆕 Visitors", href: "/dashboard/visitors" },
+  { label: "Engagement", href: "#", isSection: true },
+  { label: "📅 Calendar", href: "/dashboard/calendar" },
+  { label: "✅ Attendance", href: "/dashboard/attendance" },
+  { label: "📋 Bulletin", href: "/dashboard/bulletin" },
+  { label: "📢 Communication Hub", href: "/dashboard/communication" },
+  { label: "Pastoral Care", href: "#", isSection: true },
+  { label: "🙏 Annual Pastor Touch", href: "/dashboard/pastor-touch" },
+  { label: "🏥 Visitation", href: "/dashboard/visitation" },
+  { label: "🎂 Birthdays", href: "/dashboard/birthdays" },
+  { label: "🔄 Shepherd Pipeline", href: "/dashboard/shepherd" },
+  { label: "🙋 Prayer", href: "/dashboard/prayer" },
+  { label: "Ministry", href: "#", isSection: true },
+  ...MINISTRY_NAV_ITEMS,
+  { label: "Outreach", href: "#", isSection: true },
+  { label: "✝️ Evangelism", href: "/dashboard/evangelism" },
+  { label: "📧 Visitor Onboarding", href: "/dashboard/visitors/sequences" },
+  { label: "Marketing", href: "#", isSection: true },
+  { label: "⭐ Review Campaign", href: "/dashboard/reviews" },
+  { label: "Settings", href: "#", isSection: true },
+  { label: "⚙️ Settings", href: "/dashboard/settings" },
+  { label: "💳 Billing", href: "/dashboard/billing" },
+  { label: "📖 Tutorials", href: "/dashboard/tutorials" },
+];
 
 const ACCENT = "#F28C28";
 
@@ -141,7 +172,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
     );
 
     return (
-      <MinistryShell type={type}>
+      <AppShell navItems={YOUTH_NAV_ITEMS}>
         <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
           <p className="text-orange-100 text-sm font-medium mb-1">Youth Ministry · {gradeRange}</p>
           <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>{ministryName}</h1>
@@ -240,7 +271,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
             </div>
           </div>
         </div>
-      </MinistryShell>
+      </AppShell>
     );
   }
   // ─────────────────────────────────────────────────────────────────────────────
