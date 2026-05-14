@@ -410,6 +410,12 @@ export default function KioskPage() {
           </button>
         )}
 
+        <div style={{ backgroundColor: "#f0f4ff", border: "1px solid #dbeafe", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🔒</span>
+          <p style={{ margin: 0, fontSize: 13, color: "#4b5563", lineHeight: 1.5 }}>
+            <strong style={{ color: "#374151" }}>Your privacy is important to us.</strong> Your family&apos;s information is encrypted, never sold, and only accessible to authorized church staff. We use your information solely to serve your family.
+          </p>
+        </div>
         <button
           onClick={() => handleCheckin(false)}
           disabled={submitting || newChildren.some(c => !c.firstName.trim() || !c.lastName.trim())}
