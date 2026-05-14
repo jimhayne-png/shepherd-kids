@@ -460,6 +460,14 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
     }
   }
 
+  function previewEmail() {
+    const escaped = letterSubject.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escaped}</title></head><body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Georgia,serif;"><div style="max-width:600px;margin:32px auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><div style="background:#1a3a5c;padding:36px 40px;text-align:center;"><p style="margin:0 0 8px;font-size:11px;color:#C8A951;letter-spacing:3px;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:bold;">Children's Ministry</p><h1 style="margin:0;color:white;font-size:26px;font-weight:normal;letter-spacing:1px;">Your Church</h1><div style="width:40px;height:2px;background:#C8A951;margin:16px auto 0;"></div></div><div style="padding:40px 48px 36px;color:#1f2937;font-size:16px;line-height:1.85;">${letterBody}</div><div style="padding:24px 48px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;"><p style="margin:0;font-size:12px;color:#9ca3af;font-family:Arial,sans-serif;">This message was sent by Your Church Children's Ministry</p></div></div></body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
   async function markAsSent() {
     if (!token || !letterModal) return;
     setMarkingSent(true);
@@ -579,7 +587,7 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
                       <div className="space-y-1.5 mt-3 pt-3 border-t border-gray-50">
                         {([
                           { n: 1 as const, label: "Phone Call" },
-                          { n: 2 as const, label: "Written Letter" },
+                          { n: 2 as const, label: "Send Welcome Card" },
                           { n: 3 as const, label: "In-Person Visit" },
                         ]).map(({ n, label }) => {
                           const done = !!(log[`touch${n}_completed`]);
@@ -670,6 +678,12 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
               <div className="flex gap-3">
                 <button onClick={() => setLetterModal(null)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">
                   Cancel
+                </button>
+                <button
+                  onClick={previewEmail}
+                  className="px-4 py-2.5 rounded-xl text-sm font-bold border border-gray-200 text-gray-600 hover:bg-gray-50"
+                >
+                  👁️ Preview
                 </button>
                 <button
                   onClick={sendEmail}

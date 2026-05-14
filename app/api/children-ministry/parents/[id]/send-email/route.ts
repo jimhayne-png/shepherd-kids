@@ -16,6 +16,39 @@ async function getChurchId(userId: string) {
   return data?.church_id ?? null;
 }
 
+function buildEmailHtml(churchName: string, subject: string, body: string): string {
+  const escapedSubject = subject.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapedSubject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Georgia,serif;">
+  <div style="max-width:600px;margin:32px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+    <div style="background:#1a3a5c;padding:36px 40px;text-align:center;">
+      <p style="margin:0 0 8px;font-size:11px;color:#C8A951;letter-spacing:3px;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:bold;">Children's Ministry</p>
+      <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:normal;letter-spacing:1px;">${churchName}</h1>
+      <div style="width:40px;height:2px;background:#C8A951;margin:16px auto 0;"></div>
+    </div>
+
+    <div style="padding:40px 48px 36px;color:#1f2937;font-size:16px;line-height:1.85;">
+      ${body}
+    </div>
+
+    <div style="padding:24px 48px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;font-family:Arial,sans-serif;">
+        This message was sent by ${churchName} Children's Ministry
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>`;
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await getAuthUser(req);
@@ -39,7 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       from: `${churchName} <onboarding@resend.dev>`,
       to: email,
       subject,
-      html: body,
+      html: buildEmailHtml(churchName, subject, body),
     });
 
     await admin
