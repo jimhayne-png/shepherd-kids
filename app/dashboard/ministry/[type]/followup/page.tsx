@@ -379,6 +379,8 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
   const [letterBody, setLetterBody] = useState("");
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [markingSent, setMarkingSent] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailToast, setEmailToast] = useState("");
   const [followupMap, setFollowupMap] = useState<Record<string, any>>({});
   const [loggingTouch, setLoggingTouch] = useState<string | null>(null);
 
@@ -438,6 +440,24 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
     win.document.write(`<!DOCTYPE html><html><head><title>Letter</title><style>body{font-family:Georgia,serif;max-width:680px;margin:48px auto;color:#1f2937;padding:0 32px}p{line-height:1.8;margin-bottom:16px}</style></head><body>${letterBody}</body></html>`);
     win.document.close();
     win.print();
+  }
+
+  async function sendEmail() {
+    if (!token || !letterModal) return;
+    setSendingEmail(true);
+    const res = await fetch(`/api/children-ministry/parents/${letterModal.fam.id}/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ subject: letterSubject, body: letterBody, email: letterModal.fam.parent1_email }),
+    });
+    setSendingEmail(false);
+    if (res.ok) {
+      const sentEmail = letterModal.fam.parent1_email;
+      setPendingParents(ps => ps.filter((p: any) => p.id !== letterModal!.fam.id));
+      setLetterModal(null);
+      setEmailToast(`Email sent to ${sentEmail}`);
+      setTimeout(() => setEmailToast(""), 4000);
+    }
   }
 
   async function markAsSent() {
@@ -598,6 +618,13 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
         </div>
       </div>
 
+      {/* Email success toast */}
+      {emailToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-xl z-50 whitespace-nowrap">
+          ✅ {emailToast}
+        </div>
+      )}
+
       {/* Letter Personalize Modal */}
       {letterModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setLetterModal(null)}>
@@ -634,25 +661,33 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
                 </div>
               </div>
             )}
-            <div className="p-6 border-t border-gray-100 flex gap-3">
-              <button onClick={() => setLetterModal(null)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">
-                Cancel
-              </button>
-              <button
-                onClick={printLetter}
-                className="px-4 py-2.5 rounded-xl text-sm font-bold border"
-                style={{ borderColor: ACCENT, color: ACCENT }}
-              >
-                🖨️ Print Letter
-              </button>
-              <button
-                onClick={markAsSent}
-                disabled={markingSent}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ backgroundColor: ACCENT, opacity: markingSent ? 0.7 : 1 }}
-              >
-                {markingSent ? "Saving…" : "✅ Send & Mark Sent"}
-              </button>
+            <div className="p-6 border-t border-gray-100 flex flex-col gap-3">
+              {!letterModal.fam.parent1_email && (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  ⚠️ No email on file for this family. Please add an email to send this letter.
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => setLetterModal(null)} className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">
+                  Cancel
+                </button>
+                <button
+                  onClick={sendEmail}
+                  disabled={sendingEmail || !letterModal.fam.parent1_email}
+                  className="px-4 py-2.5 rounded-xl text-sm font-bold border"
+                  style={{ borderColor: ACCENT, color: ACCENT, opacity: sendingEmail || !letterModal.fam.parent1_email ? 0.4 : 1 }}
+                >
+                  {sendingEmail ? "Sending…" : "📧 Send Email"}
+                </button>
+                <button
+                  onClick={markAsSent}
+                  disabled={markingSent}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ backgroundColor: ACCENT, opacity: markingSent ? 0.7 : 1 }}
+                >
+                  {markingSent ? "Saving…" : "✅ Send & Mark Sent"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
