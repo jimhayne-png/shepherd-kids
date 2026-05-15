@@ -103,7 +103,7 @@ export default function CheckinSetupPage() {
     setToggling(null);
   }
 
-  const ministryLabel = (t: string) => t === 'middle-school' ? 'Middle School' : t === 'senior-high' ? 'Senior High' : t;
+  const ministryLabel = (t: string) => t === 'middle-school' ? 'Middle School' : t === 'high-school' ? 'Senior High' : t;
 
   return (
     <AppShell navItems={navItems}>
@@ -142,7 +142,7 @@ export default function CheckinSetupPage() {
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Ministry Type</label>
                   <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
                     <option value="middle-school">Middle School</option>
-                    <option value="senior-high">Senior High</option>
+                    <option value="high-school">Senior High</option>
                   </select>
                 </div>
               </div>

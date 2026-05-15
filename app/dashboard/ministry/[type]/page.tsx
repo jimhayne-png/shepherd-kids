@@ -83,13 +83,13 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   const [pipelineHealth, setPipelineHealth] = useState<number | null>(null);
   const [recentJoins, setRecentJoins] = useState<any[]>([]);
 
-  // Youth-specific state (only populated when type is middle-school / senior-high)
+  // Youth-specific state (only populated when type is middle-school / high-school)
   const [youthStudents, setYouthStudents] = useState<any[]>([]);
   const [youthSessions, setYouthSessions] = useState<any[]>([]);
   const [youthLoading, setYouthLoading] = useState(true);
 
   useEffect(() => {
-    if (type === 'middle-school' || type === 'senior-high') {
+    if (type === 'middle-school' || type === 'high-school') {
       async function initYouth() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { router.replace("/"); return; }
@@ -159,7 +159,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   }, [type, router, cfg]);
 
   // ── Custom Youth overview (mirrors children-ministry/page.tsx exactly) ───────
-  if (type === 'middle-school' || type === 'senior-high') {
+  if (type === 'middle-school' || type === 'high-school') {
     const ministryName = type === 'middle-school' ? 'Middle School Ministry' : 'Senior High Ministry';
     const gradeRange   = type === 'middle-school' ? '6th–8th Grade' : '9th–12th Grade';
     const birthdays    = calcUpcomingBirthdays(youthStudents);

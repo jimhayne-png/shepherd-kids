@@ -90,7 +90,7 @@ function fmtDate(iso: string) {
 }
 
 function ministryLabel(t: string) {
-  return t === "middle-school" ? "Middle School" : t === "senior-high" ? "Senior High" : t;
+  return t === "middle-school" ? "Middle School" : t === "high-school" ? "Senior High" : t;
 }
 
 export default function YouthMinistryPage() {

@@ -159,28 +159,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     invitationOnly: true,
     hasMetamorphosis: false,
   },
-  "senior-high": {
-    name: "Senior High",
-    label: "Senior High",
-    emoji: "🎓",
-    ageRange: "9th–12th Grade",
-    grades: ["9th", "10th", "11th", "12th"],
-    pipelineStages: ["visitor", "regular", "engaged", "leadership_role", "faith_decision", "baptism_ready"],
-    stages: ["visitor", "regular", "engaged", "leadership_role", "faith_decision", "baptism_ready"],
-    hasShepherdGroups: true,
-    hasTeamChallenge: false,
-    hasGrowthModule: false,
-    invitationOnly: false,
-    hasMetamorphosis: false,
-    stageDescriptions: {
-      "visitor": "First time guest",
-      "regular": "4+ visits",
-      "engaged": "Consistent & active participant",
-      "leadership_role": "Serving or leading others",
-      "faith_decision": "Made a decision for Christ",
-      "baptism_ready": "Ready for baptism",
-    },
-  },
 };
 
 // ── Helper functions ──────────────────────────────────────────────────────────
@@ -278,5 +256,4 @@ export const MINISTRY_NAV_ITEMS = [
   { label: "🎩 Ushers Ministry",      href: "/dashboard/ministry/ushers" },
   { label: "🎭 Drama & Skit",         href: "/dashboard/ministry/drama" },
   { label: "🏠 Bible Study Pods",     href: "/dashboard/bible-study-pods" },
-  { label: "🎓 Senior High",            href: "/dashboard/ministry/senior-high" },
 ];
