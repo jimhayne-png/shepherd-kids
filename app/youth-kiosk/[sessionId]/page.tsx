@@ -36,6 +36,7 @@ export default function YouthKioskPage() {
 
   const [studentName, setStudentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // New student form
   const [firstName, setFirstName] = useState("");
@@ -93,16 +94,22 @@ export default function YouthKioskPage() {
   async function handleNewStudentSubmit() {
     if (!firstName.trim() || !lastName.trim()) return;
     setSubmitting(true);
+    setSubmitError("");
+    const requestBody = { sessionId, phone, firstName: firstName.trim(), lastName: lastName.trim(), grade, dateOfBirth: dob, address, city, state: stateVal, zip };
+    console.log("[YouthKiosk] Submitting new student:", requestBody);
     const res = await fetch("/api/youth-checkin/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, phone, firstName: firstName.trim(), lastName: lastName.trim(), grade, dateOfBirth: dob, address, city, state: stateVal, zip }),
+      body: JSON.stringify(requestBody),
     });
     const data = await res.json();
+    console.log("[YouthKiosk] Check-in response:", data);
     setSubmitting(false);
     if (data.success) {
       setStudentName(data.studentName);
       setStep("confirm");
+    } else {
+      setSubmitError(data.error ?? "Check-in failed. Please try again or see a staff member.");
     }
   }
 
@@ -241,8 +248,13 @@ export default function YouthKioskPage() {
             <input type="text" value={zip} onChange={e => setZip(e.target.value)} maxLength={10} style={{ width: "100%", fontSize: 18, padding: "14px 16px", borderRadius: 12, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }} />
           </div>
         </div>
+        {submitError && (
+          <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: "14px 18px", marginBottom: 16 }}>
+            <p style={{ margin: 0, color: "#dc2626", fontSize: 15, fontWeight: 600 }}>⚠️ {submitError}</p>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 12 }}>
-          <button onClick={() => setStep("phone")} style={{ flex: "0 0 auto", padding: "18px 24px", borderRadius: 16, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 18, fontWeight: 600, cursor: "pointer" }}>← Back</button>
+          <button onClick={() => { setStep("phone"); setSubmitError(""); }} style={{ flex: "0 0 auto", padding: "18px 24px", borderRadius: 16, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 18, fontWeight: 600, cursor: "pointer" }}>← Back</button>
           <button
             onClick={handleNewStudentSubmit}
             disabled={submitting || !firstName.trim() || !lastName.trim()}

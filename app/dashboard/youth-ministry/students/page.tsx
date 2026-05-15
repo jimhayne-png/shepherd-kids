@@ -24,12 +24,30 @@ function calcAge(dob: string | null): string {
   return `${age}`;
 }
 
+const GRADES = ["6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+
 export default function StudentsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
+
+  // Add student modal
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState("");
+  const [newFirst, setNewFirst] = useState("");
+  const [newLast, setNewLast] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newGrade, setNewGrade] = useState("");
+  const [newDob, setNewDob] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [newState, setNewState] = useState("");
+  const [newZip, setNewZip] = useState("");
 
   const navItems: NavItem[] = [
     { label: "Dashboard", href: "/dashboard" },
@@ -61,17 +79,55 @@ export default function StudentsPage() {
     { label: "📖 Tutorials", href: "/dashboard/tutorials" },
   ];
 
+  async function loadStudents(t: string) {
+    const res = await fetch('/api/youth-ministry/students', { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) { const d = await res.json(); setStudents(d.students ?? []); }
+  }
+
   useEffect(() => {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.replace("/"); return; }
       const t = session.access_token;
-      const res = await fetch('/api/youth-ministry/students', { headers: { Authorization: `Bearer ${t}` } });
-      if (res.ok) { const d = await res.json(); setStudents(d.students ?? []); }
+      setToken(t);
+      await loadStudents(t);
       setLoading(false);
     }
     init();
   }, [router]);
+
+  async function handleAddStudent() {
+    if (!token || !newFirst.trim() || !newLast.trim()) return;
+    setAddSaving(true);
+    setAddError("");
+    const res = await fetch('/api/youth-ministry/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        first_name: newFirst.trim(),
+        last_name: newLast.trim(),
+        phone: newPhone.trim() || null,
+        email: newEmail.trim() || null,
+        grade: newGrade || null,
+        date_of_birth: newDob || null,
+        address: newAddress.trim() || null,
+        city: newCity.trim() || null,
+        state: newState.trim() || null,
+        zip: newZip.trim() || null,
+      }),
+    });
+    const data = await res.json();
+    setAddSaving(false);
+    if (res.ok) {
+      setShowAddModal(false);
+      setNewFirst(""); setNewLast(""); setNewPhone(""); setNewEmail("");
+      setNewGrade(""); setNewDob(""); setNewAddress(""); setNewCity("");
+      setNewState(""); setNewZip("");
+      await loadStudents(token);
+    } else {
+      setAddError(data.error ?? "Failed to add student.");
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -86,8 +142,19 @@ export default function StudentsPage() {
     <AppShell navItems={navItems}>
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
         <Link href="/dashboard/youth-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Youth Ministry</Link>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Students</h1>
-        <p className="text-orange-100 text-sm mt-1">{students.length} student{students.length !== 1 ? "s" : ""} registered</p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Students</h1>
+            <p className="text-orange-100 text-sm mt-1">{students.length} student{students.length !== 1 ? "s" : ""} registered</p>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2.5 rounded-xl text-sm font-bold bg-white flex-shrink-0"
+            style={{ color: ACCENT }}
+          >
+            + Add Student
+          </button>
+        </div>
       </div>
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
@@ -138,6 +205,86 @@ export default function StudentsPage() {
           </div>
         )}
       </div>
+
+      {/* Add Student Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: "Georgia, serif" }}>Add Student</h2>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {addError && (
+                <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{addError}</p>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "First Name *", value: newFirst, set: setNewFirst },
+                  { label: "Last Name *", value: newLast, set: setNewLast },
+                ].map(({ label, value, set }) => (
+                  <div key={label}>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">{label}</label>
+                    <input value={value} onChange={e => set(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Phone</label>
+                  <input type="tel" value={newPhone} onChange={e => setNewPhone(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Email</label>
+                  <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Grade</label>
+                  <select value={newGrade} onChange={e => setNewGrade(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
+                    <option value="">—</option>
+                    {GRADES.map(g => <option key={g} value={g}>{g} Grade</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Date of Birth</label>
+                  <input type="date" value={newDob} onChange={e => setNewDob(e.target.value)} max={new Date().toISOString().slice(0, 10)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Address</label>
+                <input value={newAddress} onChange={e => setNewAddress(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-1">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">City</label>
+                  <input value={newCity} onChange={e => setNewCity(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">State</label>
+                  <input value={newState} onChange={e => setNewState(e.target.value)} maxLength={2} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Zip</label>
+                  <input value={newZip} onChange={e => setNewZip(e.target.value)} maxLength={10} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setShowAddModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">Cancel</button>
+              <button
+                onClick={handleAddStudent}
+                disabled={addSaving || !newFirst.trim() || !newLast.trim()}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: ACCENT, opacity: addSaving || !newFirst.trim() || !newLast.trim() ? 0.6 : 1 }}
+              >
+                {addSaving ? "Saving…" : "Add Student"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selected && (
