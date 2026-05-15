@@ -21,12 +21,17 @@ export async function GET(req: NextRequest) {
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const { data } = await adminClient()
+  const type = new URL(req.url).searchParams.get('type');
+  let query = adminClient()
     .from('youth_students')
     .select('*')
     .eq('church_id', churchId)
     .order('last_name', { ascending: true });
 
+  if (type === 'middle-school') query = query.in('grade', ['6th', '7th', '8th']);
+  else if (type === 'high-school') query = query.in('grade', ['9th', '10th', '11th', '12th']);
+
+  const { data } = await query;
   return Response.json({ students: data ?? [] });
 }
 
