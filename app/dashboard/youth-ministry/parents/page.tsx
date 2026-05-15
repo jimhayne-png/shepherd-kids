@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
@@ -17,10 +17,9 @@ type Parent = {
 const MS_GRADES = new Set(["6th", "7th", "8th"]);
 const HS_GRADES = new Set(["9th", "10th", "11th", "12th"]);
 
-export default function ParentsPage() {
+export default function ParentsPage({ searchParams }: { searchParams: { type?: string } }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const typeParam = searchParams.get("type");
+  const typeParam = searchParams.type ?? null;
   const [loading, setLoading] = useState(true);
   const [parents, setParents] = useState<Parent[]>([]);
   const [search, setSearch] = useState("");

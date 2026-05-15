@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
@@ -28,10 +28,9 @@ const GRADES = ["6th", "7th", "8th", "9th", "10th", "11th", "12th"];
 const MS_GRADES = new Set(["6th", "7th", "8th"]);
 const HS_GRADES = new Set(["9th", "10th", "11th", "12th"]);
 
-export default function StudentsPage() {
+export default function StudentsPage({ searchParams }: { searchParams: { type?: string } }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const typeParam = searchParams.get("type"); // "middle-school" | "high-school" | null
+  const typeParam = searchParams.type ?? null;
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
