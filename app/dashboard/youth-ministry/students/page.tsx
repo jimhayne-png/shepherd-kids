@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
@@ -25,9 +25,13 @@ function calcAge(dob: string | null): string {
 }
 
 const GRADES = ["6th", "7th", "8th", "9th", "10th", "11th", "12th"];
+const MS_GRADES = new Set(["6th", "7th", "8th"]);
+const HS_GRADES = new Set(["9th", "10th", "11th", "12th"]);
 
 export default function StudentsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get("type"); // "middle-school" | "high-school" | null
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
@@ -130,13 +134,16 @@ export default function StudentsPage() {
   }
 
   const filtered = useMemo(() => {
+    let list = students;
+    if (typeParam === "middle-school") list = list.filter(s => s.grade !== null && MS_GRADES.has(s.grade));
+    else if (typeParam === "high-school") list = list.filter(s => s.grade !== null && HS_GRADES.has(s.grade));
     const q = search.toLowerCase();
-    if (!q) return students;
-    return students.filter(s =>
+    if (!q) return list;
+    return list.filter(s =>
       `${s.first_name} ${s.last_name}`.toLowerCase().includes(q) ||
       (s.phone ?? "").includes(q)
     );
-  }, [students, search]);
+  }, [students, search, typeParam]);
 
   return (
     <AppShell navItems={navItems}>
@@ -144,8 +151,10 @@ export default function StudentsPage() {
         <Link href="/dashboard/youth-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Youth Ministry</Link>
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Students</h1>
-            <p className="text-orange-100 text-sm mt-1">{students.length} student{students.length !== 1 ? "s" : ""} registered</p>
+            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
+              {typeParam === "middle-school" ? "Middle School Students" : typeParam === "high-school" ? "Senior High Students" : "All Youth Students"}
+            </h1>
+            <p className="text-orange-100 text-sm mt-1">{filtered.length} student{filtered.length !== 1 ? "s" : ""}</p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}

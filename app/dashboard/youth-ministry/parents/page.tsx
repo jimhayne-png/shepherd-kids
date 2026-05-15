@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
@@ -14,8 +14,13 @@ type Parent = {
   youth_students: { first_name: string; last_name: string; grade: string | null } | null;
 };
 
+const MS_GRADES = new Set(["6th", "7th", "8th"]);
+const HS_GRADES = new Set(["9th", "10th", "11th", "12th"]);
+
 export default function ParentsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get("type");
   const [loading, setLoading] = useState(true);
   const [parents, setParents] = useState<Parent[]>([]);
   const [search, setSearch] = useState("");
@@ -63,20 +68,25 @@ export default function ParentsPage() {
   }, [router]);
 
   const filtered = useMemo(() => {
+    let list = parents;
+    if (typeParam === "middle-school") list = list.filter(p => p.youth_students?.grade != null && MS_GRADES.has(p.youth_students.grade));
+    else if (typeParam === "high-school") list = list.filter(p => p.youth_students?.grade != null && HS_GRADES.has(p.youth_students.grade));
     const q = search.toLowerCase();
-    if (!q) return parents;
-    return parents.filter(p =>
+    if (!q) return list;
+    return list.filter(p =>
       `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
       (p.phone ?? "").includes(q)
     );
-  }, [parents, search]);
+  }, [parents, search, typeParam]);
 
   return (
     <AppShell navItems={navItems}>
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
         <Link href="/dashboard/youth-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Youth Ministry</Link>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Parents</h1>
-        <p className="text-orange-100 text-sm mt-1">{parents.length} parent{parents.length !== 1 ? "s" : ""} on file</p>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
+          {typeParam === "middle-school" ? "Middle School Parents" : typeParam === "high-school" ? "Senior High Parents" : "All Youth Parents"}
+        </h1>
+        <p className="text-orange-100 text-sm mt-1">{filtered.length} parent{filtered.length !== 1 ? "s" : ""} on file</p>
       </div>
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
