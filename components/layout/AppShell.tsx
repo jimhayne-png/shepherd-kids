@@ -24,6 +24,50 @@ type Category = {
   items: { label: string; href: string }[];
 };
 
+// ── Youth & Children sub-group item lists ────────────────────────────────────
+const CM_ITEMS = [
+  { label: "📋 Overview",           href: "/dashboard/children-ministry" },
+  { label: "👥 Members & Visitors", href: "/dashboard/ministry/childrens/roster" },
+  { label: "✅ Attendance",          href: "/dashboard/ministry/childrens/attendance" },
+  { label: "🔄 Follow Up",          href: "/dashboard/ministry/childrens/followup" },
+  { label: "📊 Shepherd Pipeline",  href: "/dashboard/ministry/childrens/pipeline" },
+  { label: "📢 Communication",      href: "/dashboard/ministry/childrens/communication" },
+  { label: "🎂 Birthdays",          href: "/dashboard/ministry/childrens/birthdays" },
+  { label: "🙏 Prayer",             href: "/dashboard/ministry/childrens/prayer" },
+  { label: "👫 Shepherd Groups",    href: "/dashboard/ministry/childrens/shepherd-groups" },
+  { label: "🏆 Growth Challenge",   href: "/dashboard/ministry/childrens/growth-challenge" },
+  { label: "🦋 Metamorphosis",      href: "/dashboard/ministry/childrens/metamorphosis" },
+];
+const MS_ITEMS = [
+  { label: "📋 Overview",           href: "/dashboard/ministry/middle-school" },
+  { label: "👥 Members & Visitors", href: "/dashboard/ministry/middle-school/roster" },
+  { label: "✅ Attendance",          href: "/dashboard/ministry/middle-school/attendance" },
+  { label: "🔄 Follow Up",          href: "/dashboard/ministry/middle-school/followup" },
+  { label: "📊 Shepherd Pipeline",  href: "/dashboard/ministry/middle-school/pipeline" },
+  { label: "📢 Communication",      href: "/dashboard/ministry/middle-school/communication" },
+  { label: "🎂 Birthdays",          href: "/dashboard/ministry/middle-school/birthdays" },
+  { label: "🙏 Prayer",             href: "/dashboard/ministry/middle-school/prayer" },
+  { label: "👤 Students",           href: "/dashboard/youth-ministry/students" },
+  { label: "👪 Parents",            href: "/dashboard/youth-ministry/parents" },
+  { label: "📋 Permission Forms",   href: "/dashboard/youth-ministry/permissions" },
+  { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
+];
+const SH_ITEMS = [
+  { label: "📋 Overview",           href: "/dashboard/ministry/high-school" },
+  { label: "👥 Members & Visitors", href: "/dashboard/ministry/high-school/roster" },
+  { label: "✅ Attendance",          href: "/dashboard/ministry/high-school/attendance" },
+  { label: "🔄 Follow Up",          href: "/dashboard/ministry/high-school/followup" },
+  { label: "📊 Shepherd Pipeline",  href: "/dashboard/ministry/high-school/pipeline" },
+  { label: "📢 Communication",      href: "/dashboard/ministry/high-school/communication" },
+  { label: "🎂 Birthdays",          href: "/dashboard/ministry/high-school/birthdays" },
+  { label: "🙏 Prayer",             href: "/dashboard/ministry/high-school/prayer" },
+  { label: "👤 Students",           href: "/dashboard/youth-ministry/students" },
+  { label: "👪 Parents",            href: "/dashboard/youth-ministry/parents" },
+  { label: "📋 Permission Forms",   href: "/dashboard/youth-ministry/permissions" },
+  { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
+];
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CATEGORIES: Category[] = [
   {
     key: "administration",
@@ -72,14 +116,14 @@ const CATEGORIES: Category[] = [
   {
     key: "youth",
     label: "Youth & Children",
+    // Items here are used only for hasActive detection on the collapsed category header.
+    // The actual rendered items come from CM_ITEMS / MS_ITEMS / SH_ITEMS.
     items: [
-      { label: "👦 Children's Ministry",   href: "/dashboard/children-ministry" },
-      { label: "🎒 Middle School",         href: "/dashboard/ministry/middle-school" },
-      { label: "🎓 High School",           href: "/dashboard/ministry/high-school" },
-      { label: "🏫 Youth Check-In Setup",  href: "/dashboard/youth-ministry/checkin-setup" },
-      { label: "👨‍👩‍👧 Youth Students",       href: "/dashboard/youth-ministry/students" },
-      { label: "👪 Youth Parents",          href: "/dashboard/youth-ministry/parents" },
-      { label: "📋 Permission Forms",      href: "/dashboard/youth-ministry/permissions" },
+      { label: "", href: "/dashboard/children-ministry" },
+      { label: "", href: "/dashboard/ministry/childrens" },
+      { label: "", href: "/dashboard/ministry/middle-school" },
+      { label: "", href: "/dashboard/ministry/high-school" },
+      { label: "", href: "/dashboard/youth-ministry" },
     ],
   },
 ];
@@ -106,6 +150,8 @@ export default function AppShell(props: AppShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [cmOpen, setCmOpen] = useState(false);
+  const [msOpen, setMsOpen] = useState(false);
+  const [shOpen, setShOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -117,9 +163,9 @@ export default function AppShell(props: AppShellProps) {
       next[cat.key] = hasActive ? false : (stored[cat.key] ?? true);
     }
     setCollapsed(next);
-    const youthCat = CATEGORIES.find(c => c.key === "youth");
-    const cmActive = (youthCat?.items ?? []).some(item => pathActive(pathname, item.href));
-    setCmOpen(cmActive);
+    setCmOpen(CM_ITEMS.some(item => pathActive(pathname, item.href)));
+    setMsOpen(MS_ITEMS.some(item => pathActive(pathname, item.href)));
+    setShOpen(SH_ITEMS.some(item => pathActive(pathname, item.href)));
     setMounted(true);
   }, [pathname]);
 
@@ -275,70 +321,74 @@ export default function AppShell(props: AppShellProps) {
 
                 {/* Collapsible items */}
                 {cat.key === "youth" ? (
-                  /* Youth & Children — nested Children's Ministry sub-dropdown */
+                  /* Youth & Children — three expandable sub-groups */
                   <div
                     style={{
                       overflow: "hidden",
-                      maxHeight: isCollapsed ? "0px" : "380px",
-                      transition: "max-height 0.22s ease, opacity 0.15s ease",
+                      maxHeight: isCollapsed ? "0px" : "1500px",
+                      transition: "max-height 0.25s ease, opacity 0.15s ease",
                       opacity: isCollapsed ? 0 : 1,
                     }}
                   >
                     <div style={{ paddingBottom: "4px" }}>
-                      {/* CM sub-dropdown toggle */}
-                      <button
-                        onClick={() => setCmOpen(o => !o)}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "7px 12px 7px 18px",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          color: hasActive ? "#F28C28" : "rgba(255,255,255,0.78)",
-                          fontSize: "13px",
-                          fontWeight: hasActive ? 600 : 400,
-                          borderRadius: "8px",
-                          textAlign: "left",
-                        }}
-                      >
-                        <span>🧒 Children's Ministry</span>
-                        <svg
-                          width="10" height="10" viewBox="0 0 10 10" fill="none"
-                          style={{
-                            flexShrink: 0,
-                            transform: cmOpen ? "rotate(0deg)" : "rotate(-90deg)",
-                            transition: "transform 0.2s ease",
-                            opacity: 0.55,
-                          }}
-                        >
-                          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-
-                      {/* CM nested items */}
-                      <div
-                        style={{
-                          overflow: "hidden",
-                          maxHeight: cmOpen ? `${cat.items.length * 34}px` : "0px",
-                          transition: "max-height 0.22s ease, opacity 0.15s ease",
-                          opacity: cmOpen ? 1 : 0,
-                        }}
-                      >
-                        <div style={{ display: "flex", flexDirection: "column", gap: "1px", paddingBottom: "4px" }}>
-                          {cat.items.map(item => (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              style={nestedItemStyle(pathActive(pathname, item.href))}
+                      {[
+                        { label: "🧒 Children's Ministry",  items: CM_ITEMS, open: cmOpen, setOpen: setCmOpen },
+                        { label: "🎒 Middle School",         items: MS_ITEMS, open: msOpen, setOpen: setMsOpen },
+                        { label: "🎓 Senior High",           items: SH_ITEMS, open: shOpen, setOpen: setShOpen },
+                      ].map(group => {
+                        const groupActive = group.items.some(item => pathActive(pathname, item.href));
+                        return (
+                          <div key={group.label}>
+                            <button
+                              onClick={() => group.setOpen(o => !o)}
+                              style={{
+                                width: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "7px 12px 7px 18px",
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: groupActive ? "#F28C28" : "rgba(255,255,255,0.78)",
+                                fontSize: "13px",
+                                fontWeight: groupActive ? 600 : 400,
+                                borderRadius: "8px",
+                                textAlign: "left",
+                              }}
                             >
-                              {item.href === "/dashboard/children-ministry" ? "📋 Overview" : item.label}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
+                              <span>{group.label}</span>
+                              <svg
+                                width="10" height="10" viewBox="0 0 10 10" fill="none"
+                                style={{
+                                  flexShrink: 0,
+                                  transform: group.open ? "rotate(0deg)" : "rotate(-90deg)",
+                                  transition: "transform 0.2s ease",
+                                  opacity: 0.55,
+                                }}
+                              >
+                                <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            <div
+                              style={{
+                                overflow: "hidden",
+                                maxHeight: group.open ? `${group.items.length * 34}px` : "0px",
+                                transition: "max-height 0.22s ease, opacity 0.15s ease",
+                                opacity: group.open ? 1 : 0,
+                              }}
+                            >
+                              <div style={{ display: "flex", flexDirection: "column", gap: "1px", paddingBottom: "4px" }}>
+                                {group.items.map(item => (
+                                  <Link key={group.label + item.href} href={item.href} style={nestedItemStyle(pathActive(pathname, item.href))}>
+                                    {item.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
