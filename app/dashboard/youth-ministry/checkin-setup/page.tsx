@@ -55,7 +55,7 @@ export default function CheckinSetupPage() {
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
-  const [newType, setNewType] = useState("middle_school");
+  const [newType, setNewType] = useState("middle-school");
   const [creating, setCreating] = useState(false);
 
   async function load(t: string) {
@@ -103,7 +103,7 @@ export default function CheckinSetupPage() {
     setToggling(null);
   }
 
-  const ministryLabel = (t: string) => t === 'middle_school' ? 'Middle School' : t === 'senior_high' ? 'Senior High' : t;
+  const ministryLabel = (t: string) => t === 'middle-school' ? 'Middle School' : t === 'senior-high' ? 'Senior High' : t;
 
   return (
     <AppShell navItems={navItems}>
@@ -141,8 +141,8 @@ export default function CheckinSetupPage() {
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Ministry Type</label>
                   <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
-                    <option value="middle_school">Middle School</option>
-                    <option value="senior_high">Senior High</option>
+                    <option value="middle-school">Middle School</option>
+                    <option value="senior-high">Senior High</option>
                   </select>
                 </div>
               </div>

@@ -45,10 +45,10 @@ const TILES = [
   { emoji: "📊", label: "Attendance Reports",   href: "/dashboard/youth-ministry/attendance-report",   desc: "Historical attendance data" },
   { emoji: "👤", label: "Students",             href: "/dashboard/youth-ministry/students",            desc: "Student directory & profiles" },
   { emoji: "👨‍👩‍👧", label: "Parents",              href: "/dashboard/youth-ministry/parents",             desc: "All registered families" },
-  { emoji: "🔄", label: "Shepherd Pipeline",    href: "/dashboard/ministry/middle_school/pipeline",    desc: "Track student spiritual journey" },
-  { emoji: "✉️", label: "Follow Up",             href: "/dashboard/ministry/middle_school/followup",   desc: "Student & family follow-up" },
-  { emoji: "📢", label: "Communication",        href: "/dashboard/ministry/middle_school/communication", desc: "Send announcements" },
-  { emoji: "🎂", label: "Birthdays",            href: "/dashboard/ministry/middle_school/birthdays",   desc: "Upcoming student birthdays" },
+  { emoji: "🔄", label: "Shepherd Pipeline",    href: "/dashboard/ministry/middle-school/pipeline",    desc: "Track student spiritual journey" },
+  { emoji: "✉️", label: "Follow Up",             href: "/dashboard/ministry/middle-school/followup",   desc: "Student & family follow-up" },
+  { emoji: "📢", label: "Communication",        href: "/dashboard/ministry/middle-school/communication", desc: "Send announcements" },
+  { emoji: "🎂", label: "Birthdays",            href: "/dashboard/ministry/middle-school/birthdays",   desc: "Upcoming student birthdays" },
   { emoji: "📝", label: "Permission Forms",     href: "/dashboard/youth-ministry/permissions",         desc: "Student activity permissions" },
 ];
 
@@ -90,7 +90,7 @@ function fmtDate(iso: string) {
 }
 
 function ministryLabel(t: string) {
-  return t === "middle_school" ? "Middle School" : t === "senior_high" ? "Senior High" : t;
+  return t === "middle-school" ? "Middle School" : t === "senior-high" ? "Senior High" : t;
 }
 
 export default function YouthMinistryPage() {
