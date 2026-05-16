@@ -247,6 +247,14 @@ export default function SettingsPage() {
               <Field label="Women's Ministry Leader" value={form.womens_ministry_leader} onChange={set('womens_ministry_leader')} />
               <Field label="Young Adult Ministry Leader" value={form.young_adult_leader} onChange={set('young_adult_leader')} />
               <Field label="Senior Ministry Leader" value={form.senior_ministry_leader} onChange={set('senior_ministry_leader')} />
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Middle School Pastor</label>
+                <input type="text" value={youthForm.middle_school_pastor} onChange={e => setYouthForm(f => ({ ...f, middle_school_pastor: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Senior High Pastor</label>
+                <input type="text" value={youthForm.senior_high_pastor} onChange={e => setYouthForm(f => ({ ...f, senior_high_pastor: e.target.value }))} disabled={youthForm.same_pastor} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white disabled:opacity-50 disabled:bg-gray-50" />
+              </div>
             </div>
           </section>
 
@@ -255,16 +263,25 @@ export default function SettingsPage() {
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">Billing</h2>
             <p className="text-sm text-gray-500 mb-5">Your current subscription details.</p>
             <div className="grid grid-cols-3 gap-4 mb-5">
-              {[
-                { label: "Status", value: billing.subscription_status },
-                { label: "Plan", value: billing.subscription_tier },
-                { label: "Trial Ends", value: billing.trial_ends_at ? new Date(billing.trial_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '' },
-              ].map(({ label, value }) => (
-                <div key={label} className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
-                  <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                  <p className="text-sm font-semibold text-gray-800 capitalize">{value || <span className="text-gray-400 font-normal italic">—</span>}</p>
-                </div>
-              ))}
+              {(() => {
+                const planDisplayName: Record<string, string> = {
+                  very_small: 'Starter',
+                  small: 'Basic',
+                  medium: 'Standard',
+                  large: 'Professional',
+                  enterprise: 'Enterprise',
+                };
+                return [
+                  { label: "Status", value: billing.subscription_status },
+                  { label: "Plan", value: billing.subscription_tier ? (planDisplayName[billing.subscription_tier] ?? billing.subscription_tier) : '' },
+                  { label: "Trial Ends", value: billing.trial_ends_at ? new Date(billing.trial_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '' },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
+                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold text-gray-800 capitalize">{value || <span className="text-gray-400 font-normal italic">—</span>}</p>
+                  </div>
+                ));
+              })()}
             </div>
             <Link
               href="/dashboard/billing"
@@ -274,31 +291,10 @@ export default function SettingsPage() {
             </Link>
           </section>
 
-          {/* Section 4 — Youth Ministry Settings */}
+          {/* Section 4 — Youth Ministry Preferences */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-0.5">Youth Ministry Settings</h2>
-            <p className="text-sm text-gray-500 mb-5">Configure pastors and preferences for Middle School and Senior High ministries.</p>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Middle School Pastor</label>
-                <input
-                  type="text"
-                  value={youthForm.middle_school_pastor}
-                  onChange={e => setYouthForm(f => ({ ...f, middle_school_pastor: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Senior High Pastor</label>
-                <input
-                  type="text"
-                  value={youthForm.senior_high_pastor}
-                  onChange={e => setYouthForm(f => ({ ...f, senior_high_pastor: e.target.value }))}
-                  disabled={youthForm.same_pastor}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white disabled:opacity-50 disabled:bg-gray-50"
-                />
-              </div>
-            </div>
+            <h2 className="text-base font-semibold text-gray-900 mb-0.5">Youth Ministry Preferences</h2>
+            <p className="text-sm text-gray-500 mb-5">Grade groupings and permission form settings for Middle School and Senior High.</p>
             <div className="space-y-3 mb-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
