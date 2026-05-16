@@ -373,6 +373,7 @@ export default function HighSchoolPermissionsPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {filtered.map(form => {
+              console.log('[HS Permissions] form.student:', form.student);
               const studentName = form.student ? `${form.student.first_name} ${form.student.last_name}` : 'Unknown Student';
               const status = signatureStatus(form);
               const statusBadge = { signed: 'bg-green-100 text-green-700', pending: 'bg-amber-100 text-amber-700', expired: 'bg-red-100 text-red-700' }[status];
@@ -392,7 +393,7 @@ export default function HighSchoolPermissionsPage() {
                     {form.parent_phone && <span>📞 {form.parent_phone}</span>}
                     {form.parent_email && <span>✉️ {form.parent_email}</span>}
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     <PermPill val={form.on_campus} label="On Campus" />
                     <PermPill val={form.off_campus} label="Off Campus" />
                     <PermPill val={form.overnight} label="Overnight" />
