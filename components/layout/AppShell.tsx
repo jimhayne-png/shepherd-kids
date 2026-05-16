@@ -50,7 +50,9 @@ const MS_ITEMS = [
   { label: "👤 Students",           href: "/dashboard/middle-school-ministry/students" },
   { label: "👪 Parents",            href: "/dashboard/middle-school-ministry/parents" },
   { label: "📋 Permission Forms",   href: "/dashboard/middle-school-ministry/permissions" },
-  { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
+  { label: "🏫 Check-In Setup",     href: "/dashboard/middle-school-ministry/checkin-setup" },
+  { label: "⚡ Live Check-In",       href: "/dashboard/middle-school-ministry/live-checkin" },
+  { label: "📊 Attendance Reports", href: "/dashboard/middle-school-ministry/attendance-report" },
 ];
 const SH_ITEMS = [
   { label: "📋 Overview",           href: "/dashboard/ministry/high-school" },
@@ -63,9 +65,10 @@ const SH_ITEMS = [
   { label: "🙏 Prayer",             href: "/dashboard/ministry/high-school/prayer" },
   { label: "👤 Students",           href: "/dashboard/high-school-ministry/students" },
   { label: "👪 Parents",            href: "/dashboard/high-school-ministry/parents" },
-  // updated
   { label: "📋 Permission Forms",   href: "/dashboard/high-school-ministry/permissions" },
-  { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
+  { label: "🏫 Check-In Setup",     href: "/dashboard/high-school-ministry/checkin-setup" },
+  { label: "⚡ Live Check-In",       href: "/dashboard/high-school-ministry/live-checkin" },
+  { label: "📊 Attendance Reports", href: "/dashboard/high-school-ministry/attendance-report" },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -125,6 +128,10 @@ const CATEGORIES: Category[] = [
       { label: "", href: "/dashboard/ministry/middle-school" },
       { label: "", href: "/dashboard/ministry/high-school" },
       { label: "", href: "/dashboard/youth-ministry" },
+      { label: "", href: "/dashboard/middle-school-ministry" },
+      { label: "", href: "/dashboard/high-school-ministry" },
+      { label: "", href: "/middle-school-kiosk" },
+      { label: "", href: "/high-school-kiosk" },
     ],
   },
 ];

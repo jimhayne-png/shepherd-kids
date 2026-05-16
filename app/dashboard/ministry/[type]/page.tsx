@@ -68,13 +68,22 @@ function getYouthSections(ministryType: string) {
   const permissionsHref = ministryType === 'middle-school'
     ? '/dashboard/middle-school-ministry/permissions'
     : '/dashboard/high-school-ministry/permissions';
+  const checkinSetupHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/checkin-setup'
+    : '/dashboard/high-school-ministry/checkin-setup';
+  const liveCheckinHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/live-checkin'
+    : '/dashboard/high-school-ministry/live-checkin';
+  const attendanceReportHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/attendance-report'
+    : '/dashboard/high-school-ministry/attendance-report';
   return [
-    { label: "📋 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup",    desc: "Manage sessions" },
-    { label: "⚡ Live Check-In",       href: "/dashboard/youth-ministry/live-checkin",     desc: "View who's checked in now" },
-    { label: "📊 Attendance Reports", href: "/dashboard/youth-ministry/attendance-report", desc: "Historical attendance data" },
-    { label: "👤 Students",           href: studentsHref,                                  desc: "Student directory & profiles" },
-    { label: "👨‍👩‍👧 Parents",            href: parentsHref,                                  desc: "All registered families" },
-    { label: "📝 Permission Forms",   href: permissionsHref,                               desc: "Student activity permissions" },
+    { label: "📋 Check-In Setup",     href: checkinSetupHref,      desc: "Manage sessions" },
+    { label: "⚡ Live Check-In",       href: liveCheckinHref,       desc: "View who's checked in now" },
+    { label: "📊 Attendance Reports", href: attendanceReportHref,  desc: "Historical attendance data" },
+    { label: "👤 Students",           href: studentsHref,           desc: "Student directory & profiles" },
+    { label: "👨‍👩‍👧 Parents",            href: parentsHref,            desc: "All registered families" },
+    { label: "📝 Permission Forms",   href: permissionsHref,        desc: "Student activity permissions" },
   ];
 }
 
@@ -258,12 +267,12 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
             <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>📋 Recent Check-Ins</h2>
-                <Link href="/dashboard/youth-ministry/checkin-setup" className="text-xs font-medium" style={{ color: ACCENT }}>View all →</Link>
+                <Link href={type === 'middle-school' ? '/dashboard/middle-school-ministry/checkin-setup' : '/dashboard/high-school-ministry/checkin-setup'} className="text-xs font-medium" style={{ color: ACCENT }}>View all →</Link>
               </div>
               {recentCheckins.length === 0 ? (
                 <p className="text-sm text-gray-400">
                   No sessions yet.{" "}
-                  <Link href="/dashboard/youth-ministry/checkin-setup" className="underline" style={{ color: ACCENT }}>Set one up →</Link>
+                  <Link href={type === 'middle-school' ? '/dashboard/middle-school-ministry/checkin-setup' : '/dashboard/high-school-ministry/checkin-setup'} className="underline" style={{ color: ACCENT }}>Set one up →</Link>
                 </p>
               ) : (
                 <div className="space-y-1">
