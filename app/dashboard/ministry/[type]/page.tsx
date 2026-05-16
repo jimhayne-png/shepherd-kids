@@ -77,13 +77,25 @@ function getYouthSections(ministryType: string) {
   const attendanceReportHref = ministryType === 'middle-school'
     ? '/dashboard/middle-school-ministry/attendance-report'
     : '/dashboard/high-school-ministry/attendance-report';
+  const rosterHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/roster'
+    : '/dashboard/high-school-ministry/roster';
+  const attendanceHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/attendance'
+    : '/dashboard/high-school-ministry/attendance';
+  const followupHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/followup'
+    : '/dashboard/high-school-ministry/followup';
   return [
-    { label: "📋 Check-In Setup",     href: checkinSetupHref,      desc: "Manage sessions" },
-    { label: "⚡ Live Check-In",       href: liveCheckinHref,       desc: "View who's checked in now" },
-    { label: "📊 Attendance Reports", href: attendanceReportHref,  desc: "Historical attendance data" },
-    { label: "👤 Students",           href: studentsHref,           desc: "Student directory & profiles" },
-    { label: "👨‍👩‍👧 Parents",            href: parentsHref,            desc: "All registered families" },
-    { label: "📝 Permission Forms",   href: permissionsHref,        desc: "Student activity permissions" },
+    { label: "👥 Members & Visitors", href: rosterHref,            desc: "Student roster & new visitors" },
+    { label: "✅ Attendance",          href: attendanceHref,         desc: "Session attendance records" },
+    { label: "🔄 Follow Up",           href: followupHref,           desc: "Student & family follow-up" },
+    { label: "📋 Check-In Setup",      href: checkinSetupHref,       desc: "Manage sessions" },
+    { label: "⚡ Live Check-In",        href: liveCheckinHref,        desc: "View who's checked in now" },
+    { label: "📊 Attendance Reports",  href: attendanceReportHref,   desc: "Historical attendance data" },
+    { label: "👤 Students",            href: studentsHref,            desc: "Student directory & profiles" },
+    { label: "👨‍👩‍👧 Parents",             href: parentsHref,             desc: "All registered families" },
+    { label: "📝 Permission Forms",    href: permissionsHref,         desc: "Student activity permissions" },
   ];
 }
 

@@ -40,9 +40,9 @@ const CM_ITEMS = [
 ];
 const MS_ITEMS = [
   { label: "📋 Overview",           href: "/dashboard/ministry/middle-school" },
-  { label: "👥 Members & Visitors", href: "/dashboard/ministry/middle-school/roster" },
-  { label: "✅ Attendance",          href: "/dashboard/ministry/middle-school/attendance" },
-  { label: "🔄 Follow Up",          href: "/dashboard/ministry/middle-school/followup" },
+  { label: "👥 Members & Visitors", href: "/dashboard/middle-school-ministry/roster" },
+  { label: "✅ Attendance",          href: "/dashboard/middle-school-ministry/attendance" },
+  { label: "🔄 Follow Up",          href: "/dashboard/middle-school-ministry/followup" },
   { label: "📊 Shepherd Pipeline",  href: "/dashboard/ministry/middle-school/pipeline" },
   { label: "📢 Communication",      href: "/dashboard/ministry/middle-school/communication" },
   { label: "🎂 Birthdays",          href: "/dashboard/ministry/middle-school/birthdays" },
@@ -56,9 +56,9 @@ const MS_ITEMS = [
 ];
 const SH_ITEMS = [
   { label: "📋 Overview",           href: "/dashboard/ministry/high-school" },
-  { label: "👥 Members & Visitors", href: "/dashboard/ministry/high-school/roster" },
-  { label: "✅ Attendance",          href: "/dashboard/ministry/high-school/attendance" },
-  { label: "🔄 Follow Up",          href: "/dashboard/ministry/high-school/followup" },
+  { label: "👥 Members & Visitors", href: "/dashboard/high-school-ministry/roster" },
+  { label: "✅ Attendance",          href: "/dashboard/high-school-ministry/attendance" },
+  { label: "🔄 Follow Up",          href: "/dashboard/high-school-ministry/followup" },
   { label: "📊 Shepherd Pipeline",  href: "/dashboard/ministry/high-school/pipeline" },
   { label: "📢 Communication",      href: "/dashboard/ministry/high-school/communication" },
   { label: "🎂 Birthdays",          href: "/dashboard/ministry/high-school/birthdays" },
