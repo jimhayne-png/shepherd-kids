@@ -21,13 +21,44 @@ export async function GET(req: NextRequest) {
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const { data } = await adminClient()
+  const admin = adminClient();
+  const url = new URL(req.url);
+  const ministryType = url.searchParams.get('ministry_type');
+
+  let query = admin
     .from('youth_permission_forms')
-    .select('*, youth_students(first_name, last_name, grade, date_of_birth)')
+    .select('*')
     .eq('church_id', churchId)
     .order('created_at', { ascending: false });
 
-  return Response.json({ forms: data ?? [] });
+  if (ministryType) query = query.eq('ministry_type', ministryType);
+
+  const { data: forms } = await query;
+  if (!forms || forms.length === 0) return Response.json({ forms: [] });
+
+  // Fetch student info from the correct table based on each form's ministry_type
+  const msIds = forms.filter(f => f.ministry_type === 'middle-school' && f.student_id).map(f => f.student_id);
+  const hsIds = forms.filter(f => f.ministry_type === 'high-school' && f.student_id).map(f => f.student_id);
+
+  const [msStudents, hsStudents] = await Promise.all([
+    msIds.length > 0
+      ? admin.from('middle_school_students').select('id, first_name, last_name, grade, date_of_birth').in('id', msIds)
+      : Promise.resolve({ data: [] }),
+    hsIds.length > 0
+      ? admin.from('high_school_students').select('id, first_name, last_name, grade, date_of_birth').in('id', hsIds)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const studentMap: Record<string, any> = {};
+  for (const s of (msStudents.data ?? [])) studentMap[s.id] = s;
+  for (const s of (hsStudents.data ?? [])) studentMap[s.id] = s;
+
+  const enriched = forms.map(f => ({
+    ...f,
+    student: f.student_id ? (studentMap[f.student_id] ?? null) : null,
+  }));
+
+  return Response.json({ forms: enriched });
 }
 
 export async function POST(req: NextRequest) {
@@ -41,11 +72,13 @@ export async function POST(req: NextRequest) {
   const expiresAt = new Date(signedDate);
   expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-  const { data, error } = await adminClient()
+  const admin = adminClient();
+  const { data, error } = await admin
     .from('youth_permission_forms')
     .insert({
       church_id: churchId,
       student_id: body.student_id,
+      ministry_type: body.ministry_type ?? null,
       parent_name: body.parent_name ?? '',
       parent_phone: body.parent_phone ?? '',
       parent_email: body.parent_email ?? '',
@@ -65,9 +98,22 @@ export async function POST(req: NextRequest) {
       signed_date: signedDate,
       expires_at: expiresAt.toISOString().slice(0, 10),
     })
-    .select('*, youth_students(first_name, last_name, grade, date_of_birth)')
+    .select('*')
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json({ form: data });
+
+  // Enrich with student data
+  let student = null;
+  if (data.student_id) {
+    const table = data.ministry_type === 'high-school' ? 'high_school_students' : 'middle_school_students';
+    const { data: s } = await admin
+      .from(table)
+      .select('id, first_name, last_name, grade, date_of_birth')
+      .eq('id', data.student_id)
+      .maybeSingle();
+    student = s;
+  }
+
+  return Response.json({ form: { ...data, student } });
 }

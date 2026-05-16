@@ -49,7 +49,7 @@ const MS_ITEMS = [
   { label: "🙏 Prayer",             href: "/dashboard/ministry/middle-school/prayer" },
   { label: "👤 Students",           href: "/dashboard/middle-school-ministry/students" },
   { label: "👪 Parents",            href: "/dashboard/middle-school-ministry/parents" },
-  { label: "📋 Permission Forms",   href: "/dashboard/youth-ministry/permissions" },
+  { label: "📋 Permission Forms",   href: "/dashboard/middle-school-ministry/permissions" },
   { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
 ];
 const SH_ITEMS = [
@@ -63,7 +63,7 @@ const SH_ITEMS = [
   { label: "🙏 Prayer",             href: "/dashboard/ministry/high-school/prayer" },
   { label: "👤 Students",           href: "/dashboard/high-school-ministry/students" },
   { label: "👪 Parents",            href: "/dashboard/high-school-ministry/parents" },
-  { label: "📋 Permission Forms",   href: "/dashboard/youth-ministry/permissions" },
+  { label: "📋 Permission Forms",   href: "/dashboard/high-school-ministry/permissions" },
   { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
 ];
 // ─────────────────────────────────────────────────────────────────────────────
