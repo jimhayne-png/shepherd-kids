@@ -88,9 +88,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
 
   const memberIds = roster.map((r: any) => r.member_id);
 
-  // Member details
+  // Member details — use the correct table for youth ministry types
+  const memberTable =
+    type === 'middle-school' ? 'middle_school_students' :
+    type === 'high-school'   ? 'high_school_students' :
+    'members';
   const { data: members } = await admin
-    .from('members')
+    .from(memberTable)
     .select('id, first_name, last_name, email')
     .in('id', memberIds);
   const memberMap: Record<string, any> = {};
