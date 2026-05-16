@@ -65,13 +65,16 @@ function getYouthSections(ministryType: string) {
   const parentsHref = ministryType === 'middle-school'
     ? '/dashboard/middle-school-ministry/parents'
     : '/dashboard/high-school-ministry/parents';
+  const permissionsHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/permissions'
+    : '/dashboard/high-school-ministry/permissions';
   return [
     { label: "📋 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup",    desc: "Manage sessions" },
     { label: "⚡ Live Check-In",       href: "/dashboard/youth-ministry/live-checkin",     desc: "View who's checked in now" },
     { label: "📊 Attendance Reports", href: "/dashboard/youth-ministry/attendance-report", desc: "Historical attendance data" },
     { label: "👤 Students",           href: studentsHref,                                  desc: "Student directory & profiles" },
     { label: "👨‍👩‍👧 Parents",            href: parentsHref,                                  desc: "All registered families" },
-    { label: "📝 Permission Forms",   href: "/dashboard/youth-ministry/permissions",       desc: "Student activity permissions" },
+    { label: "📝 Permission Forms",   href: permissionsHref,                               desc: "Student activity permissions" },
   ];
 }
 
