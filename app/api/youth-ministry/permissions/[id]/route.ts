@@ -28,16 +28,30 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     body.signature_received_date = new Date().toISOString().slice(0, 10);
   }
 
-  const { data, error } = await adminClient()
+  const admin = adminClient();
+  const { data, error } = await admin
     .from('youth_permission_forms')
     .update(body)
     .eq('id', id)
     .eq('church_id', churchId)
-    .select('*, youth_students(first_name, last_name, grade, date_of_birth)')
+    .select('*')
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json({ form: data });
+
+  // Look up student from the correct table based on the form's ministry_type
+  let student = null;
+  if (data.student_id) {
+    const table = data.ministry_type === 'high-school' ? 'high_school_students' : 'middle_school_students';
+    const { data: s } = await admin
+      .from(table)
+      .select('id, first_name, last_name, grade, date_of_birth')
+      .eq('id', data.student_id)
+      .maybeSingle();
+    student = s;
+  }
+
+  return Response.json({ form: { ...data, student } });
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
