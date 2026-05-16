@@ -134,7 +134,7 @@ export default function MiddleSchoolPermissionsPage() {
       setToken(t);
       const headers = { Authorization: `Bearer ${t}` };
       const [formsRes, studentsRes] = await Promise.all([
-        fetch(`/api/youth-ministry/permissions?ministry_type=${MINISTRY_TYPE}`, { headers }),
+        fetch('/api/middle-school-ministry/permissions', { headers }),
         fetch('/api/middle-school-ministry/students', { headers }),
       ]);
       if (formsRes.ok) { const d = await formsRes.json(); setForms(d.forms ?? []); }
@@ -169,11 +169,11 @@ export default function MiddleSchoolPermissionsPage() {
   async function handleAddForm() {
     if (!token || !newStudentId) return;
     setSaving(true);
-    const res = await fetch('/api/youth-ministry/permissions', {
+    const res = await fetch('/api/middle-school-ministry/permissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        student_id: newStudentId, ministry_type: MINISTRY_TYPE,
+        student_id: newStudentId,
         parent_name: newParentName, parent_phone: newParentPhone, parent_email: newParentEmail,
         emergency_contact_name: newEmergencyName, emergency_contact_phone: newEmergencyPhone,
         emergency_contact_relationship: newEmergencyRel,
