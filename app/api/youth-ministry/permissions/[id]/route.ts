@@ -28,6 +28,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     body.signature_received_date = new Date().toISOString().slice(0, 10);
   }
 
+  // Remap frontend field names to actual DB column names
+  if ('on_campus' in body)  { body.on_campus_permission  = body.on_campus;  delete body.on_campus; }
+  if ('off_campus' in body) { body.off_campus_permission = body.off_campus; delete body.off_campus; }
+  if ('overnight' in body)  { body.overnight_permission  = body.overnight;  delete body.overnight; }
+
   const admin = adminClient();
   const { data, error } = await admin
     .from('youth_permission_forms')
