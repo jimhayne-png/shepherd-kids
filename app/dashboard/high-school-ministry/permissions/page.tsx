@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -63,6 +63,7 @@ type PermissionForm = {
   signed_date: string | null;
   expires_at: string | null;
   created_at: string;
+  scan_url: string | null;
   student: { id: string; first_name: string; last_name: string; grade: string | null; date_of_birth: string | null } | null;
 };
 
@@ -108,6 +109,13 @@ export default function HighSchoolPermissionsPage() {
   const [saving, setSaving] = useState(false);
   const [markingId, setMarkingId] = useState<string | null>(null);
   const [emailingSent, setEmailingSent] = useState<Record<string, boolean>>({});
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingForm, setEditingForm] = useState<PermissionForm | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, any>>({});
+  const [editSaving, setEditSaving] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFormIdRef = useRef<string | null>(null);
 
   const [newStudentId, setNewStudentId] = useState('');
   const [newParentName, setNewParentName] = useState('');
@@ -222,6 +230,72 @@ export default function HighSchoolPermissionsPage() {
     if (res.ok) setForms(prev => prev.filter(f => f.id !== formId));
   }
 
+  function openEditModal(form: PermissionForm) {
+    setEditingForm(form);
+    setEditValues({
+      parent_name: form.parent_name,
+      parent_phone: form.parent_phone,
+      parent_email: form.parent_email,
+      emergency_contact_name: form.emergency_contact_name,
+      emergency_contact_phone: form.emergency_contact_phone,
+      emergency_contact_relationship: form.emergency_contact_relationship,
+      allergies: form.allergies,
+      medications: form.medications,
+      medical_notes: form.medical_notes,
+      on_campus: form.on_campus,
+      off_campus: form.off_campus,
+      overnight: form.overnight,
+      photo_permission: form.photo_permission,
+      video_permission: form.video_permission,
+      signed_date: form.signed_date ?? '',
+    });
+    setShowEditModal(true);
+  }
+
+  async function handleEditSave() {
+    if (!token || !editingForm) return;
+    setEditSaving(true);
+    const res = await fetch(`/api/youth-ministry/permissions/${editingForm.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(editValues),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setForms(prev => prev.map(f => f.id === editingForm.id ? { ...data.form, student: f.student } : f));
+      setShowEditModal(false);
+      setEditingForm(null);
+    } else {
+      alert(data.error ?? 'Failed to update permission form');
+    }
+    setEditSaving(false);
+  }
+
+  async function handleUploadScan(formId: string, file: File) {
+    if (!token) return;
+    setUploadingId(formId);
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${formId}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('permission-forms')
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      alert('Upload failed: ' + uploadError.message);
+      setUploadingId(null);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('permission-forms').getPublicUrl(path);
+    const res = await fetch(`/api/youth-ministry/permissions/${formId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ scan_url: publicUrl }),
+    });
+    if (res.ok) {
+      setForms(prev => prev.map(f => f.id === formId ? { ...f, scan_url: publicUrl } : f));
+    }
+    setUploadingId(null);
+  }
+
   const total = forms.length;
   const signed = forms.filter(f => f.physical_signature_received).length;
   const expiring = forms.filter(isExpiringSoon).length;
@@ -244,10 +318,16 @@ export default function HighSchoolPermissionsPage() {
             <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Senior High Permission Forms</h1>
             <p className="text-orange-100 text-sm mt-1">Track parent signatures and activity authorizations</p>
           </div>
-          <button onClick={() => { resetModal(); setShowAddModal(true); }}
-            className="px-4 py-2.5 rounded-xl text-sm font-bold bg-white flex-shrink-0" style={{ color: ACCENT }}>
-            + Add Form
-          </button>
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={() => window.open('/dashboard/youth-ministry/permissions/print/blank', '_blank')}
+              className="px-4 py-2.5 rounded-xl text-sm font-bold bg-white/20 text-white border border-white/30 hover:bg-white/30">
+              🖨️ Blank Form
+            </button>
+            <button onClick={() => { resetModal(); setShowAddModal(true); }}
+              className="px-4 py-2.5 rounded-xl text-sm font-bold bg-white" style={{ color: ACCENT }}>
+              + Add Form
+            </button>
+          </div>
         </div>
       </div>
 
@@ -319,14 +399,32 @@ export default function HighSchoolPermissionsPage() {
                     <PermPill val={form.photo_permission} label="Photo" />
                     <PermPill val={form.video_permission} label="Video" />
                   </div>
-                  <div className="text-xs mb-4" style={{ color: expiryColor }}>
+                  <div className="text-xs mb-3" style={{ color: expiryColor }}>
                     {form.expires_at ? (isExpired(form) ? `Expired ${fmtDate(form.expires_at)}` : `Valid through ${fmtDate(form.expires_at)}`) : 'No expiry date'}
                   </div>
+                  {form.scan_url && (
+                    <div className="mb-3 flex items-center gap-2">
+                      <a href={form.scan_url} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-blue-600 underline hover:text-blue-800">
+                        📄 View Signed Scan
+                      </a>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     <Link href={`/dashboard/youth-ministry/permissions/print/${form.id}`} target="_blank"
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
                       🖨️ Print
                     </Link>
+                    <button onClick={() => openEditModal(form)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50">
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => { uploadFormIdRef.current = form.id; fileInputRef.current?.click(); }}
+                      disabled={uploadingId === form.id}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-60">
+                      {uploadingId === form.id ? 'Uploading…' : '📎 Upload Scan'}
+                    </button>
                     <button onClick={() => handleEmailParent(form.id)}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold border text-white"
                       style={{ backgroundColor: emailingSent[form.id] ? '#22c55e' : ACCENT, borderColor: emailingSent[form.id] ? '#22c55e' : ACCENT }}>
@@ -349,6 +447,84 @@ export default function HighSchoolPermissionsPage() {
           </div>
         )}
       </div>
+
+      {/* Hidden file input for scan upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          if (file && uploadFormIdRef.current) handleUploadScan(uploadFormIdRef.current, file);
+          e.target.value = '';
+        }}
+      />
+
+      {/* Edit Modal */}
+      {showEditModal && editingForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowEditModal(false)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Edit Permission Form</h2>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {[
+                { label: 'Parent Name', key: 'parent_name' },
+                { label: 'Parent Phone', key: 'parent_phone' },
+                { label: 'Parent Email', key: 'parent_email' },
+                { label: 'Emergency Contact', key: 'emergency_contact_name' },
+                { label: 'Emergency Phone', key: 'emergency_contact_phone' },
+                { label: 'Relationship', key: 'emergency_contact_relationship' },
+                { label: 'Known Allergies', key: 'allergies' },
+                { label: 'Current Medications', key: 'medications' },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">{label}</label>
+                  <input value={editValues[key] ?? ''} onChange={e => setEditValues((v: any) => ({ ...v, [key]: e.target.value }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Additional Medical Notes</label>
+                <textarea value={editValues.medical_notes ?? ''} onChange={e => setEditValues((v: any) => ({ ...v, medical_notes: e.target.value }))}
+                  rows={3} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Permissions</label>
+                <div className="space-y-2">
+                  {[
+                    { label: 'On-Campus Activities', key: 'on_campus' },
+                    { label: 'Off-Campus Activities', key: 'off_campus' },
+                    { label: 'Overnight Events', key: 'overnight' },
+                    { label: 'Photo Permission', key: 'photo_permission' },
+                    { label: 'Video Permission', key: 'video_permission' },
+                  ].map(({ label, key }) => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={!!editValues[key]} onChange={e => setEditValues((v: any) => ({ ...v, [key]: e.target.checked }))} className="w-4 h-4 rounded" />
+                      <span className="text-sm text-gray-700">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Signed Date</label>
+                <input type="date" value={editValues.signed_date ?? ''} onChange={e => setEditValues((v: any) => ({ ...v, signed_date: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setShowEditModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">Cancel</button>
+              <button onClick={handleEditSave} disabled={editSaving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: ACCENT, opacity: editSaving ? 0.6 : 1 }}>
+                {editSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowAddModal(false)}>
