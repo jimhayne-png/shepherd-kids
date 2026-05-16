@@ -48,6 +48,7 @@ export default function HSKioskPage() {
   const [lastName, setLastName] = useState("");
   const [grade, setGrade] = useState("");
   const [dob, setDob] = useState("");
+  const [parentName, setParentName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
@@ -95,7 +96,7 @@ export default function HSKioskPage() {
     const res = await fetch("/api/high-school-ministry/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, phone, firstName: firstName.trim(), lastName: lastName.trim(), grade, dateOfBirth: dob, address, city, state: stateVal, zip }),
+      body: JSON.stringify({ sessionId, phone, firstName: firstName.trim(), lastName: lastName.trim(), parentName: parentName.trim() || null, grade, dateOfBirth: dob, address, city, state: stateVal, zip }),
     });
     const data = await res.json();
     setSubmitting(false);
@@ -111,7 +112,7 @@ export default function HSKioskPage() {
     setStep("phone");
     setPhone("");
     setLookupError("");
-    setFirstName(""); setLastName(""); setGrade(""); setDob("");
+    setFirstName(""); setLastName(""); setParentName(""); setGrade(""); setDob("");
     setAddress(""); setCity(""); setStateVal(""); setZip("");
     setStudentName("");
   }
@@ -219,6 +220,10 @@ export default function HSKioskPage() {
               {GRADES.map(g => <option key={g} value={g}>{g} Grade</option>)}
             </select>
           </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Parent/Guardian Name *</label>
+          <input type="text" value={parentName} onChange={e => setParentName(e.target.value)} placeholder="Full name" style={{ width: "100%", fontSize: 20, padding: "14px 16px", borderRadius: 12, border: "2px solid #e5e7eb", boxSizing: "border-box" as const }} />
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 6 }}>Date of Birth</label>

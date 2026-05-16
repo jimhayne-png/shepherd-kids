@@ -7,7 +7,7 @@ function adminClient() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { sessionId, phone, firstName, lastName, grade, dateOfBirth, address, city, state, zip } = body;
+  const { sessionId, phone, firstName, lastName, parentName, grade, dateOfBirth, address, city, state, zip } = body;
 
   if (!sessionId || !phone) {
     return NextResponse.json({ error: 'sessionId and phone are required' }, { status: 400 });
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
         first_name: firstName,
         last_name: lastName,
         phone,
+        parent_name: parentName ?? null,
         grade: grade ?? null,
         date_of_birth: dateOfBirth ?? null,
         address: address ?? null,

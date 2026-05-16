@@ -9,15 +9,15 @@ import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 
 const ACCENT = "#F28C28";
 
-type Parent = {
+type StudentWithParent = {
   id: string;
   first_name: string;
   last_name: string;
   phone: string | null;
   email: string | null;
-  relationship: string | null;
-  is_primary: boolean;
-  high_school_students: { first_name: string; last_name: string } | null;
+  parent_name: string | null;
+  grade: string | null;
+  firstCheckin: string | null;
 };
 
 const navItems: NavItem[] = [
@@ -50,10 +50,15 @@ const navItems: NavItem[] = [
   { label: "📖 Tutorials", href: "/dashboard/tutorials" },
 ];
 
+function fmtDateTime(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function HighSchoolParentsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [parents, setParents] = useState<Parent[]>([]);
+  const [parents, setParents] = useState<StudentWithParent[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -61,8 +66,34 @@ export default function HighSchoolParentsPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.replace("/"); return; }
       const t = session.access_token;
-      const res = await fetch('/api/high-school-ministry/parents', { headers: { Authorization: `Bearer ${t}` } });
-      if (res.ok) { const d = await res.json(); setParents(d.parents ?? []); }
+
+      // Fetch all students
+      const studentsRes = await fetch('/api/high-school-ministry/students', {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      if (!studentsRes.ok) { setLoading(false); return; }
+      const { students } = await studentsRes.json();
+
+      // Filter to those with parent_name
+      const withParent = (students ?? []).filter((s: any) => s.parent_name);
+
+      // Fetch first check-in dates from supabase directly
+      const studentIds = withParent.map((s: any) => s.id);
+      const firstCheckinMap: Record<string, string> = {};
+      if (studentIds.length > 0) {
+        const { data: checkins } = await supabase
+          .from('high_school_checkin_records')
+          .select('student_id, checked_in_at')
+          .in('student_id', studentIds)
+          .order('checked_in_at', { ascending: true });
+        for (const c of checkins ?? []) {
+          if (!firstCheckinMap[c.student_id]) {
+            firstCheckinMap[c.student_id] = c.checked_in_at;
+          }
+        }
+      }
+
+      setParents(withParent.map((s: any) => ({ ...s, firstCheckin: firstCheckinMap[s.id] ?? null })));
       setLoading(false);
     }
     init();
@@ -73,6 +104,7 @@ export default function HighSchoolParentsPage() {
     if (!q) return parents;
     return parents.filter(p =>
       `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
+      (p.parent_name ?? "").toLowerCase().includes(q) ||
       (p.phone ?? "").includes(q)
     );
   }, [parents, search]);
@@ -90,7 +122,7 @@ export default function HighSchoolParentsPage() {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or phone…"
+            placeholder="Search by parent or student name…"
             className="w-full max-w-md px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
           />
         </div>
@@ -106,11 +138,11 @@ export default function HighSchoolParentsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Parent</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Parent Name</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Phone</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Email</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Student</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Relationship</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">First Check-In</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,22 +151,18 @@ export default function HighSchoolParentsPage() {
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "#6366f1" }}>
-                          {p.first_name[0]}{p.last_name[0]}
+                          {(p.parent_name ?? "?")[0]}
                         </div>
-                        <div>
-                          <span className="font-medium text-sm text-gray-900">{p.first_name} {p.last_name}</span>
-                          {p.is_primary && <span className="ml-2 text-xs text-orange-600 font-semibold">Primary</span>}
-                        </div>
+                        <span className="font-medium text-sm text-gray-900">{p.parent_name ?? "—"}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{p.phone ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{p.email ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {p.high_school_students
-                        ? `${p.high_school_students.first_name} ${p.high_school_students.last_name}`
-                        : "—"}
+                      {p.first_name} {p.last_name}
+                      {p.grade && <span className="ml-1.5 text-xs text-gray-400">({p.grade})</span>}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 capitalize">{p.relationship ?? "—"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{fmtDateTime(p.firstCheckin)}</td>
                   </tr>
                 ))}
               </tbody>
