@@ -58,14 +58,22 @@ function calcUpcomingBirthdays(students: any[], days = 30) {
   return results.sort((a, b) => a.daysAway - b.daysAway);
 }
 
-const YOUTH_SECTIONS = [
-  { label: "📋 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup",     desc: "Manage sessions" },
-  { label: "⚡ Live Check-In",       href: "/dashboard/youth-ministry/live-checkin",       desc: "View who's checked in now" },
-  { label: "📊 Attendance Reports", href: "/dashboard/youth-ministry/attendance-report",  desc: "Historical attendance data" },
-  { label: "👤 Students",           href: "/dashboard/youth-ministry/students",           desc: "Student directory & profiles" },
-  { label: "👨‍👩‍👧 Parents",            href: "/dashboard/youth-ministry/parents",            desc: "All registered families" },
-  { label: "📝 Permission Forms",   href: "/dashboard/youth-ministry/permissions",        desc: "Student activity permissions" },
-];
+function getYouthSections(ministryType: string) {
+  const studentsHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/students'
+    : '/dashboard/high-school-ministry/students';
+  const parentsHref = ministryType === 'middle-school'
+    ? '/dashboard/middle-school-ministry/parents'
+    : '/dashboard/high-school-ministry/parents';
+  return [
+    { label: "📋 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup",    desc: "Manage sessions" },
+    { label: "⚡ Live Check-In",       href: "/dashboard/youth-ministry/live-checkin",     desc: "View who's checked in now" },
+    { label: "📊 Attendance Reports", href: "/dashboard/youth-ministry/attendance-report", desc: "Historical attendance data" },
+    { label: "👤 Students",           href: studentsHref,                                  desc: "Student directory & profiles" },
+    { label: "👨‍👩‍👧 Parents",            href: parentsHref,                                  desc: "All registered families" },
+    { label: "📝 Permission Forms",   href: "/dashboard/youth-ministry/permissions",       desc: "Student activity permissions" },
+  ];
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -202,7 +210,7 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
           {/* Quick Links — identical markup to children-ministry/page.tsx */}
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Sections</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            {YOUTH_SECTIONS.map(s => (
+            {getYouthSections(type).map(s => (
               <Link
                 key={s.href}
                 href={s.href}
