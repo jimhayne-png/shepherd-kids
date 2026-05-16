@@ -390,6 +390,18 @@ export default function HighSchoolPermissionsPage() {
                 <input value={newEmergencyRel} onChange={e => setNewEmergencyRel(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
               </div>
               <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Known Allergies</label>
+                <input value={newAllergies} onChange={e => setNewAllergies(e.target.value)} placeholder="e.g. Peanuts, Bee stings" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Current Medications</label>
+                <input value={newMedications} onChange={e => setNewMedications(e.target.value)} placeholder="e.g. EpiPen, Inhaler" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Additional Medical Notes</label>
+                <textarea value={newMedicalNotes} onChange={e => setNewMedicalNotes(e.target.value)} rows={3} placeholder="Any other health information we should know" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm resize-none" />
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Permissions</label>
                 <div className="space-y-2">
                   {[
