@@ -396,9 +396,9 @@ export default function HighSchoolPermissionsPage() {
                     {form.parent_email && <span>✉️ {form.parent_email}</span>}
                   </div>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    <PermPill val={form.on_campus} label="On Campus" />
-                    <PermPill val={form.off_campus} label="Off Campus" />
-                    <PermPill val={form.overnight} label="Overnight" />
+                    <PermPill val={(form as any).on_campus_permission} label="On Campus" />
+                    <PermPill val={(form as any).off_campus_permission} label="Off Campus" />
+                    <PermPill val={(form as any).overnight_permission} label="Overnight" />
                     <PermPill val={form.photo_permission} label="Photo" />
                     <PermPill val={form.video_permission} label="Video" />
                   </div>
