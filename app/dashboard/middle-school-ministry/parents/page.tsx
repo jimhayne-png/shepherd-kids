@@ -10,8 +10,14 @@ import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 const ACCENT = "#F28C28";
 
 type Parent = {
-  id: string; first_name: string; last_name: string; phone: string | null; email: string | null;
-  youth_students: { first_name: string; last_name: string; grade: string | null } | null;
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string | null;
+  email: string | null;
+  relationship: string | null;
+  is_primary: boolean;
+  middle_school_students: { first_name: string; last_name: string } | null;
 };
 
 const navItems: NavItem[] = [
@@ -81,8 +87,12 @@ export default function MiddleSchoolParentsPage() {
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
         <div className="mb-5">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or phone…"
-            className="w-full max-w-md px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name or phone…"
+            className="w-full max-w-md px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+          />
         </div>
 
         {loading ? (
@@ -100,6 +110,7 @@ export default function MiddleSchoolParentsPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Phone</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Email</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Student</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Relationship</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,14 +121,20 @@ export default function MiddleSchoolParentsPage() {
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: "#6366f1" }}>
                           {p.first_name[0]}{p.last_name[0]}
                         </div>
-                        <span className="font-medium text-sm text-gray-900">{p.first_name} {p.last_name}</span>
+                        <div>
+                          <span className="font-medium text-sm text-gray-900">{p.first_name} {p.last_name}</span>
+                          {p.is_primary && <span className="ml-2 text-xs text-orange-600 font-semibold">Primary</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{p.phone ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{p.email ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {p.youth_students ? `${p.youth_students.first_name} ${p.youth_students.last_name}${p.youth_students.grade ? ` (${p.youth_students.grade})` : ""}` : "—"}
+                      {p.middle_school_students
+                        ? `${p.middle_school_students.first_name} ${p.middle_school_students.last_name}`
+                        : "—"}
                     </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 capitalize">{p.relationship ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
