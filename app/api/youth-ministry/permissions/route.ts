@@ -50,10 +50,12 @@ export async function GET(req: NextRequest) {
       : Promise.resolve({ data: [] }),
   ]);
 
-  console.log('[Permissions GET] hsStudents:', hsStudents.data);
+  console.log('[Permissions GET] hsStudents result:', JSON.stringify(hsStudents));
+  const hsData = hsStudents.data ?? [];
+  const msData = msStudents.data ?? [];
   const studentMap: Record<string, any> = {};
-  for (const s of (msStudents.data ?? [])) studentMap[s.id] = s;
-  for (const s of (hsStudents.data ?? [])) studentMap[s.id] = s;
+  for (const s of msData) studentMap[s.id] = s;
+  for (const s of hsData) studentMap[s.id] = s;
   console.log('[Permissions GET] studentMap keys:', Object.keys(studentMap));
 
   const enriched = forms.map(f => ({
