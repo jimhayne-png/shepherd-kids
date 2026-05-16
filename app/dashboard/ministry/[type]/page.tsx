@@ -102,8 +102,11 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { router.replace("/"); return; }
         const headers = { Authorization: `Bearer ${session.access_token}` };
+        const studentsEndpoint = type === 'middle-school'
+          ? '/api/middle-school-ministry/students'
+          : '/api/high-school-ministry/students';
         const [studentsRes, sessionsRes] = await Promise.all([
-          fetch('/api/youth-ministry/students', { headers }),
+          fetch(studentsEndpoint, { headers }),
           fetch('/api/youth-checkin/sessions', { headers }),
         ]);
         if (studentsRes.ok) { const d = await studentsRes.json(); setYouthStudents(d.students ?? []); }

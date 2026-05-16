@@ -22,10 +22,9 @@ export async function GET(req: NextRequest) {
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
   const { data } = await adminClient()
-    .from('youth_students')
+    .from('high_school_students')
     .select('*')
     .eq('church_id', churchId)
-    .eq('ministry_type', 'high-school')
     .order('last_name', { ascending: true });
 
   return Response.json({ students: data ?? [] });
@@ -39,10 +38,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { data, error } = await adminClient()
-    .from('youth_students')
+    .from('high_school_students')
     .insert({
       church_id: churchId,
-      ministry_type: 'high-school',
       first_name: body.first_name ?? '',
       last_name: body.last_name ?? '',
       phone: body.phone || null,
@@ -53,6 +51,8 @@ export async function POST(req: NextRequest) {
       city: body.city || null,
       state: body.state || null,
       zip: body.zip || null,
+      photo_url: body.photo_url || null,
+      active: body.active ?? true,
     })
     .select('*')
     .single();
