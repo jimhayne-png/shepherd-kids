@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
   // Fetch student info from the correct table based on each form's ministry_type
   const msIds = forms.filter(f => f.ministry_type === 'middle-school' && f.student_id).map(f => f.student_id);
   const hsIds = forms.filter(f => f.ministry_type === 'high-school' && f.student_id).map(f => f.student_id);
+  console.log('[Permissions GET] forms count:', forms?.length, 'hsIds:', hsIds);
 
   const [msStudents, hsStudents] = await Promise.all([
     msIds.length > 0
@@ -49,9 +50,11 @@ export async function GET(req: NextRequest) {
       : Promise.resolve({ data: [] }),
   ]);
 
+  console.log('[Permissions GET] hsStudents:', hsStudents.data);
   const studentMap: Record<string, any> = {};
   for (const s of (msStudents.data ?? [])) studentMap[s.id] = s;
   for (const s of (hsStudents.data ?? [])) studentMap[s.id] = s;
+  console.log('[Permissions GET] studentMap keys:', Object.keys(studentMap));
 
   const enriched = forms.map(f => ({
     ...f,
