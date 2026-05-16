@@ -47,8 +47,8 @@ const MS_ITEMS = [
   { label: "📢 Communication",      href: "/dashboard/ministry/middle-school/communication" },
   { label: "🎂 Birthdays",          href: "/dashboard/ministry/middle-school/birthdays" },
   { label: "🙏 Prayer",             href: "/dashboard/ministry/middle-school/prayer" },
-  { label: "👤 Students",           href: "/dashboard/youth-ministry/middle-school/students" },
-  { label: "👪 Parents",            href: "/dashboard/youth-ministry/middle-school/parents" },
+  { label: "👤 Students",           href: "/dashboard/middle-school-ministry/students" },
+  { label: "👪 Parents",            href: "/dashboard/middle-school-ministry/parents" },
   { label: "📋 Permission Forms",   href: "/dashboard/youth-ministry/permissions" },
   { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
 ];
@@ -61,8 +61,8 @@ const SH_ITEMS = [
   { label: "📢 Communication",      href: "/dashboard/ministry/high-school/communication" },
   { label: "🎂 Birthdays",          href: "/dashboard/ministry/high-school/birthdays" },
   { label: "🙏 Prayer",             href: "/dashboard/ministry/high-school/prayer" },
-  { label: "👤 Students",           href: "/dashboard/youth-ministry/high-school/students" },
-  { label: "👪 Parents",            href: "/dashboard/youth-ministry/high-school/parents" },
+  { label: "👤 Students",           href: "/dashboard/high-school-ministry/students" },
+  { label: "👪 Parents",            href: "/dashboard/high-school-ministry/parents" },
   { label: "📋 Permission Forms",   href: "/dashboard/youth-ministry/permissions" },
   { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
 ];
