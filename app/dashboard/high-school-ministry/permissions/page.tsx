@@ -138,7 +138,9 @@ export default function HighSchoolPermissionsPage() {
         fetch('/api/high-school-ministry/students', { headers }),
       ]);
       if (formsRes.ok) { const d = await formsRes.json(); setForms(d.forms ?? []); }
-      if (studentsRes.ok) { const d = await studentsRes.json(); setStudents(d.students ?? []); }
+      const studentsData = await studentsRes.json();
+      console.log('[HS Permissions] students response:', studentsRes.status, studentsData);
+      if (studentsRes.ok) { setStudents(studentsData.students ?? []); }
       setLoading(false);
     }
     init();
