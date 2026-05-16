@@ -265,11 +265,14 @@ export default function SettingsPage() {
             <div className="grid grid-cols-3 gap-4 mb-5">
               {(() => {
                 const planDisplayName: Record<string, string> = {
-                  very_small: 'Starter',
-                  small: 'Basic',
-                  medium: 'Standard',
-                  large: 'Professional',
-                  enterprise: 'Enterprise',
+                  very_small: 'Vine',
+                  small: 'Vine',
+                  medium: 'Grove',
+                  large: 'Orchard',
+                  enterprise: 'Orchard',
+                  vine: 'Vine',
+                  grove: 'Grove',
+                  orchard: 'Orchard',
                 };
                 return [
                   { label: "Status", value: billing.subscription_status },
