@@ -242,9 +242,9 @@ export default function HighSchoolPermissionsPage() {
       allergies: form.allergies,
       medications: form.medications,
       medical_notes: form.medical_notes,
-      on_campus: form.on_campus,
-      off_campus: form.off_campus,
-      overnight: form.overnight,
+      on_campus: (form as any).on_campus_permission ?? form.on_campus,
+      off_campus: (form as any).off_campus_permission ?? form.off_campus,
+      overnight: (form as any).overnight_permission ?? form.overnight,
       photo_permission: form.photo_permission,
       video_permission: form.video_permission,
       signed_date: form.signed_date ?? '',
@@ -374,7 +374,9 @@ export default function HighSchoolPermissionsPage() {
           <div className="flex flex-col gap-4">
             {filtered.map(form => {
               console.log('[HS Permissions] form.student:', form.student);
-              const studentName = form.student ? `${form.student.first_name} ${form.student.last_name}` : 'Unknown Student';
+              const studentName = form.student
+                ? `${form.student.first_name} ${form.student.last_name}`
+                : form.student_id ? `[id: ${form.student_id.slice(0, 8)}…]` : 'Unknown Student';
               const status = signatureStatus(form);
               const statusBadge = { signed: 'bg-green-100 text-green-700', pending: 'bg-amber-100 text-amber-700', expired: 'bg-red-100 text-red-700' }[status];
               const statusLabel = { signed: '✓ Signed', pending: '⏳ Pending Signature', expired: '✗ Expired' }[status];
