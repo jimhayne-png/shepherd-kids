@@ -258,43 +258,7 @@ export default function SettingsPage() {
             </div>
           </section>
 
-          {/* Section 3 — Billing */}
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-0.5">Billing</h2>
-            <p className="text-sm text-gray-500 mb-5">Your current subscription details.</p>
-            <div className="grid grid-cols-3 gap-4 mb-5">
-              {(() => {
-                const planDisplayName: Record<string, string> = {
-                  very_small: 'Vine',
-                  small: 'Vine',
-                  medium: 'Grove',
-                  large: 'Orchard',
-                  enterprise: 'Orchard',
-                  vine: 'Vine',
-                  grove: 'Grove',
-                  orchard: 'Orchard',
-                };
-                return [
-                  { label: "Status", value: billing.subscription_status },
-                  { label: "Plan", value: billing.subscription_tier ? (planDisplayName[billing.subscription_tier] ?? billing.subscription_tier) : '' },
-                  { label: "Trial Ends", value: billing.trial_ends_at ? new Date(billing.trial_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '' },
-                ].map(({ label, value }) => (
-                  <div key={label} className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
-                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                    <p className="text-sm font-semibold text-gray-800 capitalize">{value || <span className="text-gray-400 font-normal italic">—</span>}</p>
-                  </div>
-                ));
-              })()}
-            </div>
-            <Link
-              href="/dashboard/billing"
-              className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              💳 Manage Billing
-            </Link>
-          </section>
-
-          {/* Section 4 — Youth Ministry Preferences */}
+          {/* Section 3 — Youth Ministry Preferences */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">Youth Ministry Preferences</h2>
             <p className="text-sm text-gray-500 mb-5">Grade groupings and permission form settings for Middle School and Senior High.</p>
@@ -329,6 +293,42 @@ export default function SettingsPage() {
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
               />
             </div>
+          </section>
+
+          {/* Section 4 — Billing */}
+          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-0.5">Billing</h2>
+            <p className="text-sm text-gray-500 mb-5">Your current subscription details.</p>
+            <div className="grid grid-cols-3 gap-4 mb-5">
+              {(() => {
+                const planDisplayName: Record<string, string> = {
+                  very_small: 'Vine',
+                  small: 'Vine',
+                  medium: 'Grove',
+                  large: 'Orchard',
+                  enterprise: 'Orchard',
+                  vine: 'Vine',
+                  grove: 'Grove',
+                  orchard: 'Orchard',
+                };
+                return [
+                  { label: "Status", value: billing.subscription_status },
+                  { label: "Plan", value: billing.subscription_tier ? (planDisplayName[billing.subscription_tier] ?? billing.subscription_tier) : '' },
+                  { label: "Trial Ends", value: billing.trial_ends_at ? new Date(billing.trial_ends_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '' },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200">
+                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold text-gray-800 capitalize">{value || <span className="text-gray-400 font-normal italic">—</span>}</p>
+                  </div>
+                ));
+              })()}
+            </div>
+            <Link
+              href="/dashboard/billing"
+              className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              💳 Manage Billing
+            </Link>
           </section>
 
           {/* Section 5 — Danger Zone */}
