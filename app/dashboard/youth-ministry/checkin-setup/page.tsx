@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -47,21 +47,33 @@ function fmtDate(d: string) {
 
 export default function CheckinSetupPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [toggling, setToggling] = useState<string | null>(null);
+  const [msSessions, setMsSessions] = useState<Session[]>([]);
+  const [hsSessions, setHsSessions] = useState<Session[]>([]);
+  const [showMsForm, setShowMsForm] = useState(false);
+  const [showHsForm, setShowHsForm] = useState(false);
+  const [msName, setMsName] = useState("");
+  const [hsName, setHsName] = useState("");
+  const [msDate, setMsDate] = useState(new Date().toISOString().slice(0, 10));
+  const [hsDate, setHsDate] = useState(new Date().toISOString().slice(0, 10));
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [creatingMs, setCreatingMs] = useState(false);
+  const [creatingHs, setCreatingHs] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [showForm, setShowForm] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
-  const [newType, setNewType] = useState("middle-school");
-  const [creating, setCreating] = useState(false);
+  const loadMs = useCallback(async (t: string) => {
+    const res = await fetch("/api/youth-checkin/sessions?ministry_type=middle-school", {
+      headers: { Authorization: `Bearer ${t}` },
+    });
+    if (res.ok) { const d = await res.json(); setMsSessions(d.sessions ?? []); }
+  }, []);
 
-  async function load(t: string) {
-    const res = await fetch('/api/youth-checkin/sessions', { headers: { Authorization: `Bearer ${t}` } });
-    if (res.ok) { const d = await res.json(); setSessions(d.sessions ?? []); }
-  }
+  const loadHs = useCallback(async (t: string) => {
+    const res = await fetch("/api/youth-checkin/sessions?ministry_type=high-school", {
+      headers: { Authorization: `Bearer ${t}` },
+    });
+    if (res.ok) { const d = await res.json(); setHsSessions(d.sessions ?? []); }
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -69,108 +81,158 @@ export default function CheckinSetupPage() {
       if (!session) { router.replace("/"); return; }
       const t = session.access_token;
       setToken(t);
-      await load(t);
+      await Promise.all([loadMs(t), loadHs(t)]);
       setLoading(false);
     }
     init();
-  }, [router]);
+  }, [router, loadMs, loadHs]);
 
-  async function handleCreate() {
-    if (!token || !newName.trim() || !newDate) return;
-    setCreating(true);
-    const res = await fetch('/api/youth-checkin/sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name: newName.trim(), date: newDate, ministryType: newType }),
+  async function handleCreateMs() {
+    if (!token || !msName.trim() || !msDate) return;
+    setCreatingMs(true);
+    const res = await fetch("/api/youth-checkin/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name: msName.trim(), date: msDate, ministryType: "middle-school" }),
     });
     if (res.ok) {
-      setShowForm(false);
-      setNewName("");
-      await load(token);
+      setShowMsForm(false);
+      setMsName("");
+      await loadMs(token);
     }
-    setCreating(false);
+    setCreatingMs(false);
   }
 
-  async function handleToggle(sessionId: string) {
-    if (!token) return;
-    setToggling(sessionId);
-    const res = await fetch('/api/youth-checkin/sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: 'toggle', sessionId }),
+  async function handleCreateHs() {
+    if (!token || !hsName.trim() || !hsDate) return;
+    setCreatingHs(true);
+    const res = await fetch("/api/youth-checkin/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name: hsName.trim(), date: hsDate, ministryType: "high-school" }),
     });
-    if (res.ok) { await load(token); }
-    setToggling(null);
+    if (res.ok) {
+      setShowHsForm(false);
+      setHsName("");
+      await loadHs(token);
+    }
+    setCreatingHs(false);
   }
 
-  const ministryLabel = (t: string) => t === 'middle-school' ? 'Middle School' : t === 'high-school' ? 'Senior High' : t;
+  async function handleToggle(session: Session) {
+    if (!token) return;
+    setTogglingId(session.id);
+    const res = await fetch("/api/youth-checkin/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: "toggle", sessionId: session.id, ministryType: session.ministry_type }),
+    });
+    if (res.ok) {
+      if (session.ministry_type === "middle-school") await loadMs(token);
+      else await loadHs(token);
+    }
+    setTogglingId(null);
+  }
 
-  return (
-    <AppShell navItems={navItems}>
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <Link href="/dashboard/youth-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Youth Ministry</Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Check-In Setup</h1>
-            <p className="text-orange-100 text-sm mt-1">Create sessions and launch the student kiosk</p>
-          </div>
+  function SessionPanel({
+    emoji,
+    title,
+    ministryType,
+    sessions,
+    showForm,
+    setShowForm,
+    name,
+    setName,
+    date,
+    setDate,
+    creating,
+    onCreate,
+  }: {
+    emoji: string;
+    title: string;
+    ministryType: string;
+    sessions: Session[];
+    showForm: boolean;
+    setShowForm: (v: boolean) => void;
+    name: string;
+    setName: (v: string) => void;
+    date: string;
+    setDate: (v: string) => void;
+    creating: boolean;
+    onCreate: () => void;
+  }) {
+    return (
+      <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden flex flex-col">
+        {/* Panel header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-bold text-gray-900 flex items-center gap-2" style={{ fontFamily: "Georgia, serif" }}>
+            <span>{emoji}</span>
+            {title}
+          </h2>
           <button
-            onClick={() => setShowForm(true)}
-            className="px-5 py-2.5 rounded-xl text-sm font-bold bg-white"
-            style={{ color: ACCENT }}
+            onClick={() => setShowForm(!showForm)}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+            style={{ backgroundColor: ACCENT }}
           >
             + New Session
           </button>
         </div>
-      </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+        {/* Inline create form */}
         {showForm && (
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 mb-6 max-w-xl">
-            <h2 className="font-bold text-gray-900 mb-4">New Session</h2>
+          <div className="px-6 py-4 border-b border-gray-100 bg-orange-50">
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Session Name</label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Sunday Youth Service" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                <input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="e.g. Sunday Service"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+                />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Date</label>
-                  <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Ministry Type</label>
-                  <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
-                    <option value="middle-school">Middle School</option>
-                    <option value="high-school">Senior High</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+                />
               </div>
-              <div className="flex gap-3 pt-1">
-                <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600">Cancel</button>
-                <button onClick={handleCreate} disabled={creating || !newName.trim()} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: creating || !newName.trim() ? 0.6 : 1 }}>
-                  {creating ? "Creating…" : "Create Session"}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="flex-1 py-2 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 bg-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onCreate}
+                  disabled={creating || !name.trim()}
+                  className="flex-1 py-2 rounded-lg text-xs font-bold text-white transition-opacity"
+                  style={{ backgroundColor: ACCENT, opacity: creating || !name.trim() ? 0.6 : 1 }}
+                >
+                  {creating ? "Creating…" : "Create"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {loading ? (
-          <div className="text-gray-400 text-sm py-12 text-center">Loading sessions…</div>
-        ) : sessions.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow border border-gray-100 p-12 text-center">
-            <p className="text-3xl mb-3">📋</p>
-            <p className="font-semibold text-gray-700 mb-1">No sessions yet</p>
-            <p className="text-sm text-gray-400">Create your first session to get started.</p>
+        {/* Session list */}
+        {sessions.length === 0 ? (
+          <div className="flex-1 px-6 py-10 text-center">
+            <p className="text-2xl mb-2">📋</p>
+            <p className="text-sm font-medium text-gray-500">No sessions yet</p>
+            <p className="text-xs text-gray-400 mt-1">Create the first session above</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Session</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Type</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Date</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="px-4 py-3" />
@@ -178,33 +240,30 @@ export default function CheckinSetupPage() {
               </thead>
               <tbody>
                 {sessions.map(s => (
-                  <tr key={s.id} className="border-b border-gray-50 hover:bg-orange-50 transition-colors">
+                  <tr key={s.id} className="border-b border-gray-50 last:border-0 hover:bg-orange-50 transition-colors">
                     <td className="px-6 py-3 font-medium text-gray-900 text-sm">{s.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{ministryLabel(s.ministry_type)}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{fmtDate(s.date)}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${s.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {s.status === 'open' ? '🟢 Open' : '⚫ Closed'}
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${s.status === "open" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                        {s.status === "open" ? "🟢 Open" : "⚫ Closed"}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2 justify-end">
-                        {s.status === 'open' && (
-                          <Link
-                            href={`/youth-kiosk/${s.id}`}
-                            target="_blank"
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-white"
-                            style={{ backgroundColor: ACCENT }}
-                          >
-                            🖥️ Open Kiosk
-                          </Link>
-                        )}
+                        <Link
+                          href={`/youth-kiosk/${s.id}`}
+                          target="_blank"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+                          style={{ backgroundColor: ACCENT }}
+                        >
+                          🖥️ Open Kiosk
+                        </Link>
                         <button
-                          onClick={() => handleToggle(s.id)}
-                          disabled={toggling === s.id}
+                          onClick={() => handleToggle(s)}
+                          disabled={togglingId === s.id}
                           className="px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50"
                         >
-                          {toggling === s.id ? "…" : s.status === 'open' ? 'Close' : 'Reopen'}
+                          {togglingId === s.id ? "…" : s.status === "open" ? "Close" : "Reopen"}
                         </button>
                       </div>
                     </td>
@@ -212,6 +271,53 @@ export default function CheckinSetupPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <AppShell navItems={navItems}>
+      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
+        <Link href="/dashboard/youth-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Youth Ministry</Link>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Check-In Setup</h1>
+        <p className="text-orange-100 text-sm mt-1">Create sessions and launch the student kiosk</p>
+      </div>
+
+      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+        {loading ? (
+          <div className="text-gray-400 text-sm py-16 text-center">Loading sessions…</div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SessionPanel
+              emoji="🎒"
+              title="Middle School Sessions"
+              ministryType="middle-school"
+              sessions={msSessions}
+              showForm={showMsForm}
+              setShowForm={setShowMsForm}
+              name={msName}
+              setName={setMsName}
+              date={msDate}
+              setDate={setMsDate}
+              creating={creatingMs}
+              onCreate={handleCreateMs}
+            />
+            <SessionPanel
+              emoji="🎓"
+              title="Senior High Sessions"
+              ministryType="high-school"
+              sessions={hsSessions}
+              showForm={showHsForm}
+              setShowForm={setShowHsForm}
+              name={hsName}
+              setName={setHsName}
+              date={hsDate}
+              setDate={setHsDate}
+              creating={creatingHs}
+              onCreate={handleCreateHs}
+            />
           </div>
         )}
       </div>

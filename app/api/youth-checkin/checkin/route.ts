@@ -5,6 +5,24 @@ function adminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 }
 
+function getMinistryTables(ministryType: string) {
+  if (ministryType === 'middle-school') return {
+    sessions: 'middle_school_checkin_sessions',
+    records: 'middle_school_checkin_records',
+    students: 'middle_school_students',
+  };
+  if (ministryType === 'high-school') return {
+    sessions: 'high_school_checkin_sessions',
+    records: 'high_school_checkin_records',
+    students: 'high_school_students',
+  };
+  return {
+    sessions: 'youth_checkin_sessions',
+    records: 'youth_checkin_records',
+    students: 'youth_students',
+  };
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { sessionId, phone, firstName, lastName, grade, dateOfBirth, address, city, state, zip } = body;
@@ -15,39 +33,41 @@ export async function POST(req: NextRequest) {
 
   const admin = adminClient();
 
-  // Validate session
-  const { data: session } = await admin
-    .from('youth_checkin_sessions')
-    .select('id, church_id, ministry_type, name, status')
-    .eq('id', sessionId)
-    .eq('status', 'open')
-    .maybeSingle();
+  // Try to find session in all tables (MS first, then HS, then legacy)
+  let session: any = null;
+  let resolvedMinistryType = 'youth';
+  for (const [table, mt] of [
+    ['middle_school_checkin_sessions', 'middle-school'],
+    ['high_school_checkin_sessions', 'high-school'],
+    ['youth_checkin_sessions', 'youth'],
+  ] as const) {
+    const { data } = await admin.from(table).select('id, church_id, ministry_type, name, status').eq('id', sessionId).maybeSingle();
+    if (data) {
+      session = data;
+      resolvedMinistryType = mt !== 'youth' ? mt : (data.ministry_type ?? 'youth');
+      break;
+    }
+  }
 
-  if (!session) {
+  if (!session || session.status !== 'open') {
     return Response.json({ error: 'Session not found or closed' }, { status: 404 });
   }
 
   const churchId = session.church_id;
+  const tables = getMinistryTables(resolvedMinistryType);
 
-  // Determine correct student table based on session ministry_type
-  const studentTable =
-    session.ministry_type === 'middle-school' ? 'middle_school_students' :
-    session.ministry_type === 'high-school'   ? 'high_school_students' :
-    'youth_students';
-
-  // Look up student by phone
+  // Look up student by phone in correct table
   const { data: existingStudent } = await admin
-    .from(studentTable)
+    .from(tables.students)
     .select('id, first_name, last_name')
     .eq('church_id', churchId)
     .eq('phone', phone)
     .maybeSingle();
 
-  // If lookup only (no firstName provided), return found/not-found
+  // Lookup only (no firstName) → check in returning student or return not found
   if (!firstName) {
     if (existingStudent) {
-      // Check in returning student
-      await admin.from('youth_checkin_records').insert({
+      await admin.from(tables.records).insert({
         session_id: sessionId,
         church_id: churchId,
         student_id: existingStudent.id,
@@ -63,7 +83,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ found: false });
   }
 
-  // New student registration
+  // New student
   let studentId: string;
   let isNewVisitor = true;
 
@@ -72,7 +92,7 @@ export async function POST(req: NextRequest) {
     isNewVisitor = false;
   } else {
     const { data: newStudent, error: insertErr } = await admin
-      .from(studentTable)
+      .from(tables.students)
       .insert({
         church_id: churchId,
         first_name: firstName,
@@ -94,8 +114,7 @@ export async function POST(req: NextRequest) {
     studentId = newStudent.id;
   }
 
-  // Insert check-in record
-  await admin.from('youth_checkin_records').insert({
+  await admin.from(tables.records).insert({
     session_id: sessionId,
     church_id: churchId,
     student_id: studentId,
@@ -103,11 +122,10 @@ export async function POST(req: NextRequest) {
     checked_in_at: new Date().toISOString(),
   });
 
-  // New visitor: upsert ministry_visitors and ministry_rosters
   if (isNewVisitor) {
     await admin.from('ministry_visitors').upsert({
       church_id: churchId,
-      ministry_type: session.ministry_type,
+      ministry_type: resolvedMinistryType,
       visitor_name: `${firstName} ${lastName}`,
       visitor_phone: phone,
       visit_date: new Date().toISOString().slice(0, 10),
@@ -115,7 +133,7 @@ export async function POST(req: NextRequest) {
 
     await admin.from('ministry_rosters').upsert({
       church_id: churchId,
-      ministry_type: session.ministry_type,
+      ministry_type: resolvedMinistryType,
       member_id: studentId,
       pipeline_stage: 'visitor',
     }, { onConflict: 'church_id,ministry_type,member_id' });

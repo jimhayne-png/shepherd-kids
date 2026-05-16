@@ -15,35 +15,68 @@ async function getChurchId(userId: string) {
   return data?.church_id ?? null;
 }
 
+function getMinistryTables(ministryType: string) {
+  if (ministryType === 'middle-school') return {
+    sessions: 'middle_school_checkin_sessions',
+    records: 'middle_school_checkin_records',
+    students: 'middle_school_students',
+  };
+  if (ministryType === 'high-school') return {
+    sessions: 'high_school_checkin_sessions',
+    records: 'high_school_checkin_records',
+    students: 'high_school_students',
+  };
+  return {
+    sessions: 'youth_checkin_sessions',
+    records: 'youth_checkin_records',
+    students: 'youth_students',
+  };
+}
+
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const sessionId = url.searchParams.get('id');
+  const ministryType = url.searchParams.get('ministry_type');
 
   const admin = adminClient();
 
-  // Allow fetching a single session by id without auth (for kiosk)
+  // Public single-session fetch for kiosk (no auth required)
   if (sessionId) {
-    const { data } = await admin
-      .from('youth_checkin_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .maybeSingle();
-    return Response.json({ session: data });
+    for (const table of ['middle_school_checkin_sessions', 'high_school_checkin_sessions', 'youth_checkin_sessions']) {
+      const { data } = await admin.from(table).select('*').eq('id', sessionId).maybeSingle();
+      if (data) {
+        const ministryTypeFromTable = table === 'middle_school_checkin_sessions' ? 'middle-school'
+          : table === 'high_school_checkin_sessions' ? 'high-school' : data.ministry_type;
+        return Response.json({ session: { ...data, ministry_type: ministryTypeFromTable } });
+      }
+    }
+    return Response.json({ session: null });
   }
 
-  // Authenticated list fetch
+  // Authenticated fetch
   const user = await getAuthUser(req);
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const { data } = await admin
-    .from('youth_checkin_sessions')
-    .select('*')
-    .eq('church_id', churchId)
-    .order('date', { ascending: false });
+  if (ministryType) {
+    const tables = getMinistryTables(ministryType);
+    const { data } = await admin.from(tables.sessions).select('*').eq('church_id', churchId).order('date', { ascending: false });
+    return Response.json({ sessions: (data ?? []).map(s => ({ ...s, ministry_type: ministryType })) });
+  }
 
-  return Response.json({ sessions: data ?? [] });
+  // No filter — fetch from all three tables and merge
+  const [ms, hs, legacy] = await Promise.all([
+    admin.from('middle_school_checkin_sessions').select('*').eq('church_id', churchId).order('date', { ascending: false }),
+    admin.from('high_school_checkin_sessions').select('*').eq('church_id', churchId).order('date', { ascending: false }),
+    admin.from('youth_checkin_sessions').select('*').eq('church_id', churchId).order('date', { ascending: false }),
+  ]);
+  const all = [
+    ...(ms.data ?? []).map(s => ({ ...s, ministry_type: 'middle-school' })),
+    ...(hs.data ?? []).map(s => ({ ...s, ministry_type: 'high-school' })),
+    ...(legacy.data ?? []),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+  return Response.json({ sessions: all });
 }
 
 export async function POST(req: NextRequest) {
@@ -54,35 +87,28 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { action, sessionId, name, date, ministryType } = body;
-
+  const mt = ministryType ?? body.ministry_type ?? 'youth';
+  const tables = getMinistryTables(mt);
   const admin = adminClient();
 
   if (action === 'toggle') {
-    const { data: existing } = await admin
-      .from('youth_checkin_sessions')
-      .select('status')
-      .eq('id', sessionId)
-      .eq('church_id', churchId)
-      .single();
-    if (!existing) return Response.json({ error: 'Not found' }, { status: 404 });
-    const newStatus = existing.status === 'open' ? 'closed' : 'open';
-    await admin.from('youth_checkin_sessions').update({ status: newStatus }).eq('id', sessionId);
-    return Response.json({ success: true, status: newStatus });
+    for (const table of [tables.sessions, 'middle_school_checkin_sessions', 'high_school_checkin_sessions', 'youth_checkin_sessions']) {
+      const { data: existing } = await admin.from(table).select('status').eq('id', sessionId).eq('church_id', churchId).maybeSingle();
+      if (existing) {
+        const newStatus = existing.status === 'open' ? 'closed' : 'open';
+        await admin.from(table).update({ status: newStatus }).eq('id', sessionId);
+        return Response.json({ success: true, status: newStatus });
+      }
+    }
+    return Response.json({ error: 'Session not found' }, { status: 404 });
   }
 
-  // Create new session
   const { data, error } = await admin
-    .from('youth_checkin_sessions')
-    .insert({
-      church_id: churchId,
-      ministry_type: ministryType,
-      name,
-      date,
-      status: 'open',
-    })
+    .from(tables.sessions)
+    .insert({ church_id: churchId, name, date, status: 'open' })
     .select('*')
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json({ session: data });
+  return Response.json({ session: { ...data, ministry_type: mt } });
 }
