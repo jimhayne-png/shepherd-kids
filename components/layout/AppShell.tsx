@@ -63,6 +63,7 @@ const SH_ITEMS = [
   { label: "🙏 Prayer",             href: "/dashboard/ministry/high-school/prayer" },
   { label: "👤 Students",           href: "/dashboard/high-school-ministry/students" },
   { label: "👪 Parents",            href: "/dashboard/high-school-ministry/parents" },
+  // updated
   { label: "📋 Permission Forms",   href: "/dashboard/high-school-ministry/permissions" },
   { label: "🏫 Check-In Setup",     href: "/dashboard/youth-ministry/checkin-setup" },
 ];
