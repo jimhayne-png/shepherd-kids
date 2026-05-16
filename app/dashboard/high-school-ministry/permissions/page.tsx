@@ -185,11 +185,14 @@ export default function HighSchoolPermissionsPage() {
         signed_date: newSignedDate || null,
       }),
     });
+    const data = await res.json();
+    console.log('[HS Permissions] add form response:', res.status, data);
     if (res.ok) {
-      const d = await res.json();
-      setForms(prev => [d.form, ...prev]);
+      setForms(prev => [data.form, ...prev]);
       setShowAddModal(false);
       resetModal();
+    } else {
+      alert(data.error ?? 'Failed to save permission form');
     }
     setSaving(false);
   }
