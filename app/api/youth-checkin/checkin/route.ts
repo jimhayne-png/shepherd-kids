@@ -29,9 +29,15 @@ export async function POST(req: NextRequest) {
 
   const churchId = session.church_id;
 
+  // Determine correct student table based on session ministry_type
+  const studentTable =
+    session.ministry_type === 'middle-school' ? 'middle_school_students' :
+    session.ministry_type === 'high-school'   ? 'high_school_students' :
+    'youth_students';
+
   // Look up student by phone
   const { data: existingStudent } = await admin
-    .from('youth_students')
+    .from(studentTable)
     .select('id, first_name, last_name')
     .eq('church_id', churchId)
     .eq('phone', phone)
@@ -66,7 +72,7 @@ export async function POST(req: NextRequest) {
     isNewVisitor = false;
   } else {
     const { data: newStudent, error: insertErr } = await admin
-      .from('youth_students')
+      .from(studentTable)
       .insert({
         church_id: churchId,
         first_name: firstName,
