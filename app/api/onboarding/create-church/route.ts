@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Insert church
+  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: church, error: churchError } = await supabaseAdmin
     .from('churches')
     .insert({
@@ -53,6 +54,8 @@ export async function POST(request: NextRequest) {
       state: state?.trim() || null,
       zip: zip?.trim() || null,
       qr_checkin_enabled: qrCheckin ?? false,
+      trial_ends_at: trialEndsAt,
+      subscription_status: 'trial',
     })
     .select('id')
     .single();

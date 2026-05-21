@@ -86,6 +86,7 @@ export default function DashboardPage() {
   const [churchName, setChurchName] = useState<string | null>(null);
   const [churchId, setChurchId] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null });
+  const [trialExpired, setTrialExpired] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -98,20 +99,31 @@ export default function DashboardPage() {
 
       setUserEmail(session.user.email ?? null);
 
-      const { data: churchUser } = await supabase
-        .from("church_users")
-        .select("church_id, churches(name)")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      const [churchUserRes, trialRes] = await Promise.all([
+        supabase
+          .from("church_users")
+          .select("church_id, churches(name)")
+          .eq("user_id", session.user.id)
+          .maybeSingle(),
+        fetch("/api/trial-status", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }).then((r) => r.json()).catch(() => ({ expired: false })),
+      ]);
 
-      if (!churchUser) {
+      if (!churchUserRes.data) {
         router.replace("/onboarding");
         return;
       }
 
-      const churches = churchUser.churches as unknown as { name: string } | null;
+      if (trialRes.expired) {
+        setTrialExpired(true);
+        setLoading(false);
+        return;
+      }
+
+      const churches = churchUserRes.data.churches as unknown as { name: string } | null;
       setChurchName(churches?.name ?? null);
-      setChurchId(churchUser.church_id);
+      setChurchId(churchUserRes.data.church_id);
       setLoading(false);
     }
 
@@ -153,6 +165,34 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-500">Loading…</div>
+      </div>
+    );
+  }
+
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center max-w-md w-full">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-5"
+            style={{ backgroundColor: "#F28C2818" }}
+          >
+            ⏰
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Georgia, serif" }}>
+            Your free trial has ended
+          </h1>
+          <p className="text-gray-500 text-sm mb-6">
+            To continue using ShepherdWell, please contact us to activate your subscription.
+          </p>
+          <a
+            href="mailto:support@shepherdwell.com"
+            className="inline-block px-7 py-2.5 rounded-xl font-semibold text-sm text-white hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: "#1A4A2E" }}
+          >
+            Contact Support
+          </a>
+        </div>
       </div>
     );
   }
