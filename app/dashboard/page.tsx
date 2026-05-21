@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 
@@ -90,16 +90,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function init() {
-      // If the callback route forwarded auth tokens as query params, establish the
-      // session in the browser before doing anything else, then clean up the URL.
-      const urlParams = new URLSearchParams(window.location.search);
-      const accessToken = urlParams.get("access_token");
-      const refreshToken = urlParams.get("refresh_token");
-      if (accessToken && refreshToken) {
-        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        window.history.replaceState({}, "", "/dashboard");
-      }
-
       let { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
