@@ -90,7 +90,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        // Retry for up to 2s in case the session is still being persisted to localStorage.
+        for (let i = 0; i < 10; i++) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          ({ data: { session } } = await supabase.auth.getSession());
+          if (session) break;
+        }
+      }
 
       if (!session) {
         router.replace("/");

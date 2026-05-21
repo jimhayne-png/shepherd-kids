@@ -53,7 +53,7 @@ export default function Home() {
       return;
     }
 
-    window.location.href = "/dashboard";
+    router.push("/dashboard");
   }
 
   function switchMode(next: Mode) {
