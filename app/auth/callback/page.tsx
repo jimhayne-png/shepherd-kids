@@ -12,6 +12,17 @@ export default function AuthCallback() {
         return;
       }
 
+      // OTP / magic link flow — ?token=...&type=magiclink
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const type = params.get("type");
+      if (token && type === "magiclink") {
+        const { error } = await supabase.auth.verifyOtp({ token_hash: token, type: "magiclink" });
+        if (error) console.error("verifyOtp error:", error);
+        window.location.href = error ? "/" : "/dashboard";
+        return;
+      }
+
       // PKCE flow — ?code=... query param
       const code = new URLSearchParams(window.location.search).get("code");
       if (code) {
