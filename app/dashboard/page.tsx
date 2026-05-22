@@ -92,7 +92,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+
+      console.log("dashboard getUser result:", {
+        hasUser: !!user,
+        error: getUserError?.message ?? null,
+      });
 
       if (!user) {
         router.replace("/");
