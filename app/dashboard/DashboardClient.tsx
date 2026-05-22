@@ -91,19 +91,14 @@ export default function DashboardClient({ userId, userEmail }: Props) {
 
   useEffect(() => {
     async function init() {
-      // Auth already validated server-side. getSession() here only to obtain
-      // the access_token required by the trial-status API bearer header.
-      const { data: { session } } = await supabase.auth.getSession();
-
       const [churchUserRes, trialRes] = await Promise.all([
         supabase
           .from("church_users")
           .select("church_id, churches(name)")
           .eq("user_id", userId)
           .maybeSingle(),
-        fetch("/api/trial-status", {
-          headers: { Authorization: `Bearer ${session?.access_token ?? ""}` },
-        }).then((r) => r.json()).catch(() => ({ expired: false })),
+        fetch("/api/trial-status")
+          .then((r) => r.json()).catch(() => ({ expired: false })),
       ]);
 
       if (!churchUserRes.data) {

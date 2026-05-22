@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createClient as createSSRClient } from '@/lib/supabase/server';
 import { type NextRequest } from 'next/server';
 
 function adminClient() {
@@ -8,13 +9,13 @@ function adminClient() {
   );
 }
 
-export async function GET(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '');
-  if (!token) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(_req: NextRequest) {
+  // Identify user via SSR cookie session (written by /auth/callback).
+  const ssrClient = await createSSRClient();
+  const { data: { user } } = await ssrClient.auth.getUser();
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = adminClient();
-  const { data: { user } } = await admin.auth.getUser(token);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   // Owner accounts are always active — never show trial expired.
   const ownerEmails = (process.env.OWNER_EMAILS ?? '')
