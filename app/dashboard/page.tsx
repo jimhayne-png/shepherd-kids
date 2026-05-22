@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-const supabase = createClient();
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+
+const supabase = createClient();
 import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 
 const navItems: NavItem[] = [
@@ -91,23 +92,27 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      if (!session) {
+      if (!user) {
         router.replace("/");
         return;
       }
 
-      setUserEmail(session.user.email ?? null);
+      setUserEmail(user.email ?? null);
+
+      // getSession() is called only to obtain the access_token for the
+      // trial-status API request — getUser() above already validated the user.
+      const { data: { session } } = await supabase.auth.getSession();
 
       const [churchUserRes, trialRes] = await Promise.all([
         supabase
           .from("church_users")
           .select("church_id, churches(name)")
-          .eq("user_id", session.user.id)
+          .eq("user_id", user.id)
           .maybeSingle(),
         fetch("/api/trial-status", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: `Bearer ${session?.access_token ?? ""}` },
         }).then((r) => r.json()).catch(() => ({ expired: false })),
       ]);
 
