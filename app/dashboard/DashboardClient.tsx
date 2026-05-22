@@ -91,17 +91,19 @@ export default function DashboardClient({ userId, userEmail }: Props) {
 
   useEffect(() => {
     async function init() {
-      const [churchUserRes, trialRes] = await Promise.all([
+      const [churchRows, trialRes] = await Promise.all([
         supabase
           .from("church_users")
           .select("church_id, churches(name)")
           .eq("user_id", userId)
-          .maybeSingle(),
+          .limit(1),
         fetch("/api/trial-status")
           .then((r) => r.json()).catch(() => ({ expired: false })),
       ]);
 
-      if (!churchUserRes.data) {
+      const churchRow = churchRows.data?.[0] ?? null;
+
+      if (!churchRow) {
         router.replace("/onboarding");
         return;
       }
@@ -112,9 +114,9 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         return;
       }
 
-      const churches = churchUserRes.data.churches as unknown as { name: string } | null;
+      const churches = churchRow.churches as unknown as { name: string } | null;
       setChurchName(churches?.name ?? null);
-      setChurchId(churchUserRes.data.church_id);
+      setChurchId(churchRow.church_id);
       setLoading(false);
     }
 
