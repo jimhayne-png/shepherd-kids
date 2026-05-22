@@ -1,54 +1,51 @@
 "use client";
-
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function AuthCallback() {
-  const router = useRouter();
-
   useEffect(() => {
-    let redirected = false;
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-    async function handleSession(userId: string) {
-      if (redirected) return;
-      redirected = true;
-
-      const { data: cu } = await supabase
-        .from("church_users")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (cu?.role === "ministry_leader") {
-        const { data: dl } = await supabase
-          .from("department_leaders")
-          .select("department_id")
-          .eq("user_id", userId)
-          .maybeSingle();
-        if (dl?.department_id) {
-          router.replace(`/shepherd/${dl.department_id}`);
-          return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          window.location.href = "/dashboard";
         }
       }
+    );
 
-      router.replace("/dashboard");
-    }
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session) {
-        handleSession(session.user.id);
+    // Also check immediately in case session already exists
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        window.location.href = "/dashboard";
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [router]);
+    // Fallback after 5 seconds
+    const timeout = setTimeout(() => {
+      window.location.href = "/";
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <p className="text-gray-500">Signing you in…</p>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100vh",
+      fontFamily: "sans-serif",
+      fontSize: "18px",
+      color: "#1A4A2E"
+    }}>
+      Signing you in...
     </div>
   );
 }
