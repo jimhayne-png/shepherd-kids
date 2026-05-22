@@ -10,6 +10,9 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  if (event.request.url.includes('/auth/')) {
+    return; // Let auth routes go straight to network
+  }
   if (event.request.mode === "navigate") {
     event.respondWith(
       caches
