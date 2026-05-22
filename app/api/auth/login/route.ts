@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const { error } = await supabaseAdmin.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: 'https://shepherd-well.vercel.app',
+      emailRedirectTo: process.env.NEXT_PUBLIC_APP_URL + '/auth/callback',
     },
   });
 

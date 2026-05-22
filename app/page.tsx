@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 
 type Mode = "magic" | "password";
 type Status = "idle" | "loading" | "sent" | "error";
@@ -14,15 +14,6 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        router.push("/dashboard");
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [router]);
 
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
@@ -56,13 +47,12 @@ export default function Home() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      console.error("signInWithPassword error:", error);
       setErrorMsg(error.message);
       setStatus("error");
       return;
     }
 
-    router.push("/dashboard");
+    router.replace("/dashboard");
   }
 
   function switchMode(next: Mode) {

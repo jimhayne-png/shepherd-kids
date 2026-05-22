@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase-browser";
+import { supabase } from "@/lib/supabase";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 
@@ -90,16 +90,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function init() {
-      let { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        // Retry for up to 2s in case the session is still being persisted to localStorage.
-        for (let i = 0; i < 10; i++) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          ({ data: { session } } = await supabase.auth.getSession());
-          if (session) break;
-        }
-      }
+      const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
         router.replace("/");
