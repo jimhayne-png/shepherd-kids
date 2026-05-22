@@ -3,9 +3,11 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
 import { MINISTRY_CONFIG, stageColor, isInvitationOnly } from "@/lib/ministry-config";
+
+const supabase = createClient();
 
 const ACCENT = "#F28C28";
 
@@ -70,8 +72,13 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const t = session.access_token;
       setToken(t);
 

@@ -3,11 +3,13 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { MINISTRY_CONFIG, MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 import { ProLockedOverlay } from "@/components/ProLockedOverlay";
+
+const supabase = createClient();
 
 const YOUTH_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -123,8 +125,13 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
   useEffect(() => {
     if (type === 'middle-school' || type === 'high-school') {
       async function initYouth() {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (!user || error) {
+          console.log("Dashboard client user unavailable:", error?.message ?? null);
+          return;
+        }
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) { router.replace("/"); return; }
+        if (!session) return;
         const headers = { Authorization: `Bearer ${session.access_token}` };
         const studentsEndpoint = type === 'middle-school'
           ? '/api/middle-school-ministry/students'
@@ -142,8 +149,13 @@ export default function MinistryOverviewPage({ params }: { params: Promise<{ typ
     }
 
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const t = session.access_token;
       setToken(t);
 

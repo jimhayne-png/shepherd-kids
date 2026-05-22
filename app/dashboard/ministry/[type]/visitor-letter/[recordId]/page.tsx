@@ -2,8 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+
+const supabase = createClient();
 
 const ACCENT = "#F28C28";
 
@@ -23,8 +25,13 @@ export default function VisitorLetterPage({ params }: { params: Promise<{ type: 
 
   useEffect(() => {
     async function load() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const res = await fetch(`/api/ministry/${type}/visitor-letter/${recordId}`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });

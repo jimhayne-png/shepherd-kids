@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 export default function BlankPermissionFormPage() {
   const [churchName, setChurchName] = useState("Your Church");
 
   useEffect(() => {
     async function load() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const res = await fetch('/api/settings', {

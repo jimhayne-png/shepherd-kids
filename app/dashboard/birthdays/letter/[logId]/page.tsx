@@ -2,10 +2,12 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
 
-const anonClient = createClient(
+const supabase = createClient();
+
+const anonClient = createAnonClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
@@ -119,8 +121,13 @@ export default function LetterPage({ params }: { params: Promise<{ logId: string
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
 
       // Fetch log entry
       const { data: log } = await anonClient

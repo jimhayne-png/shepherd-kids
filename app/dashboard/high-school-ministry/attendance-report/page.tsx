@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
+
+const supabase = createClient();
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -59,7 +61,13 @@ export default function HSAttendanceReportPage() {
   const [loadingRecords, setLoadingRecords] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    (async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const t = session.access_token;
       setToken(t);
@@ -69,7 +77,7 @@ export default function HSAttendanceReportPage() {
         .then(r => r.json())
         .then(d => { setSessions(d.sessions ?? []); setLoading(false); })
         .catch(() => setLoading(false));
-    });
+    })();
   }, []);
 
   useEffect(() => {

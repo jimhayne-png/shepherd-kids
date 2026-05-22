@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
+
+const supabase = createClient();
 
 const ACCENT = "#F28C28";
 
@@ -36,8 +38,13 @@ export default function ParentsPage() {
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const res = await fetch("/api/children-ministry/parents", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });

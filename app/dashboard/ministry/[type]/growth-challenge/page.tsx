@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import MinistryShell from "@/components/layout/MinistryShell";
 import { MINISTRY_CONFIG } from "@/lib/ministry-config";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { ProLockedOverlay } from "@/components/ProLockedOverlay";
+
+const supabase = createClient();
 
 const CM_ACCENT = "#F28C28";
 
@@ -83,8 +85,13 @@ export default function GrowthChallengePage({ params }: { params: Promise<{ type
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const t = session.access_token;
       setToken(t);
       const headers = { Authorization: `Bearer ${t}` };

@@ -3,9 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
+
+const supabase = createClient();
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -101,8 +103,13 @@ export default function YouthMinistryPage() {
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const t = session.access_token;
       const headers = { Authorization: `Bearer ${t}` };
       const [studentsRes, sessionsRes] = await Promise.all([

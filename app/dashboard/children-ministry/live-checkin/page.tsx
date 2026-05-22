@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
+
+const supabase = createClient();
 
 const ACCENT = "#F28C28";
 
@@ -46,8 +48,13 @@ export default function LiveCheckinPage() {
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session: authSession } } = await supabase.auth.getSession();
-      if (!authSession) { router.replace("/"); return; }
+      if (!authSession) return;
       const token = authSession.access_token;
       setAuthToken(token);
       await fetchLive(token);

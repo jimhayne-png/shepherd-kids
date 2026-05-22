@@ -3,8 +3,10 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+
+const supabase = createClient();
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -85,11 +87,16 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
 
       const { data: cu } = await supabase
-        .from("church_users").select("church_id").eq("user_id", session.user.id).maybeSingle();
+        .from("church_users").select("church_id").eq("user_id", user.id).maybeSingle();
       if (!cu) { router.replace("/onboarding"); return; }
       setAuthLoading(false);
 
@@ -127,6 +134,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     setError("");
 
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
     const res = await fetch(`/api/events/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
@@ -146,6 +154,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     if (!confirm(`Delete "${eventTitle}"? This cannot be undone.`)) return;
     setDeleting(true);
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
     const res = await fetch(`/api/events/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${session?.access_token}` },

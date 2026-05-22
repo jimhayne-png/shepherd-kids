@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
+
+const supabase = createClient();
 
 const ACCENT = "#F28C28";
 
@@ -88,8 +90,13 @@ export default function AttendanceReportPage() {
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       const token = session.access_token;
       setAuthToken(token);
       const res = await fetch("/api/checkin/attendance-report", { headers: { Authorization: `Bearer ${token}` } });

@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useMemo, use } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+
+const supabase = createClient();
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
@@ -80,8 +82,13 @@ export default function AttendanceEventPage({ params }: { params: Promise<{ even
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.replace("/"); return; }
+      if (!session) return;
       setToken(session.access_token);
 
       const res = await fetch(`/api/attendance/${eventId}`, {

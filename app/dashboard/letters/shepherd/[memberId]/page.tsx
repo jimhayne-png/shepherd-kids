@@ -2,7 +2,9 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 export default function ShepherdLetterPage({ params }: { params: Promise<{ memberId: string }> }) {
   const { memberId } = use(params);
@@ -21,8 +23,13 @@ export default function ShepherdLetterPage({ params }: { params: Promise<{ membe
 
   useEffect(() => {
     async function init() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        console.log("Dashboard client user unavailable:", error?.message ?? null);
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setError("Not authenticated"); setLoading(false); return; }
+      if (!session) return;
 
       const url = `/api/letters/shepherd/${memberId}?ministry_type=${ministryType}${groupId ? `&group_id=${groupId}` : ''}`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
