@@ -91,7 +91,9 @@ export default function DashboardClient({ userId, userEmail }: Props) {
 
   useEffect(() => {
     async function init() {
-      const [churchRows, trialRes] = await Promise.all([
+      console.log("Dashboard userId:", userId);
+
+      const [churchUserRes, trialRes] = await Promise.all([
         supabase
           .from("church_users")
           .select("church_id, churches(name)")
@@ -101,9 +103,17 @@ export default function DashboardClient({ userId, userEmail }: Props) {
           .then((r) => r.json()).catch(() => ({ expired: false })),
       ]);
 
-      const churchRow = churchRows.data?.[0] ?? null;
+      console.log("churchUserRes:", JSON.stringify({
+        data: churchUserRes.data,
+        error: churchUserRes.error,
+        count: Array.isArray(churchUserRes.data) ? churchUserRes.data.length : null,
+      }));
 
-      if (!churchRow) {
+      const churchUser = Array.isArray(churchUserRes.data)
+        ? churchUserRes.data[0] ?? null
+        : churchUserRes.data;
+
+      if (!churchUser) {
         router.replace("/onboarding");
         return;
       }
@@ -114,9 +124,9 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         return;
       }
 
-      const churches = churchRow.churches as unknown as { name: string } | null;
+      const churches = churchUser.churches as unknown as { name: string } | null;
       setChurchName(churches?.name ?? null);
-      setChurchId(churchRow.church_id);
+      setChurchId(churchUser.church_id);
       setLoading(false);
     }
 
