@@ -1,13 +1,32 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-// Public routes — no auth required. All other routes rely on client-side session checks.
-// Listed here for documentation and to provide a hook for future server-side auth guards.
-// const PUBLIC_PREFIXES = ['/check-in', '/pray', '/accept-invite', '/auth', '/bulletin', '/kids-checkin', '/api/check-in', '/api/prayer-requests/public', '/api/communication/feed', '/api/shepherd/accept', '/api/bulletins/public', '/api/children-ministry/visitor-flow'];
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request })
 
-export function middleware(_request: NextRequest) {
-  return NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return request.cookies.getAll() },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  await supabase.auth.getUser()
+  return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp)$).*)'],
-};
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+}

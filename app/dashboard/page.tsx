@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+const supabase = createClient();
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 
