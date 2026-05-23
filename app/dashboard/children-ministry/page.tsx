@@ -50,12 +50,9 @@ export default function ChildrenMinistryPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const headers = { Authorization: `Bearer ${session.access_token}` };
       const [childrenRes, sessionsRes] = await Promise.all([
-        fetch("/api/children-ministry/children", { headers }),
-        fetch("/api/checkin/attendance-report", { headers }),
+        fetch("/api/children-ministry/children", { credentials: "include" }),
+        fetch("/api/checkin/attendance-report", { credentials: "include" }),
       ]);
       if (childrenRes.ok) { const d = await childrenRes.json(); setChildren(d.children ?? []); }
       if (sessionsRes.ok) { const d = await sessionsRes.json(); setRecentSessions((d.sessions ?? []).slice(0, 4)); }

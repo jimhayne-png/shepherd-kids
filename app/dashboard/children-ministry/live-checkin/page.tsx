@@ -23,7 +23,6 @@ function fmtTime(iso: string) {
 
 export default function LiveCheckinPage() {
   const router = useRouter();
-  const [authToken, setAuthToken] = useState<string | null>(null);
   const [session, setSession] = useState<LiveSession | null>(null);
   const [rooms, setRooms] = useState<LiveRoom[]>([]);
   const [totalCheckedIn, setTotalCheckedIn] = useState(0);
@@ -35,8 +34,8 @@ export default function LiveCheckinPage() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchLive = useCallback(async (token: string) => {
-    const res = await fetch("/api/checkin/live", { headers: { Authorization: `Bearer ${token}` } });
+  const fetchLive = useCallback(async () => {
+    const res = await fetch("/api/checkin/live", { credentials: "include" });
     if (!res.ok) return;
     const d = await res.json();
     setSession(d.session ?? null);
@@ -53,46 +52,42 @@ export default function LiveCheckinPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      if (!authSession) return;
-      const token = authSession.access_token;
-      setAuthToken(token);
-      await fetchLive(token);
-      const roomsRes = await fetch("/api/checkin/update-record", { headers: { Authorization: `Bearer ${token}` } });
+      await fetchLive();
+      const roomsRes = await fetch("/api/checkin/update-record", { credentials: "include" });
       if (roomsRes.ok) { const d = await roomsRes.json(); setAllRooms(d.rooms ?? []); }
     }
     init();
   }, [router, fetchLive]);
 
   useEffect(() => {
-    if (!authToken) return;
-    const interval = setInterval(() => fetchLive(authToken), 30000);
+    const interval = setInterval(() => fetchLive(), 30000);
     return () => clearInterval(interval);
-  }, [authToken, fetchLive]);
+  }, [fetchLive]);
 
   async function handleSaveRoom(recordId: string) {
-    if (!authToken) return;
     setSaving(true);
     await fetch("/api/checkin/update-record", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ recordId, roomId: editRoomId || null }),
     });
     setSaving(false);
     setEditingId(null);
-    fetchLive(authToken);
+    fetchLive();
   }
 
   async function handleDelete(recordId: string) {
-    if (!authToken || !window.confirm("Remove this check-in record?")) return;
+    if (!window.confirm("Remove this check-in record?")) return;
     setDeletingId(recordId);
     await fetch("/api/checkin/update-record", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ recordId }),
     });
     setDeletingId(null);
-    fetchLive(authToken);
+    fetchLive();
   }
 
   return (

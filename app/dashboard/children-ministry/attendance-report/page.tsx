@@ -77,7 +77,6 @@ function exportCSV(report: Report) {
 
 export default function AttendanceReportPage() {
   const router = useRouter();
-  const [authToken, setAuthToken] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionOption[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [report, setReport] = useState<Report | null>(null);
@@ -95,34 +94,30 @@ export default function AttendanceReportPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const token = session.access_token;
-      setAuthToken(token);
-      const res = await fetch("/api/checkin/attendance-report", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch("/api/checkin/attendance-report", { credentials: "include" });
       if (res.ok) { const d = await res.json(); setSessions(d.sessions ?? []); }
-      const roomsRes = await fetch("/api/checkin/update-record", { headers: { Authorization: `Bearer ${token}` } });
+      const roomsRes = await fetch("/api/checkin/update-record", { credentials: "include" });
       if (roomsRes.ok) { const d = await roomsRes.json(); setAllRooms(d.rooms ?? []); }
     }
     init();
   }, [router]);
 
   async function loadReport(sessionId: string) {
-    if (!authToken || !sessionId) return;
+    if (!sessionId) return;
     setLoadingReport(true);
     setReport(null);
     setEditingId(null);
-    const res = await fetch(`/api/checkin/attendance-report?sessionId=${sessionId}`, { headers: { Authorization: `Bearer ${authToken}` } });
+    const res = await fetch(`/api/checkin/attendance-report?sessionId=${sessionId}`, { credentials: "include" });
     if (res.ok) { const d = await res.json(); setReport(d); }
     setLoadingReport(false);
   }
 
   async function handleSaveRoom(recordId: string) {
-    if (!authToken) return;
     setSaving(true);
     await fetch("/api/checkin/update-record", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ recordId, roomId: editRoomId || null }),
     });
     setSaving(false);
@@ -131,11 +126,12 @@ export default function AttendanceReportPage() {
   }
 
   async function handleDelete(recordId: string) {
-    if (!authToken || !window.confirm("Remove this check-in record?")) return;
+    if (!window.confirm("Remove this check-in record?")) return;
     setDeletingId(recordId);
     await fetch("/api/checkin/update-record", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ recordId }),
     });
     setDeletingId(null);

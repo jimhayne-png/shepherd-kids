@@ -38,7 +38,6 @@ async function copyText(text: string) {
 
 export default function CheckinSetupPage() {
   const router = useRouter();
-  const [authToken, setAuthToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "visitors">("rooms");
 
@@ -71,25 +70,25 @@ export default function CheckinSetupPage() {
   const [nvPersonalizeOpen, setNvPersonalizeOpen] = useState<Record<string, boolean>>({});
   const [nvSending, setNvSending] = useState<Record<string, string>>({});
 
-  async function loadVisitors(token: string) {
+  async function loadVisitors() {
     setNvLoading(true);
-    const res = await fetch("/api/checkin/new-visitors", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch("/api/checkin/new-visitors", { credentials: "include" });
     if (res.ok) { const d = await res.json(); setNvSessions(d.sessions ?? []); }
     setNvLoading(false);
   }
 
   useEffect(() => {
-    if (tab === "visitors" && authToken && !nvLoaded) {
+    if (tab === "visitors" && !loading && !nvLoaded) {
       setNvLoaded(true);
-      loadVisitors(authToken);
+      loadVisitors();
     }
-  }, [tab, authToken, nvLoaded]);
+  }, [tab, loading, nvLoaded]);
 
   async function toggleAutoFollowup(sessionId: string, current: boolean) {
-    if (!authToken) return;
     await fetch("/api/checkin/sessions", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id: sessionId, autoFollowup: !current }),
     });
     setNvSessions(ss => ss.map(s => s.session.id === sessionId ? { ...s, session: { ...s.session, auto_followup: !current } } : s));
@@ -102,11 +101,11 @@ export default function CheckinSetupPage() {
     if (type === "letter" || type === "both") {
       window.open(`/api/checkin/followup/letter/${family.primaryRecordId}`, "_blank");
     }
-    if (!authToken) return;
     setNvSending(s => ({ ...s, [key]: type }));
     await fetch("/api/checkin/followup", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         sessionId,
         recordIds: family.children.map(c => c.id),
@@ -118,15 +117,14 @@ export default function CheckinSetupPage() {
       }),
     });
     setNvSending(s => { const n = { ...s }; delete n[key]; return n; });
-    if (authToken) await loadVisitors(authToken);
+    await loadVisitors();
   }
 
-  async function load(token: string) {
-    const headers = { Authorization: `Bearer ${token}` };
+  async function load() {
     const [rRes, tRes, sRes] = await Promise.all([
-      fetch("/api/checkin/rooms", { headers }),
-      fetch("/api/checkin/templates", { headers }),
-      fetch("/api/checkin/sessions", { headers }),
+      fetch("/api/checkin/rooms", { credentials: "include" }),
+      fetch("/api/checkin/templates", { credentials: "include" }),
+      fetch("/api/checkin/sessions", { credentials: "include" }),
     ]);
     if (rRes.ok) { const d = await rRes.json(); setRooms(d.rooms ?? []); }
     if (tRes.ok) { const d = await tRes.json(); setTemplates(d.templates ?? []); }
@@ -140,21 +138,19 @@ export default function CheckinSetupPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      setAuthToken(session.access_token);
-      await load(session.access_token);
+      await load();
       setLoading(false);
     }
     init();
   }, [router]);
 
   async function saveRoom() {
-    if (!authToken || !roomForm.name.trim()) return;
+    if (!roomForm.name.trim()) return;
     setSavingRoom(true);
     const res = await fetch("/api/checkin/rooms", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ name: roomForm.name, minAge: roomForm.minAge ? parseInt(roomForm.minAge) : null, maxAge: roomForm.maxAge ? parseInt(roomForm.maxAge) : null, capacity: roomForm.capacity ? parseInt(roomForm.capacity) : null }),
     });
     if (res.ok) { const d = await res.json(); setRooms(r => [...r, d.room]); setRoomForm({ name: "", minAge: "", maxAge: "", capacity: "" }); setShowAddRoom(false); }
@@ -163,32 +159,33 @@ export default function CheckinSetupPage() {
   }
 
   async function toggleRoom(room: Room) {
-    if (!authToken) return;
     const res = await fetch("/api/checkin/rooms", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id: room.id, isActive: !room.is_active }),
     });
     if (res.ok) { const d = await res.json(); setRooms(rs => rs.map(r => r.id === room.id ? d.room : r)); }
   }
 
   async function deleteRoom(room: Room) {
-    if (!authToken) return;
     if (!confirm(`Permanently delete "${room.name}"? This cannot be undone.`)) return;
     const res = await fetch("/api/checkin/rooms", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id: room.id }),
     });
     if (res.ok) { setRooms(rs => rs.filter(r => r.id !== room.id)); }
   }
 
   async function saveTemplate() {
-    if (!authToken || !tplForm.name.trim()) return;
+    if (!tplForm.name.trim()) return;
     setSavingTemplate(true);
     const res = await fetch("/api/checkin/templates", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ name: tplForm.name, typicalDay: tplForm.typicalDay || null, typicalTime: tplForm.typicalTime || null }),
     });
     if (res.ok) { const d = await res.json(); setTemplates(t => [...t, d.template]); setTplForm({ name: "", typicalDay: "", typicalTime: "" }); setShowAddTemplate(false); }
@@ -196,22 +193,23 @@ export default function CheckinSetupPage() {
   }
 
   async function toggleTemplate(tpl: Template) {
-    if (!authToken) return;
     const res = await fetch("/api/checkin/templates", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id: tpl.id, isActive: !tpl.is_active }),
     });
     if (res.ok) { const d = await res.json(); setTemplates(ts => ts.map(t => t.id === tpl.id ? d.template : t)); }
   }
 
   async function saveSession() {
-    if (!authToken || !sessionForm.serviceName.trim() || !sessionForm.date || !sessionForm.kioskPin) return;
+    if (!sessionForm.serviceName.trim() || !sessionForm.date || !sessionForm.kioskPin) return;
     if (!/^\d{4}$/.test(sessionForm.kioskPin)) { alert("PIN must be exactly 4 digits"); return; }
     setSavingSession(true);
     const res = await fetch("/api/checkin/sessions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ serviceName: sessionForm.serviceName, serviceTemplateId: sessionForm.templateId || null, date: sessionForm.date, scheduledTime: sessionForm.scheduledTime || null, kioskPin: sessionForm.kioskPin }),
     });
     if (res.ok) { const d = await res.json(); setSessions(s => [d.session, ...s]); setSessionForm({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "" }); setShowAddSession(false); }
@@ -219,11 +217,11 @@ export default function CheckinSetupPage() {
   }
 
   async function toggleSession(session: Session) {
-    if (!authToken) return;
     const newStatus = session.status === "open" ? "closed" : "open";
     const res = await fetch("/api/checkin/sessions", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id: session.id, status: newStatus }),
     });
     if (res.ok) { const d = await res.json(); setSessions(ss => ss.map(s => s.id === session.id ? d.session : s)); }
@@ -528,7 +526,7 @@ export default function CheckinSetupPage() {
                 <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>New Visitor Follow-Up</h2>
                 <p className="text-xs text-gray-400 mt-0.5">Send welcome emails or print letters for first-time families</p>
               </div>
-              {authToken && <button onClick={() => loadVisitors(authToken)} className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-500">↻ Refresh</button>}
+              <button onClick={() => loadVisitors()} className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-500">↻ Refresh</button>
             </div>
 
             {nvLoading && <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-gray-400">Loading new visitors…</div></div>}
