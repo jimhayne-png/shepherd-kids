@@ -86,6 +86,7 @@ type Props = {
 export default function DashboardClient({ userId, userEmail }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [allChurches, setAllChurches] = useState<Church[]>([]);
   const [churchName, setChurchName] = useState<string | null>(null);
@@ -103,6 +104,28 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         .maybeSingle();
 
       if (adminRow) {
+        setIsAdminUser(true);
+
+        // Check if admin has selected a specific church (URL param takes precedence).
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedId = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+
+        if (selectedId) {
+          const { data: churchData } = await supabase
+            .from("churches")
+            .select("id, name")
+            .eq("id", selectedId)
+            .maybeSingle();
+
+          if (churchData) {
+            setChurchName(churchData.name);
+            setChurchId(selectedId);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // No church selected — show the full church list.
         const { data: churches } = await supabase
           .from("churches")
           .select("id, name")
@@ -188,7 +211,12 @@ export default function DashboardClient({ userId, userEmail }: Props) {
     );
   }
 
-  // Platform admin view.
+  function handleChurchSelect(church: Church) {
+    localStorage.setItem("selected_church_id", church.id);
+    router.push(`/dashboard?churchId=${church.id}`);
+  }
+
+  // Platform admin church list view.
   if (isPlatformAdmin) {
     return (
       <AppShell navItems={navItems}>
@@ -209,13 +237,14 @@ export default function DashboardClient({ userId, userEmail }: Props) {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {allChurches.map((church) => (
-              <div
+              <button
                 key={church.id}
-                className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4"
+                onClick={() => handleChurchSelect(church)}
+                className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 text-left w-full hover:border-green-700 hover:shadow-md transition-all cursor-pointer"
               >
                 <p className="font-semibold text-gray-900">{church.name}</p>
                 <p className="text-xs text-gray-400 mt-0.5 font-mono">{church.id}</p>
-              </div>
+              </button>
             ))}
             {allChurches.length === 0 && (
               <p className="text-gray-400 text-sm col-span-full">No churches found.</p>
@@ -260,6 +289,17 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         className="px-8 py-10"
         style={{ background: "linear-gradient(135deg, #1A4A2E 0%, #2D6B42 100%)" }}
       >
+        {isAdminUser && (
+          <button
+            onClick={() => {
+              localStorage.removeItem("selected_church_id");
+              router.push("/dashboard");
+            }}
+            className="text-green-300 hover:text-white text-sm mb-2 block transition-colors"
+          >
+            ← All Churches
+          </button>
+        )}
         <p className="text-green-200 text-sm font-medium mb-1">{formatDate()}</p>
         <h1 className="text-3xl font-bold text-white mb-1">
           {getGreeting()}{churchName ? `, ${churchName}` : ""}
