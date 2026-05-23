@@ -88,12 +88,9 @@ export default function DashboardClient({ userId, userEmail }: Props) {
   const [churchId, setChurchId] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null });
   const [trialExpired, setTrialExpired] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
-      console.log("Dashboard userId:", userId);
-
       const [churchUserRes, trialRes] = await Promise.all([
         supabase
           .from("church_users")
@@ -105,24 +102,12 @@ export default function DashboardClient({ userId, userEmail }: Props) {
           .catch(() => ({ expired: false })),
       ]);
 
-      console.log("churchUserRes:", JSON.stringify({
-        data: churchUserRes.data,
-        error: churchUserRes.error,
-        count: Array.isArray(churchUserRes.data) ? churchUserRes.data.length : null,
-      }));
-
       const churchUser = Array.isArray(churchUserRes.data)
         ? churchUserRes.data[0] ?? null
         : churchUserRes.data;
 
       if (!churchUser) {
-        setDebugInfo(JSON.stringify({
-          userId,
-          churchUserData: churchUserRes.data,
-          churchUserError: churchUserRes.error,
-        }, null, 2));
-
-        setLoading(false);
+        router.replace("/onboarding");
         return;
       }
 
@@ -176,17 +161,6 @@ export default function DashboardClient({ userId, userEmail }: Props) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-500">Loading…</div>
-      </div>
-    );
-  }
-
-  if (debugInfo) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <h1 className="text-2xl font-bold mb-4">Church User Debug</h1>
-        <pre className="bg-white border rounded-xl p-4 overflow-auto text-sm whitespace-pre-wrap">
-          {debugInfo}
-        </pre>
       </div>
     );
   }
