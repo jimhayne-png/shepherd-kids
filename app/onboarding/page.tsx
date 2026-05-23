@@ -56,8 +56,8 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) router.replace("/");
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) router.replace("/");
     });
   }, [router]);
 

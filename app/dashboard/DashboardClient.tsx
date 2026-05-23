@@ -96,6 +96,9 @@ export default function DashboardClient({ userId, userEmail }: Props) {
 
   useEffect(() => {
     async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       // Check platform admin first.
       const { data: adminRow } = await supabase
         .from("platform_admins")
@@ -152,6 +155,10 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         ? churchUserRes.data[0] ?? null
         : churchUserRes.data;
 
+      if (churchUserRes.error) {
+        setLoading(false);
+        return;
+      }
       if (!churchUser) {
         router.replace("/onboarding");
         return;
