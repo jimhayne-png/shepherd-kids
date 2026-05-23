@@ -44,10 +44,21 @@ export async function GET(request: Request) {
 
       const response = NextResponse.redirect(redirectUrl)
 
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+      response.headers.set("Pragma", "no-cache")
+      response.headers.set("Expires", "0")
+
       // Copy session cookies onto the redirect response so the browser receives them.
       pendingCookies.forEach(({ name, value, options }) => {
-        response.cookies.set(name, value, options)
+        response.cookies.set(name, value, {
+          ...options,
+          path: "/",
+          sameSite: "lax",
+          secure: true,
+        })
       })
+
+      console.log("Callback cookies copied:", pendingCookies.map(c => c.name))
 
       return response
     }
