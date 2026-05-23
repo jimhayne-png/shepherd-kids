@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   const { data: families, error } = await admin
     .from('cm_visitor_families')
-    .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, visit_date, status')
+    .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, parent2_first_name, parent2_last_name, parent2_phone, parent2_email, address, how_did_you_hear, visit_date, follow_up_sent, follow_up_sent_at, next_day_sent, next_day_sent_at, notes, status, created_at')
     .eq('church_id', churchId)
     .order('created_at', { ascending: false });
 
@@ -43,8 +43,20 @@ export async function GET(req: NextRequest) {
     parent1_last_name: f.parent1_last_name,
     parent1_phone: f.parent1_phone ?? null,
     parent1_email: f.parent1_email ?? null,
+    parent2_first_name: f.parent2_first_name ?? null,
+    parent2_last_name: f.parent2_last_name ?? null,
+    parent2_phone: f.parent2_phone ?? null,
+    parent2_email: f.parent2_email ?? null,
+    address: f.address ?? null,
+    how_did_you_hear: f.how_did_you_hear ?? null,
     visit_date: f.visit_date,
+    follow_up_sent: f.follow_up_sent ?? false,
+    follow_up_sent_at: f.follow_up_sent_at ?? null,
+    next_day_sent: f.next_day_sent ?? false,
+    next_day_sent_at: f.next_day_sent_at ?? null,
+    notes: f.notes ?? null,
     status: f.status,
+    created_at: f.created_at,
     children: childMap[f.id] ?? [],
   }));
 

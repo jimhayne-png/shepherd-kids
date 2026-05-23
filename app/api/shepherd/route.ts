@@ -1,28 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-async function getAuthUser(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '');
-  if (!token) return null;
-  const { data: { user } } = await adminClient().auth.getUser(token);
-  return user ?? null;
-}
-
-async function getChurchUser(userId: string) {
-  const { data } = await adminClient()
-    .from('church_users')
-    .select('church_id, role')
-    .eq('user_id', userId)
-    .maybeSingle();
-  return data ?? null;
-}
+import { getAuthContext, adminClient } from '@/lib/api-auth';
 
 function currentMonthYear() {
   const now = new Date();
@@ -30,11 +7,8 @@ function currentMonthYear() {
 }
 
 export async function GET(request: NextRequest) {
-  const user = await getAuthUser(request);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const cu = await getChurchUser(user.id);
-  if (!cu || cu.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+  const ctx = await getAuthContext(request);
+  if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = adminClient();
   const monthYear = currentMonthYear();
@@ -42,7 +16,7 @@ export async function GET(request: NextRequest) {
   const { data: departments, error } = await admin
     .from('departments')
     .select('id, name, icon, color')
-    .eq('church_id', cu.church_id)
+    .eq('church_id', ctx.churchId)
     .order('name');
 
   if (error) return Response.json({ error: error.message }, { status: 400 });

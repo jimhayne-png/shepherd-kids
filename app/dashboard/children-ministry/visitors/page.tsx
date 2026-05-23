@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
@@ -41,8 +41,8 @@ function calcAge(dob: string): number {
 
 export default function VisitorsPage() {
   const router = useRouter();
+  const selectedChurchIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
   const [families, setFamilies] = useState<Family[]>([]);
   const [stats, setStats] = useState({ today: 0, this_week: 0, this_month: 0, converted: 0 });
   const [filter, setFilter] = useState("all");
@@ -56,10 +56,14 @@ export default function VisitorsPage() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [savingNotes, setSavingNotes] = useState<string | null>(null);
 
-  async function load(t: string) {
+  function ch(): Record<string, string> {
+    return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
+  }
+
+  async function load() {
     const [famRes, tokRes] = await Promise.all([
-      fetch("/api/children-ministry/visitors", { headers: { Authorization: `Bearer ${t}` } }),
-      fetch("/api/children-ministry/visitor-tokens", { headers: { Authorization: `Bearer ${t}` } }),
+      fetch("/api/children-ministry/visitors", { credentials: "include", headers: ch() }),
+      fetch("/api/children-ministry/visitor-tokens", { credentials: "include", headers: ch() }),
     ]);
     if (famRes.ok) { const d = await famRes.json(); setFamilies(d.families ?? []); setStats(d.stats ?? stats); }
     if (tokRes.ok) { const d = await tokRes.json(); setTokens(d.tokens ?? []); }
@@ -72,11 +76,9 @@ export default function VisitorsPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const t = session.access_token;
-      setToken(t);
-      await load(t);
+      const urlParams = new URLSearchParams(window.location.search);
+      selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+      await load();
       setLoading(false);
     }
     init();
@@ -91,32 +93,33 @@ export default function VisitorsPage() {
   }
 
   async function addToken() {
-    if (!token || !newTokenLabel.trim()) return;
+    if (!newTokenLabel.trim()) return;
     await fetch("/api/children-ministry/visitor-tokens", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...ch() },
       body: JSON.stringify({ label: newTokenLabel }),
     });
     setNewTokenLabel(""); setShowAddToken(false);
-    if (token) await load(token);
+    await load();
   }
 
   async function updateStatus(familyId: string, status: string) {
-    if (!token) return;
     await fetch(`/api/children-ministry/visitors/${familyId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...ch() },
       body: JSON.stringify({ status }),
     });
     setFamilies(fs => fs.map(f => f.id === familyId ? { ...f, status } : f));
   }
 
   async function saveNotes(familyId: string) {
-    if (!token) return;
     setSavingNotes(familyId);
     await fetch(`/api/children-ministry/visitors/${familyId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...ch() },
       body: JSON.stringify({ notes: notes[familyId] ?? "" }),
     });
     setSavingNotes(null);
@@ -124,11 +127,11 @@ export default function VisitorsPage() {
   }
 
   async function convertFamily(familyId: string) {
-    if (!token) return;
     setConverting(familyId);
     const res = await fetch(`/api/children-ministry/visitors/${familyId}/convert`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
+      headers: ch(),
     });
     const d = await res.json();
     setConverting(null);
