@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +39,7 @@ const SECTIONS = [
 
 export default function ChildrenMinistryPage() {
   const router = useRouter();
+  const selectedChurchIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<Child[]>([]);
   const [recentSessions, setRecentSessions] = useState<SessionSummary[]>([]);
@@ -50,9 +51,12 @@ export default function ChildrenMinistryPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
+      const urlParams = new URLSearchParams(window.location.search);
+      selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+      const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
       const [childrenRes, sessionsRes] = await Promise.all([
-        fetch("/api/children-ministry/children", { credentials: "include" }),
-        fetch("/api/checkin/attendance-report", { credentials: "include" }),
+        fetch("/api/children-ministry/children", { credentials: "include", headers: churchHeader }),
+        fetch("/api/checkin/attendance-report", { credentials: "include", headers: churchHeader }),
       ]);
       if (childrenRes.ok) { const d = await childrenRes.json(); setChildren(d.children ?? []); }
       if (sessionsRes.ok) { const d = await sessionsRes.json(); setRecentSessions((d.sessions ?? []).slice(0, 4)); }

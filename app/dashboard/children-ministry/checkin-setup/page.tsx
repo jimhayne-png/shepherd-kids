@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
@@ -38,6 +38,10 @@ async function copyText(text: string) {
 
 export default function CheckinSetupPage() {
   const router = useRouter();
+  const selectedChurchIdRef = useRef<string | null>(null);
+  function ch(): Record<string, string> {
+    return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
+  }
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "visitors">("rooms");
 
@@ -72,7 +76,7 @@ export default function CheckinSetupPage() {
 
   async function loadVisitors() {
     setNvLoading(true);
-    const res = await fetch("/api/checkin/new-visitors", { credentials: "include" });
+    const res = await fetch("/api/checkin/new-visitors", { credentials: "include", headers: ch() });
     if (res.ok) { const d = await res.json(); setNvSessions(d.sessions ?? []); }
     setNvLoading(false);
   }
@@ -87,7 +91,7 @@ export default function CheckinSetupPage() {
   async function toggleAutoFollowup(sessionId: string, current: boolean) {
     await fetch("/api/checkin/sessions", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ id: sessionId, autoFollowup: !current }),
     });
@@ -104,7 +108,7 @@ export default function CheckinSetupPage() {
     setNvSending(s => ({ ...s, [key]: type }));
     await fetch("/api/checkin/followup", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({
         sessionId,
@@ -122,9 +126,9 @@ export default function CheckinSetupPage() {
 
   async function load() {
     const [rRes, tRes, sRes] = await Promise.all([
-      fetch("/api/checkin/rooms", { credentials: "include" }),
-      fetch("/api/checkin/templates", { credentials: "include" }),
-      fetch("/api/checkin/sessions", { credentials: "include" }),
+      fetch("/api/checkin/rooms", { credentials: "include", headers: ch() }),
+      fetch("/api/checkin/templates", { credentials: "include", headers: ch() }),
+      fetch("/api/checkin/sessions", { credentials: "include", headers: ch() }),
     ]);
     if (rRes.ok) { const d = await rRes.json(); setRooms(d.rooms ?? []); }
     if (tRes.ok) { const d = await tRes.json(); setTemplates(d.templates ?? []); }
@@ -138,6 +142,8 @@ export default function CheckinSetupPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
+      const urlParams = new URLSearchParams(window.location.search);
+      selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
       await load();
       setLoading(false);
     }
@@ -149,7 +155,7 @@ export default function CheckinSetupPage() {
     setSavingRoom(true);
     const res = await fetch("/api/checkin/rooms", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ name: roomForm.name, minAge: roomForm.minAge ? parseInt(roomForm.minAge) : null, maxAge: roomForm.maxAge ? parseInt(roomForm.maxAge) : null, capacity: roomForm.capacity ? parseInt(roomForm.capacity) : null }),
     });
@@ -161,7 +167,7 @@ export default function CheckinSetupPage() {
   async function toggleRoom(room: Room) {
     const res = await fetch("/api/checkin/rooms", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ id: room.id, isActive: !room.is_active }),
     });
@@ -172,7 +178,7 @@ export default function CheckinSetupPage() {
     if (!confirm(`Permanently delete "${room.name}"? This cannot be undone.`)) return;
     const res = await fetch("/api/checkin/rooms", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ id: room.id }),
     });
@@ -184,7 +190,7 @@ export default function CheckinSetupPage() {
     setSavingTemplate(true);
     const res = await fetch("/api/checkin/templates", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ name: tplForm.name, typicalDay: tplForm.typicalDay || null, typicalTime: tplForm.typicalTime || null }),
     });
@@ -195,7 +201,7 @@ export default function CheckinSetupPage() {
   async function toggleTemplate(tpl: Template) {
     const res = await fetch("/api/checkin/templates", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ id: tpl.id, isActive: !tpl.is_active }),
     });
@@ -208,7 +214,7 @@ export default function CheckinSetupPage() {
     setSavingSession(true);
     const res = await fetch("/api/checkin/sessions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ serviceName: sessionForm.serviceName, serviceTemplateId: sessionForm.templateId || null, date: sessionForm.date, scheduledTime: sessionForm.scheduledTime || null, kioskPin: sessionForm.kioskPin }),
     });
@@ -220,7 +226,7 @@ export default function CheckinSetupPage() {
     const newStatus = session.status === "open" ? "closed" : "open";
     const res = await fetch("/api/checkin/sessions", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
       body: JSON.stringify({ id: session.id, status: newStatus }),
     });

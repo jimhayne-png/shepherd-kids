@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
@@ -77,6 +77,7 @@ function exportCSV(report: Report) {
 
 export default function AttendanceReportPage() {
   const router = useRouter();
+  const selectedChurchIdRef = useRef<string | null>(null);
   const [sessions, setSessions] = useState<SessionOption[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [report, setReport] = useState<Report | null>(null);
@@ -94,9 +95,12 @@ export default function AttendanceReportPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const res = await fetch("/api/checkin/attendance-report", { credentials: "include" });
+      const urlParams = new URLSearchParams(window.location.search);
+      selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+      const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
+      const res = await fetch("/api/checkin/attendance-report", { credentials: "include", headers: churchHeader });
       if (res.ok) { const d = await res.json(); setSessions(d.sessions ?? []); }
-      const roomsRes = await fetch("/api/checkin/update-record", { credentials: "include" });
+      const roomsRes = await fetch("/api/checkin/update-record", { credentials: "include", headers: churchHeader });
       if (roomsRes.ok) { const d = await roomsRes.json(); setAllRooms(d.rooms ?? []); }
     }
     init();
@@ -107,16 +111,18 @@ export default function AttendanceReportPage() {
     setLoadingReport(true);
     setReport(null);
     setEditingId(null);
-    const res = await fetch(`/api/checkin/attendance-report?sessionId=${sessionId}`, { credentials: "include" });
+    const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
+    const res = await fetch(`/api/checkin/attendance-report?sessionId=${sessionId}`, { credentials: "include", headers: churchHeader });
     if (res.ok) { const d = await res.json(); setReport(d); }
     setLoadingReport(false);
   }
 
   async function handleSaveRoom(recordId: string) {
     setSaving(true);
+    const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
     await fetch("/api/checkin/update-record", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...churchHeader },
       credentials: "include",
       body: JSON.stringify({ recordId, roomId: editRoomId || null }),
     });
@@ -128,9 +134,10 @@ export default function AttendanceReportPage() {
   async function handleDelete(recordId: string) {
     if (!window.confirm("Remove this check-in record?")) return;
     setDeletingId(recordId);
+    const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
     await fetch("/api/checkin/update-record", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...churchHeader },
       credentials: "include",
       body: JSON.stringify({ recordId }),
     });

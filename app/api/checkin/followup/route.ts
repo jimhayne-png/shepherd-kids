@@ -1,21 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
+import { getAuthContext, adminClient } from '@/lib/api-auth';
 import { Resend } from 'resend';
-
-function adminClient() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-}
-
-async function getAuth(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '');
-  if (!token) return null;
-  const admin = adminClient();
-  const { data: { user } } = await admin.auth.getUser(token);
-  if (!user) return null;
-  const { data } = await admin.from('church_users').select('church_id').eq('user_id', user.id).maybeSingle();
-  if (!data?.church_id) return null;
-  return { userId: user.id, churchId: data.church_id as string };
-}
 
 function buildEmailHtml(churchName: string, parentName: string, childList: string, customMsg?: string | null): string {
   const firstName = parentName.split(' ')[0] || parentName;
@@ -48,7 +33,7 @@ function buildEmailHtml(churchName: string, parentName: string, childList: strin
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await getAuth(request);
+  const auth = await getAuthContext(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const {
