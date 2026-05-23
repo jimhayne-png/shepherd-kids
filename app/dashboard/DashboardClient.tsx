@@ -81,103 +81,31 @@ type Church = { id: string; name: string };
 type Props = {
   userId: string;
   userEmail: string | null;
+  churchId: string | null;
+  churchName: string | null;
+  isPlatformAdmin: boolean;
+  allChurches: Church[];
 };
 
-export default function DashboardClient({ userId, userEmail }: Props) {
+export default function DashboardClient({
+  userId,
+  userEmail,
+  churchId,
+  churchName,
+  isPlatformAdmin,
+  allChurches,
+}: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
-  const [allChurches, setAllChurches] = useState<Church[]>([]);
-  const [churchName, setChurchName] = useState<string | null>(null);
-  const [churchId, setChurchId] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null });
   const [trialExpired, setTrialExpired] = useState(false);
 
   useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check platform admin first.
-      const { data: adminRow } = await supabase
-        .from("platform_admins")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (adminRow) {
-        setIsAdminUser(true);
-
-        // Check if admin has selected a specific church (URL param takes precedence).
-        const urlParams = new URLSearchParams(window.location.search);
-        const selectedId = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
-
-        if (selectedId) {
-          const { data: churchData } = await supabase
-            .from("churches")
-            .select("id, name")
-            .eq("id", selectedId)
-            .maybeSingle();
-
-          if (churchData) {
-            setChurchName(churchData.name);
-            setChurchId(selectedId);
-            setLoading(false);
-            return;
-          }
-        }
-
-        // No church selected — show the full church list.
-        const { data: churches } = await supabase
-          .from("churches")
-          .select("id, name")
-          .order("name");
-        setIsPlatformAdmin(true);
-        setAllChurches(churches ?? []);
-        setLoading(false);
-        return;
-      }
-
-      // Normal church user flow.
-      const [churchUserRes, trialRes] = await Promise.all([
-        supabase
-          .from("church_users")
-          .select("church_id, churches(name)")
-          .eq("user_id", userId)
-          .limit(1),
-        fetch("/api/trial-status")
-          .then((r) => r.json())
-          .catch(() => ({ expired: false })),
-      ]);
-
-      const churchUser = Array.isArray(churchUserRes.data)
-        ? churchUserRes.data[0] ?? null
-        : churchUserRes.data;
-
-      if (churchUserRes.error) {
-        setLoading(false);
-        return;
-      }
-      if (!churchUser) {
-        router.replace("/onboarding");
-        return;
-      }
-
-      if (trialRes.expired) {
-        setTrialExpired(true);
-        setLoading(false);
-        return;
-      }
-
-      const churches = churchUser.churches as unknown as { name: string } | null;
-      setChurchName(churches?.name ?? null);
-      setChurchId(churchUser.church_id);
-      setLoading(false);
-    }
-
-    init();
-  }, [userId, router]);
+    if (isPlatformAdmin || !churchId) return;
+    fetch("/api/trial-status", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { expired: false }))
+      .then((d) => { if (d.expired) setTrialExpired(true); })
+      .catch(() => {});
+  }, [isPlatformAdmin, churchId]);
 
   useEffect(() => {
     if (!churchId) return;
@@ -210,21 +138,13 @@ export default function DashboardClient({ userId, userEmail }: Props) {
     fetchStats();
   }, [churchId]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading…</div>
-      </div>
-    );
-  }
-
   function handleChurchSelect(church: Church) {
     localStorage.setItem("selected_church_id", church.id);
     router.push(`/dashboard?churchId=${church.id}`);
   }
 
-  // Platform admin church list view.
-  if (isPlatformAdmin) {
+  // Platform admin all-churches view
+  if (isPlatformAdmin && !churchId) {
     return (
       <AppShell navItems={navItems}>
         <div
@@ -296,7 +216,7 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         className="px-8 py-10"
         style={{ background: "linear-gradient(135deg, #1A4A2E 0%, #2D6B42 100%)" }}
       >
-        {isAdminUser && (
+        {isPlatformAdmin && (
           <button
             onClick={() => {
               localStorage.removeItem("selected_church_id");
