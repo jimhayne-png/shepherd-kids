@@ -100,7 +100,8 @@ export default function DashboardClient({ userId, userEmail }: Props) {
           .eq("user_id", userId)
           .limit(1),
         fetch("/api/trial-status")
-          .then((r) => r.json()).catch(() => ({ expired: false })),
+          .then((r) => r.json())
+          .catch(() => ({ expired: false })),
       ]);
 
       console.log("churchUserRes:", JSON.stringify({
@@ -114,6 +115,12 @@ export default function DashboardClient({ userId, userEmail }: Props) {
         : churchUserRes.data;
 
       if (!churchUser) {
+        alert(JSON.stringify({
+          userId,
+          churchUserData: churchUserRes.data,
+          churchUserError: churchUserRes.error,
+        }, null, 2));
+
         router.replace("/onboarding");
         return;
       }
