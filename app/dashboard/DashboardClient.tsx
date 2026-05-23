@@ -76,6 +76,8 @@ type Stats = {
   prayers: number | null;
 };
 
+type Church = { id: string; name: string };
+
 type Props = {
   userId: string;
   userEmail: string | null;
@@ -84,6 +86,8 @@ type Props = {
 export default function DashboardClient({ userId, userEmail }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [allChurches, setAllChurches] = useState<Church[]>([]);
   const [churchName, setChurchName] = useState<string | null>(null);
   const [churchId, setChurchId] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null });
@@ -91,6 +95,25 @@ export default function DashboardClient({ userId, userEmail }: Props) {
 
   useEffect(() => {
     async function init() {
+      // Check platform admin first.
+      const { data: adminRow } = await supabase
+        .from("platform_admins")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (adminRow) {
+        const { data: churches } = await supabase
+          .from("churches")
+          .select("id, name")
+          .order("name");
+        setIsPlatformAdmin(true);
+        setAllChurches(churches ?? []);
+        setLoading(false);
+        return;
+      }
+
+      // Normal church user flow.
       const [churchUserRes, trialRes] = await Promise.all([
         supabase
           .from("church_users")
@@ -162,6 +185,44 @@ export default function DashboardClient({ userId, userEmail }: Props) {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-500">Loading…</div>
       </div>
+    );
+  }
+
+  // Platform admin view.
+  if (isPlatformAdmin) {
+    return (
+      <AppShell navItems={navItems}>
+        <div
+          className="px-8 py-10"
+          style={{ background: "linear-gradient(135deg, #1A4A2E 0%, #2D6B42 100%)" }}
+        >
+          <p className="text-green-200 text-sm font-medium mb-1">{formatDate()}</p>
+          <h1 className="text-3xl font-bold text-white mb-1">Master Admin</h1>
+          {userEmail && (
+            <p className="text-green-300 text-sm mt-2">Signed in as {userEmail}</p>
+          )}
+        </div>
+
+        <div className="px-8 py-8 bg-gray-50 min-h-screen">
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">
+            All Churches ({allChurches.length})
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {allChurches.map((church) => (
+              <div
+                key={church.id}
+                className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4"
+              >
+                <p className="font-semibold text-gray-900">{church.name}</p>
+                <p className="text-xs text-gray-400 mt-0.5 font-mono">{church.id}</p>
+              </div>
+            ))}
+            {allChurches.length === 0 && (
+              <p className="text-gray-400 text-sm col-span-full">No churches found.</p>
+            )}
+          </div>
+        </div>
+      </AppShell>
     );
   }
 
