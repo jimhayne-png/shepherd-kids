@@ -561,19 +561,17 @@ export default function KioskCheckInForm({
             <p
               style={{
                 fontSize: 13,
-                color: "#9ca3af",
+                color: "#6b7280",
                 textAlign: "center",
                 marginTop: 20,
                 lineHeight: 1.6,
+                fontWeight: 700,
               }}
             >
               Your family information is kept private and protected.
               <br />
-              Information collected through{" "}
-              <strong style={{ color: "#6b7280" }}>
-                {churchName || "this ministry"}
-              </strong>{" "}
-              is never sold or shared outside of this ministry.
+              Information collected through {churchName || "this ministry"} is never
+              sold or shared outside of this ministry.
             </p>
           </div>
         </div>
@@ -1099,19 +1097,17 @@ export default function KioskCheckInForm({
           <p
             style={{
               fontSize: 13,
-              color: "#9ca3af",
+              color: "#6b7280",
               textAlign: "center",
               marginBottom: 20,
               lineHeight: 1.6,
+              fontWeight: 700,
             }}
           >
             Your family information is kept private and protected.
             <br />
-            Information collected through{" "}
-            <strong style={{ color: "#6b7280" }}>
-              {churchName || "this ministry"}
-            </strong>{" "}
-            is never sold or shared outside of this ministry.
+            Information collected through {churchName || "this ministry"} is never
+            sold or shared outside of this ministry.
           </p>
 
           {submitError && (
