@@ -55,7 +55,7 @@ export async function POST(
   // Get saved children with birthday
   const { data: vcChildren } = await admin
     .from('cm_visitor_children')
-    .select('id, first_name, last_name, date_of_birth')
+    .select('id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions')
     .eq('family_id', family.id)
     .order('created_at');
 
@@ -64,6 +64,9 @@ export async function POST(
     name: `${c.first_name} ${c.last_name}`.trim(),
     source: 'visitor' as const,
     dateOfBirth: c.date_of_birth ?? null,
+    allergies: c.allergies ?? null,
+    medicalNotes: c.medical_notes ?? null,
+    specialInstructions: c.special_instructions ?? null,
   }));
 
   return Response.json({

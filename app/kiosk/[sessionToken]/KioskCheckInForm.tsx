@@ -4,6 +4,22 @@ import { useState } from "react";
 
 const ACCENT = "#F28C28";
 
+const ALLERGY_OPTIONS = [
+  "No Known Allergies",
+  "Peanuts",
+  "Tree Nuts",
+  "Dairy",
+  "Eggs",
+  "Soy",
+  "Wheat / Gluten",
+  "Shellfish",
+  "Bee Stings",
+  "Medication Allergy",
+  "Asthma",
+  "EpiPen Required",
+  "Other",
+] as const;
+
 type Room = { id: string; name: string };
 
 type LookupFamily = {
@@ -19,6 +35,16 @@ type LookupChild = {
   name: string;
   source: "visitor";
   dateOfBirth: string | null;
+  allergies: string | null;
+  medicalNotes: string | null;
+  specialInstructions: string | null;
+};
+
+type AllergyState = {
+  allergies: string[];
+  allergyOther: string;
+  medicalNotes: string;
+  specialInstructions: string;
 };
 
 type ExistingChildState = {
@@ -27,15 +53,15 @@ type ExistingChildState = {
   source: "visitor";
   selected: boolean;
   roomId: string;
-  dateOfBirth: string; // "" when unset; editable so parent can fill in missing birthday
-};
+  dateOfBirth: string;
+} & AllergyState;
 
 type NewChildForm = {
   firstName: string;
   lastName: string;
   dateOfBirth: string;
   roomId: string;
-};
+} & AllergyState;
 
 type Step = "phone" | "returning" | "new" | "success";
 
@@ -56,8 +82,36 @@ function fmtDate(d: string) {
   });
 }
 
+function parseAllergyState(raw: string | null): Pick<AllergyState, "allergies" | "allergyOther"> {
+  if (!raw) return { allergies: [], allergyOther: "" };
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return { allergies: [], allergyOther: "" };
+    let allergyOther = "";
+    const allergies = parsed.map((a: string) => {
+      if (typeof a === "string" && a.startsWith("Other: ")) {
+        allergyOther = a.slice(7);
+        return "Other";
+      }
+      return a;
+    });
+    return { allergies, allergyOther };
+  } catch {
+    return { allergies: [], allergyOther: "" };
+  }
+}
+
 function emptyNewChild(): NewChildForm {
-  return { firstName: "", lastName: "", dateOfBirth: "", roomId: "" };
+  return {
+    firstName: "",
+    lastName: "",
+    dateOfBirth: "",
+    roomId: "",
+    allergies: [],
+    allergyOther: "",
+    medicalNotes: "",
+    specialInstructions: "",
+  };
 }
 
 const today = new Date().toISOString().slice(0, 10);
@@ -155,14 +209,21 @@ export default function KioskCheckInForm({
       setFamily(data.family);
       setParentEmail(data.family.parentEmail ?? "");
       setExistingChildren(
-        (data.children as LookupChild[]).map((c) => ({
-          id: c.id,
-          name: c.name,
-          source: c.source,
-          selected: true,
-          roomId: "",
-          dateOfBirth: c.dateOfBirth ?? "",
-        })),
+        (data.children as LookupChild[]).map((c) => {
+          const { allergies, allergyOther } = parseAllergyState(c.allergies);
+          return {
+            id: c.id,
+            name: c.name,
+            source: c.source,
+            selected: true,
+            roomId: "",
+            dateOfBirth: c.dateOfBirth ?? "",
+            allergies,
+            allergyOther,
+            medicalNotes: c.medicalNotes ?? "",
+            specialInstructions: c.specialInstructions ?? "",
+          };
+        }),
       );
       setAddedChildren([]);
       setStep("returning");
@@ -194,6 +255,10 @@ export default function KioskCheckInForm({
         childDateOfBirth: c.dateOfBirth || undefined,
         roomId: c.roomId || undefined,
         isNew: false,
+        allergies: c.allergies,
+        allergyOther: c.allergyOther,
+        medicalNotes: c.medicalNotes,
+        specialInstructions: c.specialInstructions,
       })),
       ...additions.map((c) => ({
         childName: `${c.firstName.trim()} ${c.lastName.trim()}`,
@@ -202,6 +267,10 @@ export default function KioskCheckInForm({
         childDateOfBirth: c.dateOfBirth || undefined,
         roomId: c.roomId || undefined,
         isNew: true,
+        allergies: c.allergies,
+        allergyOther: c.allergyOther,
+        medicalNotes: c.medicalNotes,
+        specialInstructions: c.specialInstructions,
       })),
     ];
 
@@ -251,6 +320,10 @@ export default function KioskCheckInForm({
       childDateOfBirth: c.dateOfBirth || undefined,
       roomId: c.roomId || undefined,
       isNew: true,
+      allergies: c.allergies,
+      allergyOther: c.allergyOther,
+      medicalNotes: c.medicalNotes,
+      specialInstructions: c.specialInstructions,
     }));
 
     const res = await fetch(`/api/kiosk/${sessionToken}/check-in`, {
@@ -650,53 +723,16 @@ export default function KioskCheckInForm({
               </button>
 
               {child.selected && (
-                <div
-                  style={{
-                    marginTop: 8,
-                    paddingLeft: 4,
-                    display: "grid",
-                    gridTemplateColumns: rooms.length > 0 ? "1fr 1fr" : "1fr",
-                    gap: 10,
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: "#6b7280",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Birthday {child.dateOfBirth ? "" : "(optional)"}
-                    </label>
-                    <input
-                      type="date"
-                      value={child.dateOfBirth}
-                      max={today}
-                      min="2000-01-01"
-                      onChange={(e) =>
-                        setExistingChildren((cs) =>
-                          cs.map((c, j) =>
-                            j === i
-                              ? { ...c, dateOfBirth: e.target.value }
-                              : c,
-                          ),
-                        )
-                      }
-                      style={{
-                        width: "100%",
-                        fontSize: 16,
-                        padding: "10px 14px",
-                        borderRadius: 12,
-                        border: "2px solid #e5e7eb",
-                        boxSizing: "border-box",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                  {rooms.length > 0 && (
+                <div style={{ marginTop: 8, paddingLeft: 4 }}>
+                  {/* Birthday + Room */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: rooms.length > 0 ? "1fr 1fr" : "1fr",
+                      gap: 10,
+                      marginBottom: 4,
+                    }}
+                  >
                     <div>
                       <label
                         style={{
@@ -707,21 +743,75 @@ export default function KioskCheckInForm({
                           marginBottom: 4,
                         }}
                       >
-                        Room (optional)
+                        Birthday {child.dateOfBirth ? "" : "(optional)"}
                       </label>
-                      <RoomSelect
-                        value={child.roomId}
-                        onChange={(v) =>
+                      <input
+                        type="date"
+                        value={child.dateOfBirth}
+                        max={today}
+                        min="2000-01-01"
+                        onChange={(e) =>
                           setExistingChildren((cs) =>
                             cs.map((c, j) =>
-                              j === i ? { ...c, roomId: v } : c,
+                              j === i
+                                ? { ...c, dateOfBirth: e.target.value }
+                                : c,
                             ),
                           )
                         }
-                        rooms={rooms}
+                        style={{
+                          width: "100%",
+                          fontSize: 16,
+                          padding: "10px 14px",
+                          borderRadius: 12,
+                          border: "2px solid #e5e7eb",
+                          boxSizing: "border-box",
+                          outline: "none",
+                        }}
                       />
                     </div>
-                  )}
+                    {rooms.length > 0 && (
+                      <div>
+                        <label
+                          style={{
+                            display: "block",
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#6b7280",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Room (optional)
+                        </label>
+                        <RoomSelect
+                          value={child.roomId}
+                          onChange={(v) =>
+                            setExistingChildren((cs) =>
+                              cs.map((c, j) =>
+                                j === i ? { ...c, roomId: v } : c,
+                              ),
+                            )
+                          }
+                          rooms={rooms}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Allergy / medical section */}
+                  <AllergySection
+                    state={{
+                      allergies: child.allergies,
+                      allergyOther: child.allergyOther,
+                      medicalNotes: child.medicalNotes,
+                      specialInstructions: child.specialInstructions,
+                    }}
+                    onChange={(patch) =>
+                      setExistingChildren((cs) =>
+                        cs.map((c, j) => (j === i ? { ...c, ...patch } : c)),
+                      )
+                    }
+                  />
                 </div>
               )}
             </div>
@@ -1079,6 +1169,197 @@ export default function KioskCheckInForm({
   return null;
 }
 
+// ── Allergy / medical section ────────────────────────────────────────────────
+
+function AllergySection({
+  state,
+  onChange,
+}: {
+  state: AllergyState;
+  onChange: (patch: Partial<AllergyState>) => void;
+}) {
+  function toggle(label: string) {
+    const isSelected = state.allergies.includes(label);
+    if (label === "No Known Allergies") {
+      onChange({
+        allergies: isSelected ? [] : ["No Known Allergies"],
+        allergyOther: "",
+      });
+    } else {
+      let next: string[];
+      if (isSelected) {
+        next = state.allergies.filter((a) => a !== label);
+      } else {
+        next = [...state.allergies.filter((a) => a !== "No Known Allergies"), label];
+      }
+      const patch: Partial<AllergyState> = { allergies: next };
+      if (isSelected && label === "Other") patch.allergyOther = "";
+      onChange(patch);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        padding: "14px 16px",
+        backgroundColor: "#fafafa",
+        borderRadius: 14,
+        border: "1px solid #e5e7eb",
+      }}
+    >
+      <p
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: "#374151",
+          margin: "0 0 10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+        }}
+      >
+        Allergies / Medical Concerns
+      </p>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 7,
+          marginBottom: 10,
+        }}
+      >
+        {ALLERGY_OPTIONS.map((opt) => {
+          const selected = state.allergies.includes(opt);
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => toggle(opt)}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: `2px solid ${selected ? ACCENT : "#e5e7eb"}`,
+                backgroundColor: selected ? ACCENT + "18" : "white",
+                color: selected ? "#78350f" : "#4b5563",
+                fontSize: 13,
+                fontWeight: selected ? 700 : 500,
+                cursor: "pointer",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                lineHeight: 1.3,
+              }}
+            >
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  border: `2px solid ${selected ? ACCENT : "#d1d5db"}`,
+                  backgroundColor: selected ? ACCENT : "white",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  fontSize: 11,
+                  color: "white",
+                  fontWeight: 900,
+                }}
+              >
+                {selected ? "✓" : ""}
+              </span>
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+
+      {state.allergies.includes("Other") && (
+        <textarea
+          value={state.allergyOther}
+          onChange={(e) => onChange({ allergyOther: e.target.value })}
+          placeholder="Please describe"
+          rows={2}
+          style={{
+            width: "100%",
+            fontSize: 14,
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "2px solid #e5e7eb",
+            boxSizing: "border-box",
+            resize: "vertical",
+            marginBottom: 10,
+            outline: "none",
+          }}
+        />
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#6b7280",
+              marginBottom: 4,
+            }}
+          >
+            Medical Notes (optional)
+          </label>
+          <textarea
+            value={state.medicalNotes}
+            onChange={(e) => onChange({ medicalNotes: e.target.value })}
+            placeholder="e.g. carries EpiPen, uses inhaler"
+            rows={2}
+            style={{
+              width: "100%",
+              fontSize: 13,
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "2px solid #e5e7eb",
+              boxSizing: "border-box",
+              resize: "vertical",
+              outline: "none",
+            }}
+          />
+        </div>
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#6b7280",
+              marginBottom: 4,
+            }}
+          >
+            Special Instructions (optional)
+          </label>
+          <textarea
+            value={state.specialInstructions}
+            onChange={(e) => onChange({ specialInstructions: e.target.value })}
+            placeholder="e.g. bathroom reminder every hour"
+            rows={2}
+            style={{
+              width: "100%",
+              fontSize: 13,
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "2px solid #e5e7eb",
+              boxSizing: "border-box",
+              resize: "vertical",
+              outline: "none",
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Shared new-child card ────────────────────────────────────────────────────
 
 function NewChildCard({
@@ -1174,6 +1455,7 @@ function NewChildCard({
           display: "grid",
           gridTemplateColumns: rooms.length > 0 ? "1fr 1fr" : "1fr",
           gap: 10,
+          marginBottom: 4,
         }}
       >
         <div>
@@ -1226,6 +1508,16 @@ function NewChildCard({
           </div>
         )}
       </div>
+
+      <AllergySection
+        state={{
+          allergies: child.allergies,
+          allergyOther: child.allergyOther,
+          medicalNotes: child.medicalNotes,
+          specialInstructions: child.specialInstructions,
+        }}
+        onChange={(patch) => onChange({ ...child, ...patch })}
+      />
     </div>
   );
 }

@@ -9,7 +9,19 @@ type ChildInput = {
   childDateOfBirth?: string; // ISO date string, used for room assignment + stored on child record
   roomId?: string;           // explicit room override
   isNew?: boolean;           // true → create new cm_visitor_children record
+  allergies?: string[];      // selected allergy labels
+  allergyOther?: string;     // description when "Other" is selected
+  medicalNotes?: string;
+  specialInstructions?: string;
 };
+
+function serializeAllergies(allergies: string[], allergyOther: string): string | null {
+  if (!allergies.length) return null;
+  const arr = allergies.map((a) =>
+    a === 'Other' && allergyOther.trim() ? `Other: ${allergyOther.trim()}` : a,
+  );
+  return JSON.stringify(arr);
+}
 
 function calcAge(dob: string): number {
   const d = new Date(dob + 'T00:00:00');
@@ -140,22 +152,29 @@ export async function POST(
     }
   }
 
-  // ── Update birthday on existing children if now provided ─────────────────
+  // ── Update existing children (birthday guarded, allergy/medical always) ─────
   for (const child of children) {
-    if (child.isNew || !child.childId || !child.childDateOfBirth) continue;
+    if (child.isNew || !child.childId) continue;
 
-    const { data: existing } = await admin
-      .from('cm_visitor_children')
-      .select('date_of_birth')
-      .eq('id', child.childId)
-      .maybeSingle();
+    const updates: Record<string, unknown> = {
+      allergies: serializeAllergies(child.allergies ?? [], child.allergyOther ?? ''),
+      medical_notes: child.medicalNotes ?? null,
+      special_instructions: child.specialInstructions ?? null,
+    };
 
-    if (existing && !existing.date_of_birth) {
-      await admin
+    // Birthday: only set if provided and currently unset
+    if (child.childDateOfBirth) {
+      const { data: existing } = await admin
         .from('cm_visitor_children')
-        .update({ date_of_birth: child.childDateOfBirth })
-        .eq('id', child.childId);
+        .select('date_of_birth')
+        .eq('id', child.childId)
+        .maybeSingle();
+      if (existing && !existing.date_of_birth) {
+        updates.date_of_birth = child.childDateOfBirth;
+      }
     }
+
+    await admin.from('cm_visitor_children').update(updates).eq('id', child.childId);
   }
 
   // ── Create cm_visitor_children for new children ───────────────────────────
@@ -178,6 +197,9 @@ export async function POST(
           first_name: child.childFirstName,
           last_name: child.childLastName,
           date_of_birth: child.childDateOfBirth ?? null,
+          allergies: serializeAllergies(child.allergies ?? [], child.allergyOther ?? ''),
+          medical_notes: child.medicalNotes ?? null,
+          special_instructions: child.specialInstructions ?? null,
         });
       }
     }
@@ -193,7 +215,8 @@ export async function POST(
     room_id: resolveRoom(child.childDateOfBirth, child.roomId),
     security_code: securityCode,
     is_new_visitor: !!isNewFamily,
-    allergies: [],
+    allergies: child.allergies ?? [],
+    allergy_other: child.allergyOther ?? null,
   }));
 
   const { data: records, error } = await admin
