@@ -2,7 +2,9 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 const TOUCH_CONFIG = {
   email: { icon: "📧", label: "Email", color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe" },

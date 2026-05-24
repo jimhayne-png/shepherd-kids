@@ -1,7 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 const MONTHS = [
   "January","February","March","April","May","June",
