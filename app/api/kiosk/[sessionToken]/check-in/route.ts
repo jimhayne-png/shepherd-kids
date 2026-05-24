@@ -2,14 +2,25 @@ import { type NextRequest } from 'next/server';
 import { adminClient } from '@/lib/api-auth';
 
 type ChildInput = {
-  childName: string;        // combined display name → cm_checkin_records.child_name
-  childId?: string;         // existing cm_visitor_children.id (pre-existing child)
-  childFirstName?: string;  // required when isNew = true
-  childLastName?: string;   // required when isNew = true
-  childAge?: number;        // used for room auto-assignment
-  roomId?: string;          // explicit room override
-  isNew?: boolean;          // true → create new cm_visitor_children record
+  childName: string;         // combined display name → cm_checkin_records.child_name
+  childId?: string;          // existing cm_visitor_children.id
+  childFirstName?: string;   // required when isNew = true
+  childLastName?: string;    // required when isNew = true
+  childDateOfBirth?: string; // ISO date string, used for room assignment + stored on child record
+  roomId?: string;           // explicit room override
+  isNew?: boolean;           // true → create new cm_visitor_children record
 };
+
+function calcAge(dob: string): number {
+  const d = new Date(dob + 'T00:00:00');
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  if (
+    today.getMonth() < d.getMonth() ||
+    (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())
+  ) age--;
+  return age;
+}
 
 export async function POST(
   req: NextRequest,
@@ -20,12 +31,14 @@ export async function POST(
   const {
     parentName,
     parentPhone,
+    parentEmail,
     familyId,
     isNewFamily,
     children,
   } = body as {
     parentName: string;
     parentPhone: string;
+    parentEmail?: string;
     familyId?: string;
     isNewFamily?: boolean;
     children: ChildInput[];
@@ -50,9 +63,10 @@ export async function POST(
   if (session.status !== 'open') return Response.json({ error: 'Session is closed' }, { status: 400 });
 
   const normalizedPhone = parentPhone.replace(/\D/g, '');
+  const normalizedEmail = parentEmail ? parentEmail.trim().toLowerCase() : null;
   const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
-  // Load active rooms once for age-based assignment
+  // Load active rooms for age-based assignment
   const { data: activeRooms } = await admin
     .from('cm_checkin_rooms')
     .select('id, min_age, max_age')
@@ -60,11 +74,14 @@ export async function POST(
     .eq('is_active', true)
     .order('min_age');
 
-  function resolveRoom(age: number | undefined, explicit: string | undefined): string | null {
+  function resolveRoom(dob: string | undefined, explicit: string | undefined): string | null {
     if (explicit) return explicit;
-    if (age == null) return null;
+    if (!dob) return null;
+    const age = calcAge(dob);
     for (const r of activeRooms ?? []) {
-      const ok = (r.min_age == null || age >= r.min_age) && (r.max_age == null || age <= r.max_age);
+      const ok =
+        (r.min_age == null || age >= r.min_age) &&
+        (r.max_age == null || age <= r.max_age);
       if (ok) return r.id;
     }
     return null;
@@ -74,7 +91,7 @@ export async function POST(
   let resolvedFamilyId: string | null = familyId ?? null;
 
   if (!resolvedFamilyId) {
-    // Check for existing family first (idempotent)
+    // New family — check for existing record first (idempotent)
     const { data: existing } = await admin
       .from('cm_visitor_families')
       .select('id')
@@ -96,6 +113,7 @@ export async function POST(
           parent1_first_name: firstName,
           parent1_last_name: lastName,
           parent1_phone: normalizedPhone,
+          parent1_email: normalizedEmail,
           visit_date: new Date().toISOString().slice(0, 10),
           status: 'new',
           follow_up_sent: false,
@@ -106,9 +124,41 @@ export async function POST(
 
       resolvedFamilyId = created?.id ?? null;
     }
+  } else if (normalizedEmail) {
+    // Existing family — update email if provided and currently unset or different
+    const { data: currentFamily } = await admin
+      .from('cm_visitor_families')
+      .select('parent1_email')
+      .eq('id', resolvedFamilyId)
+      .maybeSingle();
+
+    if (currentFamily && currentFamily.parent1_email !== normalizedEmail) {
+      await admin
+        .from('cm_visitor_families')
+        .update({ parent1_email: normalizedEmail })
+        .eq('id', resolvedFamilyId);
+    }
   }
 
-  // ── Create cm_visitor_children for any new children ───────────────────────
+  // ── Update birthday on existing children if now provided ─────────────────
+  for (const child of children) {
+    if (child.isNew || !child.childId || !child.childDateOfBirth) continue;
+
+    const { data: existing } = await admin
+      .from('cm_visitor_children')
+      .select('date_of_birth')
+      .eq('id', child.childId)
+      .maybeSingle();
+
+    if (existing && !existing.date_of_birth) {
+      await admin
+        .from('cm_visitor_children')
+        .update({ date_of_birth: child.childDateOfBirth })
+        .eq('id', child.childId);
+    }
+  }
+
+  // ── Create cm_visitor_children for new children ───────────────────────────
   if (resolvedFamilyId) {
     for (const child of children) {
       if (!child.isNew || !child.childFirstName || !child.childLastName) continue;
@@ -127,19 +177,20 @@ export async function POST(
           family_id: resolvedFamilyId,
           first_name: child.childFirstName,
           last_name: child.childLastName,
+          date_of_birth: child.childDateOfBirth ?? null,
         });
       }
     }
   }
 
-  // ── Insert cm_checkin_records (one per child, shared security code) ───────
-  const inserts = children.map(child => ({
+  // ── Insert cm_checkin_records (one per child, shared security code) ────────
+  const inserts = children.map((child) => ({
     session_id: session.id,
     church_id: session.church_id,
     child_name: child.childName,
     parent_name: parentName,
     parent_phone: normalizedPhone,
-    room_id: resolveRoom(child.childAge, child.roomId),
+    room_id: resolveRoom(child.childDateOfBirth, child.roomId),
     security_code: securityCode,
     is_new_visitor: !!isNewFamily,
     allergies: [],

@@ -29,7 +29,7 @@ export async function POST(
   // Search visitor families by parent1_phone or parent2_phone
   const { data: families } = await admin
     .from('cm_visitor_families')
-    .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent2_first_name, parent2_last_name, parent2_phone')
+    .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, parent2_first_name, parent2_last_name, parent2_phone, parent2_email')
     .eq('church_id', session.church_id)
     .or(`parent1_phone.eq.${phone},parent2_phone.eq.${phone}`)
     .limit(1);
@@ -48,18 +48,22 @@ export async function POST(
   const parentLastName = matchedParent1
     ? family.parent1_last_name
     : (family.parent2_last_name ?? family.parent1_last_name);
+  const parentEmail = matchedParent1
+    ? (family.parent1_email ?? null)
+    : (family.parent2_email ?? family.parent1_email ?? null);
 
-  // Get saved children for this family
+  // Get saved children with birthday
   const { data: vcChildren } = await admin
     .from('cm_visitor_children')
-    .select('id, first_name, last_name')
+    .select('id, first_name, last_name, date_of_birth')
     .eq('family_id', family.id)
     .order('created_at');
 
-  const children = (vcChildren ?? []).map(c => ({
+  const children = (vcChildren ?? []).map((c) => ({
     id: c.id,
     name: `${c.first_name} ${c.last_name}`.trim(),
     source: 'visitor' as const,
+    dateOfBirth: c.date_of_birth ?? null,
   }));
 
   return Response.json({
@@ -69,6 +73,7 @@ export async function POST(
       parentFirstName,
       parentLastName,
       parentPhone: phone,
+      parentEmail,
     },
     children,
   });

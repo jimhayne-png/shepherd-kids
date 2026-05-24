@@ -35,12 +35,19 @@ export default async function KioskPage({ params }: Props) {
     );
   }
 
-  const { data: rooms } = await admin
-    .from("cm_checkin_rooms")
-    .select("id, name")
-    .eq("church_id", session.church_id)
-    .eq("is_active", true)
-    .order("name");
+  const [{ data: rooms }, { data: church }] = await Promise.all([
+    admin
+      .from("cm_checkin_rooms")
+      .select("id, name")
+      .eq("church_id", session.church_id)
+      .eq("is_active", true)
+      .order("name"),
+    admin
+      .from("churches")
+      .select("name")
+      .eq("id", session.church_id)
+      .maybeSingle(),
+  ]);
 
   return (
     <KioskCheckInForm
@@ -48,6 +55,7 @@ export default async function KioskPage({ params }: Props) {
       serviceName={session.service_name}
       serviceDate={session.date}
       rooms={rooms ?? []}
+      churchName={church?.name ?? ""}
     />
   );
 }

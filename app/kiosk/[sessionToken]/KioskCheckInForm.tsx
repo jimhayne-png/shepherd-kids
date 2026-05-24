@@ -11,17 +11,31 @@ type LookupFamily = {
   parentFirstName: string;
   parentLastName: string;
   parentPhone: string;
+  parentEmail: string | null;
 };
 
 type LookupChild = {
   id: string;
   name: string;
   source: "visitor";
+  dateOfBirth: string | null;
 };
 
-type ExistingChildState = LookupChild & { selected: boolean; roomId: string };
+type ExistingChildState = {
+  id: string;
+  name: string;
+  source: "visitor";
+  selected: boolean;
+  roomId: string;
+  dateOfBirth: string; // "" when unset; editable so parent can fill in missing birthday
+};
 
-type NewChildForm = { firstName: string; lastName: string; childAge: string; roomId: string };
+type NewChildForm = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  roomId: string;
+};
 
 type Step = "phone" | "returning" | "new" | "success";
 
@@ -30,6 +44,7 @@ type Props = {
   serviceName: string;
   serviceDate: string;
   rooms: Room[];
+  churchName: string;
 };
 
 function fmtDate(d: string) {
@@ -42,8 +57,10 @@ function fmtDate(d: string) {
 }
 
 function emptyNewChild(): NewChildForm {
-  return { firstName: "", lastName: "", childAge: "", roomId: "" };
+  return { firstName: "", lastName: "", dateOfBirth: "", roomId: "" };
 }
+
+const today = new Date().toISOString().slice(0, 10);
 
 function RoomSelect({
   value,
@@ -55,7 +72,6 @@ function RoomSelect({
   rooms: Room[];
 }) {
   if (rooms.length === 0) return null;
-
   return (
     <select
       value={value}
@@ -85,16 +101,22 @@ export default function KioskCheckInForm({
   serviceName,
   serviceDate,
   rooms,
+  churchName,
 }: Props) {
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [lookupError, setLookupError] = useState("");
   const [looking, setLooking] = useState(false);
 
+  // Shared email state (prefilled from lookup for returning, entered fresh for new)
+  const [parentEmail, setParentEmail] = useState("");
+
+  // Returning family state
   const [family, setFamily] = useState<LookupFamily | null>(null);
   const [existingChildren, setExistingChildren] = useState<ExistingChildState[]>([]);
   const [addedChildren, setAddedChildren] = useState<NewChildForm[]>([]);
 
+  // New family state
   const [parentName, setParentName] = useState("");
   const [newFamilyChildren, setNewFamilyChildren] = useState<NewChildForm[]>([
     emptyNewChild(),
@@ -104,14 +126,14 @@ export default function KioskCheckInForm({
   const [submitError, setSubmitError] = useState("");
   const [securityCode, setSecurityCode] = useState<string | null>(null);
 
+  // ── Lookup ──────────────────────────────────────────────────────────────
+
   async function handleLookup() {
     const digits = phone.replace(/\D/g, "");
-
     if (digits.length < 7) {
       setLookupError("Please enter a valid phone number.");
       return;
     }
-
     setLooking(true);
     setLookupError("");
 
@@ -131,30 +153,35 @@ export default function KioskCheckInForm({
 
     if (data.found) {
       setFamily(data.family);
+      setParentEmail(data.family.parentEmail ?? "");
       setExistingChildren(
         (data.children as LookupChild[]).map((c) => ({
-          ...c,
+          id: c.id,
+          name: c.name,
+          source: c.source,
           selected: true,
           roomId: "",
+          dateOfBirth: c.dateOfBirth ?? "",
         })),
       );
       setAddedChildren([]);
       setStep("returning");
     } else {
       setParentName("");
+      setParentEmail("");
       setNewFamilyChildren([emptyNewChild()]);
       setStep("new");
     }
   }
 
+  // ── Returning submit ────────────────────────────────────────────────────
+
   async function handleReturningSubmit() {
     if (!family) return;
-
     const selected = existingChildren.filter((c) => c.selected);
     const additions = addedChildren.filter(
       (c) => c.firstName.trim() && c.lastName.trim(),
     );
-
     if (selected.length + additions.length === 0) return;
 
     setSubmitting(true);
@@ -164,6 +191,7 @@ export default function KioskCheckInForm({
       ...selected.map((c) => ({
         childName: c.name,
         childId: c.id,
+        childDateOfBirth: c.dateOfBirth || undefined,
         roomId: c.roomId || undefined,
         isNew: false,
       })),
@@ -171,7 +199,7 @@ export default function KioskCheckInForm({
         childName: `${c.firstName.trim()} ${c.lastName.trim()}`,
         childFirstName: c.firstName.trim(),
         childLastName: c.lastName.trim(),
-        childAge: c.childAge ? Number(c.childAge) : undefined,
+        childDateOfBirth: c.dateOfBirth || undefined,
         roomId: c.roomId || undefined,
         isNew: true,
       })),
@@ -183,6 +211,7 @@ export default function KioskCheckInForm({
       body: JSON.stringify({
         parentName: `${family.parentFirstName} ${family.parentLastName}`.trim(),
         parentPhone: family.parentPhone,
+        parentEmail: parentEmail.trim() || undefined,
         familyId: family.id,
         isNewFamily: false,
         children,
@@ -196,19 +225,21 @@ export default function KioskCheckInForm({
       setSubmitError(data.error ?? "Check-in failed. Please try again.");
       return;
     }
-
     setSecurityCode(data.securityCode);
     setStep("success");
   }
+
+  // ── New family submit ───────────────────────────────────────────────────
 
   async function handleNewFamilySubmit() {
     const validChildren = newFamilyChildren.filter(
       (c) => c.firstName.trim() && c.lastName.trim(),
     );
-
-    if (!parentName.trim() || phone.replace(/\D/g, "").length < 7 || validChildren.length === 0) {
-      return;
-    }
+    if (
+      !parentName.trim() ||
+      phone.replace(/\D/g, "").length < 7 ||
+      validChildren.length === 0
+    ) return;
 
     setSubmitting(true);
     setSubmitError("");
@@ -217,7 +248,7 @@ export default function KioskCheckInForm({
       childName: `${c.firstName.trim()} ${c.lastName.trim()}`,
       childFirstName: c.firstName.trim(),
       childLastName: c.lastName.trim(),
-      childAge: c.childAge ? Number(c.childAge) : undefined,
+      childDateOfBirth: c.dateOfBirth || undefined,
       roomId: c.roomId || undefined,
       isNew: true,
     }));
@@ -228,6 +259,7 @@ export default function KioskCheckInForm({
       body: JSON.stringify({
         parentName: parentName.trim(),
         parentPhone: phone.replace(/\D/g, ""),
+        parentEmail: parentEmail.trim() || undefined,
         isNewFamily: true,
         children,
       }),
@@ -240,7 +272,6 @@ export default function KioskCheckInForm({
       setSubmitError(data.error ?? "Check-in failed. Please try again.");
       return;
     }
-
     setSecurityCode(data.securityCode);
     setStep("success");
   }
@@ -249,6 +280,7 @@ export default function KioskCheckInForm({
     setStep("phone");
     setPhone("");
     setLookupError("");
+    setParentEmail("");
     setFamily(null);
     setExistingChildren([]);
     setAddedChildren([]);
@@ -258,20 +290,28 @@ export default function KioskCheckInForm({
     setSecurityCode(null);
   }
 
-  const header = (title: string, subtitle?: string) => (
-    <div style={{ backgroundColor: ACCENT, padding: "24px 32px", flexShrink: 0 }}>
-      <p style={{ color: "white", fontWeight: 700, fontSize: 20, margin: 0 }}>
-        {title}
-      </p>
-      {subtitle && (
-        <p style={{ color: "white", opacity: 0.75, fontSize: 14, margin: "4px 0 0" }}>
-          {subtitle}
-        </p>
-      )}
-    </div>
-  );
-
   const serviceSubtitle = `${serviceName} · ${fmtDate(serviceDate)}`;
+
+  function Header({ title, green }: { title: string; green?: boolean }) {
+    return (
+      <div
+        style={{
+          backgroundColor: green ? "#16a34a" : ACCENT,
+          padding: "24px 32px",
+          flexShrink: 0,
+        }}
+      >
+        <p style={{ color: "white", fontWeight: 700, fontSize: 20, margin: 0 }}>
+          {title}
+        </p>
+        <p style={{ color: "white", opacity: 0.75, fontSize: 14, margin: "4px 0 0" }}>
+          {serviceSubtitle}
+        </p>
+      </div>
+    );
+  }
+
+  // ── SUCCESS ─────────────────────────────────────────────────────────────
 
   if (step === "success") {
     return (
@@ -283,15 +323,7 @@ export default function KioskCheckInForm({
           flexDirection: "column",
         }}
       >
-        <div style={{ backgroundColor: "#16a34a", padding: "24px 32px" }}>
-          <p style={{ color: "white", fontWeight: 700, fontSize: 20, margin: 0 }}>
-            ✅ Check-In Complete!
-          </p>
-          <p style={{ color: "white", opacity: 0.75, fontSize: 14, margin: "4px 0 0" }}>
-            {serviceSubtitle}
-          </p>
-        </div>
-
+        <Header title="✅ Check-In Complete!" green />
         <div
           style={{
             flex: 1,
@@ -306,7 +338,6 @@ export default function KioskCheckInForm({
             <p style={{ fontSize: 18, color: "#374151", marginBottom: 8 }}>
               Your family security code is:
             </p>
-
             <div
               style={{
                 backgroundColor: "#f0fdf4",
@@ -333,7 +364,6 @@ export default function KioskCheckInForm({
                 Show this code at pickup
               </p>
             </div>
-
             <button
               onClick={reset}
               style={{
@@ -356,6 +386,8 @@ export default function KioskCheckInForm({
     );
   }
 
+  // ── PHONE ────────────────────────────────────────────────────────────────
+
   if (step === "phone") {
     return (
       <div
@@ -366,8 +398,7 @@ export default function KioskCheckInForm({
           flexDirection: "column",
         }}
       >
-        {header("Children's Check-In", serviceSubtitle)}
-
+        <Header title="Children's Check-In" />
         <div
           style={{
             flex: 1,
@@ -390,7 +421,6 @@ export default function KioskCheckInForm({
             >
               Welcome!
             </h1>
-
             <p
               style={{
                 fontSize: 20,
@@ -401,7 +431,6 @@ export default function KioskCheckInForm({
             >
               Enter your phone number to check in
             </p>
-
             <input
               type="tel"
               inputMode="numeric"
@@ -425,28 +454,18 @@ export default function KioskCheckInForm({
                 boxSizing: "border-box",
               }}
             />
-
-            <p
-              style={{
-                color: "#6b7280",
-                fontSize: 14,
-                textAlign: "center",
-                marginTop: 4,
-                marginBottom: 18,
-                lineHeight: 1.5,
-              }}
-            >
-              Your family information is kept private and protected.
-              <br />
-              This ministry check-in system never sells your information.
-            </p>
-
             {lookupError && (
-              <p style={{ color: "#dc2626", textAlign: "center", marginBottom: 12, fontSize: 16 }}>
+              <p
+                style={{
+                  color: "#dc2626",
+                  textAlign: "center",
+                  marginBottom: 12,
+                  fontSize: 16,
+                }}
+              >
                 {lookupError}
               </p>
             )}
-
             <button
               onClick={handleLookup}
               disabled={looking || phone.replace(/\D/g, "").length < 7}
@@ -465,11 +484,31 @@ export default function KioskCheckInForm({
             >
               {looking ? "Looking up…" : "Get Started →"}
             </button>
+
+            <p
+              style={{
+                fontSize: 13,
+                color: "#9ca3af",
+                textAlign: "center",
+                marginTop: 20,
+                lineHeight: 1.6,
+              }}
+            >
+              Your family information is kept private and protected.
+              <br />
+              Information collected through{" "}
+              <strong style={{ color: "#6b7280" }}>
+                {churchName || "this ministry"}
+              </strong>{" "}
+              is never sold or shared outside of this ministry.
+            </p>
           </div>
         </div>
       </div>
     );
   }
+
+  // ── RETURNING ────────────────────────────────────────────────────────────
 
   if (step === "returning" && family) {
     const anyReady =
@@ -485,8 +524,7 @@ export default function KioskCheckInForm({
           flexDirection: "column",
         }}
       >
-        {header("Welcome Back!", serviceSubtitle)}
-
+        <Header title="Welcome Back!" />
         <div
           style={{
             flex: 1,
@@ -498,11 +536,48 @@ export default function KioskCheckInForm({
             boxSizing: "border-box",
           }}
         >
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", marginBottom: 4 }}>
+          <h2
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              color: "#111827",
+              marginBottom: 4,
+            }}
+          >
             {family.parentFirstName} {family.parentLastName}
           </h2>
 
-          <p style={{ fontSize: 16, color: "#6b7280", marginBottom: 24 }}>
+          {/* Parent email */}
+          <div style={{ marginBottom: 24 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#374151",
+                marginBottom: 6,
+              }}
+            >
+              Parent Email for Follow-Up
+            </label>
+            <input
+              type="email"
+              value={parentEmail}
+              onChange={(e) => setParentEmail(e.target.value)}
+              placeholder="jane@example.com (optional)"
+              style={{
+                width: "100%",
+                fontSize: 18,
+                padding: "13px 16px",
+                borderRadius: 14,
+                border: "2px solid #e5e7eb",
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+          </div>
+
+          <p style={{ fontSize: 16, color: "#6b7280", marginBottom: 16 }}>
             Select children to check in today:
           </p>
 
@@ -522,13 +597,16 @@ export default function KioskCheckInForm({
             </div>
           )}
 
+          {/* Saved children */}
           {existingChildren.map((child, i) => (
-            <div key={child.id} style={{ marginBottom: 12 }}>
+            <div key={child.id} style={{ marginBottom: 14 }}>
               <button
                 type="button"
                 onClick={() =>
                   setExistingChildren((cs) =>
-                    cs.map((c, j) => (j === i ? { ...c, selected: !c.selected } : c)),
+                    cs.map((c, j) =>
+                      j === i ? { ...c, selected: !c.selected } : c,
+                    ),
                   )
                 }
                 style={{
@@ -539,7 +617,7 @@ export default function KioskCheckInForm({
                   padding: "18px 20px",
                   borderRadius: 16,
                   border: `3px solid ${child.selected ? ACCENT : "#e5e7eb"}`,
-                  backgroundColor: child.selected ? `${ACCENT}15` : "white",
+                  backgroundColor: child.selected ? ACCENT + "15" : "white",
                   cursor: "pointer",
                   textAlign: "left",
                 }}
@@ -557,40 +635,113 @@ export default function KioskCheckInForm({
                   }}
                 >
                   {child.selected && (
-                    <span style={{ color: "white", fontWeight: 900, fontSize: 16 }}>✓</span>
+                    <span
+                      style={{ color: "white", fontWeight: 900, fontSize: 16 }}
+                    >
+                      ✓
+                    </span>
                   )}
                 </div>
-                <span style={{ fontSize: 20, fontWeight: 700, color: "#111827" }}>
+                <span
+                  style={{ fontSize: 20, fontWeight: 700, color: "#111827" }}
+                >
                   {child.name}
                 </span>
               </button>
 
-              {child.selected && rooms.length > 0 && (
-                <div style={{ marginTop: 6, paddingLeft: 4 }}>
-                  <RoomSelect
-                    value={child.roomId}
-                    onChange={(v) =>
-                      setExistingChildren((cs) =>
-                        cs.map((c, j) => (j === i ? { ...c, roomId: v } : c)),
-                      )
-                    }
-                    rooms={rooms}
-                  />
+              {child.selected && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    paddingLeft: 4,
+                    display: "grid",
+                    gridTemplateColumns: rooms.length > 0 ? "1fr 1fr" : "1fr",
+                    gap: 10,
+                  }}
+                >
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "#6b7280",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Birthday {child.dateOfBirth ? "" : "(optional)"}
+                    </label>
+                    <input
+                      type="date"
+                      value={child.dateOfBirth}
+                      max={today}
+                      min="2000-01-01"
+                      onChange={(e) =>
+                        setExistingChildren((cs) =>
+                          cs.map((c, j) =>
+                            j === i
+                              ? { ...c, dateOfBirth: e.target.value }
+                              : c,
+                          ),
+                        )
+                      }
+                      style={{
+                        width: "100%",
+                        fontSize: 16,
+                        padding: "10px 14px",
+                        borderRadius: 12,
+                        border: "2px solid #e5e7eb",
+                        boxSizing: "border-box",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                  {rooms.length > 0 && (
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#6b7280",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Room (optional)
+                      </label>
+                      <RoomSelect
+                        value={child.roomId}
+                        onChange={(v) =>
+                          setExistingChildren((cs) =>
+                            cs.map((c, j) =>
+                              j === i ? { ...c, roomId: v } : c,
+                            ),
+                          )
+                        }
+                        rooms={rooms}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           ))}
 
+          {/* New children added inline */}
           {addedChildren.map((child, i) => (
             <NewChildCard
               key={i}
               child={child}
-              index={i}
+              index={existingChildren.length + i}
               rooms={rooms}
               onChange={(updated) =>
-                setAddedChildren((cs) => cs.map((c, j) => (j === i ? updated : c)))
+                setAddedChildren((cs) =>
+                  cs.map((c, j) => (j === i ? updated : c)),
+                )
               }
-              onRemove={() => setAddedChildren((cs) => cs.filter((_, j) => j !== i))}
+              onRemove={() =>
+                setAddedChildren((cs) => cs.filter((_, j) => j !== i))
+              }
             />
           ))}
 
@@ -614,7 +765,14 @@ export default function KioskCheckInForm({
           </button>
 
           {submitError && (
-            <p style={{ color: "#dc2626", textAlign: "center", marginBottom: 12, fontSize: 15 }}>
+            <p
+              style={{
+                color: "#dc2626",
+                textAlign: "center",
+                marginBottom: 12,
+                fontSize: 15,
+              }}
+            >
               {submitError}
             </p>
           )}
@@ -637,7 +795,6 @@ export default function KioskCheckInForm({
           >
             {submitting ? "Checking in…" : "Check In →"}
           </button>
-
           <button
             onClick={() => {
               setStep("phone");
@@ -662,11 +819,12 @@ export default function KioskCheckInForm({
     );
   }
 
+  // ── NEW FAMILY ───────────────────────────────────────────────────────────
+
   if (step === "new") {
     const validCount = newFamilyChildren.filter(
       (c) => c.firstName.trim() && c.lastName.trim(),
     ).length;
-
     const canSubmit = !!(
       parentName.trim() &&
       phone.replace(/\D/g, "").length >= 7 &&
@@ -682,8 +840,7 @@ export default function KioskCheckInForm({
           flexDirection: "column",
         }}
       >
-        {header("New Family Registration", serviceSubtitle)}
-
+        <Header title="New Family Registration" />
         <div
           style={{
             flex: 1,
@@ -695,7 +852,14 @@ export default function KioskCheckInForm({
             boxSizing: "border-box",
           }}
         >
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: "#111827", marginBottom: 20 }}>
+          <h2
+            style={{
+              fontSize: 26,
+              fontWeight: 800,
+              color: "#111827",
+              marginBottom: 20,
+            }}
+          >
             Parent / Guardian Info
           </h2>
 
@@ -728,7 +892,7 @@ export default function KioskCheckInForm({
             />
           </div>
 
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: 16 }}>
             <label
               style={{
                 display: "block",
@@ -758,7 +922,44 @@ export default function KioskCheckInForm({
             />
           </div>
 
-          <h3 style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 16 }}>
+          <div style={{ marginBottom: 28 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#374151",
+                marginBottom: 8,
+              }}
+            >
+              Parent Email *
+            </label>
+            <input
+              type="email"
+              value={parentEmail}
+              onChange={(e) => setParentEmail(e.target.value)}
+              placeholder="jane@example.com"
+              required
+              style={{
+                width: "100%",
+                fontSize: 22,
+                padding: "16px 20px",
+                borderRadius: 16,
+                border: "2px solid #e5e7eb",
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+          </div>
+
+          <h3
+            style={{
+              fontSize: 22,
+              fontWeight: 800,
+              color: "#111827",
+              marginBottom: 16,
+            }}
+          >
             Children
           </h3>
 
@@ -769,11 +970,16 @@ export default function KioskCheckInForm({
               index={i}
               rooms={rooms}
               onChange={(updated) =>
-                setNewFamilyChildren((cs) => cs.map((c, j) => (j === i ? updated : c)))
+                setNewFamilyChildren((cs) =>
+                  cs.map((c, j) => (j === i ? updated : c)),
+                )
               }
               onRemove={
                 newFamilyChildren.length > 1
-                  ? () => setNewFamilyChildren((cs) => cs.filter((_, j) => j !== i))
+                  ? () =>
+                      setNewFamilyChildren((cs) =>
+                        cs.filter((_, j) => j !== i),
+                      )
                   : undefined
               }
             />
@@ -781,7 +987,9 @@ export default function KioskCheckInForm({
 
           <button
             type="button"
-            onClick={() => setNewFamilyChildren((cs) => [...cs, emptyNewChild()])}
+            onClick={() =>
+              setNewFamilyChildren((cs) => [...cs, emptyNewChild()])
+            }
             style={{
               width: "100%",
               padding: "16px",
@@ -792,14 +1000,39 @@ export default function KioskCheckInForm({
               fontSize: 16,
               fontWeight: 700,
               cursor: "pointer",
-              marginBottom: 24,
+              marginBottom: 20,
             }}
           >
             + Add Another Child
           </button>
 
+          <p
+            style={{
+              fontSize: 13,
+              color: "#9ca3af",
+              textAlign: "center",
+              marginBottom: 20,
+              lineHeight: 1.6,
+            }}
+          >
+            Your family information is kept private and protected.
+            <br />
+            Information collected through{" "}
+            <strong style={{ color: "#6b7280" }}>
+              {churchName || "this ministry"}
+            </strong>{" "}
+            is never sold or shared outside of this ministry.
+          </p>
+
           {submitError && (
-            <p style={{ color: "#dc2626", textAlign: "center", marginBottom: 12, fontSize: 15 }}>
+            <p
+              style={{
+                color: "#dc2626",
+                textAlign: "center",
+                marginBottom: 12,
+                fontSize: 15,
+              }}
+            >
               {submitError}
             </p>
           )}
@@ -822,7 +1055,6 @@ export default function KioskCheckInForm({
           >
             {submitting ? "Checking in…" : "Check In →"}
           </button>
-
           <button
             onClick={() => setStep("phone")}
             style={{
@@ -846,6 +1078,8 @@ export default function KioskCheckInForm({
 
   return null;
 }
+
+// ── Shared new-child card ────────────────────────────────────────────────────
 
 function NewChildCard({
   child,
@@ -881,7 +1115,6 @@ function NewChildCard({
         <span style={{ fontSize: 16, fontWeight: 700, color: "#374151" }}>
           Child {index + 1}
         </span>
-
         {onRemove && (
           <button
             type="button"
@@ -921,7 +1154,6 @@ function NewChildCard({
             outline: "none",
           }}
         />
-
         <input
           value={child.lastName}
           onChange={(e) => onChange({ ...child, lastName: e.target.value })}
@@ -944,30 +1176,54 @@ function NewChildCard({
           gap: 10,
         }}
       >
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={18}
-          value={child.childAge}
-          onChange={(e) => onChange({ ...child, childAge: e.target.value })}
-          placeholder="Age"
-          style={{
-            fontSize: 18,
-            padding: "12px 14px",
-            borderRadius: 12,
-            border: "2px solid #e5e7eb",
-            boxSizing: "border-box",
-            outline: "none",
-          }}
-        />
-
-        {rooms.length > 0 && (
-          <RoomSelect
-            value={child.roomId}
-            onChange={(v) => onChange({ ...child, roomId: v })}
-            rooms={rooms}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#6b7280",
+              marginBottom: 4,
+            }}
+          >
+            Birthday (optional)
+          </label>
+          <input
+            type="date"
+            value={child.dateOfBirth}
+            max={today}
+            min="2000-01-01"
+            onChange={(e) => onChange({ ...child, dateOfBirth: e.target.value })}
+            style={{
+              width: "100%",
+              fontSize: 16,
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "2px solid #e5e7eb",
+              boxSizing: "border-box",
+              outline: "none",
+            }}
           />
+        </div>
+        {rooms.length > 0 && (
+          <div>
+            <label
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#6b7280",
+                marginBottom: 4,
+              }}
+            >
+              Room (optional)
+            </label>
+            <RoomSelect
+              value={child.roomId}
+              onChange={(v) => onChange({ ...child, roomId: v })}
+              rooms={rooms}
+            />
+          </div>
         )}
       </div>
     </div>
