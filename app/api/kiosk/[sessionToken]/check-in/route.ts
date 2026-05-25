@@ -226,5 +226,81 @@ export async function POST(
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
 
-  return Response.json({ securityCode, records: records ?? [] });
+  // ── Create label print jobs (non-blocking — check-in succeeds regardless) ──
+  let printJobsCreated = 0;
+  let printJobWarning: string | undefined;
+
+  try {
+    const safeRecords = records ?? [];
+
+    // One child label per checked-in child
+    const childJobs = safeRecords.map((record, i) => {
+      const child = children[i];
+      const allergyLine = child?.allergies?.length
+        ? child.allergies
+            .map((a) =>
+              a === 'Other' && child.allergyOther?.trim()
+                ? `Other: ${child.allergyOther.trim()}`
+                : a,
+            )
+            .join(', ')
+        : null;
+      return {
+        church_id: session.church_id,
+        session_id: session.id,
+        checkin_record_id: record.id,
+        child_name: record.child_name,
+        parent_name: parentName,
+        parent_phone: normalizedPhone,
+        room_id: record.room_id ?? null,
+        security_code: record.security_code,
+        allergies: allergyLine,
+        medical_notes: children[i]?.medicalNotes || null,
+        special_instructions: children[i]?.specialInstructions || null,
+        label_type: 'child',
+        status: 'pending',
+      };
+    });
+
+    // One parent pickup label per family — lists all child names, uses first record id
+    const firstRecord = safeRecords[0];
+    const parentJob = firstRecord
+      ? {
+          church_id: session.church_id,
+          session_id: session.id,
+          checkin_record_id: firstRecord.id,
+          child_name: safeRecords.map((r) => r.child_name).join(', '),
+          parent_name: parentName,
+          parent_phone: normalizedPhone,
+          room_id: null,
+          security_code: securityCode,
+          allergies: null,
+          medical_notes: null,
+          special_instructions: null,
+          label_type: 'parent',
+          status: 'pending',
+        }
+      : null;
+
+    const printJobs = parentJob ? [...childJobs, parentJob] : childJobs;
+
+    const { error: printError } = await admin
+      .from('cm_label_print_jobs')
+      .insert(printJobs);
+
+    if (printError) {
+      printJobWarning = printError.message;
+    } else {
+      printJobsCreated = printJobs.length;
+    }
+  } catch {
+    printJobWarning = 'Label jobs could not be queued';
+  }
+
+  return Response.json({
+    securityCode,
+    records: records ?? [],
+    printJobsCreated,
+    ...(printJobWarning ? { printJobWarning } : {}),
+  });
 }

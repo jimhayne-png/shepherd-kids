@@ -179,6 +179,7 @@ export default function KioskCheckInForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [securityCode, setSecurityCode] = useState<string | null>(null);
+  const [printJobsCreated, setPrintJobsCreated] = useState(0);
 
   // ── Lookup ──────────────────────────────────────────────────────────────
 
@@ -295,6 +296,7 @@ export default function KioskCheckInForm({
       return;
     }
     setSecurityCode(data.securityCode);
+    setPrintJobsCreated(data.printJobsCreated ?? 0);
     setStep("success");
   }
 
@@ -346,6 +348,7 @@ export default function KioskCheckInForm({
       return;
     }
     setSecurityCode(data.securityCode);
+    setPrintJobsCreated(data.printJobsCreated ?? 0);
     setStep("success");
   }
 
@@ -361,6 +364,7 @@ export default function KioskCheckInForm({
     setNewFamilyChildren([emptyNewChild()]);
     setSubmitError("");
     setSecurityCode(null);
+    setPrintJobsCreated(0);
   }
 
   const serviceSubtitle = `${serviceName} · ${fmtDate(serviceDate)}`;
@@ -437,6 +441,11 @@ export default function KioskCheckInForm({
                 Show this code at pickup
               </p>
             </div>
+            {printJobsCreated > 0 && (
+              <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
+                Labels are being prepared.
+              </p>
+            )}
             <button
               onClick={reset}
               style={{
