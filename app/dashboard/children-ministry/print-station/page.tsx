@@ -41,89 +41,169 @@ function fmtTime(iso: string) {
   });
 }
 
-function PrintLabel({ job }: { job: PrintJob }) {
-  const isParent = job.label_type === "parent";
+const LABEL: React.CSSProperties = {
+  width: "4in",
+  height: "2in",
+  boxSizing: "border-box",
+  overflow: "hidden",
+  padding: "0.12in 0.15in",
+  pageBreakAfter: "always",
+  breakAfter: "page",
+  fontFamily: "Arial, Helvetica, sans-serif",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+};
+
+function ChildLabel({ job }: { job: PrintJob }) {
   return (
-    <div
-      style={{
-        width: "4in",
-        minHeight: "2in",
-        border: "2px solid #000",
-        padding: "0.18in",
-        boxSizing: "border-box",
-        fontFamily: "Arial, Helvetica, sans-serif",
-        pageBreakAfter: "always",
-        breakAfter: "page",
-      }}
-    >
-      {/* Header row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 8,
-          borderBottom: "1px solid #000",
-          paddingBottom: 6,
-        }}
-      >
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>
-          {isParent ? "Parent Pickup" : "Child Check-In"}
+    <div style={LABEL}>
+      {/* Top: type tag + room */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            backgroundColor: "#000",
+            color: "#fff",
+            padding: "1px 6px",
+            borderRadius: 3,
+          }}
+        >
+          Child Check-In
         </span>
-        <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: "0.18em", fontFamily: "monospace" }}>
-          {job.security_code}
-        </span>
+        {job.room_name && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              border: "1.5px solid #000",
+              padding: "1px 8px",
+              borderRadius: 3,
+            }}
+          >
+            {job.room_name}
+          </span>
+        )}
       </div>
 
-      {/* Main name */}
-      <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+      {/* Child name — large */}
+      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: "4px 0 0" }}>
         {job.child_name}
       </div>
 
-      {/* Sub-info */}
-      {!isParent && (
-        <div style={{ fontSize: 12, color: "#444", marginBottom: 2 }}>
-          Parent: {job.parent_name}
-          {job.parent_phone ? ` · ${job.parent_phone}` : ""}
-        </div>
-      )}
-      {!isParent && job.room_name && (
-        <div style={{ fontSize: 12, color: "#444", marginBottom: 4 }}>
-          Room: <strong>{job.room_name}</strong>
+      {/* Parent line */}
+      <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
+        Parent: {job.parent_name}
+        {job.parent_phone ? ` · ${job.parent_phone}` : ""}
+      </div>
+
+      {/* Allergy / medical */}
+      {(job.allergies || job.medical_notes || job.special_instructions) && (
+        <div style={{ marginTop: 4 }}>
+          {job.allergies && (
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#fff",
+                backgroundColor: "#dc2626",
+                padding: "2px 6px",
+                borderRadius: 3,
+                display: "inline-block",
+                marginBottom: 2,
+              }}
+            >
+              ⚠ ALLERGY: {job.allergies}
+            </div>
+          )}
+          {job.medical_notes && (
+            <div style={{ fontSize: 10, color: "#333" }}>
+              <strong>Medical:</strong> {job.medical_notes}
+            </div>
+          )}
+          {job.special_instructions && (
+            <div style={{ fontSize: 10, color: "#333" }}>
+              <strong>Instr:</strong> {job.special_instructions}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Allergy alert */}
-      {job.allergies && (
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#fff",
-            backgroundColor: "#dc2626",
-            padding: "3px 8px",
-            borderRadius: 4,
-            marginBottom: 4,
-            display: "inline-block",
-          }}
-        >
-          ⚠ ALLERGY: {job.allergies}
+      {/* Security code — bottom right */}
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", marginTop: "auto" }}>
+        <div>
+          <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
+          <div
+            style={{
+              fontSize: 28,
+              fontWeight: 900,
+              fontFamily: "monospace",
+              letterSpacing: "0.18em",
+              lineHeight: 1,
+            }}
+          >
+            {job.security_code}
+          </div>
         </div>
-      )}
-
-      {/* Medical / instructions */}
-      {job.medical_notes && (
-        <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
-          <strong>Medical:</strong> {job.medical_notes}
-        </div>
-      )}
-      {job.special_instructions && (
-        <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
-          <strong>Instructions:</strong> {job.special_instructions}
-        </div>
-      )}
+      </div>
     </div>
   );
+}
+
+function ParentLabel({ job }: { job: PrintJob }) {
+  return (
+    <div style={LABEL}>
+      {/* Header */}
+      <div
+        style={{
+          backgroundColor: "#000",
+          color: "#fff",
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          padding: "2px 8px",
+          alignSelf: "flex-start",
+          borderRadius: 3,
+        }}
+      >
+        👪 Parent Pickup
+      </div>
+
+      {/* Parent name */}
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 6 }}>
+        {job.parent_name}
+      </div>
+
+      {/* Children names (stored in child_name for parent label) */}
+      <div style={{ fontSize: 12, color: "#333", marginTop: 4 }}>
+        {job.child_name}
+      </div>
+
+      {/* Security code — very large, bottom */}
+      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 6 }}>
+        <div style={{ fontSize: 9, color: "#555", marginBottom: 2 }}>SECURITY CODE — REQUIRED FOR PICKUP</div>
+        <div
+          style={{
+            fontSize: 40,
+            fontWeight: 900,
+            fontFamily: "monospace",
+            letterSpacing: "0.2em",
+            lineHeight: 1,
+          }}
+        >
+          {job.security_code}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PrintLabel({ job }: { job: PrintJob }) {
+  return job.label_type === "parent" ? <ParentLabel job={job} /> : <ChildLabel job={job} />;
 }
 
 export default function PrintStationPage() {
@@ -238,11 +318,17 @@ export default function PrintStationPage() {
 
   return (
     <>
-      {/* Print-only styles injected once */}
+      {/* Print-only styles — @page sets each label to exactly 4in × 2in */}
       <style>{`
+        @page {
+          size: 4in 2in;
+          margin: 0;
+        }
         @media print {
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
           .print-area { display: block !important; }
+          body { margin: 0; padding: 0; }
         }
         @media screen {
           .print-area { display: none; }
@@ -325,6 +411,23 @@ export default function PrintStationPage() {
               >
                 {marking ? "Marking…" : `✓ Mark Printed (${selected.size})`}
               </button>
+            </div>
+
+            {/* Print setup note */}
+            <div
+              style={{
+                backgroundColor: "#fffbeb",
+                border: "1px solid #fde68a",
+                borderRadius: 10,
+                padding: "10px 16px",
+                marginBottom: 20,
+                fontSize: 13,
+                color: "#92400e",
+                lineHeight: 1.5,
+              }}
+            >
+              <strong>Printer setup:</strong> Select the <strong>Brother QL-820NWB</strong> in the print dialog.
+              Set paper size to <strong>4in × 2in</strong> (DK label size). Disable headers and footers.
             </div>
 
             {markError && (
