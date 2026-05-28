@@ -401,6 +401,40 @@ export default function CheckinSetupPage() {
         {/* ── SESSIONS TAB ── */}
         {tab === "sessions" && (
           <div>
+            {/* Permanent church kiosk URL */}
+            {selectedChurchIdRef.current && APP_URL && (
+              <div className="rounded-2xl shadow p-5 mb-6 border-2" style={{ backgroundColor: ACCENT + "0d", borderColor: ACCENT }}>
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-2xl flex-shrink-0">📱</span>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base">Church Check-In Kiosk</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">This link never changes — bookmark it on your check-in tablet</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5 border border-orange-200">
+                  <code className="text-sm text-gray-700 flex-1 truncate min-w-0">
+                    {APP_URL}/kiosk/church/{selectedChurchIdRef.current}
+                  </code>
+                  <button
+                    onClick={() => handleCopy(`${APP_URL}/kiosk/church/${selectedChurchIdRef.current!}`)}
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0"
+                    style={{ backgroundColor: ACCENT + "22", color: ACCENT }}
+                  >
+                    {copiedUrl === `${APP_URL}/kiosk/church/${selectedChurchIdRef.current}` ? "Copied!" : "Copy"}
+                  </button>
+                  <a
+                    href={`${APP_URL}/kiosk/church/${selectedChurchIdRef.current}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg text-white flex-shrink-0"
+                    style={{ backgroundColor: ACCENT }}
+                  >
+                    Open ↗
+                  </a>
+                </div>
+              </div>
+            )}
+
             {/* Classroom access links */}
             {activeRooms.length > 0 && APP_URL && (
               <div className="bg-white rounded-2xl shadow p-5 mb-6 border border-gray-100">
@@ -500,7 +534,6 @@ export default function CheckinSetupPage() {
             ) : (
               <div className="space-y-4">
                 {sessions.map(session => {
-                  const kioskUrl = APP_URL ? `${APP_URL}/kiosk/${session.id}` : `/kiosk/${session.id}`;
                   const isOpen = session.status === "open";
                   return (
                     <div key={session.id} className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
@@ -519,17 +552,17 @@ export default function CheckinSetupPage() {
                           </button>
                         </div>
 
-                        {/* Kiosk URL */}
-                        <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Kiosk URL</p>
-                          <div className="flex items-center gap-2">
-                            <code className="text-xs text-gray-600 flex-1 truncate">{kioskUrl}</code>
-                            <button onClick={() => handleCopy(kioskUrl)} className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ backgroundColor: ACCENT + "22", color: ACCENT }}>{copiedUrl === kioskUrl ? "Copied!" : "Copy"}</button>
-                            {isOpen && (
-                              <a href={kioskUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold px-2.5 py-1 rounded-lg text-white" style={{ backgroundColor: ACCENT }}>Open ↗</a>
-                            )}
+                        {/* Volunteer View */}
+                        {APP_URL && (
+                          <div className="bg-gray-50 rounded-xl p-3 mb-3">
+                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Volunteer View</p>
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs text-gray-600 flex-1 truncate">{APP_URL}/kiosk/room/{session.id}</code>
+                              <button onClick={() => handleCopy(`${APP_URL}/kiosk/room/${session.id}`)} className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#7c3aed22", color: "#7c3aed" }}>{copiedUrl === `${APP_URL}/kiosk/room/${session.id}` ? "Copied!" : "Copy"}</button>
+                              <a href={`${APP_URL}/kiosk/room/${session.id}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold px-2.5 py-1 rounded-lg text-white" style={{ backgroundColor: "#7c3aed" }}>Open ↗</a>
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Classroom links for this session */}
                         {isOpen && activeRooms.length > 0 && APP_URL && (
