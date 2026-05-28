@@ -217,6 +217,7 @@ export async function POST(
     is_new_visitor: !!isNewFamily,
     allergies: child.allergies ?? [],
     allergy_other: child.allergyOther ?? null,
+    date_of_birth: child.childDateOfBirth ?? null,
   }));
 
   const { data: records, error } = await admin

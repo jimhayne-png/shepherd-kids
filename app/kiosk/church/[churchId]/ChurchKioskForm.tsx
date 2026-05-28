@@ -61,7 +61,7 @@ export default function ChurchKioskForm({
     parentName: "",
     parentPhone: "",
     childName: "",
-    childAge: "",
+    childDob: "",
     roomId: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -95,9 +95,10 @@ export default function ChurchKioskForm({
     if (
       !form.parentName.trim() ||
       !form.parentPhone.trim() ||
-      !form.childName.trim()
+      !form.childName.trim() ||
+      !form.childDob
     ) {
-      setError("Please fill in Parent Name, Phone Number, and Child Name.");
+      setError("Please fill in Parent Name, Phone Number, Child Name, and Date of Birth.");
       return;
     }
     if (selectedSessionIds.size === 0) {
@@ -114,7 +115,7 @@ export default function ChurchKioskForm({
           parentName: form.parentName,
           parentPhone: form.parentPhone,
           childName: form.childName,
-          childAge: form.childAge ? parseInt(form.childAge, 10) : undefined,
+          childDob: form.childDob || undefined,
           roomId: form.roomId || undefined,
           sessionIds: [...selectedSessionIds],
         }),
@@ -137,7 +138,7 @@ export default function ChurchKioskForm({
     setStep(initialStep());
     setSelectedGroupIdx(initialGroupIdx());
     setSelectedSessionIds(initialSessionIds());
-    setForm({ parentName: "", parentPhone: "", childName: "", childAge: "", roomId: "" });
+    setForm({ parentName: "", parentPhone: "", childName: "", childDob: "", roomId: "" });
     setError("");
     setResult(null);
     setSubmitting(false);
@@ -406,15 +407,15 @@ export default function ChurchKioskForm({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-green-400 text-xs font-bold uppercase tracking-widest mb-2">
-                Child&apos;s Age
+                Date of Birth *
               </label>
               <input
-                type="number"
-                min={0}
-                max={18}
-                value={form.childAge}
-                onChange={(e) => setForm((f) => ({ ...f, childAge: e.target.value }))}
-                placeholder="Age"
+                type="date"
+                value={form.childDob}
+                max={new Date().toISOString().slice(0, 10)}
+                min="2000-01-01"
+                onChange={(e) => setForm((f) => ({ ...f, childDob: e.target.value }))}
+                required
                 className={inputCls}
               />
             </div>

@@ -7,11 +7,11 @@ export async function POST(
 ) {
   const { churchId } = await params;
   const body = await req.json();
-  const { parentName, parentPhone, childName, childAge, roomId, sessionIds } = body as {
+  const { parentName, parentPhone, childName, childDob, roomId, sessionIds } = body as {
     parentName: string;
     parentPhone: string;
     childName: string;
-    childAge?: number;
+    childDob?: string;
     roomId?: string;
     sessionIds: string[];
   };
@@ -57,6 +57,7 @@ export async function POST(
     security_code: securityCode,
     is_new_visitor: false,
     allergies: [],
+    date_of_birth: childDob ?? null,
   }));
 
   const { error } = await admin.from('cm_checkin_records').insert(inserts);
