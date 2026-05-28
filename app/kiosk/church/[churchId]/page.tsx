@@ -41,6 +41,9 @@ export default async function ChurchKioskPage({ params }: Props) {
         <div className="text-center text-white p-8">
           <div className="text-6xl mb-4">⛔</div>
           <h1 className="text-3xl font-bold mb-2">No Open Sessions</h1>
+          {churchName && (
+            <p className="text-base text-gray-400 mb-3">{churchName}</p>
+          )}
           <p className="text-lg text-gray-300">
             There are no active check-in sessions right now.
           </p>

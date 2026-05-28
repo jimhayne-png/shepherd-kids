@@ -149,6 +149,7 @@ export default function CheckinSetupPage() {
       }
       const urlParams = new URLSearchParams(window.location.search);
       selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+      console.log("[checkin-setup] churchId for kiosk links:", selectedChurchIdRef.current, "| x-selected-church-id header:", ch());
       await load();
       setLoading(false);
     }
