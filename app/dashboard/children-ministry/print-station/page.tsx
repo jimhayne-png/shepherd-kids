@@ -246,9 +246,14 @@ export default function PrintStationPage() {
         router.push("/");
         return;
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      selectedChurchIdRef.current =
-        urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+      const churchRes = await fetch('/api/auth/church', {
+        credentials: 'include',
+        headers: churchHeaders(),
+      });
+      if (churchRes.ok) {
+        const churchData = await churchRes.json();
+        selectedChurchIdRef.current = churchData.churchId;
+      }
       await fetchJobs();
     }
     init();

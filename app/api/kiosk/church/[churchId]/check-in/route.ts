@@ -60,8 +60,56 @@ export async function POST(
     date_of_birth: childDob ?? null,
   }));
 
-  const { error } = await admin.from('cm_checkin_records').insert(inserts);
+  const { data: records, error } = await admin
+    .from('cm_checkin_records')
+    .insert(inserts)
+    .select('id, child_name, room_id, security_code, session_id');
   if (error) return Response.json({ error: error.message }, { status: 400 });
+
+  // Create label print jobs (non-blocking — check-in succeeds regardless)
+  try {
+    const safeRecords = records ?? [];
+    const firstRecord = safeRecords[0];
+
+    const childJobs = safeRecords.map((record) => ({
+      church_id: churchId,
+      session_id: record.session_id,
+      checkin_record_id: record.id,
+      child_name: record.child_name,
+      parent_name: parentName,
+      parent_phone: normalizedPhone,
+      room_id: record.room_id ?? null,
+      security_code: record.security_code,
+      allergies: null,
+      medical_notes: null,
+      special_instructions: null,
+      label_type: 'child',
+      status: 'pending',
+    }));
+
+    const parentJob = firstRecord
+      ? {
+          church_id: churchId,
+          session_id: firstRecord.session_id,
+          checkin_record_id: firstRecord.id,
+          child_name: childName,
+          parent_name: parentName,
+          parent_phone: normalizedPhone,
+          room_id: null,
+          security_code: securityCode,
+          allergies: null,
+          medical_notes: null,
+          special_instructions: null,
+          label_type: 'parent',
+          status: 'pending',
+        }
+      : null;
+
+    const printJobs = parentJob ? [...childJobs, parentJob] : childJobs;
+    await admin.from('cm_label_print_jobs').insert(printJobs);
+  } catch {
+    // non-blocking
+  }
 
   return Response.json({ success: true, securityCode, checkedIntoCount: sessionIds.length });
 }
