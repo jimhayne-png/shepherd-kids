@@ -230,7 +230,7 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <p className="font-bold text-gray-900">{v.first_name} {v.last_name}</p>
-                        {(v.status === "flagged" || v.visit_count >= 3) && (
+                        {(v.status === "flagged" || v.visit_count >= 4) && (
                           <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">⭐ Ready to Promote</span>
                         )}
                       </div>
@@ -243,9 +243,22 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
                       <button onClick={() => logVisit(v.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">
                         + Log Visit
                       </button>
-                      <button onClick={() => promoteVisitor(v.id)} disabled={promotingId === v.id} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: ACCENT }}>
-                        {promotingId === v.id ? "Promoting…" : "→ Add to Roster"}
-                      </button>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <button
+                          onClick={() => promoteVisitor(v.id)}
+                          disabled={promotingId === v.id || v.visit_count < 4}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold text-white"
+                          style={{
+                            backgroundColor: promotingId === v.id || v.visit_count < 4 ? "#9ca3af" : ACCENT,
+                            cursor: promotingId === v.id || v.visit_count < 4 ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          {promotingId === v.id ? "Promoting…" : "→ Change to Member"}
+                        </button>
+                        {v.visit_count < 4 && promotingId !== v.id && (
+                          <p className="text-xs text-gray-400">{v.visit_count} of 4 visits</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
