@@ -42,6 +42,7 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
   const [totalVols, setTotalVols] = useState(0);
   const [recommended, setRecommended] = useState(0);
   const [isUnderstaffed, setIsUnderstaffed] = useState(false);
+  const [ratio, setRatio] = useState(5);
 
   // Create group modal
   const [showCreate, setShowCreate] = useState(false);
@@ -53,8 +54,8 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  async function load(t: string) {
-    const res = await fetch(`/api/ministry/${type}/shepherd-groups`, { headers: { Authorization: `Bearer ${t}` } });
+  async function load(t: string, r: number = 5) {
+    const res = await fetch(`/api/ministry/${type}/shepherd-groups?ratio=${r}`, { headers: { Authorization: `Bearer ${t}` } });
     if (!res.ok) return;
     const data = await res.json();
     setGroups(data.groups ?? []);
@@ -76,8 +77,12 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
       const t = session.access_token;
       setToken(t);
 
+      const stored = localStorage.getItem(`sw_shepherd_ratio_${type}`);
+      const storedRatio = stored ? Math.min(10, Math.max(3, parseInt(stored) || 5)) : 5;
+      setRatio(storedRatio);
+
       const [_, membersRes] = await Promise.all([
-        load(t),
+        load(t, storedRatio),
         fetch(`/api/ministry/${type}/roster`, { headers: { Authorization: `Bearer ${t}` } }),
       ]);
       const mData = await membersRes.json();
@@ -101,13 +106,19 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
     setCreating(false);
     setShowCreate(false);
     setForm({ volunteer_name: "", volunteer_email: "", volunteer_phone: "", leadership_kid_id: "", member_ids: [] });
-    if (token) await load(token);
+    if (token) await load(token, ratio);
   }
 
   async function deleteGroup(groupId: string) {
     if (!confirm("Delete this group? All contact history will be lost.")) return;
     await fetch(`/api/ministry/${type}/shepherd-groups/${groupId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-    if (token) await load(token);
+    if (token) await load(token, ratio);
+  }
+
+  function handleRatioChange(newRatio: number) {
+    setRatio(newRatio);
+    localStorage.setItem(`sw_shepherd_ratio_${type}`, String(newRatio));
+    if (token) load(token, newRatio);
   }
 
   function toggleMember(id: string) {
@@ -124,8 +135,8 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
   const contactRate = maxContacts > 0 ? Math.round((totalContacts / maxContacts) * 100) : 0;
 
   const neededVols = Math.max(0, recommended - totalVols);
-  const staffingLabel = !isUnderstaffed ? "✅ Fully Staffed" : neededVols <= 2 ? `⚠️ ${neededVols} Volunteer${neededVols > 1 ? "s" : ""} Needed` : `🚨 Understaffed — ${neededVols} Needed`;
-  const staffingColor = !isUnderstaffed ? "#22c55e" : neededVols <= 2 ? "#f59e0b" : "#ef4444";
+  const staffingLabel = totalKids === 0 ? "Awaiting Enrollment" : !isUnderstaffed ? "✅ Fully Staffed" : neededVols <= 2 ? `⚠️ ${neededVols} Volunteer${neededVols > 1 ? "s" : ""} Needed` : `🚨 Understaffed — ${neededVols} Needed`;
+  const staffingColor = totalKids === 0 ? "#6b7280" : !isUnderstaffed ? "#22c55e" : neededVols <= 2 ? "#f59e0b" : "#ef4444";
 
   if (!cfg || !SHEPHERD_TYPES.has(type)) return (
     <MinistryShell type={type}><div className="p-8 text-gray-500">Shepherd Groups are not available for this ministry type.</div></MinistryShell>
@@ -140,7 +151,18 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Shepherd Groups</h1>
-            <p className="text-orange-100 text-sm mt-1">{cfg.name} · 5:1 ratio</p>
+            <p className="text-orange-100 text-sm mt-1">{cfg.name} · {ratio}:1 ratio</p>
+            <div className="flex items-center gap-2 mt-2">
+              <label className="text-orange-200 text-xs">Children per Volunteer:</label>
+              <input
+                type="number"
+                min={3}
+                max={10}
+                value={ratio}
+                onChange={e => handleRatioChange(Math.min(10, Math.max(3, parseInt(e.target.value) || 5)))}
+                className="w-14 px-2 py-1 rounded text-sm font-bold text-gray-800 bg-white"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: staffingColor }}>
@@ -159,7 +181,7 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
         {isUnderstaffed && (
           <div className="mb-6 rounded-2xl px-6 py-4 border" style={{ backgroundColor: "#fff7ed", borderColor: ACCENT + "44" }}>
             <p className="text-sm font-medium" style={{ color: "#9a3412" }}>
-              ⚠️ You have {totalKids} kids but only {totalVols} volunteer group{totalVols !== 1 ? "s" : ""}. You need at least {recommended} volunteer{recommended !== 1 ? "s" : ""} to maintain a 5:1 ratio.
+              ⚠️ You have {totalKids} kids but only {totalVols} volunteer group{totalVols !== 1 ? "s" : ""}. You need at least {recommended} volunteer{recommended !== 1 ? "s" : ""} to maintain a {ratio}:1 ratio.
             </p>
           </div>
         )}
@@ -186,7 +208,7 @@ export default function ShepherdGroupsPage({ params }: { params: Promise<{ type:
         {groups.length === 0 ? (
           <div className="bg-white rounded-2xl shadow p-12 text-center">
             <div className="text-5xl mb-4">👥</div>
-            <p className="text-gray-400">No shepherd groups yet. Create your first group to start the 5:1 care model.</p>
+            <p className="text-gray-400">No shepherd groups yet. Create your first group to start the {ratio}:1 care model.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

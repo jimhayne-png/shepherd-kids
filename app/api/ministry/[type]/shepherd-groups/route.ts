@@ -17,10 +17,10 @@ async function getChurchId(userId: string) {
 }
 
 const SHEPHERD_TYPES = new Set(['childrens', 'middle-school', 'high-school']);
-const MAX_MEMBERS = 5;
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ type: string }> }) {
   const { type } = await params;
+  const ratio = Math.min(10, Math.max(3, parseInt(request.nextUrl.searchParams.get('ratio') ?? '5') || 5));
   if (!SHEPHERD_TYPES.has(type)) return Response.json({ error: 'Shepherd groups not available for this ministry' }, { status: 403 });
 
   const user = await getAuthUser(request);
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!groups?.length) {
     const { count: rosterCount } = await admin.from('ministry_rosters').select('*', { count: 'exact', head: true }).eq('church_id', churchId).eq('ministry_type', type).eq('status', 'active');
     const total = rosterCount ?? 0;
-    return Response.json({ groups: [], total_kids: total, total_volunteers: 0, recommended_volunteers: Math.ceil(total / MAX_MEMBERS), is_understaffed: total > 0 });
+    return Response.json({ groups: [], total_kids: total, total_volunteers: 0, recommended_volunteers: Math.ceil(total / ratio), is_understaffed: total > 0 });
   }
 
   const groupIds = groups.map((g: any) => g.id);
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const totalKids = [...new Set((memberships ?? []).map((m: any) => m.member_id))].length;
   const totalVols = groups.length;
-  const recommended = Math.ceil(totalKids / MAX_MEMBERS);
+  const recommended = Math.ceil(totalKids / ratio);
 
   return Response.json({
     groups: enriched,
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     ...(Array.isArray(member_ids) ? member_ids : []),
   ])];
 
-  if (allIds.length > MAX_MEMBERS) return Response.json({ error: `Maximum ${MAX_MEMBERS} members per group` }, { status: 400 });
+  if (allIds.length > 5) return Response.json({ error: `Maximum 5 members per group` }, { status: 400 });
 
   const admin = adminClient();
 
