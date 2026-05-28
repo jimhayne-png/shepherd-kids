@@ -147,13 +147,14 @@ export default function CheckinSetupPage() {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
         return;
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      const headerChurchId = ch()["x-selected-church-id"];
-      selectedChurchIdRef.current =
-        urlParams.get("churchId") ??
-        headerChurchId ??
-        localStorage.getItem("selected_church_id");
-      console.log("[checkin-setup] churchId for kiosk links:", selectedChurchIdRef.current, "| x-selected-church-id header:", ch());
+      const churchRes = await fetch('/api/auth/church', {
+        credentials: 'include',
+        headers: ch(),
+      });
+      if (churchRes.ok) {
+        const churchData = await churchRes.json();
+        selectedChurchIdRef.current = churchData.churchId;
+      }
       await load();
       setLoading(false);
     }
