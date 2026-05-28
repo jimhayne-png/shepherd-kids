@@ -437,11 +437,38 @@ export default function CheckinSetupPage() {
                     <input value={sessionForm.serviceName} onChange={e => setSessionForm(f => ({ ...f, serviceName: e.target.value }))} placeholder="e.g. Sunday Morning Service" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
                   </div>
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Use Template (optional)</label>
-                    <select value={sessionForm.templateId} onChange={e => { const tpl = templates.find(t => t.id === e.target.value); setSessionForm(f => ({ ...f, templateId: e.target.value, serviceName: tpl ? tpl.name : f.serviceName, scheduledTime: tpl?.typical_time ?? f.scheduledTime })); }} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm">
-                      <option value="">— No template —</option>
-                      {templates.filter(t => t.is_active).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-2">Use Template (optional)</label>
+                    <div className="space-y-1.5">
+                      <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${sessionForm.templateId === "" ? "border-orange-300 bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
+                        <input
+                          type="radio"
+                          name="sessionTemplate"
+                          value=""
+                          checked={sessionForm.templateId === ""}
+                          onChange={() => setSessionForm(f => ({ ...f, templateId: "" }))}
+                          className="accent-orange-500"
+                        />
+                        <span className="text-sm text-gray-400 italic">No template</span>
+                      </label>
+                      {templates.filter(t => t.is_active).map(t => (
+                        <label key={t.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${sessionForm.templateId === t.id ? "border-orange-300 bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
+                          <input
+                            type="radio"
+                            name="sessionTemplate"
+                            value={t.id}
+                            checked={sessionForm.templateId === t.id}
+                            onChange={() => setSessionForm(f => ({ ...f, templateId: t.id, serviceName: t.name, scheduledTime: t.typical_time ?? f.scheduledTime }))}
+                            className="accent-orange-500"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{t.name}</p>
+                            {(t.typical_day || t.typical_time) && (
+                              <p className="text-xs text-gray-400">{[t.typical_day, t.typical_time ? fmtTime(t.typical_time) : null].filter(Boolean).join(" · ")}</p>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                   <div className="col-span-2">
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Session Group (optional)</label>

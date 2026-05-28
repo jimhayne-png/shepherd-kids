@@ -37,6 +37,7 @@ const CM_ITEMS = [
   { label: "👫 Shepherd Groups",    href: "/dashboard/ministry/childrens/shepherd-groups" },
   { label: "🏆 Growth Challenge",   href: "/dashboard/ministry/childrens/growth-challenge" },
   { label: "🦋 Metamorphosis",      href: "/dashboard/ministry/childrens/metamorphosis" },
+  { label: "⚙️ Settings",           href: "/dashboard/children-ministry/settings" },
 ];
 const MS_ITEMS = [
   { label: "📋 Overview",           href: "/dashboard/ministry/middle-school" },
@@ -161,6 +162,7 @@ export default function AppShell(props: AppShellProps) {
   const [msOpen, setMsOpen] = useState(false);
   const [shOpen, setShOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [cmSubtitle, setCmSubtitle] = useState("3rd–6th Grade");
 
   useEffect(() => {
     const stored = loadCollapsed();
@@ -176,6 +178,15 @@ export default function AppShell(props: AppShellProps) {
     setShOpen(SH_ITEMS.some(item => pathActive(pathname, item.href)));
     setMounted(true);
   }, [pathname]);
+
+  useEffect(() => {
+    fetch("/api/children-ministry/config", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.config?.sidebar_label) setCmSubtitle(d.config.sidebar_label);
+      })
+      .catch(() => {});
+  }, []);
 
   function toggle(key: string) {
     setCollapsed(prev => {
@@ -340,9 +351,9 @@ export default function AppShell(props: AppShellProps) {
                   >
                     <div style={{ paddingBottom: "4px" }}>
                       {[
-                        { label: "🧒 Children's Ministry",  items: CM_ITEMS, open: cmOpen, setOpen: setCmOpen },
-                        { label: "🎒 Middle School",         items: MS_ITEMS, open: msOpen, setOpen: setMsOpen },
-                        { label: "🎓 Senior High",           items: SH_ITEMS, open: shOpen, setOpen: setShOpen },
+                        { label: "🧒 Children's Ministry", subtitle: cmSubtitle, items: CM_ITEMS, open: cmOpen, setOpen: setCmOpen },
+                        { label: "🎒 Middle School",        subtitle: undefined,  items: MS_ITEMS, open: msOpen, setOpen: setMsOpen },
+                        { label: "🎓 Senior High",          subtitle: undefined,  items: SH_ITEMS, open: shOpen, setOpen: setShOpen },
                       ].map(group => {
                         const groupActive = group.items.some(item => pathActive(pathname, item.href));
                         return (
@@ -365,7 +376,14 @@ export default function AppShell(props: AppShellProps) {
                                 textAlign: "left",
                               }}
                             >
-                              <span>{group.label}</span>
+                              <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                                <span>{group.label}</span>
+                                {group.subtitle && (
+                                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.42)", fontWeight: 400, marginTop: 1 }}>
+                                    {group.subtitle}
+                                  </span>
+                                )}
+                              </span>
                               <svg
                                 width="10" height="10" viewBox="0 0 10 10" fill="none"
                                 style={{
