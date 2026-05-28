@@ -203,7 +203,7 @@ export default function BirthdaysPage() {
             { key: "all",              label: "All" },
             { key: "birthday",         label: "🎂 Birthdays" },
             { key: "anniversary",      label: "💍 Anniversaries" },
-            { key: "spiritual_birthday", label: "✝️ Spiritual Birthdays" },
+            { key: "spiritual_birthday", label: "🕊️ Spiritual Birthdays" },
           ] as const).map(({ key, label }) => (
             <button
               key={key}
@@ -257,9 +257,9 @@ export default function BirthdaysPage() {
                           {/* Event icon */}
                           <div
                             className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-                            style={{ backgroundColor: ev.eventType === "birthday" ? "#fef3c7" : ev.eventType === "anniversary" ? "#fce7f3" : "#ecfdf5" }}
+                            style={{ backgroundColor: ev.eventType === "birthday" ? "#fef3c7" : ev.eventType === "anniversary" ? "#fce7f3" : "#ede9fe" }}
                           >
-                            {ev.eventType === "birthday" ? "🎂" : ev.eventType === "anniversary" ? "💍" : "✝️"}
+                            {ev.eventType === "birthday" ? "🎂" : ev.eventType === "anniversary" ? "💍" : "🕊️"}
                           </div>
 
                           <div className="flex-1 min-w-0">
@@ -270,8 +270,8 @@ export default function BirthdaysPage() {
                               >
                                 {ev.firstName} {ev.lastName}
                               </Link>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ev.eventType === "birthday" ? "bg-amber-100 text-amber-700" : ev.eventType === "anniversary" ? "bg-pink-100 text-pink-700" : "bg-green-100 text-green-700"}`}>
-                                {ev.eventType === "birthday" ? "Birthday" : ev.eventType === "anniversary" ? "Anniversary" : "Spiritual Birthday"}
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ev.eventType === "birthday" ? "bg-amber-100 text-amber-700" : ev.eventType === "anniversary" ? "bg-pink-100 text-pink-700" : "bg-purple-100 text-purple-700"}`}>
+                                {ev.eventType === "birthday" ? "Birthday" : ev.eventType === "anniversary" ? "Anniversary" : "🕊️ Spiritual Birthday"}
                               </span>
                               {ev.isMilestone && (
                                 <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: "#F28C28" }}>

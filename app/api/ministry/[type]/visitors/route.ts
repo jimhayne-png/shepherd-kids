@@ -40,10 +40,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
           .in('id', familyIds)
       : { data: [] };
 
-    const familyMap: Record<string, any> = {};
-    for (const f of families ?? []) familyMap[f.id] = f;
+    const activeFamilies = (families ?? []).filter((f: any) => f.status !== 'promoted');
 
-    const result = (children ?? []).map((c: any) => {
+    const familyMap: Record<string, any> = {};
+    for (const f of activeFamilies) familyMap[f.id] = f;
+
+    const result = (children ?? []).filter((c: any) => c.family_id && familyMap[c.family_id]).map((c: any) => {
       const fam = familyMap[c.family_id] ?? {};
       return {
         id: c.id,
@@ -67,6 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
     .select('*')
     .eq('church_id', churchId)
     .eq('ministry_type', type)
+    .neq('status', 'promoted')
     .order('last_visit_date', { ascending: false });
 
   if (error) return Response.json({ error: error.message }, { status: 400 });

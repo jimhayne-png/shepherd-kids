@@ -138,13 +138,13 @@ export default function MinistryBirthdaysPage({ params }: { params: Promise<{ ty
   function eventIcon(t: BirthdayEntry["event_type"]) {
     if (t === "birthday") return "🎂";
     if (t === "anniversary") return "💍";
-    return "✝️";
+    return "🕊️";
   }
 
   function eventBg(t: BirthdayEntry["event_type"]) {
     if (t === "birthday") return "#fef3c7";
     if (t === "anniversary") return "#fce7f3";
-    return "#ecfdf5";
+    return "#ede9fe";
   }
 
   function eventLabel(t: BirthdayEntry["event_type"]) {
