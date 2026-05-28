@@ -137,7 +137,7 @@ export default function CheckinSetupPage() {
     ]);
     if (rRes.ok) { const d = await rRes.json(); setRooms(d.rooms ?? []); }
     if (tRes.ok) { const d = await tRes.json(); setTemplates(d.templates ?? []); }
-    if (sRes.ok) { const d = await sRes.json(); setSessions(d.sessions ?? []); }
+    if (sRes.ok) { const d = await sRes.json(); setSessions(d.sessions ?? []); if (!selectedChurchIdRef.current && d.sessions?.length > 0) { selectedChurchIdRef.current = d.sessions[0].church_id; } }
   }
 
   useEffect(() => {
@@ -148,7 +148,11 @@ export default function CheckinSetupPage() {
         return;
       }
       const urlParams = new URLSearchParams(window.location.search);
-      selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
+      const headerChurchId = ch()["x-selected-church-id"];
+      selectedChurchIdRef.current =
+        urlParams.get("churchId") ??
+        headerChurchId ??
+        localStorage.getItem("selected_church_id");
       console.log("[checkin-setup] churchId for kiosk links:", selectedChurchIdRef.current, "| x-selected-church-id header:", ch());
       await load();
       setLoading(false);
