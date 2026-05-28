@@ -14,18 +14,8 @@ const US_STATES = [
   "SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC",
 ];
 
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
 type FormData = {
   churchName: string;
-  slug: string;
   email: string;
   phone: string;
   website: string;
@@ -43,10 +33,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [slugEdited, setSlugEdited] = useState(false);
   const [form, setForm] = useState<FormData>({
     churchName: "",
-    slug: "",
     email: "",
     phone: "",
     website: "",
@@ -64,13 +52,7 @@ export default function OnboardingPage() {
   }, [router]);
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key === "churchName" && !slugEdited) {
-        next.slug = slugify(value as string);
-      }
-      return next;
-    });
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleFinish() {
@@ -144,7 +126,7 @@ export default function OnboardingPage() {
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           {step === 0 && (
-            <StepBasics form={form} set={set} slugEdited={slugEdited} setSlugEdited={setSlugEdited} />
+            <StepBasics form={form} set={set} />
           )}
           {step === 1 && <StepLocation form={form} set={set} />}
           {step === 2 && <StepPreferences form={form} set={set} error={error} />}
@@ -244,13 +226,9 @@ function Input({
 function StepBasics({
   form,
   set,
-  slugEdited,
-  setSlugEdited,
 }: {
   form: FormData;
   set: <K extends keyof FormData>(k: K, v: FormData[K]) => void;
-  slugEdited: boolean;
-  setSlugEdited: (v: boolean) => void;
 }) {
   return (
     <div className="space-y-5">
@@ -260,16 +238,6 @@ function StepBasics({
           value={form.churchName}
           onChange={(v) => set("churchName", v)}
           placeholder="Grace Community Church"
-        />
-      </Field>
-      <Field label="Slug" hint="Used in URLs — letters, numbers, and hyphens only.">
-        <Input
-          value={form.slug}
-          onChange={(v) => {
-            setSlugEdited(true);
-            set("slug", slugify(v));
-          }}
-          placeholder="grace-community-church"
         />
       </Field>
       <Field label="Email">

@@ -1,11 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+async function uniqueSlug(
+  supabase: { from: (table: string) => any },
+  base: string,
+): Promise<string> {
+  const { data } = await supabase
+    .from('churches')
+    .select('slug')
+    .like('slug', `${base}%`);
+
+  const taken = new Set((data ?? []).map((r: { slug: string }) => r.slug));
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}-${n}`)) n++;
+  return `${base}-${n}`;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const {
     churchName,
-    slug,
     email,
     phone,
     website,
@@ -39,13 +64,19 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Generate unique slug from church name + city
+  const namePart = slugify(churchName);
+  const cityPart = city?.trim() ? slugify(city.trim()) : '';
+  const baseSlug = cityPart ? `${namePart}-${cityPart}` : namePart;
+  const slug = await uniqueSlug(supabaseAdmin, baseSlug);
+
   // Insert church
   const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: church, error: churchError } = await supabaseAdmin
     .from('churches')
     .insert({
       name: churchName.trim(),
-      slug: slug?.trim() || null,
+      slug,
       email: email?.trim() || null,
       phone: phone?.trim() || null,
       website: website?.trim() || null,
