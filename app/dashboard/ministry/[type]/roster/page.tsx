@@ -114,11 +114,16 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
   async function promoteVisitor(visitorId: string) {
     if (!token) return;
     setPromotingId(visitorId);
-    await fetch(`/api/ministry/${type}/visitors/${visitorId}/promote`, {
+    const res = await fetch(`/api/ministry/${type}/visitors/${visitorId}/promote`, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ also_add_to_members: false }),
+      body: JSON.stringify({}),
     });
     setPromotingId(null);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert((d as { error?: string }).error ?? "Failed to promote visitor");
+      return;
+    }
     await Promise.all([load(token), loadVisitors(token)]);
   }
 

@@ -20,6 +20,7 @@ type BirthdayEntry = {
   date: string;
   age: number | null;
   is_milestone: boolean;
+  is_visitor: boolean;
 };
 
 const BIRTHDAY_MILESTONES           = new Set([1, 5, 10, 16, 18, 21, 25, 30, 40, 50, 60, 70, 75, 80]);
@@ -60,19 +61,19 @@ export default function MinistryBirthdaysPage({ params }: { params: Promise<{ ty
       if (!session) return;
       const t = session.access_token;
 
-      const rosterRes = await fetch(`/api/ministry/${type}/roster`, { headers: { Authorization: `Bearer ${t}` } });
+      const [rosterRes, membersRes, visitorsRes] = await Promise.all([
+        fetch(`/api/ministry/${type}/roster`, { headers: { Authorization: `Bearer ${t}` } }),
+        fetch("/api/members", { headers: { Authorization: `Bearer ${t}` } }),
+        fetch(`/api/ministry/${type}/visitors`, { headers: { Authorization: `Bearer ${t}` } }),
+      ]);
+
       if (!rosterRes.ok) { setLoading(false); return; }
-      const rosterData = await rosterRes.json();
-      const roster = rosterData.roster ?? [];
+      const roster = (await rosterRes.json()).roster ?? [];
+      const allMembers: any[] = membersRes.ok ? (await membersRes.json()).members ?? [] : [];
+      const visitors: any[] = visitorsRes.ok ? (await visitorsRes.json()).visitors ?? [] : [];
 
-      const memberIds = roster.map((r: any) => r.member_id);
-      if (!memberIds.length) { setLoading(false); return; }
-
-      const membersRes = await fetch("/api/members", { headers: { Authorization: `Bearer ${t}` } });
-      const membersData = await membersRes.json();
-      const allMembers: any[] = membersData.members ?? [];
-      const rosterSet = new Set(memberIds);
-      const rosterMembers = allMembers.filter((m: any) => rosterSet.has(m.id));
+      const memberIds = new Set(roster.map((r: any) => r.member_id as string));
+      const rosterMembers = allMembers.filter((m: any) => memberIds.has(m.id));
 
       const thisMonth = new Date().getMonth() + 1;
       const result: BirthdayEntry[] = [];
@@ -97,8 +98,28 @@ export default function MinistryBirthdaysPage({ params }: { params: Promise<{ ty
               date,
               age,
               is_milestone: isMilestone(age, evType),
+              is_visitor: false,
             });
           }
+        }
+      }
+
+      for (const v of visitors) {
+        const date: string | null = v.date_of_birth ?? v.birthdate ?? null;
+        if (!date) continue;
+        const d = new Date(date + "T00:00:00");
+        if (d.getMonth() + 1 === thisMonth) {
+          const age = calcAge(date);
+          result.push({
+            member_id: v.id,
+            first_name: v.first_name,
+            last_name: v.last_name,
+            event_type: "birthday",
+            date,
+            age,
+            is_milestone: isMilestone(age, "birthday"),
+            is_visitor: true,
+          });
         }
       }
 
@@ -176,6 +197,9 @@ export default function MinistryBirthdaysPage({ params }: { params: Promise<{ ty
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="font-bold text-gray-900">{e.first_name} {e.last_name}</p>
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: e.is_visitor ? "#e0f2fe" : "#dcfce7", color: e.is_visitor ? "#0369a1" : "#166534" }}>
+                        {e.is_visitor ? "Visitor" : "Member"}
+                      </span>
                       {e.is_milestone && e.age && (
                         <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ backgroundColor: "#F28C28", color: "white" }}>
                           {milestoneLabel(e)}

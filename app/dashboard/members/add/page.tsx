@@ -47,6 +47,7 @@ type FormData = {
   zip: string;
   birthdate: string;
   anniversary: string;
+  spiritualBirthday: string;
   memberType: string;
   status: string;
   notes: string;
@@ -91,7 +92,7 @@ export default function AddMemberPage() {
     firstName: "", lastName: "",
     email: "", phone: "",
     address: "", city: "", state: "", zip: "",
-    birthdate: "", anniversary: "",
+    birthdate: "", anniversary: "", spiritualBirthday: "",
     memberType: "member", status: "active",
     notes: "", departmentIds: [],
   });
@@ -214,6 +215,9 @@ export default function AddMemberPage() {
               </Field>
               <Field label="Anniversary">
                 <Input value={form.anniversary} onChange={(v) => set("anniversary", v)} type="date" />
+              </Field>
+              <Field label="Spiritual Birthday">
+                <Input value={form.spiritualBirthday} onChange={(v) => set("spiritualBirthday", v)} type="date" />
               </Field>
             </div>
           </section>

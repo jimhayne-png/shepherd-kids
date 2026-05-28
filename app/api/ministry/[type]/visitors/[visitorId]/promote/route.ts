@@ -21,43 +21,93 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
   const churchId = await getChurchId(user.id);
   if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
 
-  const { also_add_to_members } = await req.json();
   const admin = adminClient();
   const cfg = MINISTRY_CONFIG[type];
 
-  const { data: visitor } = await admin.from('ministry_visitors').select('*').eq('id', visitorId).eq('church_id', churchId).maybeSingle();
-  if (!visitor) return Response.json({ error: 'Visitor not found' }, { status: 404 });
+  let firstName: string, lastName: string;
+  let email: string | null = null, phone: string | null = null, birthdate: string | null = null;
+  let markPromoted: () => Promise<void>;
 
-  // Add to ministry roster
+  if (type === 'childrens') {
+    const { data: child } = await admin
+      .from('cm_visitor_children')
+      .select('first_name, last_name, date_of_birth, family_id')
+      .eq('id', visitorId)
+      .eq('church_id', churchId)
+      .maybeSingle();
+    if (!child) return Response.json({ error: 'Visitor not found' }, { status: 404 });
+
+    if (child.family_id) {
+      const { data: fam } = await admin
+        .from('cm_visitor_families')
+        .select('parent1_email, parent1_phone')
+        .eq('id', child.family_id)
+        .maybeSingle();
+      email = fam?.parent1_email ?? null;
+      phone = fam?.parent1_phone ?? null;
+    }
+
+    firstName = child.first_name;
+    lastName = child.last_name;
+    birthdate = child.date_of_birth ?? null;
+    const familyId = child.family_id;
+    markPromoted = async () => {
+      if (familyId) {
+        await admin.from('cm_visitor_families').update({ status: 'promoted' }).eq('id', familyId);
+      }
+    };
+  } else {
+    const { data: visitor } = await admin
+      .from('ministry_visitors')
+      .select('*')
+      .eq('id', visitorId)
+      .eq('church_id', churchId)
+      .maybeSingle();
+    if (!visitor) return Response.json({ error: 'Visitor not found' }, { status: 404 });
+
+    firstName = visitor.first_name;
+    lastName = visitor.last_name;
+    email = visitor.email ?? null;
+    phone = visitor.phone ?? null;
+    markPromoted = async () => {
+      await admin.from('ministry_visitors').update({
+        status: 'promoted',
+        promoted_to_member: true,
+        promoted_at: new Date().toISOString(),
+      }).eq('id', visitorId);
+    };
+  }
+
+  // Always insert into members table
+  const { data: member, error: memberErr } = await admin.from('members').insert({
+    church_id: churchId,
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    phone,
+    birthdate,
+    member_type: 'member',
+    status: 'active',
+  }).select('id').single();
+
+  if (memberErr || !member) {
+    return Response.json({ error: memberErr?.message ?? 'Failed to create member' }, { status: 500 });
+  }
+
+  // Add to ministry roster using the real member ID
   const { error: rosterErr } = await admin.from('ministry_rosters').upsert({
     church_id: churchId,
     ministry_type: type,
-    member_id: visitorId, // using visitor id as soft link (no FK)
+    member_id: member.id,
     status: 'active',
     pipeline_stage: cfg?.stages[0] ?? null,
   }, { onConflict: 'church_id,ministry_type,member_id', ignoreDuplicates: true });
 
-  // Optionally add to main members table
-  let memberId: string | null = null;
-  if (also_add_to_members) {
-    const { data: member } = await admin.from('members').insert({
-      church_id: churchId,
-      first_name: visitor.first_name,
-      last_name: visitor.last_name,
-      email: visitor.email ?? null,
-      phone: visitor.phone ?? null,
-      member_type: 'member',
-      status: 'active',
-    }).select('id').single();
-    memberId = member?.id ?? null;
+  if (rosterErr) {
+    return Response.json({ error: rosterErr.message }, { status: 500 });
   }
 
-  // Mark visitor as promoted
-  await admin.from('ministry_visitors').update({
-    status: 'promoted',
-    promoted_to_member: true,
-    promoted_at: new Date().toISOString(),
-  }).eq('id', visitorId);
+  await markPromoted();
 
-  return Response.json({ success: true, member_id: memberId });
+  return Response.json({ success: true, member_id: member.id });
 }
