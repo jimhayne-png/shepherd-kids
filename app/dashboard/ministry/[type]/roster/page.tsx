@@ -124,6 +124,7 @@ export default function RosterPage({ params }: { params: Promise<{ type: string 
       alert((d as { error?: string }).error ?? "Failed to promote visitor");
       return;
     }
+    setVisitors(prev => prev.filter(v => v.id !== visitorId));
     await Promise.all([load(token), loadVisitors(token)]);
   }
 

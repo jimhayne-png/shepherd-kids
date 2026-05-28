@@ -78,29 +78,47 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
     };
   }
 
-  // Always insert into members table
-  const { data: member, error: memberErr } = await admin.from('members').insert({
-    church_id: churchId,
-    first_name: firstName,
-    last_name: lastName,
-    email,
-    phone,
-    birthdate,
-    member_type: 'member',
-    status: 'active',
-  }).select('id').single();
+  // Reuse existing member record if one already matches, otherwise create
+  const { data: existingMember } = await admin
+    .from('members')
+    .select('id')
+    .eq('church_id', churchId)
+    .eq('first_name', firstName)
+    .eq('last_name', lastName)
+    .maybeSingle();
 
-  if (memberErr || !member) {
-    return Response.json({ error: memberErr?.message ?? 'Failed to create member' }, { status: 500 });
+  let memberId: string;
+  if (existingMember) {
+    memberId = existingMember.id;
+  } else {
+    const { data: newMember, error: memberErr } = await admin.from('members').insert({
+      church_id: churchId,
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone,
+      birthdate,
+      member_type: 'member',
+      status: 'active',
+    }).select('id').single();
+
+    if (memberErr || !newMember) {
+      return Response.json({ error: memberErr?.message ?? 'Failed to create member' }, { status: 500 });
+    }
+    memberId = newMember.id;
   }
+
+  // Use the first non-visitor pipeline stage (stages[0] is always "Visitor" for visitor-capable ministries)
+  const firstStage = cfg?.stages[0] ?? null;
+  const pipelineStage = firstStage === 'Visitor' ? (cfg?.stages[1] ?? firstStage) : firstStage;
 
   // Add to ministry roster using the real member ID
   const { error: rosterErr } = await admin.from('ministry_rosters').upsert({
     church_id: churchId,
     ministry_type: type,
-    member_id: member.id,
+    member_id: memberId,
     status: 'active',
-    pipeline_stage: cfg?.stages[0] ?? null,
+    pipeline_stage: pipelineStage,
   }, { onConflict: 'church_id,ministry_type,member_id', ignoreDuplicates: true });
 
   if (rosterErr) {
@@ -109,5 +127,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
 
   await markPromoted();
 
-  return Response.json({ success: true, member_id: member.id });
+  return Response.json({ success: true, member_id: memberId });
 }
