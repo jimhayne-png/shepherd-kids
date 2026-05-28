@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const auth = await getAuthContext(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { serviceName, serviceTemplateId, date, scheduledTime, kioskPin } = await request.json();
+  const { serviceName, serviceTemplateId, date, scheduledTime, kioskPin, sessionGroup } = await request.json();
   if (!serviceName || !date || !kioskPin) {
     return Response.json({ error: 'serviceName, date, and kioskPin required' }, { status: 400 });
   }
@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       scheduled_time: scheduledTime ?? null,
       kiosk_pin: kioskPin,
       status: 'open',
+      session_group: sessionGroup ?? null,
     })
     .select('*')
     .single();

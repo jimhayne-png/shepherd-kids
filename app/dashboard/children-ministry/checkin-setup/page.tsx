@@ -61,7 +61,7 @@ export default function CheckinSetupPage() {
 
   // Session form
   const [showAddSession, setShowAddSession] = useState(false);
-  const [sessionForm, setSessionForm] = useState({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "" });
+  const [sessionForm, setSessionForm] = useState({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "", sessionGroup: "" });
   const [savingSession, setSavingSession] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
@@ -216,9 +216,9 @@ export default function CheckinSetupPage() {
       method: "POST",
       headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
-      body: JSON.stringify({ serviceName: sessionForm.serviceName, serviceTemplateId: sessionForm.templateId || null, date: sessionForm.date, scheduledTime: sessionForm.scheduledTime || null, kioskPin: sessionForm.kioskPin }),
+      body: JSON.stringify({ serviceName: sessionForm.serviceName, serviceTemplateId: sessionForm.templateId || null, date: sessionForm.date, scheduledTime: sessionForm.scheduledTime || null, kioskPin: sessionForm.kioskPin, sessionGroup: sessionForm.sessionGroup || null }),
     });
-    if (res.ok) { const d = await res.json(); setSessions(s => [d.session, ...s]); setSessionForm({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "" }); setShowAddSession(false); }
+    if (res.ok) { const d = await res.json(); setSessions(s => [d.session, ...s]); setSessionForm({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "", sessionGroup: "" }); setShowAddSession(false); }
     setSavingSession(false);
   }
 
@@ -442,6 +442,11 @@ export default function CheckinSetupPage() {
                       <option value="">— No template —</option>
                       {templates.filter(t => t.is_active).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Session Group (optional)</label>
+                    <input value={sessionForm.sessionGroup} onChange={e => setSessionForm(f => ({ ...f, sessionGroup: e.target.value }))} placeholder="e.g. Sunday Morning" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <p className="text-xs text-gray-400 mt-1">Sessions with the same group name on the same date will share a security code at check-in.</p>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Date *</label>
