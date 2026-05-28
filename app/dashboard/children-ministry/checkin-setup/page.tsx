@@ -65,6 +65,11 @@ export default function CheckinSetupPage() {
   const [savingSession, setSavingSession] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
+  // Daily PIN management
+  const [showChangePIN, setShowChangePIN] = useState(false);
+  const [newPINInput, setNewPINInput] = useState("");
+  const [savingPIN, setSavingPIN] = useState(false);
+
   // New Visitors tab
   const [nvSessions, setNvSessions] = useState<NVSession[]>([]);
   const [nvLoaded, setNvLoaded] = useState(false);
@@ -237,6 +242,24 @@ export default function CheckinSetupPage() {
     copyText(url);
     setCopiedUrl(url);
     setTimeout(() => setCopiedUrl(null), 2000);
+  }
+
+  async function saveDailyPin() {
+    if (!/^\d{4}$/.test(newPINInput)) return;
+    setSavingPIN(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await fetch("/api/checkin/sessions/daily-pin", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...ch() },
+      credentials: "include",
+      body: JSON.stringify({ date: today, pin: newPINInput }),
+    });
+    if (res.ok) {
+      setSessions(ss => ss.map(s => s.date === today ? { ...s, kiosk_pin: newPINInput } : s));
+      setShowChangePIN(false);
+      setNewPINInput("");
+    }
+    setSavingPIN(false);
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
@@ -435,6 +458,97 @@ export default function CheckinSetupPage() {
               </div>
             )}
 
+            {/* Volunteer Room View card */}
+            {selectedChurchIdRef.current && APP_URL && (
+              <div className="rounded-2xl shadow p-5 mb-6 border-2" style={{ backgroundColor: "#7c3aed0d", borderColor: "#7c3aed" }}>
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-2xl flex-shrink-0">👥</span>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-base">Volunteer Room View</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">Share with room volunteers — they enter today&apos;s PIN and select their room</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5 border border-purple-200">
+                  <code className="text-sm text-gray-700 flex-1 truncate min-w-0">
+                    {APP_URL}/kiosk/volunteer/{selectedChurchIdRef.current}
+                  </code>
+                  <button
+                    onClick={() => handleCopy(`${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current!}`)}
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0"
+                    style={{ backgroundColor: "#7c3aed22", color: "#7c3aed" }}
+                  >
+                    {copiedUrl === `${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current}` ? "Copied!" : "Copy"}
+                  </button>
+                  <a
+                    href={`${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg text-white flex-shrink-0"
+                    style={{ backgroundColor: "#7c3aed" }}
+                  >
+                    Open ↗
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Today's PIN card */}
+            {(() => {
+              const today = new Date().toISOString().slice(0, 10);
+              const todaySessions = sessions.filter(s => s.date === today);
+              const todayPin = todaySessions[0]?.kiosk_pin ?? null;
+              return (
+                <div className="bg-white rounded-2xl shadow p-5 mb-6 border border-gray-100">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-gray-800 text-sm mb-0.5">🔑 Today&apos;s PIN</h3>
+                      {todayPin ? (
+                        <p className="text-2xl font-mono font-bold tracking-widest text-gray-900">{todayPin}</p>
+                      ) : (
+                        <p className="text-sm text-gray-400 mt-0.5">No sessions today</p>
+                      )}
+                    </div>
+                    {!showChangePIN && (
+                      <button
+                        onClick={() => { setNewPINInput(todayPin ?? ""); setShowChangePIN(true); }}
+                        className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-600 hover:border-gray-300 flex-shrink-0"
+                      >
+                        Change PIN
+                      </button>
+                    )}
+                  </div>
+                  {showChangePIN && (
+                    <div className="mt-4 flex items-center gap-2">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={newPINInput}
+                        onChange={e => setNewPINInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        placeholder="New 4-digit PIN"
+                        maxLength={4}
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono w-36"
+                        autoFocus
+                      />
+                      <button
+                        onClick={saveDailyPin}
+                        disabled={savingPIN || newPINInput.length !== 4}
+                        className="px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-40"
+                        style={{ backgroundColor: ACCENT }}
+                      >
+                        {savingPIN ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => { setShowChangePIN(false); setNewPINInput(""); }}
+                        className="px-3 py-2 rounded-xl text-sm border border-gray-200 text-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Classroom access links */}
             {activeRooms.length > 0 && APP_URL && (
               <div className="bg-white rounded-2xl shadow p-5 mb-6 border border-gray-100">
@@ -459,7 +573,19 @@ export default function CheckinSetupPage() {
                 <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>Check-In Sessions</h2>
                 <p className="text-xs text-gray-400 mt-0.5">Create a session to open the kiosk for check-in</p>
               </div>
-              <button onClick={() => setShowAddSession(true)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>+ New Session</button>
+              <button
+                onClick={() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  const todayPin = sessions.find(s => s.date === today)?.kiosk_pin
+                    ?? String(Math.floor(1000 + Math.random() * 9000));
+                  setSessionForm(f => ({ ...f, kioskPin: todayPin }));
+                  setShowAddSession(true);
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+                style={{ backgroundColor: ACCENT }}
+              >
+                + New Session
+              </button>
             </div>
 
             {showAddSession && (
@@ -551,18 +677,6 @@ export default function CheckinSetupPage() {
                             {isOpen ? "Close Session" : "Reopen"}
                           </button>
                         </div>
-
-                        {/* Volunteer View */}
-                        {APP_URL && (
-                          <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Volunteer View</p>
-                            <div className="flex items-center gap-2">
-                              <code className="text-xs text-gray-600 flex-1 truncate">{APP_URL}/kiosk/room/{session.id}</code>
-                              <button onClick={() => handleCopy(`${APP_URL}/kiosk/room/${session.id}`)} className="text-xs font-bold px-2.5 py-1 rounded-lg" style={{ backgroundColor: "#7c3aed22", color: "#7c3aed" }}>{copiedUrl === `${APP_URL}/kiosk/room/${session.id}` ? "Copied!" : "Copy"}</button>
-                              <a href={`${APP_URL}/kiosk/room/${session.id}`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold px-2.5 py-1 rounded-lg text-white" style={{ backgroundColor: "#7c3aed" }}>Open ↗</a>
-                            </div>
-                          </div>
-                        )}
 
                         {/* Classroom links for this session */}
                         {isOpen && activeRooms.length > 0 && APP_URL && (
