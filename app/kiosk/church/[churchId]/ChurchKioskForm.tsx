@@ -33,13 +33,18 @@ const CARD = "#0d1f0d";
 const GREEN = "#4ade80";
 
 const ALLERGY_OPTIONS = [
+  "No Known Allergies",
   "Peanuts",
   "Tree Nuts",
   "Dairy",
   "Eggs",
-  "Shellfish",
-  "Wheat / Gluten",
   "Soy",
+  "Wheat / Gluten",
+  "Shellfish",
+  "Bee Stings",
+  "Medication Allergy",
+  "Asthma",
+  "EpiPen Required",
   "Other",
 ] as const;
 
@@ -634,9 +639,14 @@ function ChildCard({
 }) {
   function toggleAllergy(opt: string) {
     const isSelected = child.allergies.includes(opt);
-    const next = isSelected
-      ? child.allergies.filter((a) => a !== opt)
-      : [...child.allergies, opt];
+    let next: string[];
+    if (opt === "No Known Allergies") {
+      next = isSelected ? [] : ["No Known Allergies"];
+    } else {
+      next = isSelected
+        ? child.allergies.filter((a) => a !== opt)
+        : [...child.allergies.filter((a) => a !== "No Known Allergies"), opt];
+    }
     onChange({
       ...child,
       allergies: next,
