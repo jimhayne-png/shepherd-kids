@@ -118,12 +118,13 @@ function Field({
       >
         {label}
       </label>
+
       <input
         id={name}
         name={name}
         type="text"
-        value={value}
         autoComplete="off"
+        value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
       />
@@ -142,22 +143,29 @@ function isValidUrl(url: string) {
 
 export default function SettingsPage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+
   const [youthForm, setYouthForm] =
     useState<YouthFormState>(EMPTY_YOUTH_FORM);
+
   const [billing, setBilling] = useState<{
     subscription_status?: string;
     subscription_tier?: string;
     trial_ends_at?: string;
   }>({});
+
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
   function set(key: keyof FormState) {
-    return (v: string) => setForm((f) => ({ ...f, [key]: v }));
+    return (v: string) =>
+      setForm((f) => ({
+        ...f,
+        [key]: v,
+      }));
   }
 
   useEffect(() => {
@@ -182,14 +190,18 @@ export default function SettingsPage() {
       if (!session) return;
 
       const t = session.access_token;
-      setToken(t);
 
       const [churchRes, youthRes] = await Promise.all([
         fetch("/api/settings", {
-          headers: { Authorization: `Bearer ${t}` },
+          headers: {
+            Authorization: `Bearer ${t}`,
+          },
         }),
+
         fetch("/api/youth-ministry/settings", {
-          headers: { Authorization: `Bearer ${t}` },
+          headers: {
+            Authorization: `Bearer ${t}`,
+          },
         }),
       ]);
 
@@ -211,28 +223,37 @@ export default function SettingsPage() {
           children_pastor: church.children_pastor ?? "",
           youth_pastor: church.youth_pastor ?? "",
           choir_director: church.choir_director ?? "",
-          mens_ministry_leader: church.mens_ministry_leader ?? "",
-          womens_ministry_leader: church.womens_ministry_leader ?? "",
-          young_adult_leader: church.young_adult_leader ?? "",
-          senior_ministry_leader: church.senior_ministry_leader ?? "",
+          mens_ministry_leader:
+            church.mens_ministry_leader ?? "",
+          womens_ministry_leader:
+            church.womens_ministry_leader ?? "",
+          young_adult_leader:
+            church.young_adult_leader ?? "",
+          senior_ministry_leader:
+            church.senior_ministry_leader ?? "",
         });
 
         setBilling({
-          subscription_status: church.subscription_status ?? "",
-          subscription_tier: church.subscription_tier ?? "",
-          trial_ends_at: church.trial_ends_at ?? "",
+          subscription_status:
+            church.subscription_status ?? "",
+          subscription_tier:
+            church.subscription_tier ?? "",
+          trial_ends_at:
+            church.trial_ends_at ?? "",
         });
-      }
-
-      if (youthRes.ok) {
+      }      if (youthRes.ok) {
         const { settings } = await youthRes.json();
 
         if (settings && Object.keys(settings).length > 0) {
           setYouthForm({
-            middle_school_pastor: settings.middle_school_pastor ?? "",
-            senior_high_pastor: settings.senior_high_pastor ?? "",
-            same_pastor: settings.same_pastor ?? false,
-            include_6th_grade: settings.include_6th_grade ?? true,
+            middle_school_pastor:
+              settings.middle_school_pastor ?? "",
+            senior_high_pastor:
+              settings.senior_high_pastor ?? "",
+            same_pastor:
+              settings.same_pastor ?? false,
+            include_6th_grade:
+              settings.include_6th_grade ?? true,
             permission_renewal_months:
               settings.permission_renewal_months ?? 12,
           });
@@ -246,27 +267,38 @@ export default function SettingsPage() {
   }, [router]);
 
   async function handleSave() {
-    if (!token) return;
-
     setSaving(true);
     setError("");
     setSuccess("");
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const freshToken = session?.access_token;
+
+      if (!freshToken) {
+        setSaving(false);
+        setError("Unauthorized. Please refresh the page and sign in again.");
+        return;
+      }
+
       const [res, youthRes] = await Promise.all([
         fetch("/api/settings", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${freshToken}`,
           },
           body: JSON.stringify(form),
         }),
+
         fetch("/api/youth-ministry/settings", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${freshToken}`,
           },
           body: JSON.stringify(youthForm),
         }),
@@ -282,7 +314,10 @@ export default function SettingsPage() {
 
       if (res.ok && youthRes.ok) {
         setSuccess("Settings saved successfully.");
-        setTimeout(() => setSuccess(""), 4000);
+
+        setTimeout(() => {
+          setSuccess("");
+        }, 4000);
       } else {
         setError(
           data.error ||
@@ -294,24 +329,25 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error("Unexpected save error:", err);
+
       setSaving(false);
       setError("Unexpected error saving settings.");
     }
   }
 
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-400">Loading…</div>
       </div>
     );
+  }
 
   const showLogoPreview =
     form.logo_url.trim() !== "" && isValidUrl(form.logo_url);
 
   return (
     <AppShell navItems={navItems}>
-      {/* Hero */}
       <div
         className="px-8 py-8"
         style={{
@@ -325,12 +361,14 @@ export default function SettingsPage() {
         >
           ← Dashboard
         </Link>
+
         <h1
           className="text-3xl font-bold text-white"
           style={{ fontFamily: "Georgia, serif" }}
         >
           Church Settings
         </h1>
+
         <p className="text-green-200 text-sm mt-1">
           Manage your church profile and ministry leaders
         </p>
@@ -350,11 +388,11 @@ export default function SettingsPage() {
             </p>
           )}
 
-          {/* Section 1 — Church Information */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">
               Church Information
             </h2>
+
             <p className="text-sm text-gray-500 mb-5">
               Basic contact and identity details for your church.
             </p>
@@ -433,12 +471,16 @@ export default function SettingsPage() {
                 >
                   Timezone
                 </label>
+
                 <select
                   id="timezone"
                   name="timezone"
                   value={form.timezone}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, timezone: e.target.value }))
+                    setForm((f) => ({
+                      ...f,
+                      timezone: e.target.value,
+                    }))
                   }
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
                 >
@@ -462,13 +504,12 @@ export default function SettingsPage() {
                   </option>
                 </select>
               </div>
-            </div>
-
-            {showLogoPreview && (
+            </div>            {showLogoPreview && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
                   Logo Preview
                 </p>
+
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={form.logo_url}
@@ -480,11 +521,11 @@ export default function SettingsPage() {
             )}
           </section>
 
-          {/* Section 2 — Ministry Leaders */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">
               Ministry Leaders
             </h2>
+
             <p className="text-sm text-gray-500 mb-5">
               Names used in letters, emails, and reports across the platform.
             </p>
@@ -553,6 +594,7 @@ export default function SettingsPage() {
                 >
                   Middle School Pastor
                 </label>
+
                 <input
                   id="middle_school_pastor"
                   name="middle_school_pastor"
@@ -575,6 +617,7 @@ export default function SettingsPage() {
                 >
                   Senior High Pastor
                 </label>
+
                 <input
                   id="senior_high_pastor"
                   name="senior_high_pastor"
@@ -593,11 +636,11 @@ export default function SettingsPage() {
             </div>
           </section>
 
-          {/* Section 3 — Youth Ministry Preferences */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">
               Youth Ministry Preferences
             </h2>
+
             <p className="text-sm text-gray-500 mb-5">
               Grade groupings and permission form settings for Middle School and
               Senior High.
@@ -621,6 +664,7 @@ export default function SettingsPage() {
                   }
                   className="w-4 h-4 rounded border-gray-300 text-green-800 focus:ring-green-800"
                 />
+
                 <span className="text-sm text-gray-700">
                   Same pastor leads both Middle School and Senior High
                 </span>
@@ -643,19 +687,19 @@ export default function SettingsPage() {
                   }
                   className="w-4 h-4 rounded border-gray-300 text-green-800 focus:ring-green-800"
                 />
+
                 <span className="text-sm text-gray-700">
                   Include 6th grade in Middle School
                 </span>
               </label>
-            </div>
-
-            <div className="max-w-xs">
+            </div>            <div className="max-w-xs">
               <label
                 htmlFor="permission_renewal_months"
                 className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5"
               >
                 Permission Form Renewal (months)
               </label>
+
               <input
                 id="permission_renewal_months"
                 name="permission_renewal_months"
@@ -675,11 +719,11 @@ export default function SettingsPage() {
             </div>
           </section>
 
-          {/* Section 4 — Billing */}
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-0.5">
               Billing
             </h2>
+
             <p className="text-sm text-gray-500 mb-5">
               Your current subscription details.
             </p>
@@ -698,7 +742,10 @@ export default function SettingsPage() {
                 };
 
                 return [
-                  { label: "Status", value: billing.subscription_status },
+                  {
+                    label: "Status",
+                    value: billing.subscription_status,
+                  },
                   {
                     label: "Plan",
                     value: billing.subscription_tier
@@ -725,6 +772,7 @@ export default function SettingsPage() {
                     className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-200"
                   >
                     <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+
                     <p className="text-sm font-semibold text-gray-800 capitalize">
                       {value || (
                         <span className="text-gray-400 font-normal italic">
@@ -745,11 +793,11 @@ export default function SettingsPage() {
             </Link>
           </section>
 
-          {/* Section 5 — Danger Zone */}
           <section className="rounded-xl border border-gray-200 p-6">
             <h2 className="text-base font-semibold text-gray-700 mb-1">
               Danger Zone
             </h2>
+
             <p className="text-sm text-gray-500">
               To make changes to your account, delete your church profile, or
               transfer ownership, please{" "}
@@ -763,7 +811,6 @@ export default function SettingsPage() {
             </p>
           </section>
 
-          {/* Save */}
           <div className="pb-8">
             <button
               onClick={handleSave}
