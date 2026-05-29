@@ -253,7 +253,7 @@ export default function CheckinSetupPage() {
   async function saveDailyPin() {
     if (!/^\d{4}$/.test(newPINInput)) return;
     setSavingPIN(true);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString('en-CA');
     const res = await fetch("/api/checkin/sessions/daily-pin", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...ch() },
@@ -500,7 +500,7 @@ export default function CheckinSetupPage() {
 
             {/* Today's PIN card */}
             {(() => {
-              const today = new Date().toISOString().slice(0, 10);
+              const today = new Date().toLocaleDateString('en-CA');
               const todaySessions = sessions.filter(s => s.date === today);
               const todayPin = todaySessions[0]?.kiosk_pin ?? null;
               return (
@@ -581,7 +581,7 @@ export default function CheckinSetupPage() {
               </div>
               <button
                 onClick={() => {
-                  const today = new Date().toISOString().slice(0, 10);
+                  const today = new Date().toLocaleDateString('en-CA');
                   const todayPin = sessions.find(s => s.date === today)?.kiosk_pin
                     ?? String(Math.floor(1000 + Math.random() * 9000));
                   setSessionForm(f => ({ ...f, kioskPin: todayPin }));

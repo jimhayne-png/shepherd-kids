@@ -35,7 +35,9 @@ export async function POST(
   }
 
   const admin = adminClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const { data: churchRow } = await admin.from('churches').select('timezone').eq('id', churchId).maybeSingle();
+  const tz = (churchRow as { timezone?: string } | null)?.timezone ?? 'America/Los_Angeles';
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 
   const { data: validSessions } = await admin
     .from('cm_checkin_sessions')

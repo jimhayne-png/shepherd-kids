@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
 type FormState = {
   name: string; email: string; phone: string; address: string;
   city: string; state: string; zip: string; website: string; logo_url: string;
+  timezone: string;
   senior_pastor: string; children_pastor: string; youth_pastor: string;
   choir_director: string; mens_ministry_leader: string; womens_ministry_leader: string;
   young_adult_leader: string; senior_ministry_leader: string;
@@ -65,6 +66,7 @@ const EMPTY_YOUTH_FORM: YouthFormState = {
 
 const EMPTY_FORM: FormState = {
   name: '', email: '', phone: '', address: '', city: '', state: '', zip: '', website: '', logo_url: '',
+  timezone: 'America/Los_Angeles',
   senior_pastor: '', children_pastor: '', youth_pastor: '', choir_director: '',
   mens_ministry_leader: '', womens_ministry_leader: '', young_adult_leader: '', senior_ministry_leader: '',
 };
@@ -131,6 +133,7 @@ export default function SettingsPage() {
           zip: church.zip ?? '',
           website: church.website ?? '',
           logo_url: church.logo_url ?? '',
+          timezone: church.timezone ?? 'America/Los_Angeles',
           senior_pastor: church.senior_pastor ?? '',
           children_pastor: church.children_pastor ?? '',
           youth_pastor: church.youth_pastor ?? '',
@@ -231,6 +234,21 @@ export default function SettingsPage() {
               <Field label="Zip" value={form.zip} onChange={set('zip')} />
               <Field label="Website" value={form.website} onChange={set('website')} />
               <Field label="Logo URL" value={form.logo_url} onChange={set('logo_url')} fullWidth />
+              <div className="col-span-2">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Timezone</label>
+                <select
+                  value={form.timezone}
+                  onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
+                >
+                  <option value="America/New_York">Eastern — America/New_York</option>
+                  <option value="America/Chicago">Central — America/Chicago</option>
+                  <option value="America/Denver">Mountain — America/Denver</option>
+                  <option value="America/Los_Angeles">Pacific — America/Los_Angeles</option>
+                  <option value="America/Anchorage">Alaska — America/Anchorage</option>
+                  <option value="Pacific/Honolulu">Hawaii — Pacific/Honolulu</option>
+                </select>
+              </div>
             </div>
             {showLogoPreview && (
               <div className="mt-4 pt-4 border-t border-gray-100">

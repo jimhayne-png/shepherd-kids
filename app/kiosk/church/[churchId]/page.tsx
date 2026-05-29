@@ -9,9 +9,12 @@ type Props = { params: Promise<{ churchId: string }> };
 export default async function ChurchKioskPage({ params }: Props) {
   const { churchId } = await params;
   const admin = adminClient();
-  const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: sessionRows }, { data: roomRows }, { data: church }] = await Promise.all([
+  const { data: churchRow } = await admin.from("churches").select("name, timezone").eq("id", churchId).maybeSingle();
+  const tz = (churchRow as { name?: string; timezone?: string } | null)?.timezone ?? "America/Los_Angeles";
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
+
+  const [{ data: sessionRows }, { data: roomRows }] = await Promise.all([
     admin
       .from("cm_checkin_sessions")
       .select("id, service_name, date, session_group")
@@ -25,12 +28,11 @@ export default async function ChurchKioskPage({ params }: Props) {
       .eq("church_id", churchId)
       .eq("is_active", true)
       .order("name"),
-    admin.from("churches").select("name").eq("id", churchId).maybeSingle(),
   ]);
 
   const sessions = (sessionRows ?? []) as Session[];
   const rooms: Room[] = (roomRows ?? []) as Room[];
-  const churchName: string = (church as { name: string } | null)?.name ?? "";
+  const churchName: string = (churchRow as { name?: string } | null)?.name ?? "";
 
   if (sessions.length === 0) {
     return (

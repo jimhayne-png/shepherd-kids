@@ -10,8 +10,10 @@ export async function GET(
 
   if (!roomId) return Response.json({ error: 'roomId required' }, { status: 400 });
 
-  const today = new Date().toISOString().slice(0, 10);
   const admin = adminClient();
+  const { data: church } = await admin.from('churches').select('timezone').eq('id', churchId).maybeSingle();
+  const tz = (church as { timezone?: string } | null)?.timezone ?? 'America/Los_Angeles';
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 
   const { data: sessions } = await admin
     .from('cm_checkin_sessions')

@@ -19,7 +19,7 @@ const CHURCH_FIELDS = [
   'name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'website', 'logo_url',
   'senior_pastor', 'children_pastor', 'youth_pastor', 'choir_director',
   'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
-  'subscription_status', 'subscription_tier', 'trial_ends_at',
+  'subscription_status', 'subscription_tier', 'trial_ends_at', 'timezone',
 ].join(', ');
 
 export async function GET(req: NextRequest) {
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
     'name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'website', 'logo_url',
     'senior_pastor', 'children_pastor', 'youth_pastor', 'choir_director',
     'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
+    'timezone',
   ];
   const updates: Record<string, string> = {};
   for (const key of allowed) {
