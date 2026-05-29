@@ -2,15 +2,15 @@ import { type NextRequest } from 'next/server';
 import { adminClient } from '@/lib/api-auth';
 
 type ChildInput = {
-  childName: string;         // combined display name → cm_checkin_records.child_name
-  childId?: string;          // existing cm_visitor_children.id
-  childFirstName?: string;   // required when isNew = true
-  childLastName?: string;    // required when isNew = true
-  childDateOfBirth?: string; // ISO date string, used for room assignment + stored on child record
-  roomId?: string;           // explicit room override
-  isNew?: boolean;           // true → create new cm_visitor_children record
-  allergies?: string[];      // selected allergy labels
-  allergyOther?: string;     // description when "Other" is selected
+  childName: string;
+  childId?: string;
+  childFirstName?: string;
+  childLastName?: string;
+  childDateOfBirth?: string;
+  roomId?: string;
+  isNew?: boolean;
+  allergies?: string[];
+  allergyOther?: string;
   medicalNotes?: string;
   specialInstructions?: string;
 };
@@ -78,10 +78,9 @@ export async function POST(
   const normalizedEmail = parentEmail ? parentEmail.trim().toLowerCase() : null;
   const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
-  // Load active rooms for age-based assignment
   const { data: activeRooms } = await admin
     .from('cm_checkin_rooms')
-    .select('id, min_age, max_age')
+    .select('id, name, min_age, max_age')
     .eq('church_id', session.church_id)
     .eq('is_active', true)
     .order('min_age');
@@ -99,11 +98,9 @@ export async function POST(
     return null;
   }
 
-  // ── Resolve or create visitor family ──────────────────────────────────────
   let resolvedFamilyId: string | null = familyId ?? null;
 
   if (!resolvedFamilyId) {
-    // New family — check for existing record first (idempotent)
     const { data: existing } = await admin
       .from('cm_visitor_families')
       .select('id')
@@ -137,7 +134,6 @@ export async function POST(
       resolvedFamilyId = created?.id ?? null;
     }
   } else if (normalizedEmail) {
-    // Existing family — update email if provided and currently unset or different
     const { data: currentFamily } = await admin
       .from('cm_visitor_families')
       .select('parent1_email')
@@ -152,7 +148,6 @@ export async function POST(
     }
   }
 
-  // ── Update existing children (birthday guarded, allergy/medical always) ─────
   for (const child of children) {
     if (child.isNew || !child.childId) continue;
 
@@ -162,13 +157,13 @@ export async function POST(
       special_instructions: child.specialInstructions ?? null,
     };
 
-    // Birthday: only set if provided and currently unset
     if (child.childDateOfBirth) {
       const { data: existing } = await admin
         .from('cm_visitor_children')
         .select('date_of_birth')
         .eq('id', child.childId)
         .maybeSingle();
+
       if (existing && !existing.date_of_birth) {
         updates.date_of_birth = child.childDateOfBirth;
       }
@@ -177,7 +172,6 @@ export async function POST(
     await admin.from('cm_visitor_children').update(updates).eq('id', child.childId);
   }
 
-  // ── Create cm_visitor_children for new children ───────────────────────────
   if (resolvedFamilyId) {
     for (const child of children) {
       if (!child.isNew || !child.childFirstName || !child.childLastName) continue;
@@ -205,7 +199,6 @@ export async function POST(
     }
   }
 
-  // ── Insert cm_checkin_records (one per child, shared security code) ────────
   const inserts = children.map((child) => ({
     session_id: session.id,
     church_id: session.church_id,
@@ -227,14 +220,12 @@ export async function POST(
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
 
-  // ── Create label print jobs (non-blocking — check-in succeeds regardless) ──
   let printJobsCreated = 0;
   let printJobWarning: string | undefined;
 
   try {
     const safeRecords = records ?? [];
 
-    // One child label per checked-in child
     const childJobs = safeRecords.map((record, i) => {
       const child = children[i];
       const allergyLine = child?.allergies?.length
@@ -246,6 +237,7 @@ export async function POST(
             )
             .join(', ')
         : null;
+
       return {
         church_id: session.church_id,
         session_id: session.id,
@@ -263,17 +255,22 @@ export async function POST(
       };
     });
 
-    // One parent pickup label per family — lists all child names, uses first record id
     const firstRecord = safeRecords[0];
+
     const parentJob = firstRecord
       ? {
           church_id: session.church_id,
           session_id: session.id,
           checkin_record_id: firstRecord.id,
-          child_name: safeRecords.map((r) => r.child_name).join(', '),
+          child_name: safeRecords
+            .map((r) => {
+              const room = activeRooms?.find((ar) => ar.id === r.room_id);
+              return room?.name ? `${r.child_name} (${room.name})` : r.child_name;
+            })
+            .join(', '),
           parent_name: parentName,
           parent_phone: normalizedPhone,
-          room_id: null,
+          room_id: safeRecords[0]?.room_id ?? null,
           security_code: securityCode,
           allergies: null,
           medical_notes: null,
