@@ -15,22 +15,54 @@ type ChildInput = {
   specialInstructions?: string;
 };
 
+type ImmediateLabel = {
+  labelType: 'child' | 'parent';
+  childName: string;
+  parentName: string;
+  parentPhone: string | null;
+  roomName: string | null;
+  securityCode: string;
+  allergies: string | null;
+  medicalNotes: string | null;
+  specialInstructions: string | null;
+  visitNumber: number | null;
+};
+
 function serializeAllergies(allergies: string[], allergyOther: string): string | null {
   if (!allergies.length) return null;
+
   const arr = allergies.map((a) =>
     a === 'Other' && allergyOther.trim() ? `Other: ${allergyOther.trim()}` : a,
   );
+
   return JSON.stringify(arr);
+}
+
+function allergyLine(allergies: string[] | undefined, allergyOther: string | undefined): string | null {
+  if (!allergies?.length) return null;
+
+  return allergies
+    .map((a) =>
+      a === 'Other' && allergyOther?.trim()
+        ? `Other: ${allergyOther.trim()}`
+        : a,
+    )
+    .join(', ');
 }
 
 function calcAge(dob: string): number {
   const d = new Date(dob + 'T00:00:00');
   const today = new Date();
+
   let age = today.getFullYear() - d.getFullYear();
+
   if (
     today.getMonth() < d.getMonth() ||
     (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())
-  ) age--;
+  ) {
+    age--;
+  }
+
   return age;
 }
 
@@ -40,6 +72,7 @@ export async function POST(
 ) {
   const { sessionToken } = await params;
   const body = await req.json();
+
   const {
     parentName,
     parentPhone,
@@ -71,8 +104,13 @@ export async function POST(
     .eq('id', sessionToken)
     .maybeSingle();
 
-  if (!session) return Response.json({ error: 'Session not found' }, { status: 404 });
-  if (session.status !== 'open') return Response.json({ error: 'Session is closed' }, { status: 400 });
+  if (!session) {
+    return Response.json({ error: 'Session not found' }, { status: 404 });
+  }
+
+  if (session.status !== 'open') {
+    return Response.json({ error: 'Session is closed' }, { status: 400 });
+  }
 
   const normalizedPhone = parentPhone.replace(/\D/g, '');
   const normalizedEmail = parentEmail ? parentEmail.trim().toLowerCase() : null;
@@ -88,19 +126,27 @@ export async function POST(
   function resolveRoom(dob: string | undefined, explicit: string | undefined): string | null {
     if (explicit) return explicit;
     if (!dob) return null;
+
     const age = calcAge(dob);
+
     for (const r of activeRooms ?? []) {
       const ok =
         (r.min_age == null || age >= r.min_age) &&
         (r.max_age == null || age <= r.max_age);
+
       if (ok) return r.id;
     }
+
     return null;
   }
 
-  let resolvedFamilyId: string | null = familyId ?? null;
+  function roomNameFor(roomId: string | null | undefined): string | null {
+    if (!roomId) return null;
+    return activeRooms?.find((r) => r.id === roomId)?.name ?? null;
+  }
 
-  if (!resolvedFamilyId) {
+  let resolvedFamilyId: string | null = familyId ?? null;
+    if (!resolvedFamilyId) {
     const { data: existing } = await admin
       .from('cm_visitor_families')
       .select('id')
@@ -218,25 +264,58 @@ export async function POST(
     .insert(inserts)
     .select('id, child_name, room_id, security_code');
 
-  if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (error) {
+    return Response.json({ error: error.message }, { status: 400 });
+  }
+
+  const safeRecords = records ?? [];
+    const childImmediateLabels: ImmediateLabel[] = safeRecords.map((record, i) => {
+    const child = children[i];
+
+    return {
+      labelType: 'child',
+      childName: record.child_name,
+      parentName,
+      parentPhone: normalizedPhone,
+      roomName: roomNameFor(record.room_id),
+      securityCode: record.security_code,
+      allergies: allergyLine(child?.allergies, child?.allergyOther),
+      medicalNotes: child?.medicalNotes || null,
+      specialInstructions: child?.specialInstructions || null,
+      visitNumber: null,
+    };
+  });
+
+  const parentImmediateLabel: ImmediateLabel | null = safeRecords[0]
+    ? {
+        labelType: 'parent',
+        childName: safeRecords
+          .map((r) => {
+            const roomName = roomNameFor(r.room_id);
+            return roomName ? `${r.child_name} (${roomName})` : r.child_name;
+          })
+          .join(', '),
+        parentName,
+        parentPhone: normalizedPhone,
+        roomName: roomNameFor(safeRecords[0]?.room_id),
+        securityCode,
+        allergies: null,
+        medicalNotes: null,
+        specialInstructions: null,
+        visitNumber: null,
+      }
+    : null;
+
+  const immediateLabels: ImmediateLabel[] = parentImmediateLabel
+    ? [...childImmediateLabels, parentImmediateLabel]
+    : childImmediateLabels;
 
   let printJobsCreated = 0;
   let printJobWarning: string | undefined;
 
   try {
-    const safeRecords = records ?? [];
-
     const childJobs = safeRecords.map((record, i) => {
       const child = children[i];
-      const allergyLine = child?.allergies?.length
-        ? child.allergies
-            .map((a) =>
-              a === 'Other' && child.allergyOther?.trim()
-                ? `Other: ${child.allergyOther.trim()}`
-                : a,
-            )
-            .join(', ')
-        : null;
 
       return {
         church_id: session.church_id,
@@ -247,9 +326,9 @@ export async function POST(
         parent_phone: normalizedPhone,
         room_id: record.room_id ?? null,
         security_code: record.security_code,
-        allergies: allergyLine,
-        medical_notes: children[i]?.medicalNotes || null,
-        special_instructions: children[i]?.specialInstructions || null,
+        allergies: allergyLine(child?.allergies, child?.allergyOther),
+        medical_notes: child?.medicalNotes || null,
+        special_instructions: child?.specialInstructions || null,
         label_type: 'child',
         status: 'pending',
       };
@@ -264,13 +343,13 @@ export async function POST(
           checkin_record_id: firstRecord.id,
           child_name: safeRecords
             .map((r) => {
-              const room = activeRooms?.find((ar) => ar.id === r.room_id);
-              return room?.name ? `${r.child_name} (${room.name})` : r.child_name;
+              const roomName = roomNameFor(r.room_id);
+              return roomName ? `${r.child_name} (${roomName})` : r.child_name;
             })
             .join(', '),
           parent_name: parentName,
           parent_phone: normalizedPhone,
-          room_id: safeRecords[0]?.room_id ?? null,
+          room_id: firstRecord.room_id ?? null,
           security_code: securityCode,
           allergies: null,
           medical_notes: null,
@@ -297,7 +376,8 @@ export async function POST(
 
   return Response.json({
     securityCode,
-    records: records ?? [],
+    records: safeRecords,
+    labels: immediateLabels,
     printJobsCreated,
     ...(printJobWarning ? { printJobWarning } : {}),
   });

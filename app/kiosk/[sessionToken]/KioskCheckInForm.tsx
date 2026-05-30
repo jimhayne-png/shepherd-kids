@@ -73,6 +73,19 @@ type Props = {
   churchName: string;
 };
 
+type ImmediateLabel = {
+  labelType: "child" | "parent";
+  childName: string;
+  parentName: string;
+  parentPhone: string | null;
+  roomName: string | null;
+  securityCode: string;
+  allergies: string | null;
+  medicalNotes: string | null;
+  specialInstructions: string | null;
+  visitNumber: number | null;
+};
+
 function fmtDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", {
     weekday: "long",
@@ -150,6 +163,230 @@ function RoomSelect({
   );
 }
 
+
+const PRINT_LABEL_STYLE: React.CSSProperties = {
+  width: "4in",
+  height: "2in",
+  boxSizing: "border-box",
+  overflow: "hidden",
+  padding: "0.12in 0.15in",
+  pageBreakAfter: "always",
+  breakAfter: "page",
+  fontFamily: "Arial, Helvetica, sans-serif",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  backgroundColor: "white",
+  color: "#111827",
+};
+
+function ImmediateChildLabel({ label }: { label: ImmediateLabel }) {
+  return (
+    <div style={PRINT_LABEL_STYLE}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            backgroundColor: "#000",
+            color: "#fff",
+            padding: "2px 7px",
+            borderRadius: 3,
+          }}
+        >
+          Child Label
+        </span>
+
+        {label.roomName && (
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 900,
+              border: "1.5px solid #000",
+              padding: "2px 8px",
+              borderRadius: 3,
+              maxWidth: "1.45in",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {label.roomName}
+          </span>
+        )}
+      </div>
+
+      <div style={{ fontSize: 27, fontWeight: 900, lineHeight: 1.05, marginTop: 4 }}>
+        {label.childName}
+      </div>
+
+      <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
+        Parent: {label.parentName}
+        {label.parentPhone ? ` · ${label.parentPhone}` : ""}
+      </div>
+
+      {(label.allergies || label.medicalNotes || label.specialInstructions || label.visitNumber) && (
+        <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 2 }}>
+          {label.allergies && (
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: "#fff",
+                backgroundColor: "#dc2626",
+                padding: "2px 6px",
+                borderRadius: 3,
+                display: "inline-block",
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              ⚠ ALLERGY: {label.allergies}
+            </div>
+          )}
+          {label.medicalNotes && (
+            <div style={{ fontSize: 9.5, color: "#333", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <strong>Medical:</strong> {label.medicalNotes}
+            </div>
+          )}
+          {label.specialInstructions && (
+            <div style={{ fontSize: 9.5, color: "#333", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <strong>Instructions:</strong> {label.specialInstructions}
+            </div>
+          )}
+          {typeof label.visitNumber === "number" && (
+            <div style={{ fontSize: 9.5, color: "#333" }}>
+              <strong>Visit #:</strong> {label.visitNumber}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", marginTop: "auto" }}>
+        <div>
+          <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
+          <div
+            style={{
+              fontSize: 29,
+              fontWeight: 900,
+              fontFamily: "monospace",
+              letterSpacing: "0.16em",
+              lineHeight: 1,
+            }}
+          >
+            {label.securityCode}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImmediateParentLabel({ label }: { label: ImmediateLabel }) {
+  return (
+    <div style={PRINT_LABEL_STYLE}>
+      <div
+        style={{
+          backgroundColor: "#000",
+          color: "#fff",
+          fontSize: 11,
+          fontWeight: 800,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          padding: "3px 8px",
+          alignSelf: "flex-start",
+          borderRadius: 3,
+        }}
+      >
+        Parent Pickup
+      </div>
+
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.08, marginTop: 5 }}>
+        {label.parentName}
+      </div>
+
+      <div style={{ fontSize: 12, color: "#333", marginTop: 3, lineHeight: 1.25 }}>
+        {label.childName}
+      </div>
+
+      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 6 }}>
+        <div style={{ fontSize: 9, color: "#555", marginBottom: 2 }}>SECURITY CODE — REQUIRED FOR PICKUP</div>
+        <div
+          style={{
+            fontSize: 39,
+            fontWeight: 900,
+            fontFamily: "monospace",
+            letterSpacing: "0.18em",
+            lineHeight: 1,
+          }}
+        >
+          {label.securityCode}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImmediatePrintLabel({ label }: { label: ImmediateLabel }) {
+  return label.labelType === "parent" ? (
+    <ImmediateParentLabel label={label} />
+  ) : (
+    <ImmediateChildLabel label={label} />
+  );
+}
+
+function LabelPreviewCard({ label }: { label: ImmediateLabel }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #e5e7eb",
+        borderRadius: 14,
+        padding: "12px 14px",
+        backgroundColor: "white",
+        textAlign: "left",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            textTransform: "uppercase",
+            color: label.labelType === "parent" ? "#0369a1" : "#92400e",
+          }}
+        >
+          {label.labelType === "parent" ? "Parent Pickup" : "Child Label"}
+        </span>
+        <span style={{ fontFamily: "monospace", fontSize: 16, fontWeight: 900 }}>{label.securityCode}</span>
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 900, color: "#111827", marginTop: 4 }}>{label.childName}</div>
+      {label.roomName && label.labelType === "child" && (
+        <div style={{ fontSize: 13, fontWeight: 700, color: "#374151", marginTop: 2 }}>{label.roomName}</div>
+      )}
+      {label.allergies && (
+        <div
+          style={{
+            display: "inline-block",
+            marginTop: 6,
+            backgroundColor: "#dc2626",
+            color: "white",
+            borderRadius: 6,
+            padding: "2px 8px",
+            fontSize: 12,
+            fontWeight: 800,
+          }}
+        >
+          ⚠ {label.allergies}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function KioskCheckInForm({
   sessionToken,
   serviceName,
@@ -180,6 +417,7 @@ export default function KioskCheckInForm({
   const [submitError, setSubmitError] = useState("");
   const [securityCode, setSecurityCode] = useState<string | null>(null);
   const [printJobsCreated, setPrintJobsCreated] = useState(0);
+  const [labels, setLabels] = useState<ImmediateLabel[]>([]);
 
   // ── Lookup ──────────────────────────────────────────────────────────────
 
@@ -297,6 +535,7 @@ export default function KioskCheckInForm({
     }
     setSecurityCode(data.securityCode);
     setPrintJobsCreated(data.printJobsCreated ?? 0);
+    setLabels(data.labels ?? []);
     setStep("success");
   }
 
@@ -349,6 +588,7 @@ export default function KioskCheckInForm({
     }
     setSecurityCode(data.securityCode);
     setPrintJobsCreated(data.printJobsCreated ?? 0);
+    setLabels(data.labels ?? []);
     setStep("success");
   }
 
@@ -365,6 +605,7 @@ export default function KioskCheckInForm({
     setSubmitError("");
     setSecurityCode(null);
     setPrintJobsCreated(0);
+    setLabels([]);
   }
 
   const serviceSubtitle = `${serviceName} · ${fmtDate(serviceDate)}`;
@@ -388,83 +629,147 @@ export default function KioskCheckInForm({
     );
   }
 
+  function handlePrintLabels() {
+    if (labels.length === 0) return;
+    window.print();
+  }
+
   // ── SUCCESS ─────────────────────────────────────────────────────────────
 
   if (step === "success") {
     return (
-      <div
-        style={{
-          minHeight: "100dvh",
-          backgroundColor: "#f9fafb",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Header title="✅ Check-In Complete!" green />
+      <>
+        <style>{`
+          @page {
+            size: 4in 2in;
+            margin: 0;
+          }
+          @media print {
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .print-labels { display: block !important; }
+            body { margin: 0; padding: 0; }
+          }
+          @media screen {
+            .print-labels { display: none; }
+          }
+        `}</style>
+
+        <div className="print-labels">
+          {labels.map((label, index) => (
+            <ImmediatePrintLabel key={`${label.labelType}-${index}`} label={label} />
+          ))}
+        </div>
+
         <div
+          className="no-print"
           style={{
-            flex: 1,
+            minHeight: "100dvh",
+            backgroundColor: "#f9fafb",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "40px 32px",
           }}
         >
-          <div style={{ width: "100%", maxWidth: 480, textAlign: "center" }}>
-            <p style={{ fontSize: 18, color: "#374151", marginBottom: 8 }}>
-              Your family security code is:
-            </p>
-            <div
-              style={{
-                backgroundColor: "#f0fdf4",
-                border: "3px solid #22c55e",
-                borderRadius: 20,
-                padding: "32px 24px",
-                marginBottom: 32,
-              }}
-            >
-              <p
+          <Header title="✅ Check-In Complete!" green />
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "40px 32px",
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
+              <p style={{ fontSize: 18, color: "#374151", marginBottom: 8 }}>
+                Your family security code is:
+              </p>
+
+              <div
                 style={{
-                  fontSize: 72,
-                  fontWeight: 900,
-                  color: "#111827",
-                  letterSpacing: "0.15em",
-                  fontFamily: "monospace",
-                  margin: 0,
-                  lineHeight: 1,
+                  backgroundColor: "#f0fdf4",
+                  border: "3px solid #22c55e",
+                  borderRadius: 20,
+                  padding: "28px 24px",
+                  marginBottom: 22,
                 }}
               >
-                {securityCode}
-              </p>
-              <p style={{ fontSize: 14, color: "#6b7280", marginTop: 12, marginBottom: 0 }}>
-                Show this code at pickup
-              </p>
+                <p
+                  style={{
+                    fontSize: 68,
+                    fontWeight: 900,
+                    color: "#111827",
+                    letterSpacing: "0.15em",
+                    fontFamily: "monospace",
+                    margin: 0,
+                    lineHeight: 1,
+                  }}
+                >
+                  {securityCode}
+                </p>
+                <p style={{ fontSize: 14, color: "#6b7280", marginTop: 12, marginBottom: 0 }}>
+                  Show this code at pickup
+                </p>
+              </div>
+
+              {labels.length > 0 ? (
+                <>
+                  <button
+                    onClick={handlePrintLabels}
+                    style={{
+                      width: "100%",
+                      padding: "20px",
+                      borderRadius: 20,
+                      border: "none",
+                      backgroundColor: ACCENT,
+                      color: "white",
+                      fontSize: 22,
+                      fontWeight: 900,
+                      cursor: "pointer",
+                      marginBottom: 14,
+                    }}
+                  >
+                    🖨️ Print Labels
+                  </button>
+
+                  <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.5 }}>
+                    This prints all child labels and the parent pickup label together.
+                    {printJobsCreated > 0 ? " Backup labels are also saved in the Print Station." : ""}
+                  </p>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 18 }}>
+                    {labels.map((label, index) => (
+                      <LabelPreviewCard key={`${label.labelType}-preview-${index}`} label={label} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
+                  Check-in was completed, but no immediate labels were returned. Use the Print Station backup if needed.
+                </p>
+              )}
+
+              <button
+                onClick={reset}
+                style={{
+                  width: "100%",
+                  padding: "18px",
+                  borderRadius: 20,
+                  border: "2px solid #e5e7eb",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  fontSize: 18,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                Done (Start Over)
+              </button>
             </div>
-            {printJobsCreated > 0 && (
-              <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
-                Labels are being prepared.
-              </p>
-            )}
-            <button
-              onClick={reset}
-              style={{
-                width: "100%",
-                padding: "20px",
-                borderRadius: 20,
-                border: "none",
-                backgroundColor: ACCENT,
-                color: "white",
-                fontSize: 20,
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-            >
-              Done (Start Over)
-            </button>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
