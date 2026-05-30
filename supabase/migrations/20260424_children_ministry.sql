@@ -12,7 +12,7 @@ create table if not exists children_ministry_seasons (
   created_at timestamptz not null default now()
 );
 
--- Children (3rd–6th grade)
+-- Children Ministry
 create table if not exists children_ministry_children (
   id uuid primary key default gen_random_uuid(),
   church_id uuid not null,

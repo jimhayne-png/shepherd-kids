@@ -28,7 +28,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     name: "Children's Ministry",          // compat
     label: "Children's Ministry",
     emoji: "🧒",
-    ageRange: "3rd–6th Grade",
     grades: ["3rd", "4th", "5th", "6th"],
     pipelineStages: ["Visitor", "Regular", "Engaged", "Memory Verse", "Faith Decision", "Baptism Ready"],
     stages: ["Visitor", "Regular", "Engaged", "Memory Verse", "Faith Decision", "Baptism Ready"], // compat

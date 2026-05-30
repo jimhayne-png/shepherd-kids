@@ -34,7 +34,7 @@ export default function ChildrenMinistrySettingsPage() {
   }
 
   const [loading, setLoading] = useState(true);
-  const [sidebarLabel, setSidebarLabel] = useState("3rd–6th Grade");
+  const [sidebarLabel, setSidebarLabel] = useState("Children's Ministry");
   const [gradeLevels, setGradeLevels] = useState<string[]>(DEFAULT_GRADES);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -58,7 +58,7 @@ export default function ChildrenMinistrySettingsPage() {
       if (res.ok) {
         const d = await res.json();
         if (d.config) {
-          setSidebarLabel(d.config.sidebar_label ?? "3rd–6th Grade");
+         setSidebarLabel(d.config.sidebar_label ?? "Children's Ministry");
           setGradeLevels(d.config.grade_levels ?? DEFAULT_GRADES);
         }
       }

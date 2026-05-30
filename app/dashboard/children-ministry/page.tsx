@@ -76,7 +76,7 @@ export default function ChildrenMinistryPage() {
   return (
     <MinistryShell type="childrens">
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm font-medium mb-1">Children's Ministry · 3rd–6th Grade</p>
+        <p className="text-orange-100 text-sm font-medium mb-1">Children's Ministry</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Children's Ministry</h1>
         <p className="text-orange-100 text-sm mt-1">{children.length} children enrolled</p>
       </div>
