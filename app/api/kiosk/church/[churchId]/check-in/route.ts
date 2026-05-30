@@ -210,6 +210,87 @@ export async function POST(
     // non-blocking
   }
 
+  // Visitor tracking — populate cm_visitor_families / cm_visitor_children for ministry follow-up
+  try {
+    const { data: existingFamily } = await admin
+      .from('cm_visitor_families')
+      .select('id, visit_count')
+      .eq('church_id', churchId)
+      .eq('parent1_phone', normalizedPhone)
+      .maybeSingle();
+
+    let familyId: string;
+
+    if (!existingFamily) {
+      const { data: newFamily } = await admin
+        .from('cm_visitor_families')
+        .insert({
+          church_id: churchId,
+          parent1_first_name: parentFirstName.trim(),
+          parent1_last_name: parentLastName.trim(),
+          parent1_phone: normalizedPhone,
+          parent1_email: parentEmail?.trim() || null,
+          visit_count: 1,
+          first_visit_date: today,
+          last_visit_date: today,
+          status: 'active',
+        })
+        .select('id')
+        .single();
+
+      if (!newFamily) throw new Error('Failed to insert family');
+      familyId = (newFamily as { id: string }).id;
+
+      await admin.from('cm_visitor_children').insert(
+        children.map((child) => ({
+          church_id: churchId,
+          family_id: familyId,
+          first_name: child.firstName.trim(),
+          last_name: child.lastName.trim(),
+          date_of_birth: child.dateOfBirth ?? null,
+        })),
+      );
+    } else {
+      familyId = (existingFamily as { id: string; visit_count: number }).id;
+      const currentCount = (existingFamily as { id: string; visit_count: number }).visit_count ?? 0;
+
+      await admin
+        .from('cm_visitor_families')
+        .update({ last_visit_date: today, visit_count: currentCount + 1 })
+        .eq('id', familyId);
+
+      const { data: existingChildren } = await admin
+        .from('cm_visitor_children')
+        .select('first_name, last_name')
+        .eq('family_id', familyId);
+
+      const existingNameSet = new Set(
+        ((existingChildren ?? []) as { first_name: string; last_name: string }[]).map(
+          (c) => `${c.first_name}|${c.last_name}`.toLowerCase(),
+        ),
+      );
+
+      const newChildren = children.filter(
+        (child) =>
+          !existingNameSet.has(`${child.firstName.trim()}|${child.lastName.trim()}`.toLowerCase()),
+      );
+
+      if (newChildren.length > 0) {
+        await admin.from('cm_visitor_children').insert(
+          newChildren.map((child) => ({
+            church_id: churchId,
+            family_id: familyId,
+            first_name: child.firstName.trim(),
+            last_name: child.lastName.trim(),
+            date_of_birth: child.dateOfBirth ?? null,
+          })),
+        );
+      }
+    }
+  } catch {
+    // non-blocking — visitor tracking failure must not fail the check-in
+  }
+
   return Response.json({
     success: true,
     securityCode,
