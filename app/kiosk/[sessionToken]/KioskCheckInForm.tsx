@@ -636,142 +636,150 @@ export default function KioskCheckInForm({
 
   // ── SUCCESS ─────────────────────────────────────────────────────────────
 
-  if (step === "success") {
-    return (
-      <>
-        <style>{`
-          @page {
-            size: 4in 2in;
-            margin: 0;
+if (step === "success") {
+  return (
+    <>
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
           }
-          @media print {
-            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            .print-labels { display: block !important; }
-            body { margin: 0; padding: 0; }
-          }
-          @media screen {
-            .print-labels { display: none; }
-          }
-        `}</style>
 
-        <div className="print-labels">
-          {labels.map((label, index) => (
-            <ImmediatePrintLabel key={`${label.labelType}-${index}`} label={label} />
+          #print-area,
+          #print-area * {
+            visibility: visible;
+          }
+
+          #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white;
+          }
+
+          .print-label {
+            width: 4in;
+            height: 2in;
+            border: 2px solid black;
+            padding: 12px;
+            margin-bottom: 12px;
+            page-break-after: always;
+            color: black !important;
+            background: white !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: Arial, sans-serif;
+          }
+
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-[#0f2e17] text-white flex flex-col items-center px-6 py-10">
+        <div className="no-print text-center max-w-xl w-full">
+          <div className="text-7xl mb-4">✅</div>
+
+          <h1 className="text-5xl font-bold mb-4">
+            Checked In!
+          </h1>
+
+          <p className="text-green-300 text-xl mb-6">
+            Your security code is:
+          </p>
+
+          <div className="border-4 border-green-400 rounded-3xl p-8 mb-6">
+            <div className="text-8xl font-black tracking-widest">
+              {securityCode}
+            </div>
+
+            <div className="mt-4 text-green-300 text-xl">
+              You will need this code to pick up your child
+            </div>
+          </div>
+
+          <button
+            onClick={() => window.print()}
+            className="w-full bg-white text-black text-3xl font-bold py-6 rounded-2xl mb-6"
+          >
+            🖨️ Print Labels
+          </button>
+        </div>
+
+        <div id="print-area" className="w-full flex flex-col items-center">
+          {labels.map((label, idx) => (
+            <div
+              key={idx}
+              className="print-label"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-3xl font-black">
+                    {label.childName}
+                  </div>
+
+                  {label.roomName && (
+                    <div className="text-xl mt-1">
+                      Room: {label.roomName}
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-right">
+                  <div className="text-xs uppercase font-bold">
+                    {label.labelType === "parent"
+                      ? "Parent Pickup"
+                      : "Child Label"}
+                  </div>
+
+                  <div className="text-4xl font-black mt-1">
+                    {label.securityCode}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <div className="text-lg">
+                  Parent: {label.parentName}
+                </div>
+
+                {label.allergies && (
+                  <div className="text-red-700 font-bold mt-2">
+                    Allergies: {label.allergies}
+                  </div>
+                )}
+
+                {label.medicalNotes && (
+                  <div className="mt-2">
+                    Medical: {label.medicalNotes}
+                  </div>
+                )}
+
+                {label.specialInstructions && (
+                  <div className="mt-2">
+                    Notes: {label.specialInstructions}
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
 
-        <div
-          className="no-print"
-          style={{
-            minHeight: "100dvh",
-            backgroundColor: "#f9fafb",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Header title="✅ Check-In Complete!" green />
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "40px 32px",
-            }}
+        <div className="no-print max-w-xl w-full mt-8">
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-green-400 text-black text-2xl font-bold py-5 rounded-2xl"
           >
-            <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
-              <p style={{ fontSize: 18, color: "#374151", marginBottom: 8 }}>
-                Your family security code is:
-              </p>
-
-              <div
-                style={{
-                  backgroundColor: "#f0fdf4",
-                  border: "3px solid #22c55e",
-                  borderRadius: 20,
-                  padding: "28px 24px",
-                  marginBottom: 22,
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: 68,
-                    fontWeight: 900,
-                    color: "#111827",
-                    letterSpacing: "0.15em",
-                    fontFamily: "monospace",
-                    margin: 0,
-                    lineHeight: 1,
-                  }}
-                >
-                  {securityCode}
-                </p>
-                <p style={{ fontSize: 14, color: "#6b7280", marginTop: 12, marginBottom: 0 }}>
-                  Show this code at pickup
-                </p>
-              </div>
-
-              {labels.length > 0 ? (
-                <>
-                  <button
-                    onClick={handlePrintLabels}
-                    style={{
-                      width: "100%",
-                      padding: "20px",
-                      borderRadius: 20,
-                      border: "none",
-                      backgroundColor: ACCENT,
-                      color: "white",
-                      fontSize: 22,
-                      fontWeight: 900,
-                      cursor: "pointer",
-                      marginBottom: 14,
-                    }}
-                  >
-                    🖨️ Print Labels
-                  </button>
-
-                  <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 16, lineHeight: 1.5 }}>
-                    This prints all child labels and the parent pickup label together.
-                    {printJobsCreated > 0 ? " Backup labels are also saved in the Print Station." : ""}
-                  </p>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 18 }}>
-                    {labels.map((label, index) => (
-                      <LabelPreviewCard key={`${label.labelType}-preview-${index}`} label={label} />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <p style={{ fontSize: 14, color: "#6b7280", marginBottom: 20 }}>
-                  Check-in was completed, but no immediate labels were returned. Use the Print Station backup if needed.
-                </p>
-              )}
-
-              <button
-                onClick={reset}
-                style={{
-                  width: "100%",
-                  padding: "18px",
-                  borderRadius: 20,
-                  border: "2px solid #e5e7eb",
-                  backgroundColor: "white",
-                  color: "#374151",
-                  fontSize: 18,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                Done (Start Over)
-              </button>
-            </div>
-          </div>
+            Check In Another Family
+          </button>
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
+}
 
   // ── PHONE ────────────────────────────────────────────────────────────────
 
