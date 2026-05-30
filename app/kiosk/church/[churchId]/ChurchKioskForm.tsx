@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 type Session = { id: string; service_name: string; date: string; session_group: string | null };
 type Group = { name: string; sessions: Session[] };
@@ -18,6 +18,19 @@ type ChildForm = {
   allergyOther: string;
   specialInstructions: string;
   authorizedPickups: string;
+};
+
+type ImmediateLabel = {
+  labelType: "child" | "parent";
+  childName: string;
+  parentName: string;
+  parentPhone: string | null;
+  roomName: string | null;
+  securityCode: string;
+  allergies: string | null;
+  medicalNotes: string | null;
+  specialInstructions: string | null;
+  visitNumber: number | null;
 };
 
 type Props = {
@@ -101,6 +114,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   const [submitError, setSubmitError] = useState("");
   const [securityCode, setSecurityCode] = useState<string | null>(null);
   const [resultChildren, setResultChildren] = useState<Array<{ name: string; room: string | null }>>([]);
+  const [labels, setLabels] = useState<ImmediateLabel[]>([]);
 
   const currentGroup = selectedGroupIdx >= 0 ? displayGroups[selectedGroupIdx] : null;
   const roomMap = Object.fromEntries(rooms.map((r) => [r.id, r.name]));
@@ -185,6 +199,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
         return;
       }
       setSecurityCode(data.securityCode);
+      setLabels(data.labels ?? []);
       setResultChildren(
         children.map((c) => ({
           name: `${c.firstName.trim()} ${c.lastName.trim()}`,
@@ -211,6 +226,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
     setSubmitError("");
     setSecurityCode(null);
     setResultChildren([]);
+    setLabels([]);
   }
 
   // ── pick-group ────────────────────────────────────────────────────────────
@@ -574,50 +590,230 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
 
   if (step === "success" && securityCode) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
-        <div className="w-full max-w-md text-center">
-          <div className="text-6xl mb-6">✅</div>
-          <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "Georgia, serif" }}>
-            Checked In!
-          </h1>
-          <p className="text-green-400 text-sm mb-6">Your security code is:</p>
-          <div
-            className="rounded-3xl p-8 mb-6"
-            style={{ backgroundColor: CARD, border: "2px solid #4ade80" }}
-          >
-            <p
-              className="font-bold text-white tracking-widest"
-              style={{ fontSize: "4.5rem", lineHeight: 1, fontFamily: "monospace" }}
+      <>
+        <style>{`
+          @page { size: 4in 2in; margin: 0; }
+          @media print {
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+          }
+          .print-only { display: none; }
+        `}</style>
+
+        {/* Screen UI */}
+        <div className="no-print min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
+          <div className="w-full max-w-md text-center">
+            <div className="text-6xl mb-6">✅</div>
+            <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "Georgia, serif" }}>
+              Checked In!
+            </h1>
+            <p className="text-green-400 text-sm mb-6">Your security code is:</p>
+            <div
+              className="rounded-3xl p-8 mb-6"
+              style={{ backgroundColor: CARD, border: "2px solid #4ade80" }}
             >
-              {securityCode}
-            </p>
-            <p className="text-green-500 text-sm mt-4">
-              You will need this code to pick up your child
-            </p>
-          </div>
-          {resultChildren.length > 0 && (
-            <div className="mb-6 space-y-2">
-              {resultChildren.map((c, i) => (
-                <div key={i} className="rounded-2xl px-4 py-3" style={{ backgroundColor: CARD }}>
-                  <p className="text-white font-semibold">{c.name}</p>
-                  {c.room && <p className="text-green-500 text-sm">Room: {c.room}</p>}
-                </div>
-              ))}
+              <p
+                className="font-bold text-white tracking-widest"
+                style={{ fontSize: "4.5rem", lineHeight: 1, fontFamily: "monospace" }}
+              >
+                {securityCode}
+              </p>
+              <p className="text-green-500 text-sm mt-4">
+                You will need this code to pick up your child
+              </p>
             </div>
-          )}
-          <button
-            onClick={reset}
-            className="w-full py-4 rounded-2xl text-lg font-bold"
-            style={{ backgroundColor: GREEN, color: BG }}
-          >
-            Check In Another Family
-          </button>
+            {resultChildren.length > 0 && (
+              <div className="mb-6 space-y-2">
+                {resultChildren.map((c, i) => (
+                  <div key={i} className="rounded-2xl px-4 py-3" style={{ backgroundColor: CARD }}>
+                    <p className="text-white font-semibold">{c.name}</p>
+                    {c.room && <p className="text-green-500 text-sm">Room: {c.room}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {labels.length > 0 && (
+              <button
+                onClick={() => window.print()}
+                className="w-full py-4 rounded-2xl text-lg font-bold mb-4"
+                style={{ backgroundColor: "#fff", color: "#000" }}
+              >
+                🖨️ Print Labels
+              </button>
+            )}
+            <button
+              onClick={reset}
+              className="w-full py-4 rounded-2xl text-lg font-bold"
+              style={{ backgroundColor: GREEN, color: BG }}
+            >
+              Check In Another Family
+            </button>
+          </div>
         </div>
-      </div>
+
+        {/* Print-only label area */}
+        <div className="print-only">
+          {labels.map((label, i) =>
+            label.labelType === "parent" ? (
+              <KioskParentLabel key={i} label={label} />
+            ) : (
+              <KioskChildLabel key={i} label={label} />
+            ),
+          )}
+        </div>
+      </>
     );
   }
 
   return null;
+}
+
+// ── Label components ──────────────────────────────────────────────────────────
+
+const LABEL_STYLE: React.CSSProperties = {
+  width: "4in",
+  height: "2in",
+  boxSizing: "border-box",
+  overflow: "hidden",
+  padding: "0.12in 0.15in",
+  pageBreakAfter: "always",
+  breakAfter: "page",
+  fontFamily: "Arial, Helvetica, sans-serif",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+};
+
+function KioskChildLabel({ label }: { label: ImmediateLabel }) {
+  return (
+    <div style={LABEL_STYLE}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            backgroundColor: "#000",
+            color: "#fff",
+            padding: "1px 6px",
+            borderRadius: 3,
+          }}
+        >
+          Child Check-In
+        </span>
+        {label.roomName && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              border: "1.5px solid #000",
+              padding: "1px 8px",
+              borderRadius: 3,
+            }}
+          >
+            {label.roomName}
+          </span>
+        )}
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: "4px 0 0" }}>
+        {label.childName}
+      </div>
+      <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
+        Parent: {label.parentName}
+        {label.parentPhone ? ` · ${label.parentPhone}` : ""}
+      </div>
+      {(label.allergies || label.medicalNotes || label.specialInstructions) && (
+        <div style={{ marginTop: 4 }}>
+          {label.allergies && (
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#fff",
+                backgroundColor: "#dc2626",
+                padding: "2px 6px",
+                borderRadius: 3,
+                display: "inline-block",
+                marginBottom: 2,
+              }}
+            >
+              ⚠ ALLERGY: {label.allergies}
+            </div>
+          )}
+          {label.medicalNotes && (
+            <div style={{ fontSize: 10, color: "#333" }}>
+              <strong>Medical:</strong> {label.medicalNotes}
+            </div>
+          )}
+          {label.specialInstructions && (
+            <div style={{ fontSize: 10, color: "#333" }}>
+              <strong>Instr:</strong> {label.specialInstructions}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", marginTop: "auto" }}>
+        <div>
+          <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
+          <div
+            style={{
+              fontSize: 28,
+              fontWeight: 900,
+              fontFamily: "monospace",
+              letterSpacing: "0.18em",
+              lineHeight: 1,
+            }}
+          >
+            {label.securityCode}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KioskParentLabel({ label }: { label: ImmediateLabel }) {
+  return (
+    <div style={LABEL_STYLE}>
+      <div
+        style={{
+          backgroundColor: "#000",
+          color: "#fff",
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          padding: "2px 8px",
+          alignSelf: "flex-start",
+          borderRadius: 3,
+        }}
+      >
+        👪 Parent Pickup
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 6 }}>
+        {label.parentName}
+      </div>
+      <div style={{ fontSize: 12, color: "#333", marginTop: 4 }}>
+        {label.childName}
+      </div>
+      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 6 }}>
+        <div style={{ fontSize: 9, color: "#555", marginBottom: 2 }}>SECURITY CODE — REQUIRED FOR PICKUP</div>
+        <div
+          style={{
+            fontSize: 40,
+            fontWeight: 900,
+            fontFamily: "monospace",
+            letterSpacing: "0.2em",
+            lineHeight: 1,
+          }}
+        >
+          {label.securityCode}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── ChildCard ─────────────────────────────────────────────────────────────────
