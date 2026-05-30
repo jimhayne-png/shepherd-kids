@@ -228,22 +228,6 @@ export default function AppShell(props: AppShellProps) {
     };
   }
 
-  function bottomLinkStyle(active: boolean): React.CSSProperties {
-    return {
-      backgroundColor: active ? "#F28C28" : "transparent",
-      color: active ? "#1A4A2E" : "rgba(255,255,255,0.55)",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      padding: "7px 12px",
-      borderRadius: "8px",
-      fontSize: "13px",
-      fontWeight: active ? 600 : 400,
-      textDecoration: "none",
-      transition: "background-color 0.15s",
-    };
-  }
-
   // Skeleton sidebar while waiting for client mount (avoids hydration mismatch)
   if (!mounted) {
     return (
@@ -439,17 +423,17 @@ export default function AppShell(props: AppShellProps) {
               </div>
             );
           })}
-        </nav>
+          {/* Settings + Billing */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "8px", paddingTop: "4px", display: "flex", flexDirection: "column", gap: "1px" }}>
+            <Link href="/dashboard/settings" style={itemStyle(pathActive(pathname, "/dashboard/settings"))}>
+              ⚙️ Settings
+            </Link>
+            <Link href="/dashboard/billing" style={itemStyle(pathActive(pathname, "/dashboard/billing"))}>
+              💳 Billing
+            </Link>
+          </div>
 
-        {/* Settings + Billing — outside categories, always visible */}
-        <div style={{ flexShrink: 0, padding: "8px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "1px" }}>
-          <Link href="/dashboard/settings" style={bottomLinkStyle(pathActive(pathname, "/dashboard/settings"))}>
-            ⚙️ Settings
-          </Link>
-          <Link href="/dashboard/billing" style={bottomLinkStyle(pathActive(pathname, "/dashboard/billing"))}>
-            💳 Billing
-          </Link>
-        </div>
+        </nav>
       </aside>
 
       <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#f9fafb" }}>{children}</main>
