@@ -79,10 +79,6 @@ function emptyChild(): ChildForm {
 }
 
 export default function KioskCheckInForm({ sessionToken, serviceName, churchName, rooms }: Props) {
-  const displayGroups: DisplayGroup[] = [
-    ...groups.map((g) => ({ ...g, isNamed: true })),
-    ...ungrouped.map((s) => ({ name: s.service_name, sessions: [s], isNamed: false })),
-  ];
 
   function initialStep(): Step {
     if (displayGroups.length === 1 && displayGroups[0].sessions.length === 1) return "welcome";
