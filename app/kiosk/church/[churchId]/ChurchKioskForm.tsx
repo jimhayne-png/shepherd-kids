@@ -101,6 +101,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   const [selectedGroupIdx, setSelectedGroupIdx] = useState<number>(initialGroupIdx);
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(initialSessionIds);
 
+  const [welcomePhone, setWelcomePhone] = useState("");
   const [parentFirstName, setParentFirstName] = useState("");
   const [parentLastName, setParentLastName] = useState("");
   const [parentPhone, setParentPhone] = useState("");
@@ -135,16 +136,19 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
     });
   }
 
-  async function handleParentContinue() {
-    if (!parentFirstName.trim() || !parentLastName.trim() || parentPhone.replace(/\D/g, "").length < 7) return;
+  async function handleGetStarted() {
+    const digits = welcomePhone.replace(/\D/g, "");
+    if (digits.length < 7) return;
     setLookingUp(true);
-    const digits = parentPhone.replace(/\D/g, "");
     try {
       const res = await fetch(`/api/kiosk/church/${churchId}/lookup?phone=${digits}`);
       if (res.ok) {
         const data = await res.json();
         if (data.found && data.children?.length > 0) {
           setReturning(true);
+          setParentFirstName(data.parentFirstName ?? "");
+          setParentLastName(data.parentLastName ?? "");
+          setParentPhone(data.parentPhone ?? welcomePhone);
           setChildren(
             (data.children as { name: string; dateOfBirth: string | null }[]).map((c) => {
               const parts = c.name.trim().split(/\s+/);
@@ -156,14 +160,22 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               };
             }),
           );
-        } else {
-          setReturning(false);
+          setLookingUp(false);
+          setStep("children");
+          return;
         }
       }
     } catch {
       // lookup failure is non-blocking
     }
+    setReturning(false);
+    setParentPhone(welcomePhone);
     setLookingUp(false);
+    setStep("parent");
+  }
+
+  function handleParentContinue() {
+    if (!parentFirstName.trim() || !parentLastName.trim() || parentPhone.replace(/\D/g, "").length < 7) return;
     setStep("children");
   }
 
@@ -217,6 +229,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
     setStep(initialStep());
     setSelectedGroupIdx(initialGroupIdx());
     setSelectedSessionIds(initialSessionIds());
+    setWelcomePhone("");
     setParentFirstName("");
     setParentLastName("");
     setParentPhone("");
@@ -338,6 +351,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   // ── welcome ───────────────────────────────────────────────────────────────
 
   if (step === "welcome") {
+    const canStart = welcomePhone.replace(/\D/g, "").length >= 7;
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
         <div className="w-full max-w-lg text-center">
@@ -357,12 +371,26 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               safety and will never sell or share it with third parties.
             </p>
           </div>
+          <div className="mb-6 text-left">
+            <label className={labelCls}>Phone Number</label>
+            <input
+              type="tel"
+              value={welcomePhone}
+              onChange={(e) => setWelcomePhone(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && canStart && !lookingUp) handleGetStarted(); }}
+              placeholder="(555) 555-5555"
+              className={inputCls}
+              autoComplete="tel"
+              autoFocus
+            />
+          </div>
           <button
-            onClick={() => setStep("parent")}
-            className="w-full py-5 rounded-2xl text-xl font-bold"
-            style={{ backgroundColor: GREEN, color: BG }}
+            onClick={handleGetStarted}
+            disabled={!canStart || lookingUp}
+            className="w-full py-5 rounded-2xl text-xl font-bold transition-opacity"
+            style={{ backgroundColor: GREEN, color: BG, opacity: !canStart || lookingUp ? 0.5 : 1 }}
           >
-            Get Started →
+            {lookingUp ? "Looking up…" : "Get Started →"}
           </button>
           {(displayGroups.length > 1 || (currentGroup && currentGroup.sessions.length > 1)) && (
             <button
@@ -447,11 +475,11 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           </div>
           <button
             onClick={handleParentContinue}
-            disabled={!canContinue || lookingUp}
+            disabled={!canContinue}
             className="w-full mt-8 py-5 rounded-2xl text-xl font-bold transition-opacity"
-            style={{ backgroundColor: GREEN, color: BG, opacity: !canContinue || lookingUp ? 0.5 : 1 }}
+            style={{ backgroundColor: GREEN, color: BG, opacity: !canContinue ? 0.5 : 1 }}
           >
-            {lookingUp ? "Looking up…" : "Continue →"}
+            Continue →
           </button>
           <button
             onClick={() => setStep("welcome")}
@@ -515,7 +543,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               Continue →
             </button>
             <button
-              onClick={() => setStep("parent")}
+              onClick={() => setStep(returning ? "welcome" : "parent")}
               className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-green-600"
             >
               ← Back
