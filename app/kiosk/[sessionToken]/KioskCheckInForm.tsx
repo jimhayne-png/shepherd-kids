@@ -34,10 +34,10 @@ type ImmediateLabel = {
 };
 
 type Props = {
-  churchId: string;
+  sessionToken: string;
+  serviceName: string;
+  serviceDate: string;
   churchName: string;
-  groups: Group[];
-  ungrouped: Session[];
   rooms: Room[];
 };
 
@@ -78,7 +78,7 @@ function emptyChild(): ChildForm {
   };
 }
 
-export default function ChurchKioskForm({ churchId, churchName, groups, ungrouped, rooms }: Props) {
+export default function KioskCheckInForm({ sessionToken, serviceName, churchName, rooms }: Props) {
   const displayGroups: DisplayGroup[] = [
     ...groups.map((g) => ({ ...g, isNamed: true })),
     ...ungrouped.map((s) => ({ name: s.service_name, sessions: [s], isNamed: false })),
