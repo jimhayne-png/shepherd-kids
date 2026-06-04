@@ -161,7 +161,7 @@ export async function POST(
       const firstName = parts[0] ?? '';
       const lastName = parts.slice(1).join(' ');
 
-      const { data: created } = await admin
+      const { data: created, error: familyError } = await admin
         .from('cm_visitor_families')
         .insert({
           church_id: session.church_id,
@@ -177,6 +177,7 @@ export async function POST(
         .select('id')
         .single();
 
+      if (familyError) console.error('[check-in] family insert error:', familyError.message);
       resolvedFamilyId = created?.id ?? null;
     }
   } else if (normalizedEmail) {
@@ -194,53 +195,64 @@ export async function POST(
     }
   }
 
-  for (const child of children) {
-    if (child.isNew || !child.childId) continue;
-
-    const updates: Record<string, unknown> = {
-      allergies: serializeAllergies(child.allergies ?? [], child.allergyOther ?? ''),
-      medical_notes: child.medicalNotes ?? null,
-      special_instructions: child.specialInstructions ?? null,
-    };
-
-    if (child.childDateOfBirth) {
-      const { data: existing } = await admin
-        .from('cm_visitor_children')
-        .select('date_of_birth')
-        .eq('id', child.childId)
-        .maybeSingle();
-
-      if (existing && !existing.date_of_birth) {
-        updates.date_of_birth = child.childDateOfBirth;
-      }
-    }
-
-    await admin.from('cm_visitor_children').update(updates).eq('id', child.childId);
-  }
-
   if (resolvedFamilyId) {
     for (const child of children) {
-      if (!child.isNew || !child.childFirstName || !child.childLastName) continue;
+      const nameParts = child.childName.trim().split(/\s+/);
+      const firstName = child.childFirstName?.trim() || nameParts[0] || '';
+      const lastName = child.childLastName?.trim() || nameParts.slice(1).join(' ') || '';
 
-      const { data: existing } = await admin
-        .from('cm_visitor_children')
-        .select('id')
-        .eq('family_id', resolvedFamilyId)
-        .eq('first_name', child.childFirstName)
-        .eq('last_name', child.childLastName)
-        .maybeSingle();
+      // Locate existing child profile by explicit ID or by name within the family
+      let existingId: string | null = null;
+      let existingDob: string | null = null;
 
-      if (!existing) {
-        await admin.from('cm_visitor_children').insert({
-          church_id: session.church_id,
-          family_id: resolvedFamilyId,
-          first_name: child.childFirstName,
-          last_name: child.childLastName,
-          date_of_birth: child.childDateOfBirth ?? null,
-          allergies: serializeAllergies(child.allergies ?? [], child.allergyOther ?? ''),
-          medical_notes: child.medicalNotes ?? null,
-          special_instructions: child.specialInstructions ?? null,
-        });
+      if (child.childId) {
+        const { data: cur } = await admin
+          .from('cm_visitor_children')
+          .select('id, date_of_birth')
+          .eq('id', child.childId)
+          .maybeSingle();
+        existingId = cur?.id ?? null;
+        existingDob = (cur as { id: string; date_of_birth: string | null } | null)?.date_of_birth ?? null;
+      } else if (firstName) {
+        const { data: found } = await admin
+          .from('cm_visitor_children')
+          .select('id, date_of_birth')
+          .eq('family_id', resolvedFamilyId)
+          .eq('first_name', firstName)
+          .eq('last_name', lastName)
+          .maybeSingle();
+        existingId = found?.id ?? null;
+        existingDob = (found as { id: string; date_of_birth: string | null } | null)?.date_of_birth ?? null;
+      }
+
+      const profileData: Record<string, unknown> = {
+        allergies: serializeAllergies(child.allergies ?? [], child.allergyOther ?? ''),
+        medical_notes: child.medicalNotes ?? null,
+        special_instructions: child.specialInstructions ?? null,
+      };
+      // Only write DOB if not already stored
+      if (child.childDateOfBirth && !existingDob) {
+        profileData.date_of_birth = child.childDateOfBirth;
+      }
+
+      if (existingId) {
+        const { error: updateError } = await admin
+          .from('cm_visitor_children')
+          .update(profileData)
+          .eq('id', existingId);
+        if (updateError) console.error('[check-in] child update error:', updateError.message);
+      } else if (firstName) {
+        const { error: insertError } = await admin
+          .from('cm_visitor_children')
+          .insert({
+            church_id: session.church_id,
+            family_id: resolvedFamilyId,
+            first_name: firstName,
+            last_name: lastName,
+            date_of_birth: child.childDateOfBirth ?? null,
+            ...profileData,
+          });
+        if (insertError) console.error('[check-in] child insert error:', insertError.message);
       }
     }
   }
