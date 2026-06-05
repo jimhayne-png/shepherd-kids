@@ -2,12 +2,18 @@ import { type NextRequest } from 'next/server';
 import { adminClient } from '@/lib/api-auth';
 
 type ChildInput = {
-  firstName: string;
-  lastName: string;
+  childId?: string;
+  firstName?: string;
+  lastName?: string;
+  childFirstName?: string;
+  childLastName?: string;
+  childName?: string;
   dateOfBirth?: string;
+  childDateOfBirth?: string;
   roomId?: string;
   allergies?: string[];
   allergyOther?: string;
+  medicalNotes?: string;
   specialInstructions?: string;
   authorizedPickups?: string;
 };
@@ -25,11 +31,46 @@ type ImmediateLabel = {
   visitNumber: number | null;
 };
 
+function childFirstName(child: ChildInput): string {
+  if (child.firstName?.trim()) return child.firstName.trim();
+  if (child.childFirstName?.trim()) return child.childFirstName.trim();
+  if (child.childName?.trim()) return child.childName.trim().split(/\s+/)[0] ?? '';
+  return '';
+}
+
+function childLastName(child: ChildInput): string {
+  if (child.lastName?.trim()) return child.lastName.trim();
+  if (child.childLastName?.trim()) return child.childLastName.trim();
+  if (child.childName?.trim()) return child.childName.trim().split(/\s+/).slice(1).join(' ');
+  return '';
+}
+
+function childFullName(child: ChildInput): string {
+  return `${childFirstName(child)} ${childLastName(child)}`.trim();
+}
+
+function childBirthDate(child: ChildInput): string | null {
+  return child.dateOfBirth || child.childDateOfBirth || null;
+}
+
+function allergyArray(child: ChildInput): string[] {
+  const allergies = child.allergies ?? [];
+  return allergies.map((a) =>
+    a === 'Other' && child.allergyOther?.trim()
+      ? `Other: ${child.allergyOther.trim()}`
+      : a,
+  );
+}
+
 function allergyLine(allergies: string[] | undefined, allergyOther: string | undefined): string | null {
   if (!allergies?.length) return null;
   return allergies
     .map((a) => (a === 'Other' && allergyOther?.trim() ? `Other: ${allergyOther.trim()}` : a))
     .join(', ');
+}
+
+function allergyProfileValue(child: ChildInput): string {
+  return JSON.stringify(allergyArray(child));
 }
 
 export async function POST(
@@ -38,7 +79,15 @@ export async function POST(
 ) {
   const { churchId } = await params;
   const body = await req.json();
-  const { parentFirstName, parentLastName, parentPhone, parentEmail, sessionIds, children } = body as {
+
+  const {
+    parentFirstName,
+    parentLastName,
+    parentPhone,
+    parentEmail,
+    sessionIds,
+    children,
+  } = body as {
     parentFirstName: string;
     parentLastName: string;
     parentPhone: string;
@@ -55,7 +104,13 @@ export async function POST(
   }
 
   const admin = adminClient();
-  const { data: churchRow } = await admin.from('churches').select('timezone').eq('id', churchId).maybeSingle();
+
+  const { data: churchRow } = await admin
+    .from('churches')
+    .select('timezone')
+    .eq('id', churchId)
+    .maybeSingle();
+
   const tz = (churchRow as { timezone?: string } | null)?.timezone ?? 'America/Los_Angeles';
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 
@@ -76,6 +131,7 @@ export async function POST(
 
   const validIds = new Set(((validSessions ?? []) as { id: string }[]).map((s) => s.id));
   const invalidIds = sessionIds.filter((id) => !validIds.has(id));
+
   if (invalidIds.length) {
     return Response.json(
       { error: 'One or more sessions are not valid for this church today' },
@@ -92,12 +148,11 @@ export async function POST(
   const parentName = `${parentFirstName.trim()} ${parentLastName.trim()}`.trim();
   const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
-  // One record per child per session
   const inserts = sessionIds.flatMap((sessionId) =>
     children.map((child) => ({
       session_id: sessionId,
       church_id: churchId,
-      child_name: `${child.firstName.trim()} ${child.lastName.trim()}`.trim(),
+      child_name: childFullName(child),
       parent_name: parentName,
       parent_phone: normalizedPhone,
       room_id: child.roomId ?? null,
@@ -106,7 +161,7 @@ export async function POST(
       allergies: child.allergies ?? [],
       allergy_other: child.allergyOther || null,
       authorized_pickups: child.authorizedPickups || null,
-      date_of_birth: child.dateOfBirth ?? null,
+      date_of_birth: childBirthDate(child),
       special_instructions: child.specialInstructions || null,
     })),
   );
@@ -115,11 +170,10 @@ export async function POST(
     .from('cm_checkin_records')
     .insert(inserts)
     .select('id, child_name, room_id, security_code, session_id');
+
   if (error) return Response.json({ error: error.message }, { status: 400 });
 
   const safeRecords = records ?? [];
-
-  // One label per child (first session only — all sessions share same security code / room)
   const firstSessionRecords = safeRecords.slice(0, children.length);
 
   const childLabels: ImmediateLabel[] = firstSessionRecords.map((record, i) => {
@@ -132,7 +186,7 @@ export async function POST(
       roomName: roomNameFor(record.room_id),
       securityCode: record.security_code,
       allergies: allergyLine(child?.allergies, child?.allergyOther),
-      medicalNotes: null,
+      medicalNotes: child?.medicalNotes || null,
       specialInstructions: child?.specialInstructions || null,
       visitNumber: null,
     };
@@ -158,7 +212,6 @@ export async function POST(
 
   const labels: ImmediateLabel[] = [...childLabels, parentLabel];
 
-  // Create backup print jobs — status stays 'pending'; only Print Station marks them printed
   try {
     const firstRecord = safeRecords[0];
 
@@ -174,7 +227,7 @@ export async function POST(
         room_id: record.room_id ?? null,
         security_code: record.security_code,
         allergies: allergyLine(child?.allergies, child?.allergyOther),
-        medical_notes: null,
+        medical_notes: child?.medicalNotes || null,
         special_instructions: child?.specialInstructions || null,
         label_type: 'child',
         status: 'pending',
@@ -206,11 +259,10 @@ export async function POST(
 
     const printJobs = parentJob ? [...childJobs, parentJob] : childJobs;
     await admin.from('cm_label_print_jobs').insert(printJobs);
-  } catch {
-    // non-blocking
+  } catch (err) {
+    console.error('Label print job creation failed:', err);
   }
 
-  // Visitor tracking — populate cm_visitor_families / cm_visitor_children for ministry follow-up
   try {
     const { data: existingFamily } = await admin
       .from('cm_visitor_families')
@@ -222,7 +274,7 @@ export async function POST(
     let familyId: string;
 
     if (!existingFamily) {
-      const { data: newFamily } = await admin
+      const { data: newFamily, error: familyInsertError } = await admin
         .from('cm_visitor_families')
         .insert({
           church_id: churchId,
@@ -238,57 +290,104 @@ export async function POST(
         .select('id')
         .single();
 
+      if (familyInsertError) throw familyInsertError;
       if (!newFamily) throw new Error('Failed to insert family');
+
       familyId = (newFamily as { id: string }).id;
 
-      await admin.from('cm_visitor_children').insert(
+      const { error: childrenInsertError } = await admin.from('cm_visitor_children').insert(
         children.map((child) => ({
           church_id: churchId,
           family_id: familyId,
-          first_name: child.firstName.trim(),
-          last_name: child.lastName.trim(),
-          date_of_birth: child.dateOfBirth ?? null,
+          first_name: childFirstName(child),
+          last_name: childLastName(child),
+          date_of_birth: childBirthDate(child),
+          allergies: allergyProfileValue(child),
+          medical_notes: child.medicalNotes || null,
+          special_instructions: child.specialInstructions || null,
         })),
       );
+
+      if (childrenInsertError) throw childrenInsertError;
     } else {
       familyId = (existingFamily as { id: string; visit_count: number }).id;
       const currentCount = (existingFamily as { id: string; visit_count: number }).visit_count ?? 0;
 
-      await admin
+      const { error: familyUpdateError } = await admin
         .from('cm_visitor_families')
-        .update({ last_visit_date: today, visit_count: currentCount + 1 })
+        .update({
+          last_visit_date: today,
+          visit_count: currentCount + 1,
+          parent1_first_name: parentFirstName.trim(),
+          parent1_last_name: parentLastName.trim(),
+          parent1_email: parentEmail?.trim() || null,
+        })
         .eq('id', familyId);
 
-      const { data: existingChildren } = await admin
+      if (familyUpdateError) throw familyUpdateError;
+
+      const { data: existingChildren, error: existingChildrenError } = await admin
         .from('cm_visitor_children')
-        .select('first_name, last_name')
+        .select('id, first_name, last_name')
         .eq('family_id', familyId);
 
-      const existingNameSet = new Set(
-        ((existingChildren ?? []) as { first_name: string; last_name: string }[]).map(
-          (c) => `${c.first_name}|${c.last_name}`.toLowerCase(),
-        ),
+      if (existingChildrenError) throw existingChildrenError;
+
+      const existingRows = (existingChildren ?? []) as {
+        id: string;
+        first_name: string;
+        last_name: string;
+      }[];
+
+      const existingIdSet = new Set(existingRows.map((c) => c.id));
+      const existingNameMap = new Map(
+        existingRows.map((c) => [
+          `${c.first_name}|${c.last_name}`.toLowerCase(),
+          c.id,
+        ]),
       );
 
-      const newChildren = children.filter(
-        (child) =>
-          !existingNameSet.has(`${child.firstName.trim()}|${child.lastName.trim()}`.toLowerCase()),
-      );
+      for (const child of children) {
+        const firstName = childFirstName(child);
+        const lastName = childLastName(child);
+        const nameKey = `${firstName}|${lastName}`.toLowerCase();
 
-      if (newChildren.length > 0) {
-        await admin.from('cm_visitor_children').insert(
-          newChildren.map((child) => ({
-            church_id: churchId,
-            family_id: familyId,
-            first_name: child.firstName.trim(),
-            last_name: child.lastName.trim(),
-            date_of_birth: child.dateOfBirth ?? null,
-          })),
-        );
+        const matchedChildId =
+          child.childId && existingIdSet.has(child.childId)
+            ? child.childId
+            : existingNameMap.get(nameKey);
+
+        const childPayload = {
+          date_of_birth: childBirthDate(child),
+          allergies: allergyProfileValue(child),
+          medical_notes: child.medicalNotes || null,
+          special_instructions: child.specialInstructions || null,
+        };
+
+        if (matchedChildId) {
+          const { error: childUpdateError } = await admin
+            .from('cm_visitor_children')
+            .update(childPayload)
+            .eq('id', matchedChildId);
+
+          if (childUpdateError) throw childUpdateError;
+        } else {
+          const { error: childInsertError } = await admin
+            .from('cm_visitor_children')
+            .insert({
+              church_id: churchId,
+              family_id: familyId,
+              first_name: firstName,
+              last_name: lastName,
+              ...childPayload,
+            });
+
+          if (childInsertError) throw childInsertError;
+        }
       }
     }
-  } catch {
-    // non-blocking — visitor tracking failure must not fail the check-in
+  } catch (err) {
+    console.error('Visitor tracking update failed:', err);
   }
 
   return Response.json({

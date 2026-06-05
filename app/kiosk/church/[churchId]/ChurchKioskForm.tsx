@@ -10,6 +10,7 @@ type DisplayGroup = { name: string; sessions: Session[]; isNamed: boolean };
 type Step = "pick-group" | "pick-sessions" | "welcome" | "parent" | "children" | "review" | "success";
 
 type ChildForm = {
+  childId?: string;
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -150,10 +151,11 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           setParentLastName(data.parentLastName ?? "");
           setParentPhone(data.parentPhone ?? welcomePhone);
           setChildren(
-            (data.children as { name: string; dateOfBirth: string | null }[]).map((c) => {
+            (data.children as { id?: string; name: string; dateOfBirth: string | null }[]).map((c) => {
               const parts = c.name.trim().split(/\s+/);
               return {
                 ...emptyChild(),
+                childId: c.id,
                 firstName: parts[0] ?? "",
                 lastName: parts.slice(1).join(" "),
                 dateOfBirth: c.dateOfBirth ?? "",
@@ -193,6 +195,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           parentEmail: parentEmail.trim() || undefined,
           sessionIds: [...selectedSessionIds],
           children: children.map((c) => ({
+            childId: c.childId || undefined,
             firstName: c.firstName.trim(),
             lastName: c.lastName.trim(),
             dateOfBirth: c.dateOfBirth || undefined,
