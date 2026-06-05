@@ -82,6 +82,20 @@ function allergyProfileValue(child: ChildInput): string {
   return JSON.stringify(allergyArray(child));
 }
 
+function errorDetails(err: unknown): string {
+  if (err instanceof Error) return err.message;
+
+  if (typeof err === 'object' && err !== null) {
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return 'Unknown object error';
+    }
+  }
+
+  return String(err);
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ churchId: string }> },
@@ -291,7 +305,7 @@ export async function POST(
 
     await admin.from('cm_label_print_jobs').insert(printJobs);
   } catch (err) {
-    console.error('Label print job creation failed:', err);
+    console.error('Label print job creation failed:', errorDetails(err));
   }
 
   try {
@@ -318,7 +332,7 @@ export async function POST(
           visit_date: today,
           follow_up_sent: false,
           next_day_sent: false,
-          status: 'active',
+          status: 'new',
         })
         .select('id')
         .single();
@@ -354,7 +368,7 @@ export async function POST(
           parent1_first_name: clean(parentFirstName),
           parent1_last_name: clean(parentLastName),
           parent1_email: clean(parentEmail) || null,
-          status: 'active',
+          status: 'returning',
         })
         .eq('id', familyId);
 
@@ -423,12 +437,13 @@ export async function POST(
       }
     }
   } catch (err) {
-    console.error('Visitor tracking update failed:', err);
+    const details = errorDetails(err);
+    console.error('Visitor tracking update failed:', details);
 
     return Response.json(
       {
         error: 'Check-in saved, but visitor profile update failed',
-        details: err instanceof Error ? err.message : String(err),
+        details,
       },
       { status: 500 },
     );
