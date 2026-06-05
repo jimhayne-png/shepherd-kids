@@ -62,10 +62,18 @@ function allergyArray(child: ChildInput): string[] {
   );
 }
 
-function allergyLine(allergies: string[] | undefined, allergyOther: string | undefined): string | null {
+function allergyLine(
+  allergies: string[] | undefined,
+  allergyOther: string | undefined,
+): string | null {
   if (!allergies?.length) return null;
+
   return allergies
-    .map((a) => (a === 'Other' && allergyOther?.trim() ? `Other: ${allergyOther.trim()}` : a))
+    .map((a) =>
+      a === 'Other' && allergyOther?.trim()
+        ? `Other: ${allergyOther.trim()}`
+        : a,
+    )
     .join(', ');
 }
 
@@ -96,9 +104,18 @@ export async function POST(
     children: ChildInput[];
   };
 
-  if (!parentFirstName || !parentLastName || !parentPhone || !sessionIds?.length || !children?.length) {
+  if (
+    !parentFirstName ||
+    !parentLastName ||
+    !parentPhone ||
+    !sessionIds?.length ||
+    !children?.length
+  ) {
     return Response.json(
-      { error: 'parentFirstName, parentLastName, parentPhone, sessionIds, and children are required' },
+      {
+        error:
+          'parentFirstName, parentLastName, parentPhone, sessionIds, and children are required',
+      },
       { status: 400 },
     );
   }
@@ -111,8 +128,13 @@ export async function POST(
     .eq('id', churchId)
     .maybeSingle();
 
-  const tz = (churchRow as { timezone?: string } | null)?.timezone ?? 'America/Los_Angeles';
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+  const tz =
+    (churchRow as { timezone?: string } | null)?.timezone ??
+    'America/Los_Angeles';
+
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+  }).format(new Date());
 
   const [{ data: validSessions }, { data: activeRooms }] = await Promise.all([
     admin
@@ -129,7 +151,10 @@ export async function POST(
       .eq('is_active', true),
   ]);
 
-  const validIds = new Set(((validSessions ?? []) as { id: string }[]).map((s) => s.id));
+  const validIds = new Set(
+    ((validSessions ?? []) as { id: string }[]).map((s) => s.id),
+  );
+
   const invalidIds = sessionIds.filter((id) => !validIds.has(id));
 
   if (invalidIds.length) {
@@ -171,13 +196,16 @@ export async function POST(
     .insert(inserts)
     .select('id, child_name, room_id, security_code, session_id');
 
-  if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (error) {
+    return Response.json({ error: error.message }, { status: 400 });
+  }
 
   const safeRecords = records ?? [];
   const firstSessionRecords = safeRecords.slice(0, children.length);
 
   const childLabels: ImmediateLabel[] = firstSessionRecords.map((record, i) => {
     const child = children[i];
+
     return {
       labelType: 'child',
       childName: record.child_name,
@@ -217,6 +245,7 @@ export async function POST(
 
     const childJobs = firstSessionRecords.map((record, i) => {
       const child = children[i];
+
       return {
         church_id: churchId,
         session_id: record.session_id,
@@ -258,18 +287,21 @@ export async function POST(
       : null;
 
     const printJobs = parentJob ? [...childJobs, parentJob] : childJobs;
+
     await admin.from('cm_label_print_jobs').insert(printJobs);
   } catch (err) {
     console.error('Label print job creation failed:', err);
   }
 
   try {
-    const { data: existingFamily } = await admin
+    const { data: existingFamily, error: existingFamilyError } = await admin
       .from('cm_visitor_families')
-      .select('id, visit_count')
+      .select('id')
       .eq('church_id', churchId)
       .eq('parent1_phone', normalizedPhone)
       .maybeSingle();
+
+    if (existingFamilyError) throw existingFamilyError;
 
     let familyId: string;
 
@@ -282,7 +314,6 @@ export async function POST(
           parent1_last_name: parentLastName.trim(),
           parent1_phone: normalizedPhone,
           parent1_email: parentEmail?.trim() || null,
-          visit_count: 1,
           first_visit_date: today,
           last_visit_date: today,
           status: 'active',
@@ -295,29 +326,29 @@ export async function POST(
 
       familyId = (newFamily as { id: string }).id;
 
-      const { error: childrenInsertError } = await admin.from('cm_visitor_children').insert(
-        children.map((child) => ({
-          church_id: churchId,
-          family_id: familyId,
-          first_name: childFirstName(child),
-          last_name: childLastName(child),
-          date_of_birth: childBirthDate(child),
-          allergies: allergyProfileValue(child),
-          medical_notes: child.medicalNotes || null,
-          special_instructions: child.specialInstructions || null,
-        })),
-      );
+      const { error: childrenInsertError } = await admin
+        .from('cm_visitor_children')
+        .insert(
+          children.map((child) => ({
+            church_id: churchId,
+            family_id: familyId,
+            first_name: childFirstName(child),
+            last_name: childLastName(child),
+            date_of_birth: childBirthDate(child),
+            allergies: allergyProfileValue(child),
+            medical_notes: child.medicalNotes || null,
+            special_instructions: child.specialInstructions || null,
+          })),
+        );
 
       if (childrenInsertError) throw childrenInsertError;
     } else {
-      familyId = (existingFamily as { id: string; visit_count: number }).id;
-      const currentCount = (existingFamily as { id: string; visit_count: number }).visit_count ?? 0;
+      familyId = (existingFamily as { id: string }).id;
 
       const { error: familyUpdateError } = await admin
         .from('cm_visitor_families')
         .update({
           last_visit_date: today,
-          visit_count: currentCount + 1,
           parent1_first_name: parentFirstName.trim(),
           parent1_last_name: parentLastName.trim(),
           parent1_email: parentEmail?.trim() || null,
@@ -326,10 +357,11 @@ export async function POST(
 
       if (familyUpdateError) throw familyUpdateError;
 
-      const { data: existingChildren, error: existingChildrenError } = await admin
-        .from('cm_visitor_children')
-        .select('id, first_name, last_name')
-        .eq('family_id', familyId);
+      const { data: existingChildren, error: existingChildrenError } =
+        await admin
+          .from('cm_visitor_children')
+          .select('id, first_name, last_name')
+          .eq('family_id', familyId);
 
       if (existingChildrenError) throw existingChildrenError;
 
@@ -340,6 +372,7 @@ export async function POST(
       }[];
 
       const existingIdSet = new Set(existingRows.map((c) => c.id));
+
       const existingNameMap = new Map(
         existingRows.map((c) => [
           `${c.first_name}|${c.last_name}`.toLowerCase(),
