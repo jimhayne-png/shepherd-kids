@@ -55,6 +55,7 @@ function childBirthDate(child: ChildInput): string | null {
 
 function allergyArray(child: ChildInput): string[] {
   const allergies = child.allergies ?? [];
+
   return allergies.map((a) =>
     a === 'Other' && child.allergyOther?.trim()
       ? `Other: ${child.allergyOther.trim()}`
@@ -314,8 +315,9 @@ export async function POST(
           parent1_last_name: parentLastName.trim(),
           parent1_phone: normalizedPhone,
           parent1_email: parentEmail?.trim() || null,
-          first_visit_date: today,
-          last_visit_date: today,
+          visit_date: today,
+          follow_up_sent: false,
+          next_day_sent: false,
           status: 'active',
         })
         .select('id')
@@ -348,10 +350,11 @@ export async function POST(
       const { error: familyUpdateError } = await admin
         .from('cm_visitor_families')
         .update({
-          last_visit_date: today,
+          visit_date: today,
           parent1_first_name: parentFirstName.trim(),
           parent1_last_name: parentLastName.trim(),
           parent1_email: parentEmail?.trim() || null,
+          status: 'active',
         })
         .eq('id', familyId);
 
