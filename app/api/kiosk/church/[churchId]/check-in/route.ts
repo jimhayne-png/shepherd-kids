@@ -31,17 +31,21 @@ type ImmediateLabel = {
   visitNumber: number | null;
 };
 
+function clean(value: string | undefined | null): string {
+  return value?.trim() ?? '';
+}
+
 function childFirstName(child: ChildInput): string {
-  if (child.firstName?.trim()) return child.firstName.trim();
-  if (child.childFirstName?.trim()) return child.childFirstName.trim();
-  if (child.childName?.trim()) return child.childName.trim().split(/\s+/)[0] ?? '';
+  if (clean(child.firstName)) return clean(child.firstName);
+  if (clean(child.childFirstName)) return clean(child.childFirstName);
+  if (clean(child.childName)) return clean(child.childName).split(/\s+/)[0] ?? '';
   return '';
 }
 
 function childLastName(child: ChildInput): string {
-  if (child.lastName?.trim()) return child.lastName.trim();
-  if (child.childLastName?.trim()) return child.childLastName.trim();
-  if (child.childName?.trim()) return child.childName.trim().split(/\s+/).slice(1).join(' ');
+  if (clean(child.lastName)) return clean(child.lastName);
+  if (clean(child.childLastName)) return clean(child.childLastName);
+  if (clean(child.childName)) return clean(child.childName).split(/\s+/).slice(1).join(' ');
   return '';
 }
 
@@ -54,11 +58,9 @@ function childBirthDate(child: ChildInput): string | null {
 }
 
 function allergyArray(child: ChildInput): string[] {
-  const allergies = child.allergies ?? [];
-
-  return allergies.map((a) =>
-    a === 'Other' && child.allergyOther?.trim()
-      ? `Other: ${child.allergyOther.trim()}`
+  return (child.allergies ?? []).map((a) =>
+    a === 'Other' && clean(child.allergyOther)
+      ? `Other: ${clean(child.allergyOther)}`
       : a,
   );
 }
@@ -67,15 +69,13 @@ function allergyLine(
   allergies: string[] | undefined,
   allergyOther: string | undefined,
 ): string | null {
-  if (!allergies?.length) return null;
+  const list = (allergies ?? []).map((a) =>
+    a === 'Other' && clean(allergyOther)
+      ? `Other: ${clean(allergyOther)}`
+      : a,
+  );
 
-  return allergies
-    .map((a) =>
-      a === 'Other' && allergyOther?.trim()
-        ? `Other: ${allergyOther.trim()}`
-        : a,
-    )
-    .join(', ');
+  return list.length ? list.join(', ') : null;
 }
 
 function allergyProfileValue(child: ChildInput): string {
@@ -106,9 +106,9 @@ export async function POST(
   };
 
   if (
-    !parentFirstName ||
-    !parentLastName ||
-    !parentPhone ||
+    !clean(parentFirstName) ||
+    !clean(parentLastName) ||
+    !clean(parentPhone) ||
     !sessionIds?.length ||
     !children?.length
   ) {
@@ -171,10 +171,10 @@ export async function POST(
   }
 
   const normalizedPhone = parentPhone.replace(/\D/g, '');
-  const parentName = `${parentFirstName.trim()} ${parentLastName.trim()}`.trim();
+  const parentName = `${clean(parentFirstName)} ${clean(parentLastName)}`.trim();
   const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
-  const inserts = sessionIds.flatMap((sessionId) =>
+  const checkinRows = sessionIds.flatMap((sessionId) =>
     children.map((child) => ({
       session_id: sessionId,
       church_id: churchId,
@@ -185,20 +185,20 @@ export async function POST(
       security_code: securityCode,
       is_new_visitor: false,
       allergies: child.allergies ?? [],
-      allergy_other: child.allergyOther || null,
-      authorized_pickups: child.authorizedPickups || null,
+      allergy_other: clean(child.allergyOther) || null,
+      authorized_pickups: clean(child.authorizedPickups) || null,
       date_of_birth: childBirthDate(child),
-      special_instructions: child.specialInstructions || null,
+      special_instructions: clean(child.specialInstructions) || null,
     })),
   );
 
-  const { data: records, error } = await admin
+  const { data: records, error: checkinError } = await admin
     .from('cm_checkin_records')
-    .insert(inserts)
+    .insert(checkinRows)
     .select('id, child_name, room_id, security_code, session_id');
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 400 });
+  if (checkinError) {
+    return Response.json({ error: checkinError.message }, { status: 400 });
   }
 
   const safeRecords = records ?? [];
@@ -215,8 +215,8 @@ export async function POST(
       roomName: roomNameFor(record.room_id),
       securityCode: record.security_code,
       allergies: allergyLine(child?.allergies, child?.allergyOther),
-      medicalNotes: child?.medicalNotes || null,
-      specialInstructions: child?.specialInstructions || null,
+      medicalNotes: clean(child?.medicalNotes) || null,
+      specialInstructions: clean(child?.specialInstructions) || null,
       visitNumber: null,
     };
   });
@@ -257,8 +257,8 @@ export async function POST(
         room_id: record.room_id ?? null,
         security_code: record.security_code,
         allergies: allergyLine(child?.allergies, child?.allergyOther),
-        medical_notes: child?.medicalNotes || null,
-        special_instructions: child?.specialInstructions || null,
+        medical_notes: clean(child?.medicalNotes) || null,
+        special_instructions: clean(child?.specialInstructions) || null,
         label_type: 'child',
         status: 'pending',
       };
@@ -311,10 +311,10 @@ export async function POST(
         .from('cm_visitor_families')
         .insert({
           church_id: churchId,
-          parent1_first_name: parentFirstName.trim(),
-          parent1_last_name: parentLastName.trim(),
+          parent1_first_name: clean(parentFirstName),
+          parent1_last_name: clean(parentLastName),
           parent1_phone: normalizedPhone,
-          parent1_email: parentEmail?.trim() || null,
+          parent1_email: clean(parentEmail) || null,
           visit_date: today,
           follow_up_sent: false,
           next_day_sent: false,
@@ -324,7 +324,7 @@ export async function POST(
         .single();
 
       if (familyInsertError) throw familyInsertError;
-      if (!newFamily) throw new Error('Failed to insert family');
+      if (!newFamily) throw new Error('Failed to insert visitor family');
 
       familyId = (newFamily as { id: string }).id;
 
@@ -338,8 +338,8 @@ export async function POST(
             last_name: childLastName(child),
             date_of_birth: childBirthDate(child),
             allergies: allergyProfileValue(child),
-            medical_notes: child.medicalNotes || null,
-            special_instructions: child.specialInstructions || null,
+            medical_notes: clean(child.medicalNotes) || null,
+            special_instructions: clean(child.specialInstructions) || null,
           })),
         );
 
@@ -351,9 +351,9 @@ export async function POST(
         .from('cm_visitor_families')
         .update({
           visit_date: today,
-          parent1_first_name: parentFirstName.trim(),
-          parent1_last_name: parentLastName.trim(),
-          parent1_email: parentEmail?.trim() || null,
+          parent1_first_name: clean(parentFirstName),
+          parent1_last_name: clean(parentLastName),
+          parent1_email: clean(parentEmail) || null,
           status: 'active',
         })
         .eq('id', familyId);
@@ -378,7 +378,7 @@ export async function POST(
 
       const existingNameMap = new Map(
         existingRows.map((c) => [
-          `${c.first_name}|${c.last_name}`.toLowerCase(),
+          `${clean(c.first_name)}|${clean(c.last_name)}`.toLowerCase(),
           c.id,
         ]),
       );
@@ -396,8 +396,8 @@ export async function POST(
         const childPayload = {
           date_of_birth: childBirthDate(child),
           allergies: allergyProfileValue(child),
-          medical_notes: child.medicalNotes || null,
-          special_instructions: child.specialInstructions || null,
+          medical_notes: clean(child.medicalNotes) || null,
+          special_instructions: clean(child.specialInstructions) || null,
         };
 
         if (matchedChildId) {
@@ -424,6 +424,14 @@ export async function POST(
     }
   } catch (err) {
     console.error('Visitor tracking update failed:', err);
+
+    return Response.json(
+      {
+        error: 'Check-in saved, but visitor profile update failed',
+        details: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 },
+    );
   }
 
   return Response.json({
