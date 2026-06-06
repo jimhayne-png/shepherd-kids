@@ -217,6 +217,22 @@ export default function AppShell(props: AppShellProps) {
     };
   }
 
+  function masterAdminItemStyle(active: boolean): React.CSSProperties {
+    return {
+      backgroundColor: active ? "#f59e0b" : "rgba(245,158,11,0.12)",
+      color: active ? "#1A4A2E" : "#fcd34d",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      padding: "7px 12px 7px 18px",
+      borderRadius: "8px",
+      fontSize: "12px",
+      fontWeight: 600,
+      textDecoration: "none",
+      transition: "background-color 0.15s",
+    };
+  }
+
   // Skeleton sidebar while waiting for client mount (avoids hydration mismatch)
   if (!mounted) {
     return (
@@ -405,6 +421,7 @@ export default function AppShell(props: AppShellProps) {
               </div>
             );
           })}
+
           {/* Settings + Billing */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "8px", paddingTop: "4px", display: "flex", flexDirection: "column", gap: "1px" }}>
             <Link href="/dashboard/settings" style={itemStyle(pathActive(pathname, "/dashboard/settings"))}>
@@ -412,6 +429,19 @@ export default function AppShell(props: AppShellProps) {
             </Link>
             <Link href="/dashboard/billing" style={itemStyle(pathActive(pathname, "/dashboard/billing"))}>
               💳 Billing
+            </Link>
+          </div>
+
+          {/* Master Admin */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "6px", paddingTop: "6px", display: "flex", flexDirection: "column", gap: "1px" }}>
+            <p style={{ padding: "4px 12px 2px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(252,211,77,0.5)", margin: 0 }}>
+              Master Admin
+            </p>
+            <Link
+              href="/dashboard/master-admin/subscriptions"
+              style={masterAdminItemStyle(pathActive(pathname, "/dashboard/master-admin/subscriptions"))}
+            >
+              🔑 Subscription Management
             </Link>
           </div>
 

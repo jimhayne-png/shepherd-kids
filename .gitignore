@@ -45,3 +45,5 @@ next-env.d.ts
 
 # claude code local settings (may contain tokens)
 .claude/settings.local.json
+
+.vercel
