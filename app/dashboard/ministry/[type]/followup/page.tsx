@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { use, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -375,11 +375,17 @@ export default function FollowUpPage({ params }: { params: Promise<{ type: strin
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Children's Ministry Follow Up (separate, specialized implementation)
+// ─────────────────────────────────────────────────────────────────────────────
+
 function ChildrensFollowUpPage({ type }: { type: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
-  const [pendingParents, setPendingParents] = useState<any[]>([]);
+
+  // All parent families — completed + pending together
+  const [allParents, setAllParents] = useState<any[]>([]);
   const [families, setFamilies] = useState<any[]>([]);
   const [letterModal, setLetterModal] = useState<{ fam: any } | null>(null);
   const [letterSubject, setLetterSubject] = useState("");
@@ -390,6 +396,9 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
   const [emailToast, setEmailToast] = useState("");
   const [followupMap, setFollowupMap] = useState<Record<string, any>>({});
   const [loggingTouch, setLoggingTouch] = useState<string | null>(null);
+
+  // Active | Completed | All filter for the whole page
+  const [viewFilter, setViewFilter] = useState<'active' | 'completed' | 'all'>('active');
 
   useEffect(() => {
     async function init() {
@@ -408,8 +417,14 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
         fetch('/api/children-ministry/visitors', { headers }),
         fetch('/api/ministry/childrens/followup', { headers }),
       ]);
-      if (parentsRes.ok) { const d = await parentsRes.json(); setPendingParents((d.parents ?? []).filter((p: any) => !p.follow_up_sent)); }
-      if (familiesRes.ok) { const d = await familiesRes.json(); setFamilies(d.families ?? []); }
+      if (parentsRes.ok) {
+        const d = await parentsRes.json();
+        setAllParents(d.parents ?? []);
+      }
+      if (familiesRes.ok) {
+        const d = await familiesRes.json();
+        setFamilies(d.families ?? []);
+      }
       if (followupRes.ok) {
         const d = await followupRes.json();
         const map: Record<string, any> = {};
@@ -420,6 +435,39 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
     }
     init();
   }, [router]);
+
+  // ── Derived lists ──────────────────────────────────────────────────────────
+
+  const pendingParents = allParents.filter((p: any) => !p.follow_up_sent);
+  const completedParents = allParents.filter((p: any) => p.follow_up_sent);
+
+  function isChildComplete(childId: string): boolean {
+    const log = followupMap[childId] ?? {};
+    return !!(log.touch1_completed) && !!(log.touch2_completed) && !!(log.touch3_completed);
+  }
+
+  type ChildEntry = { child: any; fam: any };
+  const allChildEntries: ChildEntry[] = families.flatMap((fam: any) =>
+    (fam.children ?? []).map((child: any) => ({ child, fam }))
+  );
+  const activeChildEntries = allChildEntries.filter(({ child }) => !isChildComplete(child.id));
+  const completedChildEntries = allChildEntries.filter(({ child }) => isChildComplete(child.id));
+
+  const visibleParents: any[] =
+    viewFilter === 'active' ? pendingParents :
+    viewFilter === 'completed' ? completedParents :
+    allParents;
+
+  const visibleChildEntries: ChildEntry[] =
+    viewFilter === 'active' ? activeChildEntries :
+    viewFilter === 'completed' ? completedChildEntries :
+    allChildEntries;
+
+  const activeCount = pendingParents.length + activeChildEntries.length;
+  const completedCount = completedParents.length + completedChildEntries.length;
+  const totalCount = allParents.length + allChildEntries.length;
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
 
   async function openLetterModal(fam: any) {
     if (!token) return;
@@ -465,7 +513,8 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
     setSendingEmail(false);
     if (res.ok) {
       const sentEmail = letterModal.fam.parent1_email;
-      setPendingParents(ps => ps.filter((p: any) => p.id !== letterModal!.fam.id));
+      const famId = letterModal.fam.id;
+      setAllParents(ps => ps.map((p: any) => p.id === famId ? { ...p, follow_up_sent: true } : p));
       setLetterModal(null);
       setEmailToast(`Email sent to ${sentEmail}`);
       setTimeout(() => setEmailToast(""), 4000);
@@ -473,6 +522,7 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
   }
 
   function previewEmail() {
+    if (!letterModal) return;
     const escaped = letterSubject.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escaped}</title></head><body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Georgia,serif;"><div style="max-width:600px;margin:32px auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);"><div style="background:#1a3a5c;padding:36px 40px;text-align:center;"><p style="margin:0 0 8px;font-size:11px;color:#C8A951;letter-spacing:3px;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:bold;">Children's Ministry</p><h1 style="margin:0;color:white;font-size:26px;font-weight:normal;letter-spacing:1px;">Your Church</h1><div style="width:40px;height:2px;background:#C8A951;margin:16px auto 0;"></div></div><div style="padding:40px 48px 36px;color:#1f2937;font-size:16px;line-height:1.85;">${letterBody}</div><div style="padding:24px 48px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;"><p style="margin:0;font-size:12px;color:#9ca3af;font-family:Arial,sans-serif;">This message was sent by Your Church Children's Ministry</p></div></div></body></html>`;
     const blob = new Blob([html], { type: 'text/html' });
@@ -489,7 +539,8 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
       body: JSON.stringify({ follow_up_sent: true }),
     });
     setMarkingSent(false);
-    setPendingParents(ps => ps.filter((p: any) => p.id !== letterModal.fam.id));
+    const famId = letterModal.fam.id;
+    setAllParents(ps => ps.map((p: any) => p.id === famId ? { ...p, follow_up_sent: true } : p));
     setLetterModal(null);
   }
 
@@ -497,17 +548,24 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
     if (!token) return;
     const key = `${childId}-${touch}`;
     setLoggingTouch(key);
+    // Optimistic update
     setFollowupMap(m => ({
       ...m,
-      [childId]: { ...m[childId], [`touch${touch}_completed`]: true, [`touch${touch}_date`]: new Date().toISOString().slice(0, 10) },
+      [childId]: {
+        ...m[childId],
+        [`touch${touch}_completed`]: true,
+        [`touch${touch}_date`]: new Date().toISOString().slice(0, 10),
+      },
     }));
     await fetch(`/api/ministry/childrens/followup/${childId}`, {
-      method: 'PATCH',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ touch, date: new Date().toISOString().slice(0, 10) }),
     });
     setLoggingTouch(null);
   }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -517,125 +575,252 @@ function ChildrensFollowUpPage({ type }: { type: string }) {
 
   return (
     <MinistryShell type={type}>
+      {/* Header */}
       <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <Link href="/dashboard/children-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">← Children's Ministry</Link>
+        <Link href="/dashboard/children-ministry" className="text-orange-200 text-xs mb-1 block hover:text-white">
+          ← Children&#39;s Ministry
+        </Link>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Follow Up</h1>
         <p className="text-orange-100 text-sm mt-1">First visit letters &amp; shepherd touches</p>
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen space-y-8">
+      <div className="px-8 py-8 bg-gray-50 min-h-screen space-y-6">
 
-        {/* SECTION 1 — Parent First Visit Follow Up */}
+        {/* ── Filter tabs ──────────────────────────────────────────────────── */}
+        <div className="flex gap-2 flex-wrap items-center">
+          {([
+            { key: 'active' as const,    label: 'Active Follow Up', count: activeCount },
+            { key: 'completed' as const, label: 'Completed',        count: completedCount },
+            { key: 'all' as const,       label: 'All',              count: totalCount },
+          ]).map(f => (
+            <button
+              key={f.key}
+              onClick={() => setViewFilter(f.key)}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2"
+              style={{
+                backgroundColor: viewFilter === f.key ? ACCENT : 'white',
+                color: viewFilter === f.key ? 'white' : '#6b7280',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+              }}
+            >
+              {f.label}
+              <span
+                className="text-xs px-1.5 py-0.5 rounded-full font-bold"
+                style={{
+                  backgroundColor: viewFilter === f.key ? 'rgba(255,255,255,0.25)' : '#f3f4f6',
+                  color: viewFilter === f.key ? 'white' : '#6b7280',
+                }}
+              >
+                {f.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* ── SECTION 1: Parent First Visit Follow Up ──────────────────────── */}
         <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 bg-amber-100 border-b border-amber-200">
-            <h2 className="font-bold text-amber-900 text-lg" style={{ fontFamily: "Georgia, serif" }}>✉️ Parent First Visit Follow Up</h2>
-            <p className="text-xs text-amber-700 mt-0.5">Send a welcome letter to each new family</p>
+          <div className="px-6 py-4 bg-amber-100 border-b border-amber-200 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-amber-900 text-lg" style={{ fontFamily: "Georgia, serif" }}>
+                ✉️ Parent First Visit Follow Up
+              </h2>
+              <p className="text-xs text-amber-700 mt-0.5">Send a welcome letter to each new family</p>
+            </div>
+            <div className="flex gap-2 text-xs font-semibold">
+              <span className="bg-amber-200 text-amber-900 px-2.5 py-1 rounded-full">
+                {pendingParents.length} pending
+              </span>
+              {completedParents.length > 0 && (
+                <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
+                  {completedParents.length} sent
+                </span>
+              )}
+            </div>
           </div>
-          {pendingParents.length === 0 ? (
+
+          {visibleParents.length === 0 ? (
             <div className="px-6 py-10 text-center">
-              <div className="text-3xl mb-2">✅</div>
-              <p className="font-semibold text-amber-800">All first visit letters sent!</p>
+              {viewFilter === 'active' ? (
+                <>
+                  <div className="text-3xl mb-2">✅</div>
+                  <p className="font-semibold text-amber-800">All first visit letters sent!</p>
+                </>
+              ) : (
+                <p className="text-amber-700 text-sm">No letters in this category yet.</p>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-amber-100">
-              {pendingParents.map((fam: any) => (
-                <div key={fam.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900">{fam.parent1_first_name} {fam.parent1_last_name}</p>
-                    <div className="flex flex-wrap gap-3 mt-0.5">
-                      {fam.parent1_phone && <span className="text-xs text-gray-500">{fam.parent1_phone}</span>}
-                      {fam.parent1_email && <span className="text-xs text-gray-500">{fam.parent1_email}</span>}
-                      {fam.visit_date && <span className="text-xs text-gray-400">{fmtVisitDate(fam.visit_date)}</span>}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => openLetterModal(fam)}
-                    className="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0"
-                    style={{ backgroundColor: ACCENT }}
+              {visibleParents.map((fam: any) => {
+                const isSent = fam.follow_up_sent;
+                return (
+                  <div
+                    key={fam.id}
+                    className="px-6 py-4 flex items-center justify-between gap-4"
+                    style={{ backgroundColor: isSent ? '#f0fdf4' : undefined }}
                   >
-                    📄 Personalize &amp; Send
-                  </button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {isSent && (
+                        <span className="flex-shrink-0 w-7 h-7 rounded-full bg-green-100 flex items-center justify-center text-sm">
+                          ✅
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900">
+                          {fam.parent1_first_name} {fam.parent1_last_name}
+                          {isSent && (
+                            <span className="ml-2 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                              Letter Sent
+                            </span>
+                          )}
+                        </p>
+                        <div className="flex flex-wrap gap-3 mt-0.5">
+                          {fam.parent1_phone && <span className="text-xs text-gray-500">{fam.parent1_phone}</span>}
+                          {fam.parent1_email && <span className="text-xs text-gray-500">{fam.parent1_email}</span>}
+                          {fam.visit_date && <span className="text-xs text-gray-400">{fmtVisitDate(fam.visit_date)}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    {isSent ? (
+                      <button
+                        onClick={() => openLetterModal(fam)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-green-200 text-green-700 hover:bg-green-50 flex-shrink-0 transition-colors"
+                      >
+                        📄 View / Resend
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openLetterModal(fam)}
+                        className="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0"
+                        style={{ backgroundColor: ACCENT }}
+                      >
+                        📄 Personalize &amp; Send
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* SECTION 2 — Child Shepherd Follow Up */}
+        {/* ── SECTION 2: Child Shepherd Follow Up ──────────────────────────── */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>🧒 Child Shepherd Follow Up</h2>
-          {families.length === 0 || families.every((f: any) => f.children.length === 0) ? (
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>
+              🧒 Child Shepherd Follow Up
+            </h2>
+            <div className="flex gap-2 text-xs font-semibold">
+              <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                {activeChildEntries.length} active
+              </span>
+              {completedChildEntries.length > 0 && (
+                <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full">
+                  {completedChildEntries.length} complete
+                </span>
+              )}
+            </div>
+          </div>
+
+          {visibleChildEntries.length === 0 ? (
             <div className="bg-white rounded-2xl shadow p-12 text-center border border-gray-100">
-              <p className="text-gray-400">No children to follow up with yet.</p>
+              {viewFilter === 'active' && allChildEntries.length > 0 ? (
+                <>
+                  <div className="text-3xl mb-2">🎉</div>
+                  <p className="font-semibold text-gray-700">All children have been fully followed up!</p>
+                  <p className="text-sm text-gray-400 mt-1">Switch to &quot;Completed&quot; or &quot;All&quot; to view records.</p>
+                </>
+              ) : (
+                <p className="text-gray-400">
+                  {allChildEntries.length === 0
+                    ? 'No children to follow up with yet.'
+                    : 'No children in this category.'}
+                </p>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {families.flatMap((fam: any) =>
-                fam.children.map((child: any) => {
-                  const log = followupMap[child.id] ?? {};
-                  const t1 = !!(log.touch1_completed);
-                  const t2 = !!(log.touch2_completed);
-                  const t3 = !!(log.touch3_completed);
-                  const allDone = t1 && t2 && t3;
-                  const parentLabel = [fam.parent1_first_name, fam.parent1_last_name].filter(Boolean).join(' ');
-                  return (
-                    <div key={child.id ?? `${fam.id}-${child.first_name}`} className="bg-white rounded-2xl shadow border border-gray-100 p-5">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div>
-                          <p className="font-bold text-gray-900">{child.first_name} {child.last_name}</p>
-                          {child.date_of_birth && (
-                            <p className="text-xs text-gray-400">{calcAge(child.date_of_birth)} yrs old</p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {parentLabel}{fam.parent1_phone ? ` · ${fam.parent1_phone}` : ""}
-                          </p>
-                        </div>
-                        {allDone && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700 flex-shrink-0 whitespace-nowrap">
-                            ✅ Ready for Shepherd Group
-                          </span>
+              {visibleChildEntries.map(({ child, fam }) => {
+                const log = followupMap[child.id] ?? {};
+                const t1 = !!(log.touch1_completed);
+                const t2 = !!(log.touch2_completed);
+                const t3 = !!(log.touch3_completed);
+                const allDone = t1 && t2 && t3;
+                const parentLabel = [fam.parent1_first_name, fam.parent1_last_name].filter(Boolean).join(' ');
+
+                return (
+                  <div
+                    key={child.id ?? `${fam.id}-${child.first_name}`}
+                    className="bg-white rounded-2xl shadow border p-5"
+                    style={{
+                      borderColor: allDone ? '#bbf7d0' : '#f3f4f6',
+                      backgroundColor: allDone ? '#f0fdf4' : 'white',
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div>
+                        <p className="font-bold text-gray-900">{child.first_name} {child.last_name}</p>
+                        {child.date_of_birth && (
+                          <p className="text-xs text-gray-400">{calcAge(child.date_of_birth)} yrs old</p>
                         )}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {parentLabel}{fam.parent1_phone ? ` · ${fam.parent1_phone}` : ""}
+                        </p>
                       </div>
-                      <div className="space-y-1.5 mt-3 pt-3 border-t border-gray-50">
-                        {([
-                          { n: 1 as const, label: "Phone Call" },
-                          { n: 2 as const, label: "Send Welcome Card" },
-                          { n: 3 as const, label: "In-Person Visit" },
-                        ]).map(({ n, label }) => {
-                          const done = !!(log[`touch${n}_completed`]);
-                          const touchKey = `${child.id}-${n}`;
-                          const saving = loggingTouch === touchKey;
-                          return (
-                            <button
-                              key={n}
-                              onClick={() => !done && child.id && logTouch(child.id, n)}
-                              disabled={done || saving || !child.id}
-                              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left"
-                              style={{ backgroundColor: done ? "#f0fdf4" : "#f9fafb", cursor: done ? "default" : "pointer" }}
-                            >
-                              <span
-                                className="flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold"
-                                style={{ borderColor: done ? "#22c55e" : "#d1d5db", backgroundColor: done ? "#22c55e" : "white", color: "white" }}
-                              >
-                                {done && "✓"}
-                              </span>
-                              <span className="text-sm" style={{ color: done ? "#166534" : "#374151" }}>
-                                {saving ? "Saving…" : label}
-                              </span>
-                              {done && log[`touch${n}_date`] && (
-                                <span className="ml-auto text-xs text-gray-400">{fmt(log[`touch${n}_date`])}</span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {allDone && (
+                        <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700 flex-shrink-0 whitespace-nowrap">
+                          ✅ Ready for Shepherd Group
+                        </span>
+                      )}
                     </div>
-                  );
-                })
-              )}
+
+                    <div className="space-y-1.5 mt-3 pt-3 border-t" style={{ borderColor: allDone ? '#bbf7d0' : '#f9fafb' }}>
+                      {([
+                        { n: 1 as const, label: "Phone Call" },
+                        { n: 2 as const, label: "Send Welcome Card" },
+                        { n: 3 as const, label: "In-Person Visit" },
+                      ]).map(({ n, label }) => {
+                        const done = !!(log[`touch${n}_completed`]);
+                        const touchKey = `${child.id}-${n}`;
+                        const saving = loggingTouch === touchKey;
+                        return (
+                          <button
+                            key={n}
+                            onClick={() => !done && child.id && logTouch(child.id, n)}
+                            disabled={done || saving || !child.id}
+                            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors text-left"
+                            style={{
+                              backgroundColor: done ? "#f0fdf4" : "#f9fafb",
+                              cursor: done ? "default" : "pointer",
+                            }}
+                          >
+                            <span
+                              className="flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs font-bold"
+                              style={{
+                                borderColor: done ? "#22c55e" : "#d1d5db",
+                                backgroundColor: done ? "#22c55e" : "white",
+                                color: "white",
+                              }}
+                            >
+                              {done && "✓"}
+                            </span>
+                            <span className="text-sm" style={{ color: done ? "#166534" : "#374151" }}>
+                              {saving ? "Saving…" : label}
+                            </span>
+                            {done && log[`touch${n}_date`] && (
+                              <span className="ml-auto text-xs text-gray-400">{fmt(log[`touch${n}_date`])}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
+
       </div>
 
       {/* Email success toast */}
