@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 
@@ -21,22 +21,64 @@ type Church = {
 };
 
 type EffectiveStatus = "trial" | "expired_trial" | "active" | "suspended" | "none";
+type SortKey = "default" | "name" | "trial_ending" | "days_left" | "created";
 
 const STATUS_CONFIG: Record<EffectiveStatus, { label: string; bg: string; color: string }> = {
   trial:         { label: "Active Trial",  bg: "#dbeafe", color: "#1d4ed8" },
   expired_trial: { label: "Expired Trial", bg: "#fee2e2", color: "#dc2626" },
   active:        { label: "Paid / Active", bg: "#dcfce7", color: "#16a34a" },
-  suspended:     { label: "Suspended",     bg: "#f3f4f6", color: "#6b7280" },
+  suspended:     { label: "Suspended",     bg: "#fee2e2", color: "#6b7280" },
   none:          { label: "Unknown",       bg: "#f9fafb", color: "#9ca3af" },
 };
 
-const ACTIONS: { key: string; label: string; destructive?: boolean; confirm?: boolean }[] = [
+const TIER_MRR: Record<string, number> = {
+  very_small: 97,
+  small: 197,
+  medium: 297,
+  large: 497,
+  enterprise: 997,
+  paid: 197,
+};
+
+function getTierMRR(tier: string | null): number {
+  if (!tier) return 197;
+  return TIER_MRR[tier] ?? 197;
+}
+
+type Action = {
+  key: string;
+  label: string;
+  destructive?: boolean;
+  confirm?: boolean;
+  href?: (churchId: string) => string;
+  disabled?: boolean;
+};
+
+const ACTIONS: Action[] = [
   { key: "reset_trial_30",   label: "🔄 Reset Trial (30 days)" },
   { key: "extend_trial_7",   label: "⏩ Extend Trial +7 days" },
   { key: "extend_trial_30",  label: "⏩ Extend Trial +30 days" },
   { key: "mark_paid",        label: "✅ Mark Paid", confirm: true },
   { key: "suspend",          label: "🚫 Suspend", destructive: true, confirm: true },
   { key: "reactivate_trial", label: "↩️ Reactivate Trial" },
+  { key: "open_dashboard",   label: "🏛️ Open Church Dashboard", href: (id) => `/dashboard?churchId=${id}` },
+  { key: "login_as",         label: "🔑 Login as Church Admin", disabled: true },
+];
+
+const STATUS_FILTERS: { key: EffectiveStatus | "all"; label: string }[] = [
+  { key: "all",          label: "All" },
+  { key: "trial",        label: "Active Trial" },
+  { key: "expired_trial",label: "Expired Trial" },
+  { key: "active",       label: "Paid" },
+  { key: "suspended",    label: "Suspended" },
+];
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "default",      label: "Default" },
+  { key: "name",         label: "Church Name" },
+  { key: "trial_ending", label: "Trial Ending Soon" },
+  { key: "days_left",    label: "Days Left" },
+  { key: "created",      label: "Created Date" },
 ];
 
 function getEffectiveStatus(c: Church): EffectiveStatus {
@@ -52,6 +94,19 @@ function getEffectiveStatus(c: Church): EffectiveStatus {
 function getDaysRemaining(c: Church): number | null {
   if (!c.trial_ends_at) return null;
   return Math.ceil((new Date(c.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function defaultSort(a: Church, b: Church): number {
+  const sa = getEffectiveStatus(a);
+  const sb = getEffectiveStatus(b);
+  if (sa === "expired_trial" && sb !== "expired_trial") return -1;
+  if (sb === "expired_trial" && sa !== "expired_trial") return 1;
+  if (sa === "trial" && sb === "trial") {
+    const da = getDaysRemaining(a) ?? Infinity;
+    const db = getDaysRemaining(b) ?? Infinity;
+    return da - db;
+  }
+  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 }
 
 function fmtDate(iso: string | null) {
@@ -89,7 +144,7 @@ function SummaryCard({
   color,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   icon: string;
   color: string;
 }) {
@@ -99,19 +154,19 @@ function SummaryCard({
         backgroundColor: "white",
         borderRadius: 12,
         border: "1px solid #e5e7eb",
-        padding: "16px 20px",
+        padding: "14px 18px",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}
     >
-      <div style={{ fontSize: 22, marginBottom: 4 }}>{icon}</div>
-      <div style={{ fontSize: 28, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
+      <div style={{ fontSize: 24, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>{label}</div>
     </div>
   );
 }
 
 const TH_STYLE: React.CSSProperties = {
-  padding: "11px 14px",
+  padding: "10px 12px",
   textAlign: "left",
   fontSize: 11,
   fontWeight: 700,
@@ -124,7 +179,7 @@ const TH_STYLE: React.CSSProperties = {
 };
 
 const TD_STYLE: React.CSSProperties = {
-  padding: "11px 14px",
+  padding: "10px 12px",
   borderBottom: "1px solid #f3f4f6",
   fontSize: 13,
   verticalAlign: "middle",
@@ -136,6 +191,10 @@ export default function SubscriptionsPage() {
   const [pageError, setPageError] = useState("");
   const [accessDenied, setAccessDenied] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<EffectiveStatus | "all">("all");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
 
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -183,7 +242,7 @@ export default function SubscriptionsPage() {
       setLoading(false);
     }
     init();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function doAction(churchId: string, action: string) {
@@ -213,7 +272,7 @@ export default function SubscriptionsPage() {
     setActionLoading(null);
   }
 
-  // Summary counts
+  // Summary stats — computed over all churches regardless of filter
   const now = new Date();
   const activeTrialCount = churches.filter(
     (c) => c.subscription_status === "trial" && c.trial_ends_at && new Date(c.trial_ends_at) > now,
@@ -225,6 +284,41 @@ export default function SubscriptionsPage() {
       (!c.trial_ends_at || new Date(c.trial_ends_at) <= now),
   ).length;
   const suspendedCount = churches.filter((c) => c.subscription_status === "suspended").length;
+  const expiringIn7Count = churches.filter((c) => {
+    const days = getDaysRemaining(c);
+    return c.subscription_status === "trial" && days !== null && days >= 0 && days <= 7;
+  }).length;
+  const estimatedMRR = churches
+    .filter((c) => c.subscription_status === "active")
+    .reduce((sum, c) => sum + getTierMRR(c.subscription_tier), 0);
+
+  // Filtered + sorted view
+  const displayed = useMemo(() => {
+    const filtered = churches.filter((c) => {
+      if (statusFilter !== "all" && getEffectiveStatus(c) !== statusFilter) return false;
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return [c.name, c.city, c.state, c.email, c.phone, c.subscription_status, c.subscription_tier]
+        .some((v) => v?.toLowerCase().includes(q));
+    });
+
+    return [...filtered].sort((a, b) => {
+      switch (sortKey) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "created":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "trial_ending":
+        case "days_left": {
+          const da = getDaysRemaining(a) ?? Infinity;
+          const db = getDaysRemaining(b) ?? Infinity;
+          return da - db;
+        }
+        default:
+          return defaultSort(a, b);
+      }
+    });
+  }, [churches, search, statusFilter, sortKey]);
 
   // Access denied state
   if (!loading && accessDenied) {
@@ -262,7 +356,10 @@ export default function SubscriptionsPage() {
           padding: "32px 40px",
         }}
       >
-        <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "#86efac" }}>
+        <p
+          className="text-xs font-bold uppercase tracking-widest mb-1.5"
+          style={{ color: "#86efac" }}
+        >
           Master Admin
         </p>
         <h1
@@ -277,29 +374,34 @@ export default function SubscriptionsPage() {
           Subscription Management
         </h1>
         <p style={{ color: "#bbf7d0", fontSize: 14, margin: 0 }}>
-          Manage church trials, paid subscriptions, and account access.
+          Manage subscriptions, trials, billing status, and church access across the Shepherd Well
+          platform.
         </p>
       </div>
 
-      <div
-        className="min-h-screen bg-gray-50"
-        style={{ padding: "28px 32px" }}
-      >
+      <div className="min-h-screen bg-gray-50" style={{ padding: "28px 32px" }}>
         {/* Summary cards */}
         {!loading && !pageError && !accessDenied && (
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: 14,
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+              gap: 12,
               marginBottom: 24,
             }}
           >
-            <SummaryCard label="Total Churches"  value={churches.length}  icon="🏛️" color="#374151" />
-            <SummaryCard label="Active Trials"   value={activeTrialCount} icon="⏳" color="#1d4ed8" />
-            <SummaryCard label="Paid Churches"   value={paidCount}        icon="✅" color="#16a34a" />
-            <SummaryCard label="Expired Trials"  value={expiredCount}     icon="⚠️" color="#dc2626" />
-            <SummaryCard label="Suspended"       value={suspendedCount}   icon="🚫" color="#9ca3af" />
+            <SummaryCard label="Total Churches"    value={churches.length}  icon="🏛️" color="#374151" />
+            <SummaryCard label="Active Trials"     value={activeTrialCount} icon="⏳" color="#1d4ed8" />
+            <SummaryCard label="Expired Trials"    value={expiredCount}     icon="⚠️" color="#dc2626" />
+            <SummaryCard label="Paid Churches"     value={paidCount}        icon="✅" color="#16a34a" />
+            <SummaryCard label="Suspended"         value={suspendedCount}   icon="🚫" color="#9ca3af" />
+            <SummaryCard label="Expiring ≤ 7 Days" value={expiringIn7Count} icon="🔔" color="#d97706" />
+            <SummaryCard
+              label="Est. MRR"
+              value={"$" + estimatedMRR.toLocaleString()}
+              icon="💰"
+              color="#15803d"
+            />
           </div>
         )}
 
@@ -349,6 +451,75 @@ export default function SubscriptionsPage() {
           </div>
         )}
 
+        {/* Search + Filter + Sort */}
+        {!loading && !pageError && !accessDenied && (
+          <div className="flex flex-col gap-3 mb-4">
+            <input
+              type="text"
+              placeholder="Search church, city, email, phone..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-800"
+              style={{ padding: "10px 16px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+            />
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Status filter pills */}
+              <div className="flex flex-wrap gap-1.5">
+                {STATUS_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setStatusFilter(f.key)}
+                    style={{
+                      padding: "5px 14px",
+                      borderRadius: 9999,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      border: "1px solid",
+                      cursor: "pointer",
+                      transition: "all 0.1s",
+                      borderColor: statusFilter === f.key ? DARK_GREEN : "#d1d5db",
+                      backgroundColor: statusFilter === f.key ? DARK_GREEN : "white",
+                      color: statusFilter === f.key ? "white" : "#6b7280",
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sort pills */}
+              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 500, whiteSpace: "nowrap" }}>
+                  Sort:
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {SORT_OPTIONS.map((s) => (
+                    <button
+                      key={s.key}
+                      onClick={() => setSortKey(s.key)}
+                      style={{
+                        padding: "5px 12px",
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 500,
+                        border: "1px solid",
+                        cursor: "pointer",
+                        transition: "all 0.1s",
+                        borderColor: sortKey === s.key ? DARK_GREEN : "#d1d5db",
+                        backgroundColor: sortKey === s.key ? "#f0fdf4" : "white",
+                        color: sortKey === s.key ? "#14532d" : "#6b7280",
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Table */}
         {!loading && !pageError && !accessDenied && (
           <div
@@ -375,6 +546,7 @@ export default function SubscriptionsPage() {
                       "Tier",
                       "Trial Ends",
                       "Days Left",
+                      "Health",
                       "Created",
                       "Actions",
                     ].map((h) => (
@@ -386,19 +558,21 @@ export default function SubscriptionsPage() {
                 </thead>
 
                 <tbody>
-                  {churches.length === 0 && (
+                  {displayed.length === 0 && (
                     <tr>
                       <td
-                        colSpan={10}
+                        colSpan={11}
                         className="text-center text-gray-400"
                         style={{ ...TD_STYLE, padding: 48 }}
                       >
-                        No churches found.
+                        {churches.length === 0
+                          ? "No churches found."
+                          : "No churches match your search or filter."}
                       </td>
                     </tr>
                   )}
 
-                  {churches.map((church) => {
+                  {displayed.map((church) => {
                     const status = getEffectiveStatus(church);
                     const days = getDaysRemaining(church);
                     const isActing = actionLoading === church.id;
@@ -413,7 +587,14 @@ export default function SubscriptionsPage() {
                         }}
                       >
                         {/* Church name */}
-                        <td style={{ ...TD_STYLE, fontWeight: 700, color: "#111827", whiteSpace: "nowrap" }}>
+                        <td
+                          style={{
+                            ...TD_STYLE,
+                            fontWeight: 700,
+                            color: "#111827",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {church.name}
                         </td>
 
@@ -476,6 +657,11 @@ export default function SubscriptionsPage() {
                           )}
                         </td>
 
+                        {/* Health */}
+                        <td style={{ ...TD_STYLE, whiteSpace: "nowrap", color: "#9ca3af" }}>
+                          ⚪ Unknown
+                        </td>
+
                         {/* Created */}
                         <td style={{ ...TD_STYLE, color: "#9ca3af", whiteSpace: "nowrap" }}>
                           {fmtDate(church.created_at)}
@@ -518,49 +704,121 @@ export default function SubscriptionsPage() {
                                     border: "1px solid #e5e7eb",
                                     borderRadius: 10,
                                     boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                                    minWidth: 210,
+                                    minWidth: 230,
                                     overflow: "hidden",
                                   }}
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {ACTIONS.map((action, i) => (
-                                    <button
-                                      key={action.key}
-                                      onClick={() => {
-                                        setOpenMenu(null);
-                                        if (action.key === "suspend") {
-                                          setConfirmSuspend({ id: church.id, name: church.name });
-                                        } else if (action.key === "mark_paid") {
-                                          setConfirmMarkPaid({ id: church.id, name: church.name });
-                                        } else {
-                                          doAction(church.id, action.key);
-                                        }
-                                      }}
-                                      style={{
-                                        width: "100%",
-                                        padding: "10px 16px",
-                                        textAlign: "left",
-                                        fontSize: 13,
-                                        border: "none",
-                                        borderBottom:
-                                          i < ACTIONS.length - 1 ? "1px solid #f3f4f6" : "none",
-                                        backgroundColor: "white",
-                                        cursor: "pointer",
-                                        color: action.destructive ? "#dc2626" : "#374151",
-                                        fontWeight: action.destructive ? 600 : 400,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 8,
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = "white";
-                                      }}
-                                    >
-                                      {action.label}
-                                    </button>
+                                    <div key={action.key}>
+                                      {/* Divider before external actions */}
+                                      {i === 6 && (
+                                        <div
+                                          style={{
+                                            height: 1,
+                                            backgroundColor: "#e5e7eb",
+                                            margin: "2px 0",
+                                          }}
+                                        />
+                                      )}
+
+                                      {action.href ? (
+                                        <a
+                                          href={action.href(church.id)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={() => setOpenMenu(null)}
+                                          style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            padding: "10px 16px",
+                                            fontSize: 13,
+                                            color: "#374151",
+                                            textDecoration: "none",
+                                            backgroundColor: "white",
+                                            boxSizing: "border-box",
+                                            width: "100%",
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = "#f9fafb";
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = "white";
+                                          }}
+                                        >
+                                          {action.label}
+                                        </a>
+                                      ) : action.disabled ? (
+                                        <div
+                                          style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                            padding: "10px 16px",
+                                            fontSize: 13,
+                                            color: "#d1d5db",
+                                            cursor: "not-allowed",
+                                          }}
+                                        >
+                                          {action.label}
+                                          <span
+                                            style={{
+                                              marginLeft: "auto",
+                                              fontSize: 10,
+                                              backgroundColor: "#f3f4f6",
+                                              color: "#9ca3af",
+                                              padding: "1px 6px",
+                                              borderRadius: 4,
+                                              fontWeight: 600,
+                                            }}
+                                          >
+                                            Soon
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            setOpenMenu(null);
+                                            if (action.key === "suspend") {
+                                              setConfirmSuspend({
+                                                id: church.id,
+                                                name: church.name,
+                                              });
+                                            } else if (action.key === "mark_paid") {
+                                              setConfirmMarkPaid({
+                                                id: church.id,
+                                                name: church.name,
+                                              });
+                                            } else {
+                                              doAction(church.id, action.key);
+                                            }
+                                          }}
+                                          style={{
+                                            width: "100%",
+                                            padding: "10px 16px",
+                                            textAlign: "left",
+                                            fontSize: 13,
+                                            border: "none",
+                                            backgroundColor: "white",
+                                            cursor: "pointer",
+                                            color: action.destructive ? "#dc2626" : "#374151",
+                                            fontWeight: action.destructive ? 600 : 400,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 8,
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = "#f9fafb";
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = "white";
+                                          }}
+                                        >
+                                          {action.label}
+                                        </button>
+                                      )}
+                                    </div>
                                   ))}
                                 </div>
                               )}
@@ -574,17 +832,16 @@ export default function SubscriptionsPage() {
               </table>
             </div>
 
-            {churches.length > 0 && (
-              <div
-                className="text-xs text-gray-400 text-right"
-                style={{
-                  padding: "10px 14px",
-                  borderTop: "1px solid #f3f4f6",
-                }}
-              >
-                {churches.length} {churches.length === 1 ? "church" : "churches"}
-              </div>
-            )}
+            {/* Footer */}
+            <div
+              className="flex items-center text-xs text-gray-400"
+              style={{ padding: "10px 14px", borderTop: "1px solid #f3f4f6" }}
+            >
+              Showing{" "}
+              <strong className="text-gray-600 mx-1">{displayed.length}</strong> of{" "}
+              <strong className="text-gray-600 mx-1">{churches.length}</strong>{" "}
+              {churches.length === 1 ? "church" : "churches"}
+            </div>
           </div>
         )}
       </div>
@@ -668,7 +925,8 @@ export default function SubscriptionsPage() {
             <p className="text-sm text-gray-500 leading-relaxed mb-6">
               This will mark{" "}
               <strong className="text-gray-900">{confirmMarkPaid.name}</strong> as a paid
-              subscriber and set their status to <strong className="text-gray-900">Paid / Active</strong>.
+              subscriber and set their status to{" "}
+              <strong className="text-gray-900">Paid / Active</strong>.
             </p>
             <div className="flex gap-3">
               <button

@@ -15,8 +15,6 @@ async function getAuthUser(req: NextRequest) {
 async function checkMasterAdmin(req: NextRequest): Promise<boolean> {
   const user = await getAuthUser(req);
   if (!user?.email) return false;
-  console.log("MASTER ADMIN USER EMAIL:", user.email);
-  console.log("OWNER_EMAILS:", process.env.OWNER_EMAILS);
   const masterEmails = (process.env.OWNER_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -65,7 +63,6 @@ export async function PATCH(req: NextRequest) {
       .select('trial_ends_at')
       .eq('id', churchId)
       .single();
-    // Extend from current trial_ends_at if it's still in the future; otherwise extend from now
     const base =
       church?.trial_ends_at && new Date(church.trial_ends_at) > now
         ? new Date(church.trial_ends_at)
