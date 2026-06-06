@@ -179,6 +179,25 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
     setEditStages(defaultsFromConfig(type));
   }
 
+  function addStep() {
+    setEditStages((prev) => {
+      const order = prev.length;
+      return [
+        ...prev,
+        {
+          id: null,
+          stage_key: `new-step-${Date.now()}`,
+          name: "New Step",
+          description: "Describe this step",
+          color: "#64748b",
+          display_order: order,
+          is_active: true,
+          is_default: false,
+        },
+      ];
+    });
+  }
+
   function moveEditStage(idx: number, dir: -1 | 1) {
     setEditStages((prev) => {
       const next = [...prev];
@@ -670,6 +689,14 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                   />
                 </div>
               ))}
+
+              <button
+                type="button"
+                onClick={addStep}
+                className="w-full py-3 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-400 hover:border-orange-300 hover:text-orange-500 transition-colors"
+              >
+                + Add Pipeline Step
+              </button>
             </div>
 
             {saveError && (
