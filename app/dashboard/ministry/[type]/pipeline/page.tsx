@@ -79,8 +79,38 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
 
   const isYouth = type === "middle-school" || type === "high-school";
   const isYoungAdults = type === "young-adults";
-  const memberWord = isYouth ? "youth" : isYoungAdults ? "young adults" : "children";
-  const memberWordSingular = isYouth ? "youth" : isYoungAdults ? "young adult" : "child";
+  const isMens = type === "mens";
+  const isWomens = type === "womens";
+  const isSeniors = type === "seniors";
+
+  const memberWord =
+    isYouth ? "youth" :
+    isYoungAdults ? "young adults" :
+    isMens ? "men" :
+    isWomens ? "women" :
+    isSeniors ? "senior adults" :
+    "children";
+
+  const memberWordSingular =
+    isYouth ? "youth" :
+    isYoungAdults ? "young adult" :
+    isMens ? "man" :
+    isWomens ? "woman" :
+    isSeniors ? "senior adult" :
+    "child";
+
+  // Gendered possessive pronoun for the About body copy
+  const memberPossessive = isMens ? "his" : isWomens ? "her" : "their";
+
+  const memberWordCapitalized = memberWord.charAt(0).toUpperCase() + memberWord.slice(1);
+
+  const totalMetricLabel =
+    isYouth ? "Total Youth" :
+    isYoungAdults ? "Total Young Adults" :
+    isMens ? "Total Men" :
+    isWomens ? "Total Women" :
+    isSeniors ? "Total Senior Adults" :
+    "Total Children";
 
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
@@ -349,13 +379,13 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                 </div>
               </div>
               <p className="text-sm text-gray-600 leading-6">
-                {isYouth || isYoungAdults
-                  ? `The Shepherd Pipeline helps ministry leaders understand where each ${memberWordSingular} is spiritually, pray intentionally, and encourage their next step with wisdom and care.`
+                {type !== "childrens"
+                  ? `The Shepherd Pipeline helps ministry leaders understand where each ${memberWordSingular} is spiritually, pray intentionally, and encourage ${memberPossessive} next step with wisdom and care.`
                   : "The Shepherd Pipeline helps ministry leaders see where children are spiritually, pray intentionally, and encourage their next step with care."}
               </p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Metric label={isYouth ? "Total Youth" : isYoungAdults ? "Total Young Adults" : "Total Children"} value={total} icon="👥" />
+              <Metric label={totalMetricLabel} value={total} icon="👥" />
               <Metric label="Active in Pipeline" value={activeCount} icon="🌱" />
               <Metric label="Faith Decisions" value={faithDecisionCount} icon="✝️" />
               <Metric label="Baptism" value={baptismCount} icon="💧" />
@@ -429,11 +459,7 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                   <div className="text-3xl mb-2">❔</div>
                   <h3 className="text-base font-black text-gray-500">Unassigned</h3>
                   <p className="text-xs text-gray-500 mt-2">
-                    {isYouth
-                      ? "Youth who need a pipeline stage."
-                      : isYoungAdults
-                        ? "Young adults who need a pipeline stage."
-                        : "Children who need a pipeline stage."}
+                    {`${memberWordCapitalized} who need a pipeline stage.`}
                   </p>
                   <div className="text-sm font-bold mt-3 text-gray-400">
                     {unassigned.length} {memberWord}
