@@ -78,8 +78,9 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
   const cfg = MINISTRY_CONFIG[type];
 
   const isYouth = type === "middle-school" || type === "high-school";
-  const memberWord = isYouth ? "youth" : "children";
-  const memberWordSingular = isYouth ? "youth" : "child";
+  const isYoungAdults = type === "young-adults";
+  const memberWord = isYouth ? "youth" : isYoungAdults ? "young adults" : "children";
+  const memberWordSingular = isYouth ? "youth" : isYoungAdults ? "young adult" : "child";
 
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
@@ -315,9 +316,7 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
               Shepherd Pipeline
             </h1>
             <p className="text-orange-100 text-sm mt-2">
-              {isYouth
-                ? "Helping every youth take their next step toward Christ."
-                : "Helping every child take their next step toward Christ."}
+              {`Helping every ${memberWordSingular} take their next step toward Christ.`}
             </p>
           </div>
           <button
@@ -345,20 +344,18 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">About the Pipeline</h2>
                   <p className="text-sm text-gray-500">
-                    {isYouth
-                      ? "This is a guide, not a box. Every youth’s journey is unique."
-                      : "This is a guide, not a box. Every child’s journey is unique."}
+                    {`This is a guide, not a box. Every ${memberWordSingular}’s journey is unique.`}
                   </p>
                 </div>
               </div>
               <p className="text-sm text-gray-600 leading-6">
-                {isYouth
-                  ? "The Shepherd Pipeline helps ministry leaders understand where each youth is spiritually, pray intentionally, and encourage their next step with wisdom and care."
+                {isYouth || isYoungAdults
+                  ? `The Shepherd Pipeline helps ministry leaders understand where each ${memberWordSingular} is spiritually, pray intentionally, and encourage their next step with wisdom and care.`
                   : "The Shepherd Pipeline helps ministry leaders see where children are spiritually, pray intentionally, and encourage their next step with care."}
               </p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Metric label={isYouth ? "Total Youth" : "Total Children"} value={total} icon="👥" />
+              <Metric label={isYouth ? "Total Youth" : isYoungAdults ? "Total Young Adults" : "Total Children"} value={total} icon="👥" />
               <Metric label="Active in Pipeline" value={activeCount} icon="🌱" />
               <Metric label="Faith Decisions" value={faithDecisionCount} icon="✝️" />
               <Metric label="Baptism" value={baptismCount} icon="💧" />
@@ -432,7 +429,11 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                   <div className="text-3xl mb-2">❔</div>
                   <h3 className="text-base font-black text-gray-500">Unassigned</h3>
                   <p className="text-xs text-gray-500 mt-2">
-                    {isYouth ? "Youth who need a pipeline stage." : "Children who need a pipeline stage."}
+                    {isYouth
+                      ? "Youth who need a pipeline stage."
+                      : isYoungAdults
+                        ? "Young adults who need a pipeline stage."
+                        : "Children who need a pipeline stage."}
                   </p>
                   <div className="text-sm font-bold mt-3 text-gray-400">
                     {unassigned.length} {memberWord}
@@ -460,9 +461,7 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
               🛠️ Make It Your Own
             </h3>
             <p className="text-sm text-blue-800 mt-1">
-              {isYouth
-                ? "Every church is unique. Customize stage names, descriptions, colors, and what moves a youth from one stage to the next."
-                : "Every church is unique. Customize stage names, descriptions, colors, and what moves a child from one step to the next."}
+              {`Every church is unique. Customize stage names, descriptions, colors, and what moves a ${memberWordSingular} from one stage to the next.`}
             </p>
           </div>
           <button

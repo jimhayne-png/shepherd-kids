@@ -31,6 +31,17 @@ export const CHILDREN_PIPELINE_STAGES = [
   "Discipleship Step",
 ];
 
+export const YOUNG_ADULTS_PIPELINE_STAGES = [
+  "Visitor",
+  "Regular",
+  "Faith Decision",
+  "Baptism",
+  "Membership",
+  "Serving",
+  "Leading",
+  "Discipleship",
+];
+
 export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
   childrens: {
     name: "Children's Ministry",
@@ -112,14 +123,24 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     label: "Young Adults",
     emoji: "🎉",
     ageRange: "Ages 18–30",
-    pipelineStages: ["Visitor", "Regular", "Connected", "Serving", "Leading", "Discipling"],
-    stages: ["Visitor", "Regular", "Connected", "Serving", "Leading", "Discipling"],
+    pipelineStages: YOUNG_ADULTS_PIPELINE_STAGES,
+    stages: YOUNG_ADULTS_PIPELINE_STAGES,
     hasShepherdGroups: false,
     hasTeamChallenge: false,
     hasGrowthModule: true,
     invitationOnly: false,
     hasMetamorphosis: false,
     metamorphosisMentorEligible: true,
+    stageDescriptions: {
+      "Visitor": "First-time guest or new attendee exploring the ministry.",
+      "Regular": "Attending consistently and building relationships within the ministry.",
+      "Faith Decision": "Has made a personal decision to trust Christ or recommit their life to Him.",
+      "Baptism": "Has publicly professed their faith through believer's baptism.",
+      "Membership": "Has completed the church membership process and committed to the local church family.",
+      "Serving": "Actively serving in a ministry, outreach, worship team, hospitality, children's ministry, or another area of the church.",
+      "Leading": "Leading others through a small group, ministry team, class, mentoring relationship, or volunteer leadership role.",
+      "Discipleship": "Intentionally discipling others and multiplying their faith through mentoring, teaching, evangelism, and spiritual leadership.",
+    },
   },
   mens: {
     name: "Men's Ministry",
