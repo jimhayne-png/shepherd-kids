@@ -77,6 +77,10 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
   const { type } = use(params);
   const cfg = MINISTRY_CONFIG[type];
 
+  const isYouth = type === "middle-school" || type === "high-school";
+  const memberWord = isYouth ? "youth" : "children";
+  const memberWordSingular = isYouth ? "youth" : "child";
+
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [members, setMembers] = useState<PipelineMember[]>([]);
@@ -311,7 +315,9 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
               Shepherd Pipeline
             </h1>
             <p className="text-orange-100 text-sm mt-2">
-              Helping every child take their next step toward Christ.
+              {isYouth
+                ? "Helping every youth take their next step toward Christ."
+                : "Helping every child take their next step toward Christ."}
             </p>
           </div>
           <button
@@ -339,17 +345,20 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">About the Pipeline</h2>
                   <p className="text-sm text-gray-500">
-                    This is a guide, not a box. Every child&apos;s journey is unique.
+                    {isYouth
+                      ? "This is a guide, not a box. Every youth’s journey is unique."
+                      : "This is a guide, not a box. Every child’s journey is unique."}
                   </p>
                 </div>
               </div>
               <p className="text-sm text-gray-600 leading-6">
-                The Shepherd Pipeline helps ministry leaders see where children are spiritually,
-                pray intentionally, and encourage their next step with care.
+                {isYouth
+                  ? "The Shepherd Pipeline helps ministry leaders understand where each youth is spiritually, pray intentionally, and encourage their next step with wisdom and care."
+                  : "The Shepherd Pipeline helps ministry leaders see where children are spiritually, pray intentionally, and encourage their next step with care."}
               </p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Metric label="Total Children" value={total} icon="👥" />
+              <Metric label={isYouth ? "Total Youth" : "Total Children"} value={total} icon="👥" />
               <Metric label="Active in Pipeline" value={activeCount} icon="🌱" />
               <Metric label="Faith Decisions" value={faithDecisionCount} icon="✝️" />
               <Metric label="Baptism" value={baptismCount} icon="💧" />
@@ -392,13 +401,13 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                   </p>
                   <div className="text-sm font-bold mt-3" style={{ color: column.color }}>
                     {column.members.length}{" "}
-                    {column.members.length === 1 ? "child" : "children"}
+                    {column.members.length === 1 ? memberWordSingular : memberWord}
                   </div>
                 </div>
                 <div className="p-3 space-y-3 max-h-[calc(100vh-430px)] overflow-y-auto">
                   {column.members.length === 0 ? (
                     <div className="rounded-xl border-2 border-dashed border-gray-200 py-6 text-center">
-                      <p className="text-xs text-gray-300">No children</p>
+                      <p className="text-xs text-gray-300">No {memberWord}</p>
                     </div>
                   ) : (
                     column.members.map((member) => (
@@ -423,10 +432,10 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
                   <div className="text-3xl mb-2">❔</div>
                   <h3 className="text-base font-black text-gray-500">Unassigned</h3>
                   <p className="text-xs text-gray-500 mt-2">
-                    Children who need a pipeline stage.
+                    {isYouth ? "Youth who need a pipeline stage." : "Children who need a pipeline stage."}
                   </p>
                   <div className="text-sm font-bold mt-3 text-gray-400">
-                    {unassigned.length} children
+                    {unassigned.length} {memberWord}
                   </div>
                 </div>
                 <div className="p-3 space-y-3 max-h-[calc(100vh-430px)] overflow-y-auto">
@@ -451,8 +460,9 @@ export default function PipelinePage({ params }: { params: Promise<{ type: strin
               🛠️ Make It Your Own
             </h3>
             <p className="text-sm text-blue-800 mt-1">
-              Every church is unique. Customize stage names, descriptions, colors, and what moves
-              a child from one step to the next.
+              {isYouth
+                ? "Every church is unique. Customize stage names, descriptions, colors, and what moves a youth from one stage to the next."
+                : "Every church is unique. Customize stage names, descriptions, colors, and what moves a child from one step to the next."}
             </p>
           </div>
           <button
