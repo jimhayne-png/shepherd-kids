@@ -18,6 +18,13 @@ type ChildInput = {
   authorizedPickups?: string;
 };
 
+type RoomRow = {
+  id: string;
+  name: string;
+  min_age: number | null;
+  max_age: number | null;
+};
+
 type ImmediateLabel = {
   labelType: 'child' | 'parent';
   childName: string;
@@ -96,6 +103,64 @@ function errorDetails(err: unknown): string {
   return String(err);
 }
 
+/**
+ * Calculates age in whole years as of `today` (YYYY-MM-DD in church timezone).
+ * Returns null if dateOfBirth is missing or unparseable.
+ */
+function calculateAge(dateOfBirth: string | null, today: string): number | null {
+  if (!dateOfBirth) return null;
+  try {
+    const [birthYear, birthMonth, birthDay] = dateOfBirth.split('-').map(Number);
+    const [todayYear, todayMonth, todayDay] = today.split('-').map(Number);
+    let age = todayYear - birthYear;
+    // Subtract 1 if the birthday hasn't occurred yet this year
+    if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) {
+      age--;
+    }
+    return age >= 0 ? age : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Determines the correct room for a child.
+ * Priority:
+ *   1. If child.roomId is provided and exists in activeRooms, use it (validated override).
+ *   2. Auto-assign based on date_of_birth using church-timezone today.
+ *      - Picks the narrowest age-range match, then alphabetical on ties.
+ *   3. Returns null if no DOB and no valid override.
+ */
+function findRoomForChild(child: ChildInput, rooms: RoomRow[], today: string): string | null {
+  // Validated manual override
+  if (child.roomId && rooms.find((r) => r.id === child.roomId)) {
+    return child.roomId;
+  }
+
+  // Age-based auto-placement
+  const dob = childBirthDate(child);
+  const age = calculateAge(dob, today);
+  if (age === null) return null;
+
+  const candidates = rooms.filter((r) => {
+    const minOk = r.min_age === null || age >= r.min_age;
+    const maxOk = r.max_age === null || age <= r.max_age;
+    return minOk && maxOk;
+  });
+
+  if (!candidates.length) return null;
+
+  // Narrowest range wins; alphabetical on tie
+  candidates.sort((a, b) => {
+    const rangeA = (a.max_age ?? 999) - (a.min_age ?? 0);
+    const rangeB = (b.max_age ?? 999) - (b.min_age ?? 0);
+    if (rangeA !== rangeB) return rangeA - rangeB;
+    return a.name.localeCompare(b.name);
+  });
+
+  return candidates[0].id;
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ churchId: string }> },
@@ -151,7 +216,7 @@ export async function POST(
     timeZone: tz,
   }).format(new Date());
 
-  const [{ data: validSessions }, { data: activeRooms }] = await Promise.all([
+  const [{ data: validSessions }, { data: activeRoomsRaw }] = await Promise.all([
     admin
       .from('cm_checkin_sessions')
       .select('id')
@@ -161,10 +226,13 @@ export async function POST(
       .in('id', sessionIds),
     admin
       .from('cm_checkin_rooms')
-      .select('id, name')
+      .select('id, name, min_age, max_age')
       .eq('church_id', churchId)
-      .eq('is_active', true),
+      .eq('is_active', true)
+      .order('min_age', { ascending: true }),
   ]);
+
+  const activeRooms = (activeRoomsRaw ?? []) as RoomRow[];
 
   const validIds = new Set(
     ((validSessions ?? []) as { id: string }[]).map((s) => s.id),
@@ -181,7 +249,7 @@ export async function POST(
 
   function roomNameFor(roomId: string | null | undefined): string | null {
     if (!roomId) return null;
-    return (activeRooms ?? []).find((r) => r.id === roomId)?.name ?? null;
+    return activeRooms.find((r) => r.id === roomId)?.name ?? null;
   }
 
   const normalizedPhone = parentPhone.replace(/\D/g, '');
@@ -195,7 +263,7 @@ export async function POST(
       child_name: childFullName(child),
       parent_name: parentName,
       parent_phone: normalizedPhone,
-      room_id: child.roomId ?? null,
+      room_id: findRoomForChild(child, activeRooms, today),
       security_code: securityCode,
       is_new_visitor: false,
       allergies: child.allergies ?? [],

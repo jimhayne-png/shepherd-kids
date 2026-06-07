@@ -15,6 +15,13 @@ type ChildInput = {
   specialInstructions?: string;
 };
 
+type RoomRow = {
+  id: string;
+  name: string;
+  min_age: number | null;
+  max_age: number | null;
+};
+
 type ImmediateLabel = {
   labelType: 'child' | 'parent';
   childName: string;
@@ -50,20 +57,64 @@ function allergyLine(allergies: string[] | undefined, allergyOther: string | und
     .join(', ');
 }
 
-function calcAge(dob: string): number {
-  const d = new Date(dob + 'T00:00:00');
-  const today = new Date();
-
-  let age = today.getFullYear() - d.getFullYear();
-
-  if (
-    today.getMonth() < d.getMonth() ||
-    (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())
-  ) {
-    age--;
+/**
+ * Calculates age in whole years as of `todayStr` (YYYY-MM-DD in church timezone).
+ * Returns null if dob is missing or unparseable.
+ */
+function calculateAge(dob: string | null, todayStr: string): number | null {
+  if (!dob) return null;
+  try {
+    const [birthYear, birthMonth, birthDay] = dob.split('-').map(Number);
+    const [todayYear, todayMonth, todayDay] = todayStr.split('-').map(Number);
+    let age = todayYear - birthYear;
+    if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) {
+      age--;
+    }
+    return age >= 0 ? age : null;
+  } catch {
+    return null;
   }
+}
 
-  return age;
+/**
+ * Resolves the room for a child.
+ * Priority:
+ *   1. If roomId is provided and exists in activeRooms, use it (validated override).
+ *   2. Auto-assign by DOB + church-timezone today.
+ *      - Picks the narrowest age-range match, then alphabetical on ties.
+ *   3. Returns null if no DOB and no valid override.
+ */
+function resolveRoom(
+  dob: string | undefined,
+  explicit: string | undefined,
+  rooms: RoomRow[],
+  today: string,
+): string | null {
+  // Validated manual override
+  if (explicit && rooms.find((r) => r.id === explicit)) return explicit;
+
+  if (!dob) return null;
+
+  const age = calculateAge(dob, today);
+  if (age === null) return null;
+
+  const candidates = rooms.filter((r) => {
+    const minOk = r.min_age === null || age >= r.min_age;
+    const maxOk = r.max_age === null || age <= r.max_age;
+    return minOk && maxOk;
+  });
+
+  if (!candidates.length) return null;
+
+  // Narrowest range wins; alphabetical on tie
+  candidates.sort((a, b) => {
+    const rangeA = (a.max_age ?? 999) - (a.min_age ?? 0);
+    const rangeB = (b.max_age ?? 999) - (b.min_age ?? 0);
+    if (rangeA !== rangeB) return rangeA - rangeB;
+    return a.name.localeCompare(b.name);
+  });
+
+  return candidates[0].id;
 }
 
 export async function POST(
@@ -112,41 +163,35 @@ export async function POST(
     return Response.json({ error: 'Session is closed' }, { status: 400 });
   }
 
+  const [{ data: churchRow }, { data: activeRoomsRaw }] = await Promise.all([
+    admin.from('churches').select('timezone').eq('id', session.church_id).maybeSingle(),
+    admin
+      .from('cm_checkin_rooms')
+      .select('id, name, min_age, max_age')
+      .eq('church_id', session.church_id)
+      .eq('is_active', true)
+      .order('min_age', { ascending: true }),
+  ]);
+
+  const tz =
+    (churchRow as { timezone?: string } | null)?.timezone ?? 'America/Los_Angeles';
+
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+
+  const activeRooms = (activeRoomsRaw ?? []) as RoomRow[];
+
+  function roomNameFor(roomId: string | null | undefined): string | null {
+    if (!roomId) return null;
+    return activeRooms.find((r) => r.id === roomId)?.name ?? null;
+  }
+
   const normalizedPhone = parentPhone.replace(/\D/g, '');
   const normalizedEmail = parentEmail ? parentEmail.trim().toLowerCase() : null;
   const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
-  const { data: activeRooms } = await admin
-    .from('cm_checkin_rooms')
-    .select('id, name, min_age, max_age')
-    .eq('church_id', session.church_id)
-    .eq('is_active', true)
-    .order('min_age');
-
-  function resolveRoom(dob: string | undefined, explicit: string | undefined): string | null {
-    if (explicit) return explicit;
-    if (!dob) return null;
-
-    const age = calcAge(dob);
-
-    for (const r of activeRooms ?? []) {
-      const ok =
-        (r.min_age == null || age >= r.min_age) &&
-        (r.max_age == null || age <= r.max_age);
-
-      if (ok) return r.id;
-    }
-
-    return null;
-  }
-
-  function roomNameFor(roomId: string | null | undefined): string | null {
-    if (!roomId) return null;
-    return activeRooms?.find((r) => r.id === roomId)?.name ?? null;
-  }
-
   let resolvedFamilyId: string | null = familyId ?? null;
-    if (!resolvedFamilyId) {
+
+  if (!resolvedFamilyId) {
     const { data: existing } = await admin
       .from('cm_visitor_families')
       .select('id')
@@ -169,7 +214,7 @@ export async function POST(
           parent1_last_name: lastName,
           parent1_phone: normalizedPhone,
           parent1_email: normalizedEmail,
-          visit_date: new Date().toISOString().slice(0, 10),
+          visit_date: today,
           status: 'new',
           follow_up_sent: false,
           next_day_sent: false,
@@ -201,7 +246,6 @@ export async function POST(
       const firstName = child.childFirstName?.trim() || nameParts[0] || '';
       const lastName = child.childLastName?.trim() || nameParts.slice(1).join(' ') || '';
 
-      // Locate existing child profile by explicit ID or by name within the family
       let existingId: string | null = null;
       let existingDob: string | null = null;
 
@@ -230,7 +274,6 @@ export async function POST(
         medical_notes: child.medicalNotes ?? null,
         special_instructions: child.specialInstructions ?? null,
       };
-      // Only write DOB if not already stored
       if (child.childDateOfBirth && !existingDob) {
         profileData.date_of_birth = child.childDateOfBirth;
       }
@@ -263,7 +306,7 @@ export async function POST(
     child_name: child.childName,
     parent_name: parentName,
     parent_phone: normalizedPhone,
-    room_id: resolveRoom(child.childDateOfBirth, child.roomId),
+    room_id: resolveRoom(child.childDateOfBirth, child.roomId, activeRooms, today),
     security_code: securityCode,
     is_new_visitor: !!isNewFamily,
     allergies: child.allergies ?? [],
@@ -281,7 +324,8 @@ export async function POST(
   }
 
   const safeRecords = records ?? [];
-    const childImmediateLabels: ImmediateLabel[] = safeRecords.map((record, i) => {
+
+  const childImmediateLabels: ImmediateLabel[] = safeRecords.map((record, i) => {
     const child = children[i];
 
     return {
