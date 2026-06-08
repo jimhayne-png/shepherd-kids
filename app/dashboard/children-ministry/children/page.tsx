@@ -20,6 +20,19 @@ type Child = {
   visit_date: string | null;
 };
 
+type MilestoneRecord = {
+  id: string;
+  milestone_type: string;
+  is_completed: boolean;
+  completed_at: string | null;
+  notes: string | null;
+};
+
+type Milestones = {
+  salvation: MilestoneRecord | null;
+  water_baptism: MilestoneRecord | null;
+};
+
 function calcAge(dob: string): number {
   const d = new Date(dob + "T00:00:00");
   const today = new Date();
@@ -38,12 +51,74 @@ export default function ChildrenPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [search, setSearch] = useState("");
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  const [milestones, setMilestones] = useState<Milestones | null>(null);
+  const [milestonesLoading, setMilestonesLoading] = useState(false);
+  const [editField, setEditField] = useState<"salvation" | "water_baptism" | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [saving, setSaving] = useState(false);
 
   async function load(t: string) {
     const res = await fetch("/api/children-ministry/children", { headers: { Authorization: `Bearer ${t}` } });
     const data = await res.json();
     setChildren(data.children ?? []);
   }
+
+  async function refreshMilestones(childId: string, t: string) {
+    const res = await fetch(`/api/children-ministry/children/${childId}/milestones`, {
+      headers: { Authorization: `Bearer ${t}` },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const m: Milestones = { salvation: null, water_baptism: null };
+    for (const item of (data.milestones ?? []) as MilestoneRecord[]) {
+      if (item.milestone_type === "salvation") m.salvation = item;
+      if (item.milestone_type === "water_baptism") m.water_baptism = item;
+    }
+    setMilestones(m);
+  }
+
+  async function saveMilestone(type: "salvation" | "water_baptism") {
+    if (!selectedChild || !token || !editValue) return;
+    setSaving(true);
+    const res = await fetch(`/api/children-ministry/children/${selectedChild.id}/milestones`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ milestoneType: type, completedAt: editValue }),
+    });
+    if (res.ok) {
+      await refreshMilestones(selectedChild.id, token);
+      setEditField(null);
+      setEditValue("");
+    }
+    setSaving(false);
+  }
+
+  useEffect(() => {
+    if (!selectedChild || !token) {
+      setMilestones(null);
+      setEditField(null);
+      setEditValue("");
+      return;
+    }
+    let cancelled = false;
+    setMilestonesLoading(true);
+    setMilestones(null);
+    setEditField(null);
+    setEditValue("");
+    fetch(`/api/children-ministry/children/${selectedChild.id}/milestones`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(async (res) => {
+      if (cancelled || !res.ok) return;
+      const data = await res.json();
+      const m: Milestones = { salvation: null, water_baptism: null };
+      for (const item of (data.milestones ?? []) as MilestoneRecord[]) {
+        if (item.milestone_type === "salvation") m.salvation = item;
+        if (item.milestone_type === "water_baptism") m.water_baptism = item;
+      }
+      setMilestones(m);
+    }).finally(() => { if (!cancelled) setMilestonesLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedChild?.id, token]);
 
   useEffect(() => {
     async function init() {
@@ -182,6 +257,67 @@ export default function ChildrenPage() {
                   <p className="text-sm text-gray-700">{fmtDate(selectedChild.visit_date)}</p>
                 </div>
               )}
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Faith Journey</p>
+                {milestonesLoading ? (
+                  <p className="text-xs text-gray-400">Loading…</p>
+                ) : (
+                  <div className="space-y-3">
+                    {(["salvation", "water_baptism"] as const).map((type) => {
+                      const label = type === "salvation" ? "✝️ Spiritual Birthday" : "🌊 Baptism Date";
+                      const current = milestones?.[type] ?? null;
+                      return (
+                        <div key={type}>
+                          <p className="text-xs text-gray-500 mb-1">{label}</p>
+                          {editField === type ? (
+                            <div className="flex gap-2 items-center flex-wrap">
+                              <input
+                                type="date"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="text-sm border border-gray-200 rounded-lg px-2 py-1"
+                              />
+                              <button
+                                onClick={() => saveMilestone(type)}
+                                disabled={saving || !editValue}
+                                className="text-xs font-medium text-white px-3 py-1 rounded-lg disabled:opacity-50"
+                                style={{ backgroundColor: CM_ACCENT }}
+                              >
+                                {saving ? "Saving…" : "Save"}
+                              </button>
+                              <button
+                                onClick={() => { setEditField(null); setEditValue(""); }}
+                                className="text-xs text-gray-400"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : current?.completed_at ? (
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm text-gray-700">{fmtDate(current.completed_at)}</p>
+                              <button
+                                onClick={() => { setEditField(type); setEditValue(current.completed_at ?? ""); }}
+                                className="text-xs font-medium"
+                                style={{ color: CM_ACCENT }}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setEditField(type); setEditValue(""); }}
+                              className="text-xs font-medium"
+                              style={{ color: CM_ACCENT }}
+                            >
+                              + Add date
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

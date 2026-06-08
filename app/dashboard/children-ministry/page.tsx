@@ -12,6 +12,14 @@ const ACCENT = "#F28C28";
 
 type Child = { id: string; first_name: string; last_name: string; date_of_birth: string | null };
 type SessionSummary = { id: string; service_name: string; date: string; status: string };
+type SpiritualBirthdayEntry = {
+  id: string;
+  child_id: string;
+  completed_at: string;
+  notes: string | null;
+  first_name: string;
+  last_name: string;
+};
 
 function upcomingBirthdays(children: Child[], days = 30) {
   const today = new Date();
@@ -24,6 +32,22 @@ function upcomingBirthdays(children: Child[], days = 30) {
     if (next < today) next.setFullYear(today.getFullYear() + 1);
     const daysAway = Math.round((next.getTime() - today.getTime()) / 86400000);
     if (daysAway <= days) results.push({ child, next, daysAway });
+  }
+  return results.sort((a, b) => a.daysAway - b.daysAway);
+}
+
+function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days = 7) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const results: { entry: SpiritualBirthdayEntry; next: Date; daysAway: number; years: number }[] = [];
+  for (const entry of entries) {
+    const saved = new Date(entry.completed_at + "T00:00:00");
+    const next = new Date(today.getFullYear(), saved.getMonth(), saved.getDate());
+    if (next < today) next.setFullYear(today.getFullYear() + 1);
+    const daysAway = Math.round((next.getTime() - today.getTime()) / 86400000);
+    if (daysAway <= days) {
+      results.push({ entry, next, daysAway, years: next.getFullYear() - saved.getFullYear() });
+    }
   }
   return results.sort((a, b) => a.daysAway - b.daysAway);
 }
@@ -43,6 +67,7 @@ export default function ChildrenMinistryPage() {
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<Child[]>([]);
   const [recentSessions, setRecentSessions] = useState<SessionSummary[]>([]);
+  const [spiritualBirthdayEntries, setSpiritualBirthdayEntries] = useState<SpiritualBirthdayEntry[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -54,18 +79,21 @@ export default function ChildrenMinistryPage() {
       const urlParams = new URLSearchParams(window.location.search);
       selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
       const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
-      const [childrenRes, sessionsRes] = await Promise.all([
+      const [childrenRes, sessionsRes, spiritualBdRes] = await Promise.all([
         fetch("/api/children-ministry/children", { credentials: "include", headers: churchHeader }),
         fetch("/api/checkin/attendance-report", { credentials: "include", headers: churchHeader }),
+        fetch("/api/children-ministry/spiritual-birthdays", { credentials: "include", headers: churchHeader }),
       ]);
       if (childrenRes.ok) { const d = await childrenRes.json(); setChildren(d.children ?? []); }
       if (sessionsRes.ok) { const d = await sessionsRes.json(); setRecentSessions((d.sessions ?? []).slice(0, 4)); }
+      if (spiritualBdRes.ok) { const d = await spiritualBdRes.json(); setSpiritualBirthdayEntries(d.entries ?? []); }
       setLoading(false);
     }
     init();
   }, [router]);
 
   const birthdays = upcomingBirthdays(children);
+  const spiritualBirthdays = upcomingSpiritualBirthdays(spiritualBirthdayEntries);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -83,10 +111,11 @@ export default function ChildrenMinistryPage() {
 
       <div className="px-8 py-8 bg-gray-50 min-h-screen">
         {/* Stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Total Children", value: children.length, emoji: "🧒" },
             { label: "Upcoming Birthdays", value: birthdays.length, emoji: "🎂", sub: "next 30 days" },
+            { label: "Spiritual Birthdays", value: spiritualBirthdays.length, emoji: "✝️", sub: "this week" },
             { label: "Recent Sessions", value: recentSessions.length, emoji: "📋" },
           ].map(card => (
             <div key={card.label} className="bg-white rounded-xl shadow-md px-5 py-4 flex items-center gap-3 border border-gray-100">
@@ -115,6 +144,31 @@ export default function ChildrenMinistryPage() {
             </Link>
           ))}
         </div>
+
+        {/* Spiritual Birthdays This Week */}
+        {spiritualBirthdays.length > 0 && (
+          <div className="bg-white rounded-2xl shadow p-6 border border-gray-100 mb-6">
+            <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>✝️ Spiritual Birthdays This Week</h2>
+            <div className="space-y-1">
+              {spiritualBirthdays.map(({ entry, next, daysAway, years }) => (
+                <div key={entry.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{entry.first_name} {entry.last_name}</p>
+                    <p className="text-xs text-gray-400">
+                      {next.toLocaleDateString("en-US", { month: "long", day: "numeric" })} · {years} {years === 1 ? "year" : "years"} ago
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{
+                    backgroundColor: daysAway === 0 ? "#fef9c3" : daysAway <= 3 ? "#fef3c7" : "#f0fdf4",
+                    color: daysAway === 0 ? "#713f12" : daysAway <= 3 ? "#92400e" : "#166534",
+                  }}>
+                    {daysAway === 0 ? "Today! 🎉" : daysAway === 1 ? "Tomorrow" : `${daysAway} days`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Upcoming Birthdays */}
