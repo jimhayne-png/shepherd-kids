@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
+const MASTER_ADMIN_EMAIL = "jim@gratefulconsultinggroup.com";
+const supabase = createClient();
 
 // Kept for backward compat — pages still pass navItems but the sidebar
 // now uses the hardcoded 5-category structure defined below.
@@ -157,11 +161,21 @@ function pathActive(pathname: string, href: string) {
 export default function AppShell(props: AppShellProps) {
   const { children } = props;
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [cmOpen, setCmOpen] = useState(false);
   const [msOpen, setMsOpen] = useState(false);
   const [shOpen, setShOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Fetch the authenticated user's email once on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserEmail(user?.email ?? null);
+    });
+  }, []);
+
   useEffect(() => {
     const stored = loadCollapsed();
     const next: Record<string, boolean> = {};
@@ -184,6 +198,14 @@ export default function AppShell(props: AppShellProps) {
       return next;
     });
   }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/");
+  }
+
+  const isMasterAdmin =
+    !!userEmail && userEmail.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase();
 
   function nestedItemStyle(active: boolean): React.CSSProperties {
     return {
@@ -432,20 +454,56 @@ export default function AppShell(props: AppShellProps) {
             </Link>
           </div>
 
-          {/* Master Admin */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "6px", paddingTop: "6px", display: "flex", flexDirection: "column", gap: "1px" }}>
-            <p style={{ padding: "4px 12px 2px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(252,211,77,0.5)", margin: 0 }}>
-              Master Admin
-            </p>
-            <Link
-              href="/dashboard/master-admin/subscriptions"
-              style={masterAdminItemStyle(pathActive(pathname, "/dashboard/master-admin/subscriptions"))}
-            >
-              🔑 Subscription Management
-            </Link>
-          </div>
+          {/* Master Admin — only visible to the master admin account */}
+          {isMasterAdmin && (
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "6px", paddingTop: "6px", display: "flex", flexDirection: "column", gap: "1px" }}>
+              <p style={{ padding: "4px 12px 2px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(252,211,77,0.5)", margin: 0 }}>
+                Master Admin
+              </p>
+              <Link
+                href="/dashboard/master-admin/subscriptions"
+                style={masterAdminItemStyle(pathActive(pathname, "/dashboard/master-admin/subscriptions"))}
+              >
+                🔑 Subscription Management
+              </Link>
+            </div>
+          )}
 
         </nav>
+
+        {/* Sign Out — always visible to authenticated users */}
+        <div style={{ padding: "8px", borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 12px 8px 18px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "rgba(255,255,255,0.55)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              textAlign: "left",
+              transition: "color 0.15s, background-color 0.15s",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.9)";
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)";
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+            }}
+          >
+            🚪 Sign Out
+          </button>
+        </div>
       </aside>
 
       <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#f9fafb" }}>{children}</main>
