@@ -98,7 +98,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="rounded-2xl px-8 py-8" style={{ background: "#0D0A14", border: "1px solid rgba(212, 175, 55, 0.2)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+        <div className="rounded-2xl px-8 py-8" style={{ border: "1px solid rgba(212, 175, 55, 0.15)" }}>
 
         {/* Password sign-in (primary) */}
         {mode === "password" && (
@@ -115,7 +115,7 @@ export default function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="pastor@mychurch.org"
                 className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
-                style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
+                style={{ background: "#0E0C18", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
               />
             </div>
 
@@ -141,7 +141,7 @@ export default function Home() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
-                style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
+                style={{ background: "#0E0C18", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
               />
             </div>
 
@@ -201,7 +201,7 @@ export default function Home() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="pastor@mychurch.org"
                   className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
-                  style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
+                  style={{ background: "#0E0C18", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
                 />
               </div>
 
@@ -269,7 +269,7 @@ export default function Home() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="pastor@mychurch.org"
                   className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
-                  style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
+                  style={{ background: "#0E0C18", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
                 />
               </div>
 
