@@ -85,18 +85,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#08060D" }}>
-      <div className="w-full max-w-md px-8 py-12 rounded-2xl" style={{ background: "#120A1F", border: "1px solid rgba(212, 175, 55, 0.35)", boxShadow: "0 25px 60px rgba(0,0,0,0.6)" }}>
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center mb-4">
-            <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: "200px", height: "auto" }} />
+      <div className="w-full max-w-md px-6">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-3">
+            <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: "190px", height: "auto" }} />
           </div>
-          <p style={{ color: "#D4AF37", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "12px", marginBottom: "4px" }}>
+          <p style={{ color: "#D4AF37", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "5px" }}>
             More Than a Check-In Platform.
           </p>
-          <p style={{ color: "#A9A9B8", fontSize: "14px" }}>
+          <p style={{ color: "#A9A9B8", fontSize: "13px" }}>
             Welcome Every Family. Know Every Child. Shepherd Every Journey.
           </p>
         </div>
+
+        <div className="rounded-2xl px-8 py-8" style={{ background: "#0D0A14", border: "1px solid rgba(212, 175, 55, 0.2)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
 
         {/* Password sign-in (primary) */}
         {mode === "password" && (
@@ -296,6 +298,7 @@ export default function Home() {
             </form>
           )
         )}
+        </div>
       </div>
     </div>
   );
