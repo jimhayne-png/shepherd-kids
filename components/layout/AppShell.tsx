@@ -25,9 +25,11 @@ interface AppShellProps {
 type SkItem = { label: string; href: string; emoji: string; exact?: boolean };
 
 const SK_ITEMS: SkItem[] = [
-  { label: "Ministry Care",          href: "/dashboard/children-ministry",               emoji: "👨‍👩‍👧", exact: true },
-  { label: "Families",               href: "/dashboard/children-ministry/children",      emoji: "👪" },
-  { label: "Check-In",               href: "/dashboard/children-ministry/live-checkin",  emoji: "✅" },
+  { label: "Ministry Care",          href: "/dashboard/children-ministry",                emoji: "👨‍👩‍👧", exact: true },
+  { label: "Families",               href: "/dashboard/children-ministry/parents",        emoji: "👪" },
+  { label: "ShepherdKids",           href: "/dashboard/children-ministry/children",       emoji: "🧒" },
+  { label: "Parent Communication",   href: "/dashboard/children-ministry/parent-update",  emoji: "📧" },
+  { label: "Check-In",               href: "/dashboard/children-ministry/live-checkin",   emoji: "✅" },
   { label: "Celebrations",           href: "/dashboard/birthdays",                       emoji: "🎉" },
   { label: "Faith Journey",          href: "/dashboard/children-ministry/faith-journey", emoji: "✝️" },
   { label: "Volunteers",             href: "/dashboard/children-ministry/volunteers",    emoji: "🙋" },

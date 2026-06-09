@@ -53,12 +53,12 @@ function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days = 7)
 }
 
 const SECTIONS = [
-  { label: "📋 Check-In Setup", href: "/dashboard/children-ministry/checkin-setup", desc: "Manage sessions & rooms" },
-  { label: "✅ Check-In", href: "/dashboard/children-ministry/live-checkin", desc: "View who's checked in now" },
-  { label: "📊 Reports", href: "/dashboard/children-ministry/attendance-report", desc: "Historical attendance data" },
-  { label: "👪 Families", href: "/dashboard/children-ministry/children", desc: "Child directory & profiles" },
-  { label: "👨‍👩‍👧 Parents", href: "/dashboard/children-ministry/parents", desc: "All registered families" },
-  { label: "📧 Parent Update", href: "/dashboard/children-ministry/parent-update", desc: "Send family communications" },
+  { label: "📋 Check-In Setup",         href: "/dashboard/children-ministry/checkin-setup",   desc: "Manage sessions & rooms" },
+  { label: "✅ Check-In",               href: "/dashboard/children-ministry/live-checkin",     desc: "View who's checked in now" },
+  { label: "📊 Reports",                href: "/dashboard/children-ministry/attendance-report", desc: "Historical attendance data" },
+  { label: "👪 Families",               href: "/dashboard/children-ministry/parents",          desc: "Households, parents & pickups" },
+  { label: "🧒 ShepherdKids",           href: "/dashboard/children-ministry/children",         desc: "Child directory & profiles" },
+  { label: "📧 Parent Communication",   href: "/dashboard/children-ministry/parent-update",    desc: "Email updates & family messages" },
 ];
 
 export default function ChildrenMinistryPage() {
