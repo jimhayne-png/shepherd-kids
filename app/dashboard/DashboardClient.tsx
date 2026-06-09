@@ -38,6 +38,57 @@ const navItems: NavItem[] = [
   { label: "📖 Tutorials", href: "/dashboard/tutorials" },
 ];
 
+const CARE_CARDS = [
+  {
+    title: "Families Needing Encouragement",
+    desc: "Missed 3 or more Sundays",
+    href: "/dashboard/children-ministry",
+    action: "View",
+    emoji: "🤝",
+    countLabel: "families",
+  },
+  {
+    title: "Birthdays This Week",
+    desc: "Celebrate children and families",
+    href: "/dashboard/birthdays",
+    action: "View",
+    emoji: "🎂",
+    countLabel: "upcoming",
+  },
+  {
+    title: "Spiritual Birthdays Today",
+    desc: "Remember faith milestones",
+    href: "/dashboard/birthdays",
+    action: "View",
+    emoji: "✝️",
+    countLabel: "today",
+  },
+  {
+    title: "Follow-Up Needed",
+    desc: "New or returning families",
+    href: "/dashboard/children-ministry/children",
+    action: "Review",
+    emoji: "🔄",
+    countLabel: "families",
+  },
+  {
+    title: "Promotion Sunday Ready",
+    desc: "Children ready for next classroom",
+    href: "/dashboard/children-ministry/children",
+    action: "Review",
+    emoji: "🎓",
+    countLabel: "children",
+  },
+  {
+    title: "Parent Updates Overdue",
+    desc: "Allergies, pickups, or family info",
+    href: "/dashboard/children-ministry/children",
+    action: "Review",
+    emoji: "📋",
+    countLabel: "parents",
+  },
+];
+
 const MODULE_CARDS = [
   { label: "Ministry Care",         href: "/dashboard/children-ministry",               desc: "Families needing encouragement",               emoji: "👨‍👩‍👧", gradient: "linear-gradient(135deg, #7B2CBF, #5b21b6)" },
   { label: "Families",              href: "/dashboard/children-ministry/children",      desc: "Parents & children",                           emoji: "👪",   gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
@@ -223,7 +274,7 @@ export default function DashboardClient({
             ← All Churches
           </button>
         )}
-        <p className="text-green-200 text-sm font-medium mb-1">{formatDate()}</p>
+        <p className="text-sm font-medium mb-1" style={{ color: "#D4AF37" }}>{formatDate()}</p>
         <h1 className="text-3xl font-bold text-white mb-1">
           {getGreeting()}{churchName ? `, ${churchName}` : ""}
         </h1>
@@ -232,7 +283,7 @@ export default function DashboardClient({
         )}
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 -mt-6">
           {[
             { label: "Total Members", value: stats.members, emoji: "👥", color: "#3b82f6" },
@@ -260,7 +311,78 @@ export default function DashboardClient({
           ))}
         </div>
 
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">
+        {/* Ministry Care Today */}
+        <div className="mb-10">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
+              Ministry Care Today
+            </h2>
+            <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>
+              Actionable care items to help you shepherd every child and family.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {CARE_CARDS.map((card) => (
+              <div
+                key={card.title}
+                style={{
+                  background: "#120A1F",
+                  border: "1px solid rgba(212,175,55,0.28)",
+                  borderRadius: "16px",
+                  padding: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
+              >
+                {/* Title row with count */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px" }}>
+                      <span style={{ fontSize: "17px", flexShrink: 0 }}>{card.emoji}</span>
+                      <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "13px", lineHeight: 1.3, margin: 0 }}>
+                        {card.title}
+                      </p>
+                    </div>
+                    <p style={{ color: "#D8D8E8", fontSize: "12px", lineHeight: 1.5, margin: 0 }}>
+                      {card.desc}
+                    </p>
+                  </div>
+                  <div style={{ flexShrink: 0, textAlign: "right" }}>
+                    <p style={{ color: "#D4AF37", fontSize: "30px", fontWeight: 700, lineHeight: 1, margin: 0 }}>
+                      0
+                    </p>
+                    <p style={{ color: "rgba(212,175,55,0.6)", fontSize: "10px", margin: "2px 0 0", fontWeight: 500 }}>
+                      {card.countLabel}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action button */}
+                <a
+                  href={card.href}
+                  style={{
+                    alignSelf: "flex-start",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#ffffff",
+                    background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                    borderRadius: "8px",
+                    padding: "5px 12px",
+                    textDecoration: "none",
+                  }}
+                >
+                  {card.action} →
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#D8D8E8" }}>
           Modules
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
