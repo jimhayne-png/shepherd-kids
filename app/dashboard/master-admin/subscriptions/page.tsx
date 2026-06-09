@@ -374,7 +374,7 @@ export default function SubscriptionsPage() {
           Subscription Management
         </h1>
         <p style={{ color: "#bbf7d0", fontSize: 14, margin: 0 }}>
-          Manage subscriptions, trials, billing status, and church access across the Shepherd Well
+          Manage subscriptions, trials, billing status, and church access across the ShepherdKids
           platform.
         </p>
       </div>

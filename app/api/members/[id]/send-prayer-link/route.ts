@@ -65,7 +65,7 @@ export async function POST(
   const htmlBody = `
     <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #f9f7f4; padding: 32px; border-radius: 12px;">
       <div style="background: #1A4A2E; padding: 32px 24px; border-radius: 8px; text-align: center; margin-bottom: 32px;">
-        <p style="color: rgba(255,255,255,0.7); margin: 0 0 8px; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase;">ShepherdWell</p>
+        <p style="color: rgba(255,255,255,0.7); margin: 0 0 8px; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase;">ShepherdKids</p>
         <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: normal;">Your Personal Prayer Button</h1>
         <p style="color: rgba(255,255,255,0.75); margin: 8px 0 0; font-size: 15px;">${churchName}</p>
       </div>
@@ -101,7 +101,7 @@ export async function POST(
 
   try {
     await resend.emails.send({
-      from: 'ShepherdWell <noreply@shepherdwell.church>',
+      from: 'ShepherdKids <noreply@shepherdwell.church>',
       to: member.email,
       subject: `Your personal prayer button is ready — ${churchName}`,
       html: htmlBody,

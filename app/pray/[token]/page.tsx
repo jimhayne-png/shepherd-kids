@@ -152,7 +152,7 @@ export default function PrayPage({
           <div style={{ marginBottom: "32px" }}>
             <img
               src="/shepherdwell-logo.png"
-              alt="ShepherdWell"
+              alt="ShepherdKids"
               style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", margin: "0 auto", display: "block", border: "2px solid rgba(26,74,46,0.2)" }}
             />
           </div>
@@ -215,7 +215,7 @@ export default function PrayPage({
       <div style={{ background: "#1A4A2E", padding: "24px 20px", textAlign: "center" }}>
         <img
           src="/shepherdwell-logo.png"
-          alt="ShepherdWell"
+          alt="ShepherdKids"
           style={{ width: "72px", height: "72px", borderRadius: "50%", objectFit: "cover", margin: "0 auto 12px", display: "block", border: "2px solid rgba(255,255,255,0.25)" }}
         />
         <h1 style={{ color: "white", margin: "0 0 4px", fontSize: "20px", fontFamily: "Georgia, serif", fontWeight: "normal" }}>
@@ -373,7 +373,7 @@ export default function PrayPage({
 
           <p style={{ textAlign: "center", color: "#9ca3af", fontSize: "12px", fontFamily: "Georgia, serif", marginTop: "16px", lineHeight: "1.5" }}>
             Your request is handled with care and confidentiality.<br />
-            Powered by ShepherdWell
+            Powered by ShepherdKids
           </p>
         </form>
       </div>

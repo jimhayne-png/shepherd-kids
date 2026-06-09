@@ -43,7 +43,7 @@ function downloadTemplate() {
   const blob = new Blob([csv], { type: "text/csv" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "shepherdwell-members-template.csv";
+  a.download = "shepherdkids-members-template.csv";
   a.click();
   URL.revokeObjectURL(a.href);
 }

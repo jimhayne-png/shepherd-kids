@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 
       if (incomplete === 0) continue; // All done, no reminder needed
 
-      const html = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1f2937"><div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0"><h1 style="color:white;margin:0;font-size:22px;font-weight:normal">${church.name}</h1><p style="color:#86efac;margin:6px 0 0;font-size:14px">Annual Pastor Touch — Week ${currentWeek} of 52</p></div><div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px"><p style="color:#374151;margin:0 0 20px">Hi ${pastor.title ? pastor.title + ' ' : ''}${pastor.name}, here are your ${assignments.length} member${assignments.length !== 1 ? 's' : ''} for this week. ${incomplete} still need${incomplete === 1 ? 's' : ''} follow up.</p><table style="width:100%;border-collapse:collapse">${rows}</table><hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"><p style="font-size:12px;color:#9ca3af;text-align:center">Sent via ShepherdWell Annual Pastor Touch</p></div></div>`;
+      const html = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1f2937"><div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0"><h1 style="color:white;margin:0;font-size:22px;font-weight:normal">${church.name}</h1><p style="color:#86efac;margin:6px 0 0;font-size:14px">Annual Pastor Touch — Week ${currentWeek} of 52</p></div><div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px"><p style="color:#374151;margin:0 0 20px">Hi ${pastor.title ? pastor.title + ' ' : ''}${pastor.name}, here are your ${assignments.length} member${assignments.length !== 1 ? 's' : ''} for this week. ${incomplete} still need${incomplete === 1 ? 's' : ''} follow up.</p><table style="width:100%;border-collapse:collapse">${rows}</table><hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"><p style="font-size:12px;color:#9ca3af;text-align:center">Sent via ShepherdKids Annual Pastor Touch</p></div></div>`;
 
       // Send to pastor's email, fall back to admin emails
       const recipients = pastor.email ? [pastor.email] : adminEmails;
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
       try {
         await resend.emails.send({
-          from: 'ShepherdWell <onboarding@resend.dev>',
+          from: 'ShepherdKids <onboarding@resend.dev>',
           to: recipients,
           subject: `Your Pastor Touch list for Week ${currentWeek} — ${assignments.length} member${assignments.length !== 1 ? 's' : ''}`,
           html,

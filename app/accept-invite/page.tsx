@@ -99,11 +99,11 @@ function AcceptInviteContent() {
         <div style={{ background: "#1A4A2E", borderRadius: "16px 16px 0 0", padding: "40px 32px", textAlign: "center" }}>
           <img
             src="/shepherdwell-logo.png"
-            alt="ShepherdWell"
+            alt="ShepherdKids"
             style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", margin: "0 auto 16px", display: "block", border: "2px solid rgba(255,255,255,0.25)" }}
           />
           <h1 style={{ color: "white", margin: 0, fontSize: "22px", fontFamily: "Georgia, serif", fontWeight: "normal" }}>
-            Welcome to ShepherdWell
+            Welcome to ShepherdKids
           </h1>
           <p style={{ color: "rgba(255,255,255,0.7)", margin: "8px 0 0", fontSize: "15px", fontFamily: "Georgia, serif" }}>
             {churchName}
@@ -125,7 +125,7 @@ function AcceptInviteContent() {
             <p style={{ fontFamily: "Georgia, serif", fontSize: "14px", color: "#166534", lineHeight: "1.7", margin: 0 }}>
               As a ministry shepherd, you'll help ensure every member of {deptName} receives
               a personal touch each month — through emails, phone calls, and handwritten notes.
-              ShepherdWell will show you exactly who needs what each month.
+              ShepherdKids will show you exactly who needs what each month.
             </p>
           </div>
 

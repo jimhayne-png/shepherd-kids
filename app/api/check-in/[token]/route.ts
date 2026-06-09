@@ -52,10 +52,10 @@ async function autoEnrollVisitor(churchId: string, visitorId: string, email: str
       const { data: church } = await admin.from('churches').select('name').eq('id', churchId).maybeSingle();
       const resend = new Resend(process.env.RESEND_API_KEY!);
       await resend.emails.send({
-        from: 'ShepherdWell <onboarding@resend.dev>',
+        from: 'ShepherdKids <onboarding@resend.dev>',
         to: email,
         subject: firstStep.email_subject ?? `Welcome from ${church?.name ?? 'our church'}!`,
-        html: `<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto"><div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0"><h1 style="color:white;margin:0;font-size:22px;font-weight:normal">${church?.name ?? 'Our Church'}</h1></div><div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px"><p style="font-size:16px;line-height:1.7;color:#374151;white-space:pre-wrap">${firstStep.email_body ?? ''}</p><hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0"/><p style="font-size:13px;color:#9ca3af;text-align:center">Sent via ShepherdWell</p></div></div>`,
+        html: `<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto"><div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0"><h1 style="color:white;margin:0;font-size:22px;font-weight:normal">${church?.name ?? 'Our Church'}</h1></div><div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px"><p style="font-size:16px;line-height:1.7;color:#374151;white-space:pre-wrap">${firstStep.email_body ?? ''}</p><hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0"/><p style="font-size:13px;color:#9ca3af;text-align:center">Sent via ShepherdKids</p></div></div>`,
       });
       await admin.from('visitor_sequence_log').insert({ enrollment_id: enrollment.id, step_id: firstStep.id, result: 'sent' });
       const { data: nextStep } = await admin

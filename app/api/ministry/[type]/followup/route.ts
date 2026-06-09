@@ -207,12 +207,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const tableRows = rows.map(r => `<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:10px 0;font-size:15px;color:#111827;">${r.name}</td><td style="padding:10px 0;text-align:right;font-size:14px;color:${r.done === 3 ? '#22c55e' : r.done > 0 ? '#f59e0b' : '#9ca3af'}">${r.done === 3 ? '✅ Complete' : r.done > 0 ? `🟡 ${r.done}/3 touches` : '⬜ Not started'}</td></tr>`).join('');
 
-  const html = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1f2937"><div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0"><h1 style="color:white;margin:0;font-size:22px;font-weight:normal">${churchName}</h1><p style="color:#86efac;margin:6px 0 0;font-size:14px">${cfg?.name ?? type} Follow Up Reminder — ${periodLabel}</p></div><div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px"><table style="width:100%;border-collapse:collapse">${tableRows}</table><hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"><p style="font-size:12px;color:#9ca3af;text-align:center">Sent via ShepherdWell</p></div></div>`;
+  const html = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1f2937"><div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0"><h1 style="color:white;margin:0;font-size:22px;font-weight:normal">${churchName}</h1><p style="color:#86efac;margin:6px 0 0;font-size:14px">${cfg?.name ?? type} Follow Up Reminder — ${periodLabel}</p></div><div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px"><table style="width:100%;border-collapse:collapse">${tableRows}</table><hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"><p style="font-size:12px;color:#9ca3af;text-align:center">Sent via ShepherdKids</p></div></div>`;
 
   try {
     const resend = new Resend(resendKey);
     await resend.emails.send({
-      from: 'ShepherdWell <onboarding@resend.dev>',
+      from: 'ShepherdKids <onboarding@resend.dev>',
       to: adminEmails,
       subject: `${cfg?.name ?? type} Follow Up Reminder — ${periodLabel}`,
       html,

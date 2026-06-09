@@ -348,7 +348,7 @@ function StepDone() {
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Your church is set up!</h2>
         <p className="text-gray-500 text-sm">
-          You&apos;re ready to start managing your congregation in ShepherdWell.
+          You&apos;re ready to start managing your congregation in ShepherdKids.
         </p>
       </div>
       <button

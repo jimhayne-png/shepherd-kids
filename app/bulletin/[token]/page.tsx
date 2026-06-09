@@ -130,7 +130,7 @@ export default function PublicBulletinPage({ params }: { params: Promise<{ token
         </div>
 
         {/* Footer */}
-        <p style={{ textAlign: "center", color: "#9ca3af", fontSize: "12px" }}>{churchName} · Powered by ShepherdWell</p>
+        <p style={{ textAlign: "center", color: "#9ca3af", fontSize: "12px" }}>{churchName} · Powered by ShepherdKids</p>
       </div>
     </div>
   );

@@ -234,7 +234,7 @@ async function sendParentEmails(
             </div>` : ''}
 
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
-            <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent with love by ${churchName} Children's Ministry · Powered by ShepherdWell</p>
+            <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent with love by ${churchName} Children's Ministry · Powered by ShepherdKids</p>
           </div>
         </div>`;
 

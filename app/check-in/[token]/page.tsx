@@ -176,7 +176,7 @@ export default function PublicCheckInPage({ params }: { params: Promise<{ token:
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">Powered by ShepherdWell</p>
+        <p className="text-center text-xs text-gray-400 mt-6">Powered by ShepherdKids</p>
       </div>
     </div>
   );

@@ -118,13 +118,13 @@ export async function POST(request: NextRequest) {
             <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">"${requestText.trim()}"</p>
           </div>
           <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-            Submitted through the ShepherdWell Prayer Button.
+            Submitted through the ShepherdKids Prayer Button.
           </p>
         </div>
       `;
 
       await resend.emails.send({
-        from: 'ShepherdWell <noreply@shepherdwell.church>',
+        from: 'ShepherdKids <noreply@shepherdwell.church>',
         to: recipients,
         subject,
         html: htmlBody,
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
       if (isUrgent) {
         await resend.emails.send({
-          from: 'ShepherdWell <noreply@shepherdwell.church>',
+          from: 'ShepherdKids <noreply@shepherdwell.church>',
           to: recipients,
           subject: `URGENT: Prayer needed now — ${displayName}`,
           html: htmlBody,

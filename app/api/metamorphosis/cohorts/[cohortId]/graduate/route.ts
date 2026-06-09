@@ -103,7 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ coh
     </div>
     <p style="color:#374151;font-size:15px;line-height:1.7;margin:0;">With love and celebration,<br><strong>${churchName}</strong></p>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
-    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdWell</p>
+    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdKids</p>
   </div>
 </div>`;
           await resend.emails.send({

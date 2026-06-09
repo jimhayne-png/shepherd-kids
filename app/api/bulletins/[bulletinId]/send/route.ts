@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bul
     <p style="color:#6b7280;font-size:13px;margin:0 0 16px;">Or scan the QR code below:</p>
     <img src="${qrUrl}" alt="Scan to view bulletin" width="160" height="160" style="border-radius:8px;border:1px solid #e5e7eb;" />
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;" />
-    <p style="font-size:12px;color:#9ca3af;margin:0;">Sent by ${churchName} · Powered by ShepherdWell</p>
+    <p style="font-size:12px;color:#9ca3af;margin:0;">Sent by ${churchName} · Powered by ShepherdKids</p>
   </div>
 </div>`;
 

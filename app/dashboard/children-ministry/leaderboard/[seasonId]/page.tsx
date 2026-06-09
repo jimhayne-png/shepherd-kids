@@ -131,7 +131,7 @@ export default function LeaderboardPage({ params }: { params: Promise<{ seasonId
 
       {/* Footer */}
       <div className="py-4 px-12 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-        <p className="text-gray-500 text-sm">ShepherdWell · Children's Ministry</p>
+        <p className="text-gray-500 text-sm">ShepherdKids · Children's Ministry</p>
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <p className="text-gray-500 text-sm">

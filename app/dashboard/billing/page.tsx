@@ -40,7 +40,7 @@ export default function BillingPage() {
       <div className="px-8 py-8" style={{ background: "linear-gradient(135deg, #1A4A2E 0%, #2D6B42 100%)" }}>
         <Link href="/dashboard/settings" className="text-green-300 hover:text-white text-sm transition-colors block mb-2">← Settings</Link>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Billing</h1>
-        <p className="text-green-200 text-sm mt-1">Manage your ShepherdWell subscription</p>
+        <p className="text-green-200 text-sm mt-1">Manage your ShepherdKids subscription</p>
       </div>
 
       <div className="px-8 py-16 bg-gray-50 min-h-screen flex items-start">

@@ -111,7 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
                 <h2 style="color:#1A4A2E;font-size:20px;margin:0 0 20px;">${title.trim()}</h2>
                 ${htmlBody}
                 <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;">
-                <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdWell</p>
+                <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdKids</p>
               </div>
             </div>`,
         });

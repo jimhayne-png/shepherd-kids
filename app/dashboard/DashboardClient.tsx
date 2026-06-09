@@ -196,7 +196,7 @@ export default function DashboardClient({
             Your free trial has ended
           </h1>
           <p className="text-gray-500 text-sm mb-6">
-            To continue using ShepherdWell, please contact us to activate your subscription.
+            To continue using ShepherdKids, please contact us to activate your subscription.
           </p>
           <a
             href="mailto:support@shepherdwell.com"

@@ -65,7 +65,7 @@ async function processChurch(churchId: string, resend: Resend) {
     if (step.step_type === 'email' && visitor?.email) {
       try {
         await resend.emails.send({
-          from: 'ShepherdWell <onboarding@resend.dev>',
+          from: 'ShepherdKids <onboarding@resend.dev>',
           to: visitor.email,
           subject: step.email_subject ?? `A message from ${church?.name ?? 'our church'}`,
           html: `
@@ -76,7 +76,7 @@ async function processChurch(churchId: string, resend: Resend) {
               <div style="background: white; padding: 36px 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
                 <p style="font-size: 16px; line-height: 1.7; color: #374151; white-space: pre-wrap;">${step.email_body ?? ''}</p>
                 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 28px 0;" />
-                <p style="font-size: 13px; color: #9ca3af; text-align: center;">Sent via ShepherdWell</p>
+                <p style="font-size: 13px; color: #9ca3af; text-align: center;">Sent via ShepherdKids</p>
               </div>
             </div>
           `,

@@ -65,7 +65,7 @@ function PublicPreview({ bulletin, sections, announcements, churchName }: { bull
             ))}
           </div>
         )}
-        <p style={{ fontSize: "11px", color: "#9ca3af", textAlign: "center", margin: "12px 0 0" }}>Powered by ShepherdWell</p>
+        <p style={{ fontSize: "11px", color: "#9ca3af", textAlign: "center", margin: "12px 0 0" }}>Powered by ShepherdKids</p>
       </div>
     </div>
   );

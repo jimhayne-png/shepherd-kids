@@ -200,13 +200,13 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
             </table>` : ''}
           <p style="font-size:14px;color:#6b7280;line-height:1.6;">Click <strong>Print Letter</strong> next to each name to open a print-ready letter you can sign and mail. These letters are personalized and milestone-aware.</p>
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
-          <p style="font-size:12px;color:#9ca3af;text-align:center;">Sent via ShepherdWell · <a href="${baseUrl}/dashboard/birthdays" style="color:#9ca3af;">View all upcoming</a></p>
+          <p style="font-size:12px;color:#9ca3af;text-align:center;">Sent via ShepherdKids · <a href="${baseUrl}/dashboard/birthdays" style="color:#9ca3af;">View all upcoming</a></p>
         </div>
       </div>`;
 
     try {
       await resend.emails.send({
-        from: 'ShepherdWell <onboarding@resend.dev>',
+        from: 'ShepherdKids <onboarding@resend.dev>',
         to: adminEmails,
         subject: `${churchName} — ${newEntries.length} Birthday${newEntries.length !== 1 ? '/Anniversary' : ''} Today`,
         html,

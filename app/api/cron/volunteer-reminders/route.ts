@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
             </div>
             <p style="font-size:14px;color:#374151;margin:0;">Thank you for serving!</p>
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;">
-            <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdWell</p>
+            <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdKids</p>
           </div></div>`,
       });
       await admin.from('cm_volunteer_assignments').update({ reminder_sent: true, reminder_sent_at: now.toISOString() }).eq('id', assignment.id);

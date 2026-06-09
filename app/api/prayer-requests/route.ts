@@ -93,13 +93,13 @@ async function sendPrayerEmails(opts: {
         <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">"${requestText}"</p>
       </div>
       <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-        This request was submitted through ShepherdWell. Please respond with prayer and pastoral care.
+        This request was submitted through ShepherdKids. Please respond with prayer and pastoral care.
       </p>
     </div>
   `;
 
   await resend.emails.send({
-    from: 'ShepherdWell <noreply@shepherdwell.church>',
+    from: 'ShepherdKids <noreply@shepherdwell.church>',
     to: recipients,
     subject,
     html: htmlBody,
@@ -107,7 +107,7 @@ async function sendPrayerEmails(opts: {
 
   if (isUrgent) {
     await resend.emails.send({
-      from: 'ShepherdWell <noreply@shepherdwell.church>',
+      from: 'ShepherdKids <noreply@shepherdwell.church>',
       to: recipients,
       subject: `URGENT: Prayer needed now — ${privacyLevel === 'anonymous' ? 'Anonymous Member' : displayName}`,
       html: htmlBody.replace('🙏 Prayer Request', '⚠️ URGENT Prayer Request'),

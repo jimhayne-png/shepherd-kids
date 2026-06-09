@@ -88,10 +88,10 @@ export default function Home() {
       <div className="w-full max-w-md px-8 py-12 bg-white rounded-2xl shadow-lg">
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-4">
-            <img src="/shepherdwell-logo.png" alt="ShepherdWell" style={{ width: "200px", height: "auto" }} />
+            <img src="/shepherdwell-logo.png" alt="ShepherdKids" style={{ width: "200px", height: "auto" }} />
           </div>
           <p className="text-gray-500 text-base mt-2">
-            Grow your congregation. Care for every member.
+            Welcome Every Family. Know Every Child. Shepherd Every Journey.
           </p>
         </div>
 

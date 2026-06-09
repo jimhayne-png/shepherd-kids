@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">We would love to make ${church.name} your family's church home. We meet every Sunday — we'd be overjoyed to see you again!</p>
     <p style="color:#374151;font-size:15px;line-height:1.7;margin:0;">With love,<br><strong>${church.name} Children's Ministry</strong></p>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;">
-    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdWell</p>
+    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdKids</p>
   </div>
 </div>`;
 

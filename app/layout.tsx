@@ -8,8 +8,8 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "ShepherdWell",
-  description: "Church Growth & Member Engagement Platform",
+  title: "ShepherdKids",
+  description: "Welcome Every Family. Know Every Child. Shepherd Every Journey.",
 };
 
 export default function RootLayout({

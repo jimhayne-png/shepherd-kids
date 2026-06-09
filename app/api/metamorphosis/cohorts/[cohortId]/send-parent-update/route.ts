@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ coh
     <p style="font-size:14px;color:#6b7280;margin:0 0 16px;">Next week: <strong>${nextWeekTopic}</strong></p>
     <p style="font-size:14px;color:#374151;margin:0;">Thank you for investing in ${student.first_name}'s journey!</p>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
-    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdWell · ${churchName}</p>
+    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent via ShepherdKids · ${churchName}</p>
   </div>
 </div>`;
 

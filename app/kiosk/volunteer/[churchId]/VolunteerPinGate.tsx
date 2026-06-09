@@ -201,7 +201,7 @@ export default function VolunteerPinGate({
               <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.25)" />
               <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
-            <span className="text-white text-xs font-semibold">ShepherdWell</span>
+            <span className="text-white text-xs font-semibold">ShepherdKids</span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-0.5">Select Your Room</h1>
           <p className="text-orange-100 text-sm">{churchName}</p>

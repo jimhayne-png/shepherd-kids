@@ -79,13 +79,13 @@ export async function POST(
   if (resendKey) {
     const resend = new Resend(resendKey);
     await resend.emails.send({
-      from: 'ShepherdWell <onboarding@resend.dev>',
+      from: 'ShepherdKids <onboarding@resend.dev>',
       to: member.email,
       subject: `You've been invited to lead ${dept.name} at ${churchName}`,
       html: `
         <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #1f2937;">
           <div style="background: #1A4A2E; padding: 32px; text-align: center; border-radius: 12px 12px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: normal;">ShepherdWell</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: normal;">ShepherdKids</h1>
           </div>
           <div style="background: white; padding: 40px; border: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
             <p style="font-size: 18px; margin-top: 0;">Dear ${firstName},</p>
@@ -102,7 +102,7 @@ export async function POST(
               </a>
             </div>
             <p style="font-size: 14px; color: #9ca3af; line-height: 1.6;">
-              This link will sign you in to ShepherdWell and take you directly to your dashboard.
+              This link will sign you in to ShepherdKids and take you directly to your dashboard.
               If you did not expect this invitation, you can safely ignore this email.
             </p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;" />

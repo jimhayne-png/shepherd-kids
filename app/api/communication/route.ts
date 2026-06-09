@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       if (recipientEmails.length > 0) {
         const resend = new Resend(resendKey);
         await resend.emails.send({
-          from: 'ShepherdWell <onboarding@resend.dev>',
+          from: 'ShepherdKids <onboarding@resend.dev>',
           to: recipientEmails,
           subject: `${churchName} — ${title.trim()}`,
           html: `
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
                 <h2 style="color: #1A4A2E; font-size: 22px; margin: 0 0 20px; font-weight: bold;">${title.trim()}</h2>
                 <div style="font-size: 16px; line-height: 1.7; color: #374151; white-space: pre-wrap;">${postBody.trim()}</div>
                 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 28px 0;" />
-                <p style="font-size: 13px; color: #9ca3af; text-align: center;">Sent via ShepherdWell</p>
+                <p style="font-size: 13px; color: #9ca3af; text-align: center;">Sent via ShepherdKids</p>
               </div>
             </div>
           `,
