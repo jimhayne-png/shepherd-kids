@@ -39,19 +39,14 @@ const navItems: NavItem[] = [
 ];
 
 const MODULE_CARDS = [
-  { label: "Members", href: "/dashboard/members", desc: "Manage your congregation", emoji: "👥", gradient: "linear-gradient(135deg, #3b82f6, #1d4ed8)" },
-  { label: "Departments", href: "/dashboard/departments", desc: "Ministries & teams", emoji: "🏛️", gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
-  { label: "Visitors", href: "/dashboard/visitors", desc: "Track & follow up visitors", emoji: "🆕", gradient: "linear-gradient(135deg, #8b5cf6, #6d28d9)" },
-  { label: "Calendar", href: "/dashboard/calendar", desc: "Events & scheduling", emoji: "📅", gradient: "linear-gradient(135deg, #f59e0b, #d97706)" },
-  { label: "Attendance", href: "/dashboard/attendance", desc: "Track service attendance", emoji: "✅", gradient: "linear-gradient(135deg, #14b8a6, #0f766e)" },
-  { label: "Communication", href: "/dashboard/communication", desc: "Keep every ministry connected", emoji: "📢", gradient: "linear-gradient(135deg, #06b6d4, #0e7490)" },
-  { label: "Annual Pastor Touch", href: "/dashboard/pastor-touch", desc: "Personal touch for every member", emoji: "🙏", gradient: "linear-gradient(135deg, #7c3aed, #4338ca)" },
-  { label: "Visitation", href: "/dashboard/visitation", desc: "Member care & visits", emoji: "🏥", gradient: "linear-gradient(135deg, #fb7185, #be123c)" },
-  { label: "Celebrations", href: "/dashboard/birthdays", desc: "Birthdays, spiritual birthdays, milestones & certificates", emoji: "🎉", gradient: "linear-gradient(135deg, #f59e0b, #92400e)" },
-  { label: "Prayer", href: "/dashboard/prayer", desc: "Prayer requests & updates", emoji: "🙋", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
-  { label: "Evangelism", href: "/dashboard/evangelism", desc: "Share the Gospel", emoji: "✝️", gradient: "linear-gradient(135deg, #ef4444, #991b1b)" },
-  { label: "Ministry Rosters", href: "/dashboard/ministry/childrens", desc: "Roster, attendance & follow-up", emoji: "⛪", gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
-  { label: "Bible Study Pods", href: "/dashboard/bible-study-pods", desc: "Small groups & curriculum", emoji: "🏠", gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
+  { label: "Ministry Care",         href: "/dashboard/children-ministry",               desc: "Families needing encouragement",               emoji: "👨‍👩‍👧", gradient: "linear-gradient(135deg, #7B2CBF, #5b21b6)" },
+  { label: "Families",              href: "/dashboard/children-ministry/children",      desc: "Parents & children",                           emoji: "👪",   gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
+  { label: "Check-In",              href: "/dashboard/children-ministry/live-checkin",  desc: "Today's check-in activity",                    emoji: "✅",   gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
+  { label: "Celebrations",          href: "/dashboard/birthdays",                       desc: "Birthdays, spiritual birthdays & certificates",  emoji: "🎉",   gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
+  { label: "Faith Journey",         href: "/dashboard/children-ministry/faith-journey", desc: "Spiritual milestones",                          emoji: "✝️",  gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
+  { label: "Volunteers",            href: "/dashboard/children-ministry/volunteers",    desc: "Team management",                              emoji: "🙋",   gradient: "linear-gradient(135deg, #14b8a6, #0f766e)" },
+  { label: "Label Printing",        href: "/dashboard/children-ministry/print-station", desc: "Name tags & pickup labels",                    emoji: "🏷️",  gradient: "linear-gradient(135deg, #f59e0b, #b45309)" },
+  { label: "Reports",               href: "/dashboard/children-ministry/attendance-report", desc: "Attendance & trends",                      emoji: "📊",   gradient: "linear-gradient(135deg, #3b82f6, #1d4ed8)" },
 ];
 
 function getGreeting() {
@@ -154,12 +149,12 @@ export default function DashboardClient({
           <p className="text-sm font-medium mb-1" style={{ color: "#D4AF37" }}>{formatDate()}</p>
           <h1 className="text-3xl font-bold text-white mb-1">Master Admin</h1>
           {userEmail && (
-            <p className="text-sm mt-2" style={{ color: "#A9A9B8" }}>Signed in as {userEmail}</p>
+            <p className="text-sm mt-2" style={{ color: "#D8D8E8" }}>Signed in as {userEmail}</p>
           )}
         </div>
 
         <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
-          <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#A9A9B8" }}>
+          <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#D8D8E8" }}>
             All Churches ({allChurches.length})
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -171,11 +166,11 @@ export default function DashboardClient({
                 style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.2)" }}
               >
                 <p className="font-semibold text-white">{church.name}</p>
-                <p className="text-xs mt-0.5 font-mono" style={{ color: "#A9A9B8" }}>{church.id}</p>
+                <p className="text-xs mt-0.5 font-mono" style={{ color: "#D8D8E8" }}>{church.id}</p>
               </button>
             ))}
             {allChurches.length === 0 && (
-              <p className="text-sm col-span-full" style={{ color: "#A9A9B8" }}>No churches found.</p>
+              <p className="text-sm col-span-full" style={{ color: "#D8D8E8" }}>No churches found.</p>
             )}
           </div>
         </div>
@@ -196,7 +191,7 @@ export default function DashboardClient({
           <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: "Georgia, serif" }}>
             Your free trial has ended
           </h1>
-          <p className="text-sm mb-6" style={{ color: "#A9A9B8" }}>
+          <p className="text-sm mb-6" style={{ color: "#D8D8E8" }}>
             To continue using ShepherdKids, please contact us to activate your subscription.
           </p>
           <a
@@ -233,7 +228,7 @@ export default function DashboardClient({
           {getGreeting()}{churchName ? `, ${churchName}` : ""}
         </h1>
         {userEmail && (
-          <p className="text-sm mt-2" style={{ color: "#A9A9B8" }}>Signed in as {userEmail}</p>
+          <p className="text-sm mt-2" style={{ color: "#D8D8E8" }}>Signed in as {userEmail}</p>
         )}
       </div>
 
@@ -259,7 +254,7 @@ export default function DashboardClient({
                 <p className="text-2xl font-bold text-white">
                   {stat.value === null ? "—" : stat.value}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>{stat.label}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#D8D8E8" }}>{stat.label}</p>
               </div>
             </div>
           ))}
@@ -268,7 +263,7 @@ export default function DashboardClient({
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">
           Modules
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {MODULE_CARDS.map((card) => (
             <a
               key={card.href}
@@ -278,7 +273,7 @@ export default function DashboardClient({
             >
               <div className="text-3xl mb-3">{card.emoji}</div>
               <p className="font-bold text-base leading-tight">{card.label}</p>
-              <p className="text-xs mt-1 opacity-75 leading-snug">{card.desc}</p>
+              <p className="text-xs mt-1 leading-snug" style={{ opacity: 0.9 }}>{card.desc}</p>
             </a>
           ))}
         </div>
