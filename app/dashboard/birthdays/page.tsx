@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { label: "Shepherd Pipeline", href: "/dashboard/shepherd" },
   { label: "Reviews", href: "/dashboard/reviews" },
   { label: "Evangelism", href: "/dashboard/evangelism" },
-  { label: "Birthdays", href: "/dashboard/birthdays" },
+  { label: "Celebrations", href: "/dashboard/birthdays" },
   { label: "Tutorials", href: "/dashboard/tutorials" },
   { label: "Settings", href: "/dashboard/settings" },
 ];
@@ -160,7 +160,7 @@ export default function BirthdaysPage() {
           <div>
             <p className="text-amber-200 text-sm mb-1">Next 30 Days</p>
             <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
-              🎂 Birthdays & Anniversaries
+              🎉 Celebrations
             </h1>
           </div>
           <button
@@ -286,6 +286,11 @@ export default function BirthdaysPage() {
                             )}
                           </div>
 
+                          {/* TODO: Celebrations — Certificate generation (Sprint 2)
+                              Add color and B&W certificate buttons here.
+                              Each certificate needs: child name, adult leader / Children's Minister name,
+                              church name, date, and milestone/award type.
+                              Route: /dashboard/birthdays/certificate/[logId] */}
                           <button
                             onClick={() => handlePrintLetter(ev)}
                             disabled={isPrinting}
