@@ -17,6 +17,16 @@ type NVChild = { id: string; child_name: string; room_id: string | null; room_na
 type NVFamily = { parentName: string; parentPhone: string; primaryRecordId: string; children: NVChild[]; followupLog: { id: string; status: string; follow_up_type: string; sent_at: string | null; parent_email: string | null } | null; visitCount: number };
 type NVSession = { session: { id: string; service_name: string; date: string; auto_followup: boolean }; families: NVFamily[] };
 
+const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function computeOpenTime(time: string, minutesBefore: number): string {
+  const [h, m] = time.split(":").map(Number);
+  const adjusted = ((h * 60 + m - minutesBefore) % 1440 + 1440) % 1440;
+  const oh = Math.floor(adjusted / 60);
+  const om = adjusted % 60;
+  return `${oh % 12 || 12}:${om.toString().padStart(2, "0")} ${oh < 12 ? "AM" : "PM"}`;
+}
+
 function fmtDate(d: string) {
   return new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 }
@@ -43,7 +53,7 @@ export default function CheckinSetupPage() {
     return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
   }
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "visitors">("rooms");
+  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "visitors" | "automation">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -70,6 +80,16 @@ export default function CheckinSetupPage() {
   const [newPINInput, setNewPINInput] = useState("");
   const [savingPIN, setSavingPIN] = useState(false);
 
+  // Automation settings (persisted in localStorage — no DB yet)
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoOpenMinutes, setAutoOpenMinutes] = useState(60);
+  const [autoSettingsSaved, setAutoSettingsSaved] = useState(false);
+
+  // Automation: add-service-schedule form (session_group UI-only — DB field pending)
+  const [showAddSchedule, setShowAddSchedule] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ name: "", day: "Sunday", time: "", sessionGroup: "" });
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
   // New Visitors tab
   const [nvSessions, setNvSessions] = useState<NVSession[]>([]);
   const [nvLoaded, setNvLoaded] = useState(false);
@@ -92,6 +112,41 @@ export default function CheckinSetupPage() {
       loadVisitors();
     }
   }, [tab, loading, nvLoaded]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("sk_checkin_auto_open");
+      if (raw) {
+        const p = JSON.parse(raw);
+        setAutoOpen(p.autoOpen ?? false);
+        setAutoOpenMinutes(p.autoOpenMinutes ?? 60);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  function saveAutoSettings() {
+    localStorage.setItem("sk_checkin_auto_open", JSON.stringify({ autoOpen, autoOpenMinutes }));
+    setAutoSettingsSaved(true);
+    setTimeout(() => setAutoSettingsSaved(false), 2000);
+  }
+
+  async function saveSchedule() {
+    if (!scheduleForm.name.trim() || !scheduleForm.time) return;
+    setSavingSchedule(true);
+    const res = await fetch("/api/checkin/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...ch() },
+      credentials: "include",
+      body: JSON.stringify({ name: scheduleForm.name, typicalDay: scheduleForm.day, typicalTime: scheduleForm.time }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setTemplates(t => [...t, d.template]);
+      setScheduleForm({ name: "", day: "Sunday", time: "", sessionGroup: "" });
+      setShowAddSchedule(false);
+    }
+    setSavingSchedule(false);
+  }
 
   async function toggleAutoFollowup(sessionId: string, current: boolean) {
     await fetch("/api/checkin/sessions", {
@@ -284,10 +339,10 @@ export default function CheckinSetupPage() {
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
-          {(["rooms", "templates", "sessions", "visitors"] as const).map(t => (
+        <div className="flex gap-1 mb-8 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit flex-wrap">
+          {(["rooms", "templates", "sessions", "visitors", "automation"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#6b7280" }}>
-              {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Service Templates" : t === "sessions" ? "🔑 Sessions" : "🆕 New Visitors"}
+              {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Templates" : t === "sessions" ? "🔑 Sessions" : t === "visitors" ? "🆕 New Visitors" : "⚡ Automation"}
             </button>
           ))}
         </div>
@@ -706,6 +761,241 @@ export default function CheckinSetupPage() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── AUTOMATION TAB ── */}
+        {tab === "automation" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Auto-Open Setting */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>⚡</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Auto-Open Check-In</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Automatically open sessions before service starts</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "20px" }}>
+                {/* Toggle */}
+                <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", width: "fit-content" }}>
+                  <div
+                    onClick={() => setAutoOpen(v => !v)}
+                    style={{ width: 44, height: 24, borderRadius: 12, background: autoOpen ? "#7B2CBF" : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", flexShrink: 0, border: `1px solid ${autoOpen ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}
+                  >
+                    <div style={{ position: "absolute", top: 2, left: autoOpen ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                  </div>
+                  <span style={{ color: "#FFFFFF", fontSize: "14px", fontWeight: 600 }}>{autoOpen ? "Enabled" : "Disabled"}</span>
+                </label>
+
+                {/* Minutes before */}
+                {autoOpen && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                    <span style={{ color: "#D8D8E8", fontSize: "13px" }}>Open check-in</span>
+                    <input
+                      type="number"
+                      min={5}
+                      max={240}
+                      value={autoOpenMinutes}
+                      onChange={e => setAutoOpenMinutes(Math.max(5, Math.min(240, parseInt(e.target.value) || 60)))}
+                      style={{ width: "68px", padding: "6px 10px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "15px", fontWeight: 700, color: "#D4AF37", textAlign: "center", outline: "none" }}
+                    />
+                    <span style={{ color: "#D8D8E8", fontSize: "13px" }}>minutes before service start</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveAutoSettings}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer" }}
+                >
+                  {autoSettingsSaved ? "✓ Saved" : "Save Settings"}
+                </button>
+              </div>
+
+              <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
+                  💡 Settings are saved locally. Backend automation activates in an upcoming update once service schedule fields are confirmed in the database.
+                </p>
+              </div>
+            </div>
+
+            {/* Service Schedule */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "20px" }}>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>📅 Service Schedule</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0" }}>
+                    {autoOpen
+                      ? `Active services will open check-in ${autoOpenMinutes} min before start`
+                      : "Define recurring services — enable Auto-Open above to activate automation"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAddSchedule(true)}
+                  style={{ padding: "8px 16px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer", flexShrink: 0 }}
+                >
+                  + Add Service
+                </button>
+              </div>
+
+              {/* Add Schedule Form */}
+              {showAddSchedule && (
+                <div style={{ background: "#0D0A14", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "20px", marginBottom: "16px" }}>
+                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: "0 0 16px" }}>New Service Schedule</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Service Name *</label>
+                      <input
+                        value={scheduleForm.name}
+                        onChange={e => setScheduleForm(f => ({ ...f, name: e.target.value }))}
+                        placeholder="e.g. Sunday Morning Service"
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", boxSizing: "border-box", outline: "none" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Day of Week *</label>
+                      <select
+                        value={scheduleForm.day}
+                        onChange={e => setScheduleForm(f => ({ ...f, day: e.target.value }))}
+                        className="select-dark"
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", outline: "none" }}
+                      >
+                        {DAYS_OF_WEEK.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Service Start Time *</label>
+                      <input
+                        type="time"
+                        value={scheduleForm.time}
+                        onChange={e => setScheduleForm(f => ({ ...f, time: e.target.value }))}
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", outline: "none" }}
+                      />
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>
+                        Session Group{" "}
+                        <span style={{ color: "rgba(212,175,55,0.5)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+                      </label>
+                      <input
+                        value={scheduleForm.sessionGroup}
+                        onChange={e => setScheduleForm(f => ({ ...f, sessionGroup: e.target.value }))}
+                        placeholder="e.g. Sunday Morning"
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "8px", fontSize: "13px", color: "rgba(255,255,255,0.45)", boxSizing: "border-box", outline: "none" }}
+                      />
+                      <p style={{ fontSize: "11px", color: "rgba(212,175,55,0.45)", marginTop: "5px" }}>
+                        🔒 Stored once the <code style={{ fontSize: "10px" }}>session_group</code> database field is confirmed.
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+                    <button
+                      onClick={saveSchedule}
+                      disabled={savingSchedule || !scheduleForm.name.trim() || !scheduleForm.time}
+                      style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: savingSchedule ? "not-allowed" : "pointer", opacity: (savingSchedule || !scheduleForm.name.trim() || !scheduleForm.time) ? 0.6 : 1 }}
+                    >
+                      {savingSchedule ? "Saving…" : "Save Service"}
+                    </button>
+                    <button
+                      onClick={() => { setShowAddSchedule(false); setScheduleForm({ name: "", day: "Sunday", time: "", sessionGroup: "" }); }}
+                      style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "10px", fontSize: "13px", color: "#A9A9B8", cursor: "pointer" }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Template list */}
+              {templates.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "12px" }}>📅</div>
+                  <p style={{ color: "#FFFFFF", fontWeight: 500, fontFamily: "Georgia, serif", margin: 0 }}>No services scheduled yet.</p>
+                  <p style={{ color: "#A9A9B8", fontSize: "13px", marginTop: "6px" }}>Add your first recurring service above.</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {templates.map(tpl => {
+                    const openAtTime = autoOpen && tpl.typical_time ? computeOpenTime(tpl.typical_time, autoOpenMinutes) : null;
+                    return (
+                      <div
+                        key={tpl.id}
+                        style={{
+                          background: "#0D0A14",
+                          border: `1px solid ${tpl.is_active ? "rgba(123,44,191,0.3)" : "rgba(212,175,55,0.1)"}`,
+                          borderRadius: "12px",
+                          padding: "16px 20px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "16px",
+                          opacity: tpl.is_active ? 1 : 0.55,
+                        }}
+                      >
+                        {/* Day + time badge */}
+                        <div style={{ flexShrink: 0, width: 58, textAlign: "center", background: tpl.is_active ? "rgba(123,44,191,0.15)" : "rgba(212,175,55,0.06)", borderRadius: "8px", padding: "6px 4px" }}>
+                          <p style={{ fontSize: "10px", fontWeight: 700, color: tpl.is_active ? "#c084fc" : "#6b6b8a", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                            {tpl.typical_day?.slice(0, 3) ?? "—"}
+                          </p>
+                          <p style={{ fontSize: "12px", fontWeight: 700, color: tpl.is_active ? "#FFFFFF" : "#6b6b8a", margin: "3px 0 0" }}>
+                            {tpl.typical_time ? fmtTime(tpl.typical_time) : "—"}
+                          </p>
+                        </div>
+
+                        {/* Name + open time */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 700, color: "#FFFFFF", fontSize: "14px", margin: 0 }}>{tpl.name}</p>
+                          {openAtTime ? (
+                            <p style={{ fontSize: "12px", color: "#D4AF37", margin: "3px 0 0" }}>
+                              ⚡ Check-in opens at {openAtTime}
+                            </p>
+                          ) : (
+                            <p style={{ fontSize: "12px", color: "#6b6b8a", margin: "3px 0 0" }}>
+                              {tpl.typical_day && tpl.typical_time
+                                ? `${tpl.typical_day} · ${fmtTime(tpl.typical_time)}`
+                                : "No schedule set"}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Status + toggle */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                          <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", fontWeight: 700, background: tpl.is_active ? "rgba(123,44,191,0.18)" : "rgba(212,175,55,0.07)", color: tpl.is_active ? "#c084fc" : "#6b6b8a" }}>
+                            {tpl.is_active ? "Active" : "Inactive"}
+                          </span>
+                          <button
+                            onClick={() => toggleTemplate(tpl)}
+                            style={{ padding: "5px 12px", borderRadius: "8px", border: "1px solid rgba(212,175,55,0.2)", background: "transparent", fontSize: "12px", fontWeight: 600, color: "#A9A9B8", cursor: "pointer" }}
+                          >
+                            {tpl.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* How it works */}
+            <div style={{ background: "rgba(123,44,191,0.07)", border: "1px solid rgba(123,44,191,0.2)", borderRadius: "16px", padding: "20px" }}>
+              <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: "0 0 12px" }}>⚙️ How Automation Works</h3>
+              <ul style={{ margin: 0, padding: "0 0 0 18px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[
+                  "On the day of service, ShepherdKids creates or activates a check-in session from the matching template.",
+                  "Check-in opens automatically at the configured time before service start.",
+                  "Duplicate sessions for the same church + template + date are never created.",
+                  "Sessions use your church timezone.",
+                  "A 4-digit PIN will be auto-generated if none exists for that day.",
+                ].map((note, i) => (
+                  <li key={i} style={{ fontSize: "13px", color: "#D8D8E8", lineHeight: 1.6 }}>{note}</li>
+                ))}
+              </ul>
+            </div>
+
           </div>
         )}
 
