@@ -40,6 +40,14 @@ const navItems: NavItem[] = [
 
 const CARE_CARDS = [
   {
+    title: "First-Time Families",
+    desc: "Welcome and connect with new visitors.",
+    href: "/dashboard/children-ministry/children",
+    action: "Welcome",
+    emoji: "👋",
+    countLabel: "families",
+  },
+  {
     title: "Families Needing Encouragement",
     desc: "Missed 3 or more Sundays",
     href: "/dashboard/children-ministry",
@@ -62,14 +70,6 @@ const CARE_CARDS = [
     action: "View",
     emoji: "✝️",
     countLabel: "upcoming",
-  },
-  {
-    title: "Follow-Up Needed",
-    desc: "New or returning families",
-    href: "/dashboard/children-ministry/children",
-    action: "Review",
-    emoji: "🔄",
-    countLabel: "families",
   },
   {
     title: "Promotion Sunday Ready",
@@ -286,9 +286,9 @@ export default function DashboardClient({
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 -mt-6">
           {[
-            { label: "Total Members", value: stats.members, emoji: "👥", color: "#3b82f6" },
-            { label: "Upcoming Events", value: stats.events, emoji: "📅", color: "#f59e0b" },
-            { label: "Open Prayer Requests", value: stats.prayers, emoji: "🙏", color: "#a855f7" },
+            { label: "Active Families",   value: stats.members, emoji: "👨‍👩‍👧‍👦", color: "#7B2CBF" },
+            { label: "Total Children",    value: stats.events,  emoji: "🧒",        color: "#9D4EDD" },
+            { label: "Family Care Needs", value: stats.prayers, emoji: "💛",        color: "#D4AF37" },
           ].map((stat) => (
             <div
               key={stat.label}
