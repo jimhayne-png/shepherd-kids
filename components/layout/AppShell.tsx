@@ -515,7 +515,7 @@ function LogoBlock() {
   return (
     <div style={{ padding: "16px", display: "flex", justifyContent: "center", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
       <img
-        src="/shepherdwell-logo.png"
+        src="/shepherd-kids-logo.png"
         alt="ShepherdKids"
         style={{ width: "140px", height: "140px", borderRadius: "50%", objectFit: "cover", objectPosition: "center", border: "2px solid rgba(240,192,64,0.4)" }}
       />

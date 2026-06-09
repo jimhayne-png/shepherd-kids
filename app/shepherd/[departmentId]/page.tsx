@@ -181,7 +181,7 @@ export default function ShepherdDepartmentPage({
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
             <img
-              src="/shepherdwell-logo.png"
+              src="/shepherd-kids-logo.png"
               alt="ShepherdKids"
               style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(255,255,255,0.25)" }}
             />

@@ -98,7 +98,7 @@ function AcceptInviteContent() {
       <div style={{ width: "100%", maxWidth: "460px" }}>
         <div style={{ background: "#1A4A2E", borderRadius: "16px 16px 0 0", padding: "40px 32px", textAlign: "center" }}>
           <img
-            src="/shepherdwell-logo.png"
+            src="/shepherd-kids-logo.png"
             alt="ShepherdKids"
             style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", margin: "0 auto 16px", display: "block", border: "2px solid rgba(255,255,255,0.25)" }}
           />

@@ -83,7 +83,7 @@ export default function MinistryShell({ type, children }: MinistryShellProps) {
     <div className="flex flex-col h-full" style={{ backgroundColor: "#1a2e1a" }}>
       {/* Top: logo + back */}
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: "10px" }}>
-        <img src="/shepherdwell-logo.png" alt="ShepherdKids" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+        <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
         <Link href="/dashboard" style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 600, textDecoration: "none", letterSpacing: "0.03em" }}
           onClick={() => setSidebarOpen(false)}>
           ← Dashboard

@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md px-8 py-12 bg-white rounded-2xl shadow-lg">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <img src="/shepherdwell-logo.png" alt="ShepherdKids" style={{ width: "160px", height: "auto" }} />
+            <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: "160px", height: "auto" }} />
           </div>
           <h1 className="text-xl font-semibold text-gray-800">Set your password</h1>
           <p className="text-sm text-gray-500 mt-1">Choose a new password for your account.</p>

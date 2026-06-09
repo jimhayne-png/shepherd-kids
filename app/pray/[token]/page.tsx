@@ -151,7 +151,7 @@ export default function PrayPage({
           {/* Logo */}
           <div style={{ marginBottom: "32px" }}>
             <img
-              src="/shepherdwell-logo.png"
+              src="/shepherd-kids-logo.png"
               alt="ShepherdKids"
               style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", margin: "0 auto", display: "block", border: "2px solid rgba(26,74,46,0.2)" }}
             />
@@ -214,7 +214,7 @@ export default function PrayPage({
       {/* Header */}
       <div style={{ background: "#1A4A2E", padding: "24px 20px", textAlign: "center" }}>
         <img
-          src="/shepherdwell-logo.png"
+          src="/shepherd-kids-logo.png"
           alt="ShepherdKids"
           style={{ width: "72px", height: "72px", borderRadius: "50%", objectFit: "cover", margin: "0 auto 12px", display: "block", border: "2px solid rgba(255,255,255,0.25)" }}
         />
