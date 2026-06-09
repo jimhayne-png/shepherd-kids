@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
@@ -89,12 +88,11 @@ function formatEventDate(iso: string) {
 }
 
 export default function BirthdaysPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [events, setEvents] = useState<BirthdayEvent[]>([]);
   const [stats, setStats] = useState<Stats>({ totalThisMonth: 0, milestonesThisMonth: 0, todayCount: 0 });
-  const [filter, setFilter] = useState<"all" | "birthday" | "anniversary" | "spiritual_birthday">("all");
+  const [filter, setFilter] = useState<"all" | "birthday" | "spiritual_birthday">("all");
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
@@ -121,9 +119,14 @@ export default function BirthdaysPage() {
     init();
   }, []);
 
-  const filtered = useMemo(() =>
-    filter === "all" ? events : events.filter(e => e.eventType === filter),
+  const filtered = useMemo(
+    () => filter === "all" ? events : events.filter(e => e.eventType === filter),
     [events, filter]
+  );
+
+  const upcomingCount = useMemo(
+    () => events.filter(e => e.eventType === "birthday" || e.eventType === "spiritual_birthday").length,
+    [events]
   );
 
   async function handlePrintLetter(ev: BirthdayEvent) {
@@ -164,7 +167,6 @@ export default function BirthdaysPage() {
         ? `Sent digest for ${data.processed} event${data.processed !== 1 ? "s" : ""}.`
         : "No new events found for today (already sent, or none today)."
     );
-    // Refresh event list
     const vRes = await fetch("/api/birthdays?days=30", { headers: { Authorization: `Bearer ${token}` } });
     const vData = await vRes.json();
     setEvents(vData.events ?? []);
@@ -175,8 +177,8 @@ export default function BirthdaysPage() {
   if (loading) {
     return (
       <AppShell navItems={navItems}>
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-400 font-serif">Loading…</p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", backgroundColor: "#08060D" }}>
+          <p style={{ color: "#A9A9B8", fontFamily: "Georgia, serif" }}>Loading…</p>
         </div>
       </AppShell>
     );
@@ -193,61 +195,74 @@ export default function BirthdaysPage() {
   return (
     <AppShell navItems={navItems}>
       {/* Hero */}
-      <div className="px-8 py-8" style={{ background: "linear-gradient(135deg, #92400e 0%, #b45309 100%)" }}>
-        <div className="flex items-center justify-between">
+      <div style={{ padding: "32px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <p className="text-amber-200 text-sm mb-1">Next 30 Days</p>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
+            <p style={{ color: "#D4AF37", fontSize: "13px", marginBottom: "4px", fontWeight: 600 }}>ShepherdKids</p>
+            <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#FFFFFF", fontFamily: "Georgia, serif", margin: 0 }}>
               🎉 Celebrations
             </h1>
           </div>
           <button
             onClick={handleSendToday}
             disabled={sending}
-            className="px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#F28C28", color: "white" }}
+            style={{
+              background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: "8px",
+              padding: "10px 20px",
+              fontSize: "14px",
+              fontWeight: 700,
+              cursor: sending ? "not-allowed" : "pointer",
+              opacity: sending ? 0.7 : 1,
+            }}
           >
             {sending ? "Sending…" : "📬 Send Today's Notifications"}
           </button>
         </div>
         {sendResult && (
-          <p className="mt-3 text-amber-100 text-sm bg-white/10 px-4 py-2 rounded-lg inline-block">{sendResult}</p>
+          <p style={{ marginTop: "12px", color: "#D4AF37", fontSize: "13px", background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", padding: "8px 16px", borderRadius: "8px", display: "inline-block" }}>
+            {sendResult}
+          </p>
         )}
       </div>
 
-      <div className="px-8 py-6 bg-gray-50 min-h-screen">
+      <div style={{ padding: "24px 32px", backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8 -mt-6">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "32px", marginTop: "-24px" }}>
           {[
-            { label: "This Month", value: stats.totalThisMonth, icon: "📅", color: "#F28C28" },
-            { label: "Milestones", value: stats.milestonesThisMonth, icon: "🎉", color: "#8b5cf6" },
-            { label: "Today", value: stats.todayCount, icon: "🎂", color: "#22c55e" },
+            { label: "This Month", value: stats.totalThisMonth, icon: "📅", color: "#7B2CBF" },
+            { label: "Milestones", value: stats.milestonesThisMonth, icon: "🎉", color: "#9D4EDD" },
+            { label: "Next 30 Days", value: upcomingCount, icon: "🎂", color: "#D4AF37" },
           ].map((s) => (
-            <div key={s.label} className="bg-white rounded-xl shadow-md px-6 py-5 flex items-center gap-4 border border-gray-100">
-              <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: s.color + "18" }}>
+            <div key={s.label} style={{ background: "#120A1F", borderRadius: "16px", padding: "20px 24px", display: "flex", alignItems: "center", gap: "16px", border: "1px solid rgba(212,175,55,0.25)" }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0, backgroundColor: s.color + "22" }}>
                 {s.icon}
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+                <p style={{ fontSize: "24px", fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{s.value}</p>
+                <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "2px 0 0" }}>{s.label}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* Filter tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "24px" }}>
           {([
-            { key: "all",              label: "All" },
-            { key: "birthday",         label: "🎂 Birthdays" },
-            { key: "anniversary",      label: "💍 Anniversaries" },
-            { key: "spiritual_birthday", label: "🕊️ Spiritual Birthdays" },
+            { key: "all",               label: "All" },
+            { key: "birthday",          label: "🎂 Birthdays" },
+            { key: "spiritual_birthday", label: "🕊️ Upcoming Spiritual Birthdays" },
           ] as const).map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${filter === key ? "text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"}`}
-              style={filter === key ? { backgroundColor: "#F28C28" } : {}}
+              style={
+                filter === key
+                  ? { background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF", border: "none", borderRadius: "8px", padding: "6px 16px", fontSize: "13px", fontWeight: 700, cursor: "pointer" }
+                  : { background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", color: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "6px 16px", fontSize: "13px", fontWeight: 500, cursor: "pointer" }
+              }
             >
               {label}
             </button>
@@ -255,15 +270,17 @@ export default function BirthdaysPage() {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
-            <div className="text-5xl mb-4">🎂</div>
-            <p className="text-gray-500 font-medium" style={{ fontFamily: "Georgia, serif" }}>
-              No {filter === "all" ? "events" : filter === "birthday" ? "birthdays" : filter === "anniversary" ? "anniversaries" : "spiritual birthdays"} in the next 30 days
+          <div style={{ background: "#120A1F", borderRadius: "16px", border: "1px dashed rgba(212,175,55,0.3)", padding: "64px", textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🎂</div>
+            <p style={{ color: "#FFFFFF", fontWeight: 500, fontFamily: "Georgia, serif", margin: 0 }}>
+              No celebrations in the next 30 days.
             </p>
-            <p className="text-gray-400 text-sm mt-1">Add birthdates, anniversaries, and spiritual birthdays on member profiles.</p>
+            <p style={{ color: "#A9A9B8", fontSize: "13px", marginTop: "6px" }}>
+              Add birthdays and spiritual birthdays on child profiles.
+            </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {sortedDates.map((date) => {
               const dayEvents = grouped[date];
               const isToday = dayEvents[0].daysAway === 0;
@@ -272,54 +289,86 @@ export default function BirthdaysPage() {
               return (
                 <div key={date}>
                   {/* Date header */}
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-sm font-semibold text-gray-500">
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                    <h3 style={{ fontSize: "13px", fontWeight: 600, color: "#A9A9B8", margin: 0 }}>
                       {formatEventDate(date)}
                     </h3>
-                    {isToday && <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700">Today</span>}
-                    {isTomorrow && <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700">Tomorrow</span>}
+                    {isToday && (
+                      <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", fontWeight: 700, background: "rgba(123,44,191,0.25)", color: "#c084fc" }}>
+                        Today
+                      </span>
+                    )}
+                    {isTomorrow && (
+                      <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", fontWeight: 700, background: "rgba(59,130,246,0.2)", color: "#93c5fd" }}>
+                        Tomorrow
+                      </span>
+                    )}
                     {!isToday && !isTomorrow && (
-                      <span className="text-xs text-gray-400">in {dayEvents[0].daysAway} days</span>
+                      <span style={{ fontSize: "12px", color: "#A9A9B8" }}>in {dayEvents[0].daysAway} days</span>
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {dayEvents.map((ev) => {
-                      const key = `${ev.memberId}:${ev.eventType}`;
-                      const isPrinting = printingId === key;
+                      const evKey = `${ev.memberId}:${ev.eventType}`;
+                      const isPrinting = printingId === evKey;
                       return (
                         <div
-                          key={key}
-                          className={`bg-white rounded-xl border shadow-sm flex items-center gap-4 px-5 py-4 ${isToday ? "border-amber-200" : "border-gray-100"}`}
+                          key={evKey}
+                          style={{
+                            background: "#120A1F",
+                            borderRadius: "12px",
+                            border: isToday ? "1px solid rgba(212,175,55,0.6)" : "1px solid rgba(212,175,55,0.2)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                            padding: "16px 20px",
+                          }}
                         >
                           {/* Event icon */}
                           <div
-                            className="w-11 h-11 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-                            style={{ backgroundColor: ev.eventType === "birthday" ? "#fef3c7" : ev.eventType === "anniversary" ? "#fce7f3" : "#ede9fe" }}
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: "50%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "18px",
+                              flexShrink: 0,
+                              backgroundColor: ev.eventType === "birthday" ? "rgba(212,175,55,0.15)" : "rgba(123,44,191,0.2)",
+                            }}
                           >
-                            {ev.eventType === "birthday" ? "🎂" : ev.eventType === "anniversary" ? "💍" : "🕊️"}
+                            {ev.eventType === "birthday" ? "🎂" : "🕊️"}
                           </div>
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                               <Link
                                 href={`/dashboard/members/${ev.memberId}/edit`}
-                                className="font-semibold text-gray-900 hover:text-green-800 transition-colors"
+                                style={{ fontWeight: 600, color: "#FFFFFF", textDecoration: "none" }}
                               >
                                 {ev.firstName} {ev.lastName}
                               </Link>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ev.eventType === "birthday" ? "bg-amber-100 text-amber-700" : ev.eventType === "anniversary" ? "bg-pink-100 text-pink-700" : "bg-purple-100 text-purple-700"}`}>
-                                {ev.eventType === "birthday" ? "Birthday" : ev.eventType === "anniversary" ? "Anniversary" : "🕊️ Spiritual Birthday"}
+                              <span style={{
+                                fontSize: "11px",
+                                padding: "2px 8px",
+                                borderRadius: "20px",
+                                fontWeight: 600,
+                                background: ev.eventType === "birthday" ? "rgba(212,175,55,0.15)" : "rgba(123,44,191,0.25)",
+                                color: ev.eventType === "birthday" ? "#D4AF37" : "#c084fc",
+                              }}>
+                                {ev.eventType === "birthday" ? "Birthday" : "🕊️ Spiritual Birthday"}
                               </span>
                               {ev.isMilestone && (
-                                <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: "#F28C28" }}>
-                                  🎉 {ev.milestoneYears}{ev.eventType === "birthday" ? "th Birthday" : ev.eventType === "anniversary" ? " Years" : " Years in Faith"}
+                                <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", fontWeight: 700, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF" }}>
+                                  🎉 {ev.milestoneYears}{ev.eventType === "birthday" ? "th Birthday" : " Years in Faith"}
                                 </span>
                               )}
                             </div>
                             {ev.years !== null && !ev.isMilestone && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {ev.eventType === "birthday" ? `Turning ${ev.years}` : ev.eventType === "anniversary" ? `${ev.years} years together` : `${ev.years} years in faith`}
+                              <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "4px 0 0" }}>
+                                {ev.eventType === "birthday" ? `Turning ${ev.years}` : `${ev.years} years in faith`}
                               </p>
                             )}
                           </div>
@@ -332,8 +381,17 @@ export default function BirthdaysPage() {
                           <button
                             onClick={() => handlePrintLetter(ev)}
                             disabled={isPrinting}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold text-white hover:opacity-90 transition-opacity flex-shrink-0"
-                            style={{ backgroundColor: isPrinting ? "#9ca3af" : "#F28C28" }}
+                            style={{
+                              background: isPrinting ? "#9ca3af" : "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                              color: "#FFFFFF",
+                              border: "none",
+                              borderRadius: "8px",
+                              padding: "8px 16px",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                              cursor: isPrinting ? "not-allowed" : "pointer",
+                              flexShrink: 0,
+                            }}
                           >
                             {isPrinting ? "…" : "🖨 Print Letter"}
                           </button>
@@ -364,25 +422,23 @@ export default function BirthdaysPage() {
             - Save each issued certificate to the child's profile (certificate_logs table)
           Route: /dashboard/birthdays/certificate/create?type=[key]
         */}
-        <div className="mt-10">
-          <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#A9A9B8" }}>
+        <div style={{ marginTop: "40px" }}>
+          <h2 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#A9A9B8", marginBottom: "16px" }}>
             Award Certificates
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" }}>
             {CERTIFICATES.map((cert) => (
               <div
                 key={cert.key}
-                className="rounded-2xl p-5 flex flex-col gap-3"
-                style={{ background: "#120A1F", border: "1px solid rgba(212, 175, 55, 0.25)" }}
+                style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}
               >
                 <div>
-                  <p className="font-semibold text-sm" style={{ color: "#FFFFFF" }}>{cert.name}</p>
-                  <p className="text-xs mt-1 leading-relaxed" style={{ color: "#A9A9B8" }}>{cert.description}</p>
+                  <p style={{ fontWeight: 600, fontSize: "14px", color: "#FFFFFF", margin: 0 }}>{cert.name}</p>
+                  <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "6px 0 0", lineHeight: 1.5 }}>{cert.description}</p>
                 </div>
                 <button
                   disabled
-                  className="mt-auto w-full py-2 rounded-lg text-xs font-semibold transition-opacity disabled:opacity-50 cursor-not-allowed"
-                  style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF" }}
+                  style={{ marginTop: "auto", width: "100%", padding: "8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF", border: "none", opacity: 0.5, cursor: "not-allowed" }}
                 >
                   Coming Soon
                 </button>
