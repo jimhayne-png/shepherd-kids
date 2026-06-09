@@ -20,3 +20,13 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+.input-dark::placeholder {
+  color: #6B6B8A;
+  opacity: 1;
+}
+
+.select-dark option {
+  background: #1C1230;
+  color: #ffffff;
+}

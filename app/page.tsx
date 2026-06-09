@@ -84,13 +84,16 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md px-8 py-12 bg-white rounded-2xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#08060D" }}>
+      <div className="w-full max-w-md px-8 py-12 rounded-2xl" style={{ background: "#120A1F", border: "1px solid rgba(212, 175, 55, 0.35)", boxShadow: "0 25px 60px rgba(0,0,0,0.6)" }}>
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-4">
             <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: "200px", height: "auto" }} />
           </div>
-          <p className="text-gray-500 text-base mt-2">
+          <p style={{ color: "#D4AF37", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "12px", marginBottom: "4px" }}>
+            More Than a Check-In Platform.
+          </p>
+          <p style={{ color: "#A9A9B8", fontSize: "14px" }}>
             Welcome Every Family. Know Every Child. Shepherd Every Journey.
           </p>
         </div>
@@ -99,7 +102,7 @@ export default function Home() {
         {mode === "password" && (
           <form onSubmit={handlePassword} className="space-y-5">
             <div>
-              <label htmlFor="email-pw" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email-pw" className="block text-sm font-medium mb-1" style={{ color: "#D8D8E8" }}>
                 Email address
               </label>
               <input
@@ -109,21 +112,21 @@ export default function Home() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="pastor@mychurch.org"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent"
-                style={{ "--tw-ring-color": "#1A4A2E" } as React.CSSProperties}
+                className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
+                style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium" style={{ color: "#D8D8E8" }}>
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={() => switchMode("reset")}
                   className="text-xs font-medium"
-                  style={{ color: "#1A4A2E" }}
+                  style={{ color: "#D4AF37" }}
                 >
                   Forgot password?
                 </button>
@@ -135,8 +138,8 @@ export default function Home() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent"
-                style={{ "--tw-ring-color": "#1A4A2E" } as React.CSSProperties}
+                className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
+                style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
               />
             </div>
 
@@ -148,7 +151,7 @@ export default function Home() {
               type="submit"
               disabled={status === "loading"}
               className="w-full py-3 px-6 rounded-lg font-semibold text-white transition-opacity disabled:opacity-60"
-              style={{ backgroundColor: "#1A4A2E" }}
+              style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
             >
               {status === "loading" ? "Signing in…" : "Sign In"}
             </button>
@@ -157,7 +160,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => switchMode("magic")}
-                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                className="text-sm underline underline-offset-2" style={{ color: "#A9A9B8" }}
               >
                 Send me a magic link instead
               </button>
@@ -170,14 +173,14 @@ export default function Home() {
           status === "sent" ? (
             <div className="text-center py-6">
               <div className="text-5xl mb-4">✉️</div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">Check your email</h2>
-              <p className="text-gray-500 mb-6">
-                We sent a login link to <strong>{email}</strong>. Click it to sign in.
+              <h2 className="text-xl font-semibold mb-2" style={{ color: "#FFFFFF" }}>Check your email</h2>
+              <p className="mb-6" style={{ color: "#A9A9B8" }}>
+                We sent a login link to <strong style={{ color: "#D8D8E8" }}>{email}</strong>. Click it to sign in.
               </p>
               <button
                 type="button"
                 onClick={() => switchMode("password")}
-                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                className="text-sm underline underline-offset-2" style={{ color: "#A9A9B8" }}
               >
                 ← Back to sign in
               </button>
@@ -185,7 +188,7 @@ export default function Home() {
           ) : (
             <form onSubmit={handleMagicLink} className="space-y-5">
               <div>
-                <label htmlFor="email-magic" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email-magic" className="block text-sm font-medium mb-1" style={{ color: "#D8D8E8" }}>
                   Email address
                 </label>
                 <input
@@ -195,8 +198,8 @@ export default function Home() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="pastor@mychurch.org"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent"
-                  style={{ "--tw-ring-color": "#1A4A2E" } as React.CSSProperties}
+                  className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
+                  style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
                 />
               </div>
 
@@ -208,7 +211,7 @@ export default function Home() {
                 type="submit"
                 disabled={status === "loading"}
                 className="w-full py-3 px-6 rounded-lg font-semibold text-white transition-opacity disabled:opacity-60"
-                style={{ backgroundColor: "#1A4A2E" }}
+                style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
               >
                 {status === "loading" ? "Sending…" : "Send Login Link"}
               </button>
@@ -217,7 +220,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => switchMode("password")}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                  className="text-sm underline underline-offset-2" style={{ color: "#A9A9B8" }}
                 >
                   ← Sign in with password
                 </button>
@@ -231,14 +234,14 @@ export default function Home() {
           status === "sent" ? (
             <div className="text-center py-6">
               <div className="text-5xl mb-4">✉️</div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">Check your email</h2>
-              <p className="text-gray-500 mb-6">
-                We sent a password reset link to <strong>{email}</strong>.
+              <h2 className="text-xl font-semibold mb-2" style={{ color: "#FFFFFF" }}>Check your email</h2>
+              <p className="mb-6" style={{ color: "#A9A9B8" }}>
+                We sent a password reset link to <strong style={{ color: "#D8D8E8" }}>{email}</strong>.
               </p>
               <button
                 type="button"
                 onClick={() => switchMode("password")}
-                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                className="text-sm underline underline-offset-2" style={{ color: "#A9A9B8" }}
               >
                 ← Back to sign in
               </button>
@@ -246,14 +249,14 @@ export default function Home() {
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-5">
               <div className="mb-1">
-                <h2 className="text-lg font-semibold text-gray-800">Set or reset your password</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-lg font-semibold" style={{ color: "#FFFFFF" }}>Set or reset your password</h2>
+                <p className="text-sm mt-1" style={{ color: "#A9A9B8" }}>
                   Enter your email and we&apos;ll send you a link to set a new password.
                 </p>
               </div>
 
               <div>
-                <label htmlFor="email-reset" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email-reset" className="block text-sm font-medium mb-1" style={{ color: "#D8D8E8" }}>
                   Email address
                 </label>
                 <input
@@ -263,8 +266,8 @@ export default function Home() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="pastor@mychurch.org"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent"
-                  style={{ "--tw-ring-color": "#1A4A2E" } as React.CSSProperties}
+                  className="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent input-dark"
+                  style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
                 />
               </div>
 
@@ -276,7 +279,7 @@ export default function Home() {
                 type="submit"
                 disabled={status === "loading"}
                 className="w-full py-3 px-6 rounded-lg font-semibold text-white transition-opacity disabled:opacity-60"
-                style={{ backgroundColor: "#1A4A2E" }}
+                style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
               >
                 {status === "loading" ? "Sending…" : "Send Reset Link"}
               </button>
@@ -285,7 +288,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => switchMode("password")}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+                  className="text-sm underline underline-offset-2" style={{ color: "#A9A9B8" }}
                 >
                   ← Back to sign in
                 </button>

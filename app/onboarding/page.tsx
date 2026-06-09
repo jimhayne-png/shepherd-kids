@@ -26,7 +26,7 @@ type FormData = {
   qrCheckin: boolean;
 };
 
-const STEPS = ["Church Basics", "Location", "Preferences", "Done"];
+const STEPS = ["Ministry Basics", "Location", "Preferences", "Done"];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -79,20 +79,14 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: "#08060D" }}>
       <div className="w-full max-w-xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <svg width="28" height="28" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-              <rect width="36" height="36" rx="8" fill="#1A4A2E" />
-              <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="#F28C28" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            </svg>
-            <span className="text-2xl font-bold" style={{ color: "#1A4A2E" }}>
-              Shepherd<span style={{ color: "#F28C28" }}>Well</span>
-            </span>
+          <div className="flex items-center justify-center mb-2">
+            <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: "160px", height: "auto" }} />
           </div>
-          <p className="text-gray-500 text-sm">Let's set up your church</p>
+          <p style={{ color: "#A9A9B8", fontSize: "13px", marginTop: "6px" }}>Let&apos;s set up your children&apos;s ministry</p>
         </div>
 
         {/* Step indicator */}
@@ -104,27 +98,27 @@ export default function OnboardingPage() {
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
                     style={{
-                      backgroundColor: i <= step ? "#1A4A2E" : "#e5e7eb",
-                      color: i <= step ? "#fff" : "#6b7280",
+                      backgroundColor: i <= step ? "#7B2CBF" : "#1E1A2E",
+                      color: i <= step ? "#fff" : "#6B6B8A",
                     }}
                   >
                     {i < step ? "✓" : i + 1}
                   </div>
                   <span
                     className="text-xs font-medium hidden sm:block"
-                    style={{ color: i <= step ? "#1A4A2E" : "#9ca3af" }}
+                    style={{ color: i <= step ? "#D4AF37" : "#6B6B8A" }}
                   >
                     {label}
                   </span>
                 </div>
-                {i < 2 && <div className="w-8 h-px bg-gray-300 mx-1" />}
+                {i < 2 && <div className="w-8 h-px mx-1" style={{ background: "rgba(212, 175, 55, 0.2)" }} />}
               </div>
             ))}
           </div>
         )}
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="rounded-2xl p-8" style={{ background: "#120A1F", border: "1px solid rgba(212, 175, 55, 0.35)", boxShadow: "0 25px 60px rgba(0,0,0,0.5)" }}>
           {step === 0 && (
             <StepBasics form={form} set={set} />
           )}
@@ -137,7 +131,7 @@ export default function OnboardingPage() {
               {step > 0 ? (
                 <button
                   onClick={() => setStep((s) => s - 1)}
-                  className="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors" style={{ border: "1px solid rgba(212, 175, 55, 0.25)", color: "#A9A9B8", background: "transparent" }}
                 >
                   Back
                 </button>
@@ -148,7 +142,7 @@ export default function OnboardingPage() {
                 onClick={() => setStep((s) => s + 1)}
                 disabled={step === 0 && !form.churchName.trim()}
                 className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity disabled:opacity-40"
-                style={{ backgroundColor: "#1A4A2E" }}
+                style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
               >
                 Continue
               </button>
@@ -159,7 +153,7 @@ export default function OnboardingPage() {
             <div className="mt-8 flex justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="px-5 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors" style={{ border: "1px solid rgba(212, 175, 55, 0.25)", color: "#A9A9B8", background: "transparent" }}
               >
                 Back
               </button>
@@ -167,7 +161,7 @@ export default function OnboardingPage() {
                 onClick={handleFinish}
                 disabled={submitting}
                 className="px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity disabled:opacity-60"
-                style={{ backgroundColor: "#1A4A2E" }}
+                style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
               >
                 {submitting ? "Setting up…" : "Finish Setup"}
               </button>
@@ -192,11 +186,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium mb-1" style={{ color: "#D8D8E8" }}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs" style={{ color: "#A9A9B8" }}>{hint}</p>}
     </div>
   );
 }
@@ -218,7 +212,8 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-800"
+      className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent input-dark"
+      style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
     />
   );
 }
@@ -232,22 +227,22 @@ function StepBasics({
 }) {
   return (
     <div className="space-y-5">
-      <h2 className="text-xl font-semibold text-gray-900">Church Basics</h2>
-      <Field label="Church Name" required>
+      <h2 className="text-xl font-semibold" style={{ color: "#FFFFFF" }}>Ministry Basics</h2>
+      <Field label="Church or Ministry Name" required>
         <Input
           value={form.churchName}
           onChange={(v) => set("churchName", v)}
-          placeholder="Grace Community Church"
+          placeholder="Grace Kids Ministry"
         />
       </Field>
       <Field label="Email">
-        <Input value={form.email} onChange={(v) => set("email", v)} placeholder="info@mychurch.org" type="email" />
+        <Input value={form.email} onChange={(v) => set("email", v)} placeholder="kids@yourchurch.org" type="email" />
       </Field>
       <Field label="Phone">
         <Input value={form.phone} onChange={(v) => set("phone", v)} placeholder="(555) 000-0000" type="tel" />
       </Field>
       <Field label="Website">
-        <Input value={form.website} onChange={(v) => set("website", v)} placeholder="https://mychurch.org" />
+        <Input value={form.website} onChange={(v) => set("website", v)} placeholder="https://yourchurch.org/kids" />
       </Field>
     </div>
   );
@@ -262,7 +257,7 @@ function StepLocation({
 }) {
   return (
     <div className="space-y-5">
-      <h2 className="text-xl font-semibold text-gray-900">Location</h2>
+      <h2 className="text-xl font-semibold" style={{ color: "#FFFFFF" }}>Location</h2>
       <Field label="Address">
         <Input value={form.address} onChange={(v) => set("address", v)} placeholder="123 Main Street" />
       </Field>
@@ -274,7 +269,8 @@ function StepLocation({
           <select
             value={form.state}
             onChange={(e) => set("state", e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
+            className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent select-dark"
+            style={{ background: "#1C1230", border: "1px solid rgba(212, 175, 55, 0.2)", color: "#FFFFFF", "--tw-ring-color": "#D4AF37" } as React.CSSProperties}
           >
             <option value="">Select…</option>
             {US_STATES.map((s) => (
@@ -301,12 +297,12 @@ function StepPreferences({
 }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Preferences</h2>
+      <h2 className="text-xl font-semibold" style={{ color: "#FFFFFF" }}>Preferences</h2>
 
-      <div className="flex items-start justify-between gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50">
+      <div className="flex items-start justify-between gap-4 p-4 rounded-xl" style={{ background: "#0D0820", border: "1px solid rgba(212, 175, 55, 0.15)" }}>
         <div>
-          <p className="text-sm font-medium text-gray-800">QR Check-in</p>
-          <p className="text-xs text-gray-500 mt-0.5 max-w-xs">
+          <p className="text-sm font-medium" style={{ color: "#D8D8E8" }}>QR Check-in</p>
+          <p className="text-xs mt-0.5 max-w-xs" style={{ color: "#A9A9B8" }}>
             QR check-in lets members scan in at services. You can enable this later from Settings.
           </p>
         </div>
@@ -314,7 +310,7 @@ function StepPreferences({
           type="button"
           onClick={() => set("qrCheckin", !form.qrCheckin)}
           className="relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-          style={{ backgroundColor: form.qrCheckin ? "#1A4A2E" : "#d1d5db" }}
+          style={{ backgroundColor: form.qrCheckin ? "#7B2CBF" : "#2A2A3A" }}
           aria-pressed={form.qrCheckin}
         >
           <span
@@ -325,7 +321,7 @@ function StepPreferences({
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+        <p className="text-sm rounded-lg px-4 py-3" style={{ color: "#F87171", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
           {error}
         </p>
       )}
@@ -339,22 +335,22 @@ function StepDone() {
     <div className="text-center py-6 space-y-5">
       <div
         className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
-        style={{ backgroundColor: "#F28C28" }}
+        style={{ backgroundColor: "#D4AF37" }}
       >
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path d="M7 16 L13 22 L25 10" stroke="#1A4A2E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M7 16 L13 22 L25 10" stroke="#120A1F" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Your church is set up!</h2>
-        <p className="text-gray-500 text-sm">
-          You&apos;re ready to start managing your congregation in ShepherdKids.
+        <h2 className="text-2xl font-bold mb-2" style={{ color: "#FFFFFF" }}>Your ministry is set up!</h2>
+        <p style={{ color: "#A9A9B8", fontSize: "14px" }}>
+          You&apos;re ready to start welcoming families in ShepherdKids.
         </p>
       </div>
       <button
         onClick={() => router.push("/dashboard")}
         className="px-8 py-3 rounded-lg font-semibold text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: "#1A4A2E" }}
+        style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
       >
         Go to Dashboard
       </button>
