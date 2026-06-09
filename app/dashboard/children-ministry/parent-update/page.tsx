@@ -3,18 +3,37 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
-
-
-const CM_ACCENT = "#F28C28";
 
 type Season = { id: string; name: string; status: string; reward_description: string | null };
 type UpdateRecord = {
   id: string; session_date: string; memory_verse: string | null;
   lesson_summary: string | null; conversation_starter: string | null;
   special_notes: string | null; sent_at: string | null; created_at: string;
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "9px 12px",
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid rgba(212,175,55,0.3)",
+  borderRadius: "8px",
+  fontSize: "13px",
+  color: "#ffffff",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "11px",
+  fontWeight: 600,
+  color: "#A9A9B8",
+  marginBottom: "6px",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
 };
 
 export default function ParentUpdatePage() {
@@ -67,6 +86,9 @@ export default function ParentUpdatePage() {
     init();
   }, [router]);
 
+  // suppress unused warning — seasons available for future season switcher
+  void seasons;
+
   function loadPastUpdate(u: UpdateRecord) {
     setForm({
       sessionDate: u.session_date,
@@ -93,92 +115,221 @@ export default function ParentUpdatePage() {
     setSaving(false); setSending(false);
 
     if (sendNow) {
-      setSendSuccess(`✅ Parent update sent to ${data.emailsSent} families!`);
+      setSendSuccess(`✅ Parent Communication sent to ${data.emailsSent} families!`);
       setTimeout(() => setSendSuccess(""), 5000);
     }
     if (token && activeSeason) await loadHistory(token, activeSeason.id);
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#08060D" }}>
+        <div style={{ color: "#D8D8E8", fontFamily: "Georgia, serif" }}>Loading…</div>
+      </div>
+    );
+  }
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${CM_ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Weekly Parent Update</h1>
-        {activeSeason && <p className="text-orange-100 text-sm mt-1">{activeSeason.name}</p>}
+    <AppShell navItems={[]}>
+      {/* Hero */}
+      <div style={{ padding: "40px 32px 32px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.06em", color: "#D4AF37", marginBottom: "6px", textTransform: "uppercase" }}>
+          ShepherdKids
+        </p>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
+          Parent Communication
+        </h1>
+        {activeSeason && (
+          <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "6px 0 0" }}>
+            {activeSeason.name}
+          </p>
+        )}
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px" }}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Form */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow p-6">
-            <h2 className="font-bold text-gray-800 mb-5" style={{ fontFamily: "Georgia, serif" }}>Compose Update</h2>
 
-            <div className="space-y-4">
+          {/* Compose form */}
+          <div
+            className="lg:col-span-2"
+            style={{
+              background: "#120A1F",
+              border: "1px solid rgba(212,175,55,0.25)",
+              borderRadius: "18px",
+              padding: "28px",
+            }}
+          >
+            <h2 style={{ fontWeight: 700, color: "#ffffff", marginBottom: "22px", fontFamily: "Georgia, serif", fontSize: "17px" }}>
+              Compose Update
+            </h2>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Session Date *</label>
-                <input type="date" value={form.sessionDate} onChange={e => setForm(f => ({ ...f, sessionDate: e.target.value }))} className="px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <label style={labelStyle}>Session Date *</label>
+                <input
+                  type="date"
+                  value={form.sessionDate}
+                  onChange={e => setForm(f => ({ ...f, sessionDate: e.target.value }))}
+                  style={{ ...inputStyle, width: "auto" }}
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Memory Verse</label>
-                <input value={form.memoryVerse} onChange={e => setForm(f => ({ ...f, memoryVerse: e.target.value }))} placeholder='e.g. "For God so loved the world…" — John 3:16' className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <label style={labelStyle}>Memory Verse</label>
+                <input
+                  value={form.memoryVerse}
+                  onChange={e => setForm(f => ({ ...f, memoryVerse: e.target.value }))}
+                  placeholder='"For God so loved the world…" — John 3:16'
+                  style={inputStyle}
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Lesson Summary</label>
-                <textarea value={form.lessonSummary} onChange={e => setForm(f => ({ ...f, lessonSummary: e.target.value }))} rows={4} placeholder="Today we learned about…" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" />
+                <label style={labelStyle}>Lesson Summary</label>
+                <textarea
+                  value={form.lessonSummary}
+                  onChange={e => setForm(f => ({ ...f, lessonSummary: e.target.value }))}
+                  rows={4}
+                  placeholder="Today we learned about…"
+                  style={{ ...inputStyle, resize: "none" }}
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Conversation Starter for Parents</label>
-                <input value={form.conversationStarter} onChange={e => setForm(f => ({ ...f, conversationStarter: e.target.value }))} placeholder="What was the most important thing you learned today?" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
-                <p className="text-xs text-gray-400 mt-1">Parents will see: "Ask [child's name]: "…""</p>
+                <label style={labelStyle}>Conversation Starter for Parents</label>
+                <input
+                  value={form.conversationStarter}
+                  onChange={e => setForm(f => ({ ...f, conversationStarter: e.target.value }))}
+                  placeholder="What was the most important thing you learned today?"
+                  style={inputStyle}
+                />
+                <p style={{ fontSize: "11px", color: "#A9A9B8", marginTop: "5px" }}>
+                  Parents will see: Ask [child&apos;s name]: &ldquo;…&rdquo;
+                </p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Special Notes</label>
-                <textarea value={form.specialNotes} onChange={e => setForm(f => ({ ...f, specialNotes: e.target.value }))} rows={3} placeholder="Upcoming events, reminders, announcements…" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" />
+                <label style={labelStyle}>Special Notes</label>
+                <textarea
+                  value={form.specialNotes}
+                  onChange={e => setForm(f => ({ ...f, specialNotes: e.target.value }))}
+                  rows={3}
+                  placeholder="Upcoming events, reminders, announcements…"
+                  style={{ ...inputStyle, resize: "none" }}
+                />
               </div>
             </div>
 
-            {saveError && <p className="text-sm text-red-600 mt-4">{saveError}</p>}
-            {sendSuccess && <p className="text-sm text-green-600 font-bold mt-4">{sendSuccess}</p>}
+            {saveError && (
+              <p style={{ fontSize: "13px", color: "#f87171", marginTop: "16px" }}>{saveError}</p>
+            )}
+            {sendSuccess && (
+              <p style={{ fontSize: "13px", color: "#4ade80", fontWeight: 700, marginTop: "16px" }}>{sendSuccess}</p>
+            )}
 
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowPreview(true)} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">
+            <div style={{ display: "flex", gap: "10px", marginTop: "24px", flexWrap: "wrap" }}>
+              <button
+                onClick={() => setShowPreview(true)}
+                style={{
+                  padding: "9px 18px",
+                  border: "1px solid rgba(212,175,55,0.4)",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#D4AF37",
+                  background: "transparent",
+                  cursor: "pointer",
+                }}
+              >
                 👁️ Preview Email
               </button>
-              <button onClick={() => save(false)} disabled={saving} className="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">
+              <button
+                onClick={() => save(false)}
+                disabled={saving}
+                style={{
+                  padding: "9px 18px",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#D8D8E8",
+                  background: "transparent",
+                  cursor: saving ? "not-allowed" : "pointer",
+                  opacity: saving ? 0.6 : 1,
+                }}
+              >
                 {saving ? "Saving…" : "💾 Save Draft"}
               </button>
-              <button onClick={() => save(true)} disabled={sending} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: CM_ACCENT }}>
+              <button
+                onClick={() => save(true)}
+                disabled={sending}
+                style={{
+                  flex: 1,
+                  minWidth: "160px",
+                  padding: "9px 18px",
+                  borderRadius: "10px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  background: sending ? "rgba(123,44,191,0.5)" : "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                  border: "none",
+                  cursor: sending ? "not-allowed" : "pointer",
+                }}
+              >
                 {sending ? "Sending…" : "📧 Send to All Parents"}
               </button>
             </div>
           </div>
 
-          {/* History sidebar */}
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>Past Updates</h2>
+          {/* Past Updates sidebar */}
+          <div
+            style={{
+              background: "#120A1F",
+              border: "1px solid rgba(212,175,55,0.25)",
+              borderRadius: "18px",
+              padding: "24px",
+            }}
+          >
+            <h2 style={{ fontWeight: 700, color: "#ffffff", marginBottom: "16px", fontFamily: "Georgia, serif", fontSize: "17px" }}>
+              Past Updates
+            </h2>
             {history.length === 0 ? (
-              <p className="text-gray-400 text-sm">No updates sent yet.</p>
+              <p style={{ color: "#A9A9B8", fontSize: "13px" }}>No updates sent yet.</p>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {history.map(u => (
-                  <button key={u.id} onClick={() => loadPastUpdate(u)} className="w-full text-left px-4 py-3 rounded-xl border border-gray-100 hover:border-orange-200 transition-colors">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <p className="text-sm font-medium text-gray-800">
+                  <button
+                    key={u.id}
+                    onClick={() => loadPastUpdate(u)}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "12px 14px",
+                      borderRadius: "10px",
+                      border: "1px solid rgba(212,175,55,0.2)",
+                      background: "rgba(255,255,255,0.03)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "3px" }}>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff", margin: 0 }}>
                         {new Date(u.session_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </p>
                       {u.sent_at ? (
-                        <span className="text-xs px-2 py-0.5 rounded-full text-white font-bold" style={{ backgroundColor: "#22c55e" }}>Sent</span>
+                        <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "20px", background: "rgba(34,197,94,0.2)", color: "#4ade80", fontWeight: 700 }}>
+                          Sent
+                        </span>
                       ) : (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-bold">Draft</span>
+                        <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "20px", background: "rgba(255,255,255,0.08)", color: "#A9A9B8", fontWeight: 700 }}>
+                          Draft
+                        </span>
                       )}
                     </div>
-                    {u.memory_verse && <p className="text-xs text-gray-400 truncate">"{u.memory_verse}"</p>}
+                    {u.memory_verse && (
+                      <p style={{ fontSize: "11px", color: "#A9A9B8", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        &ldquo;{u.memory_verse}&rdquo;
+                      </p>
+                    )}
                   </button>
                 ))}
               </div>
@@ -189,62 +340,75 @@ export default function ParentUpdatePage() {
 
       {/* Preview Modal */}
       {showPreview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowPreview(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-              <h2 className="font-bold text-gray-800">Email Preview</h2>
-              <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+        <div
+          style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}
+          onClick={() => setShowPreview(false)}
+        >
+          <div
+            style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "18px", width: "100%", maxWidth: "520px", maxHeight: "88vh", overflowY: "auto" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div style={{ position: "sticky", top: 0, background: "#120A1F", borderBottom: "1px solid rgba(212,175,55,0.15)", padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: "18px 18px 0 0" }}>
+              <h2 style={{ fontWeight: 700, color: "#ffffff", margin: 0, fontSize: "15px" }}>Email Preview</h2>
+              <button
+                onClick={() => setShowPreview(false)}
+                style={{ color: "#A9A9B8", background: "none", border: "none", cursor: "pointer", fontSize: "18px", lineHeight: 1 }}
+              >
+                ✕
+              </button>
             </div>
-            <div className="p-6">
-              {/* Email preview */}
-              <div style={{ fontFamily: "Georgia, serif" }}>
-                <div style={{ background: CM_ACCENT, padding: "24px 28px", borderRadius: "8px 8px 0 0" }}>
-                  <h1 style={{ color: "white", margin: 0, fontSize: "20px", fontWeight: "normal" }}>Your Church</h1>
-                  <p style={{ color: "rgba(255,255,255,0.9)", margin: "4px 0 0", fontSize: "14px" }}>
-                    This Week in Children's Ministry · {form.sessionDate ? new Date(form.sessionDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : ""}
+
+            {/* Email body — kept light since it represents an actual parent email */}
+            <div style={{ padding: "24px" }}>
+              <div style={{ fontFamily: "Georgia, serif", borderRadius: "10px", overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                <div style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", padding: "22px 26px" }}>
+                  <h1 style={{ color: "white", margin: 0, fontSize: "19px", fontWeight: "normal" }}>Your Church</h1>
+                  <p style={{ color: "rgba(255,255,255,0.85)", margin: "4px 0 0", fontSize: "13px" }}>
+                    ShepherdKids · {form.sessionDate ? new Date(form.sessionDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : ""}
                   </p>
                 </div>
-                <div style={{ background: "white", padding: "28px", border: "1px solid #e5e7eb", borderTop: "none", borderRadius: "0 0 8px 8px" }}>
-                  <div style={{ background: "#fff7ed", borderLeft: `4px solid ${CM_ACCENT}`, padding: "14px 18px", borderRadius: "0 8px 8px 0", marginBottom: "20px" }}>
-                    <p style={{ margin: 0, fontSize: "15px", color: "#374151" }}>Team <strong style={{ color: CM_ACCENT }}>Eagles</strong> · <strong>1st place</strong> · <strong>45,000 pts</strong></p>
+                <div style={{ background: "white", padding: "26px" }}>
+                  <div style={{ background: "#f5f3ff", borderLeft: "4px solid #7B2CBF", padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "18px" }}>
+                    <p style={{ margin: 0, fontSize: "14px", color: "#374151" }}>Team <strong style={{ color: "#7B2CBF" }}>Eagles</strong> · <strong>1st place</strong> · <strong>45,000 pts</strong></p>
                   </div>
                   {form.memoryVerse && (
-                    <div style={{ marginBottom: "20px" }}>
-                      <h3 style={{ color: "#1A4A2E", fontSize: "15px", margin: "0 0 8px" }}>📖 Memory Verse This Week</h3>
-                      <p style={{ fontSize: "15px", fontStyle: "italic", color: "#374151", margin: 0 }}>"{form.memoryVerse}"</p>
+                    <div style={{ marginBottom: "18px" }}>
+                      <h3 style={{ color: "#1A4A2E", fontSize: "14px", margin: "0 0 7px" }}>📖 Memory Verse This Week</h3>
+                      <p style={{ fontSize: "14px", fontStyle: "italic", color: "#374151", margin: 0 }}>&ldquo;{form.memoryVerse}&rdquo;</p>
                     </div>
                   )}
                   {form.lessonSummary && (
-                    <div style={{ marginBottom: "20px" }}>
-                      <h3 style={{ color: "#1A4A2E", fontSize: "15px", margin: "0 0 8px" }}>✝️ This Week's Lesson</h3>
-                      <p style={{ fontSize: "15px", color: "#374151", lineHeight: "1.7", margin: 0 }}>{form.lessonSummary}</p>
+                    <div style={{ marginBottom: "18px" }}>
+                      <h3 style={{ color: "#1A4A2E", fontSize: "14px", margin: "0 0 7px" }}>✝️ This Week&apos;s Lesson</h3>
+                      <p style={{ fontSize: "14px", color: "#374151", lineHeight: "1.7", margin: 0 }}>{form.lessonSummary}</p>
                     </div>
                   )}
                   {form.conversationStarter && (
-                    <div style={{ marginBottom: "20px", background: "#f8fafc", borderRadius: "8px", padding: "14px 18px" }}>
-                      <h3 style={{ color: "#1A4A2E", fontSize: "15px", margin: "0 0 8px" }}>💬 Conversation Starter</h3>
-                      <p style={{ fontSize: "15px", color: "#374151", fontStyle: "italic", margin: 0 }}>Ask [child's name]: "{form.conversationStarter}"</p>
+                    <div style={{ marginBottom: "18px", background: "#f8fafc", borderRadius: "8px", padding: "12px 16px" }}>
+                      <h3 style={{ color: "#1A4A2E", fontSize: "14px", margin: "0 0 7px" }}>💬 Conversation Starter</h3>
+                      <p style={{ fontSize: "14px", color: "#374151", fontStyle: "italic", margin: 0 }}>Ask [child&apos;s name]: &ldquo;{form.conversationStarter}&rdquo;</p>
                     </div>
                   )}
                   {activeSeason?.reward_description && (
-                    <div style={{ background: "#fef3c7", borderRadius: "8px", padding: "12px 16px", marginBottom: "20px" }}>
-                      <p style={{ margin: 0, fontSize: "14px", color: "#92400e" }}>🎉 Working toward: <strong>{activeSeason.reward_description}</strong></p>
+                    <div style={{ background: "#fef3c7", borderRadius: "8px", padding: "10px 14px", marginBottom: "18px" }}>
+                      <p style={{ margin: 0, fontSize: "13px", color: "#92400e" }}>🎉 Working toward: <strong>{activeSeason.reward_description}</strong></p>
                     </div>
                   )}
                   {form.specialNotes && (
                     <div>
-                      <h3 style={{ color: "#1A4A2E", fontSize: "15px", margin: "0 0 8px" }}>📢 Special Notes</h3>
-                      <p style={{ fontSize: "15px", color: "#374151", lineHeight: "1.7", margin: 0 }}>{form.specialNotes}</p>
+                      <h3 style={{ color: "#1A4A2E", fontSize: "14px", margin: "0 0 7px" }}>📢 Special Notes</h3>
+                      <p style={{ fontSize: "14px", color: "#374151", lineHeight: "1.7", margin: 0 }}>{form.specialNotes}</p>
                     </div>
                   )}
-                  <hr style={{ border: "none", borderTop: "1px solid #e5e7eb", margin: "20px 0" }} />
-                  <p style={{ fontSize: "12px", color: "#9ca3af", textAlign: "center", margin: 0 }}>Each email is personalized with the child's name, team standing, points, and streak.</p>
+                  <hr style={{ border: "none", borderTop: "1px solid #e5e7eb", margin: "18px 0" }} />
+                  <p style={{ fontSize: "11px", color: "#9ca3af", textAlign: "center", margin: 0 }}>Each email is personalized with the child&apos;s name, team standing, points, and streak.</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-    </MinistryShell>
+    </AppShell>
   );
 }
