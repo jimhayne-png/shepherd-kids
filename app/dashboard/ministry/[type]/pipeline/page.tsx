@@ -40,6 +40,7 @@ const STAGE_ICONS: Record<string, string> = {
   "Faith Decision": "✝️",
   Baptism: "💧",
   "Discipleship Step": "👣",
+  Discipleship: "👣",
 };
 
 function fmtDate(iso: string | null) {

@@ -56,12 +56,12 @@ const CARE_CARDS = [
     countLabel: "upcoming",
   },
   {
-    title: "Spiritual Birthdays Today",
-    desc: "Remember faith milestones",
+    title: "Upcoming Spiritual Birthdays",
+    desc: "Celebrate faith milestones",
     href: "/dashboard/birthdays",
     action: "View",
     emoji: "✝️",
-    countLabel: "today",
+    countLabel: "upcoming",
   },
   {
     title: "Follow-Up Needed",
