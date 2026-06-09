@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const CM_ACCENT = "#F28C28";
+const CM_ACCENT = "#7B2CBF";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shepherd-well.vercel.app";
 
 
@@ -145,16 +145,16 @@ export default function VisitorsPage() {
 
   const filtered = families.filter(f => filter === "all" || f.status === filter);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>;
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${CM_ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
+    <AppShell navItems={[]}>
+      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>🆕 First-Time Visitors</h1>
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 -mt-6">
           {[
@@ -342,6 +342,6 @@ export default function VisitorsPage() {
           )}
         </div>
       </div>
-    </MinistryShell>
+    </AppShell>
   );
 }

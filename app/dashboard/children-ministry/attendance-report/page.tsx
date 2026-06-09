@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const ACCENT = "#F28C28";
+const ACCENT = "#7B2CBF";
 
 type SessionOption = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string };
 type ReportChild = { id: string; room_id: string | null; child_name: string; parent_name: string; parent_phone: string; checked_in_at: string; checked_out_at: string | null; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; date_of_birth: string | null; visit_count: number };
@@ -146,13 +146,13 @@ export default function AttendanceReportPage() {
   }
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>📊 Attendance Reports</h1>
+    <AppShell navItems={[]}>
+      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>📊 Reports</h1>
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Session selector */}
         <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-gray-100">
           <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-2">Select Session</label>
@@ -309,6 +309,6 @@ export default function AttendanceReportPage() {
           </div>
         )}
       </div>
-    </MinistryShell>
+    </AppShell>
   );
 }

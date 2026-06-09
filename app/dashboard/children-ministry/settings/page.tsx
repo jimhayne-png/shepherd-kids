@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
-const ACCENT = "#F28C28";
+const ACCENT = "#7B2CBF";
 
 const ALL_GRADES = [
   { value: "Nursery",     label: "Nursery" },
@@ -95,32 +95,32 @@ export default function ChildrenMinistrySettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-400">Loading…</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}>
+        <div style={{ color: "#D8D8E8" }}>Loading…</div>
       </div>
     );
   }
 
   return (
-    <MinistryShell type="childrens">
+    <AppShell navItems={[]}>
       {/* Hero */}
       <div
         className="px-8 py-10"
-        style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}
+        style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}
       >
-        <p className="text-orange-100 text-sm mb-1">Children&apos;s Ministry</p>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
         <h1
           className="text-3xl font-bold text-white"
           style={{ fontFamily: "Georgia, serif" }}
         >
           ⚙️ Settings
         </h1>
-        <p className="text-orange-100 text-sm mt-1">
-          Configure how Children&apos;s Ministry appears in your dashboard
+        <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>
+          Configure your ShepherdKids platform settings
         </p>
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         <div className="max-w-xl">
           <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
             <h2
@@ -194,6 +194,6 @@ export default function ChildrenMinistrySettingsPage() {
           </div>
         </div>
       </div>
-    </MinistryShell>
+    </AppShell>
   );
 }

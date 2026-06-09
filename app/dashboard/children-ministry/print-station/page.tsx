@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
-const ACCENT = "#F28C28";
+const ACCENT = "#7B2CBF";
 
 type PrintJob = {
   id: string;
@@ -349,16 +349,16 @@ export default function PrintStationPage() {
 
       {/* Dashboard screen UI */}
       <div className="no-print">
-        <MinistryShell type="childrens">
+        <AppShell navItems={[]}>
           {/* Page header */}
           <div
             style={{
-              background: `linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)`,
+              background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)",
               padding: "28px 32px",
             }}
           >
-            <p style={{ color: "#86efac", fontSize: 13, marginBottom: 4 }}>
-              Children&apos;s Ministry
+            <p style={{ color: "#D4AF37", fontSize: 13, marginBottom: 4 }}>
+              ShepherdKids
             </p>
             <h1
               style={{
@@ -369,7 +369,7 @@ export default function PrintStationPage() {
                 margin: 0,
               }}
             >
-              🖨️ Label Print Station
+              🏷️ Label Printing
             </h1>
             {lastRefresh && (
               <p style={{ color: "#86efac", fontSize: 12, marginTop: 4 }}>
@@ -378,7 +378,7 @@ export default function PrintStationPage() {
             )}
           </div>
 
-          <div style={{ padding: "24px 32px", backgroundColor: "#f9fafb", minHeight: "100vh" }}>
+          <div style={{ padding: "24px 32px", backgroundColor: "#0A0814", minHeight: "100vh" }}>
             {/* Toolbar */}
             <div
               style={{
@@ -690,7 +690,7 @@ export default function PrintStationPage() {
               </div>
             )}
           </div>
-        </MinistryShell>
+        </AppShell>
       </div>
     </>
   );

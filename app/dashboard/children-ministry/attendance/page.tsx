@@ -3,12 +3,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
 
-const CM_ACCENT = "#F28C28";
+const CM_ACCENT = "#7B2CBF";
 
 type Season = { id: string; name: string; status: string; start_date: string; end_date: string };
 type Child = { id: string; first_name: string; last_name: string; grade: string; team?: { color: string; name: string } | null };
@@ -136,14 +136,14 @@ export default function AttendancePage() {
     URL.revokeObjectURL(url);
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>;
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${CM_ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
+    <AppShell navItems={[]}>
+      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Attendance</h1>
-        {activeSeason && <p className="text-orange-100 text-sm mt-1">{activeSeason.name}</p>}
+        {activeSeason && <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>{activeSeason.name}</p>}
       </div>
 
       {/* Streak bonus toast */}
@@ -155,7 +155,7 @@ export default function AttendancePage() {
         </div>
       )}
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         <div className="flex justify-between items-center mb-6">
           <p className="text-sm text-gray-500">Tap a cell to mark present/absent. Streak bonuses auto-award at 3, 5, and 10 weeks.</p>
           <button onClick={exportCSV} className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium bg-white">
@@ -227,6 +227,6 @@ export default function AttendancePage() {
           </div>
         )}
       </div>
-    </MinistryShell>
+    </AppShell>
   );
 }

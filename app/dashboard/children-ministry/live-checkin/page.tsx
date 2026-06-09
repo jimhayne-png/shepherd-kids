@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const ACCENT = "#F28C28";
+const ACCENT = "#7B2CBF";
 
 type LiveChild = { id: string; child_name: string; parent_name: string; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; checked_in_at: string };
 type LiveRoom = { room_id: string; room_name: string; children: LiveChild[] };
@@ -98,14 +98,14 @@ export default function LiveCheckinPage() {
   }
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>⚡ Live Check-In</h1>
-        {lastUpdated && <p className="text-orange-100 text-xs mt-1">Last updated {lastUpdated.toLocaleTimeString()} · auto-refreshes every 30s</p>}
+    <AppShell navItems={[]}>
+      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>✅ Check-In</h1>
+        {lastUpdated && <p className="text-xs mt-1" style={{ color: "#D8D8E8" }}>Last updated {lastUpdated.toLocaleTimeString()} · auto-refreshes every 30s</p>}
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {loading && (
           <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-gray-400">Loading…</div></div>
         )}
@@ -211,6 +211,6 @@ export default function LiveCheckinPage() {
           </>
         )}
       </div>
-    </MinistryShell>
+    </AppShell>
   );
 }

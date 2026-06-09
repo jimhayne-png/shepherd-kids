@@ -4,11 +4,11 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const ACCENT = "#F28C28";
+const ACCENT = "#7B2CBF";
 
 
 type Volunteer = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; roles: string[]; background_check_status: string; background_check_date: string | null; reliability_score: number; is_active: boolean; notes: string | null; assignment_count: number };
@@ -205,13 +205,13 @@ function VolunteersPageContent() {
 
   const stats = { total: volunteers.length, active: volunteers.filter(v => v.is_active).length, cleared: volunteers.filter(v => v.background_check_status === "cleared").length, avgReliability: volunteers.length ? Math.round(volunteers.reduce((s, v) => s + v.reliability_score, 0) / volunteers.length) : 100 };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>;
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm mb-1">Children's Ministry</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>👥 Volunteer Scheduling</h1>
+    <AppShell navItems={[]}>
+      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>🙋 Volunteers</h1>
       </div>
 
       {/* Sub-tabs */}
@@ -224,7 +224,7 @@ function VolunteersPageContent() {
         ))}
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
 
         {/* ====== VOLUNTEERS TAB ====== */}
         {activeTab === "volunteers" && <>
@@ -571,13 +571,13 @@ function VolunteersPageContent() {
           </div>
         </div>
       )}
-    </MinistryShell>
+    </AppShell>
   );
 }
 
 export default function VolunteersPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-400">Loading…</div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>}>
       <VolunteersPageContent />
     </Suspense>
   );

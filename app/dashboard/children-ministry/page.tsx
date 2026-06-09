@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import MinistryShell from "@/components/layout/MinistryShell";
+import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const ACCENT = "#F28C28";
+const ACCENT = "#7B2CBF";
 
 type Child = { id: string; first_name: string; last_name: string; date_of_birth: string | null };
 type SessionSummary = { id: string; service_name: string; date: string; status: string };
@@ -54,9 +54,9 @@ function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days = 7)
 
 const SECTIONS = [
   { label: "📋 Check-In Setup", href: "/dashboard/children-ministry/checkin-setup", desc: "Manage sessions & rooms" },
-  { label: "⚡ Live Check-In", href: "/dashboard/children-ministry/live-checkin", desc: "View who's checked in now" },
-  { label: "📊 Attendance Reports", href: "/dashboard/children-ministry/attendance-report", desc: "Historical attendance data" },
-  { label: "🧒 Children", href: "/dashboard/children-ministry/children", desc: "Child directory & profiles" },
+  { label: "✅ Check-In", href: "/dashboard/children-ministry/live-checkin", desc: "View who's checked in now" },
+  { label: "📊 Reports", href: "/dashboard/children-ministry/attendance-report", desc: "Historical attendance data" },
+  { label: "👪 Families", href: "/dashboard/children-ministry/children", desc: "Child directory & profiles" },
   { label: "👨‍👩‍👧 Parents", href: "/dashboard/children-ministry/parents", desc: "All registered families" },
   { label: "📧 Parent Update", href: "/dashboard/children-ministry/parent-update", desc: "Send family communications" },
 ];
@@ -96,20 +96,20 @@ export default function ChildrenMinistryPage() {
   const spiritualBirthdays = upcomingSpiritualBirthdays(spiritualBirthdayEntries);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-gray-400" style={{ fontFamily: "Georgia, serif" }}>Loading…</div>
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}>
+      <div style={{ color: "#D8D8E8", fontFamily: "Georgia, serif" }}>Loading…</div>
     </div>
   );
 
   return (
-    <MinistryShell type="childrens">
-      <div className="px-8 py-10" style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}>
-        <p className="text-orange-100 text-sm font-medium mb-1">Children's Ministry</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Children's Ministry</h1>
-        <p className="text-orange-100 text-sm mt-1">{children.length} children enrolled</p>
+    <AppShell navItems={[]}>
+      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p className="text-sm font-medium mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Ministry Care</h1>
+        <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>{children.length} children enrolled</p>
       </div>
 
-      <div className="px-8 py-8 bg-gray-50 min-h-screen">
+      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
@@ -227,6 +227,6 @@ export default function ChildrenMinistryPage() {
           </div>
         </div>
       </div>
-    </MinistryShell>
+    </AppShell>
   );
 }

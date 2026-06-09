@@ -37,17 +37,17 @@ const navItems: NavItem[] = [
 export default function BillingPage() {
   return (
     <AppShell navItems={navItems}>
-      <div className="px-8 py-8" style={{ background: "linear-gradient(135deg, #1A4A2E 0%, #2D6B42 100%)" }}>
-        <Link href="/dashboard/settings" className="text-green-300 hover:text-white text-sm transition-colors block mb-2">← Settings</Link>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Billing</h1>
-        <p className="text-green-200 text-sm mt-1">Manage your ShepherdKids subscription</p>
+      <div className="px-8 py-8" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <Link href="/dashboard/settings" className="text-sm transition-colors block mb-2" style={{ color: "#D4AF37" }}>← Settings</Link>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Subscription & Billing</h1>
+        <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>Manage your ShepherdKids subscription</p>
       </div>
 
-      <div className="px-8 py-16 bg-gray-50 min-h-screen flex items-start">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center max-w-md w-full">
+      <div className="px-8 py-16 flex items-start" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
+        <div className="rounded-xl p-10 text-center max-w-md w-full" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.2)" }}>
           <div className="text-4xl mb-4">💳</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Georgia, serif" }}>Billing Management</h2>
-          <p className="text-gray-500 text-sm">Billing management coming soon.</p>
+          <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Georgia, serif" }}>Billing Management</h2>
+          <p className="text-sm" style={{ color: "#D8D8E8" }}>Billing management coming soon.</p>
         </div>
       </div>
     </AppShell>
