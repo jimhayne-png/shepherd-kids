@@ -124,7 +124,7 @@ const CATEGORIES: Category[] = [
   },
   {
     key: "youth",
-    label: "Youth & Children",
+    label: "ShepherdKids",
     // Items here are used only for hasActive detection on the collapsed category header.
     // The actual rendered items come from CM_ITEMS / MS_ITEMS / SH_ITEMS.
     items: [
@@ -209,8 +209,8 @@ export default function AppShell(props: AppShellProps) {
 
   function nestedItemStyle(active: boolean): React.CSSProperties {
     return {
-      backgroundColor: active ? "#F28C28" : "transparent",
-      color: active ? "#1A4A2E" : "rgba(255,255,255,0.70)",
+      backgroundColor: active ? "rgba(123,44,191,0.85)" : "transparent",
+      color: active ? "#ffffff" : "rgba(255,255,255,0.65)",
       display: "flex",
       alignItems: "center",
       gap: "8px",
@@ -225,8 +225,8 @@ export default function AppShell(props: AppShellProps) {
 
   function itemStyle(active: boolean): React.CSSProperties {
     return {
-      backgroundColor: active ? "#F28C28" : "transparent",
-      color: active ? "#1A4A2E" : "rgba(255,255,255,0.78)",
+      backgroundColor: active ? "rgba(123,44,191,0.85)" : "transparent",
+      color: active ? "#ffffff" : "rgba(255,255,255,0.72)",
       display: "flex",
       alignItems: "center",
       gap: "8px",
@@ -242,7 +242,7 @@ export default function AppShell(props: AppShellProps) {
   function masterAdminItemStyle(active: boolean): React.CSSProperties {
     return {
       backgroundColor: active ? "#f59e0b" : "rgba(245,158,11,0.12)",
-      color: active ? "#1A4A2E" : "#fcd34d",
+      color: active ? "#120A1F" : "#fcd34d",
       display: "flex",
       alignItems: "center",
       gap: "8px",
@@ -259,18 +259,18 @@ export default function AppShell(props: AppShellProps) {
   if (!mounted) {
     return (
       <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-        <aside style={{ width: 256, flexShrink: 0, backgroundColor: "#1A4A2E", display: "flex", flexDirection: "column" }}>
+        <aside style={{ width: 256, flexShrink: 0, backgroundColor: "#08060D", display: "flex", flexDirection: "column" }}>
           <LogoBlock />
           <div style={{ flex: 1 }} />
         </aside>
-        <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#f9fafb" }}>{children}</main>
+        <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#08060D" }}>{children}</main>
       </div>
     );
   }
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <aside style={{ width: 256, flexShrink: 0, height: "100vh", overflowX: "hidden", backgroundColor: "#1A4A2E", display: "flex", flexDirection: "column" }}>
+      <aside style={{ width: 256, flexShrink: 0, height: "100vh", overflowX: "hidden", backgroundColor: "#08060D", display: "flex", flexDirection: "column" }}>
         <LogoBlock />
 
         <nav style={{ flex: 1, minHeight: 0, padding: "10px 8px 8px", overflowY: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
@@ -279,8 +279,8 @@ export default function AppShell(props: AppShellProps) {
           <Link
             href="/dashboard"
             style={{
-              backgroundColor: pathname === "/dashboard" ? "#F28C28" : "transparent",
-              color: pathname === "/dashboard" ? "#1A4A2E" : "rgba(255,255,255,0.85)",
+              backgroundColor: pathname === "/dashboard" ? "rgba(123,44,191,0.85)" : "transparent",
+              color: pathname === "/dashboard" ? "#ffffff" : "rgba(255,255,255,0.85)",
               display: "flex",
               alignItems: "center",
               gap: "8px",
@@ -331,7 +331,7 @@ export default function AppShell(props: AppShellProps) {
                     {isCollapsed && hasActive && (
                       <span style={{
                         width: 6, height: 6, borderRadius: "50%",
-                        backgroundColor: "#F28C28", display: "inline-block", flexShrink: 0,
+                        backgroundColor: "#D4AF37", display: "inline-block", flexShrink: 0,
                       }} />
                     )}
                   </span>
@@ -380,7 +380,7 @@ export default function AppShell(props: AppShellProps) {
                                 background: "none",
                                 border: "none",
                                 cursor: "pointer",
-                                color: groupActive ? "#F28C28" : "rgba(255,255,255,0.78)",
+                                color: groupActive ? "#D4AF37" : "rgba(255,255,255,0.70)",
                                 fontSize: "13px",
                                 fontWeight: groupActive ? 600 : 400,
                                 borderRadius: "8px",
@@ -445,7 +445,7 @@ export default function AppShell(props: AppShellProps) {
           })}
 
           {/* Settings + Billing */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "8px", paddingTop: "4px", display: "flex", flexDirection: "column", gap: "1px" }}>
+          <div style={{ borderTop: "1px solid rgba(212,175,55,0.15)", marginTop: "8px", paddingTop: "4px", display: "flex", flexDirection: "column", gap: "1px" }}>
             <Link href="/dashboard/settings" style={itemStyle(pathActive(pathname, "/dashboard/settings"))}>
               ⚙️ Settings
             </Link>
@@ -456,7 +456,7 @@ export default function AppShell(props: AppShellProps) {
 
           {/* Master Admin — only visible to the master admin account */}
           {isMasterAdmin && (
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", marginTop: "6px", paddingTop: "6px", display: "flex", flexDirection: "column", gap: "1px" }}>
+            <div style={{ borderTop: "1px solid rgba(212,175,55,0.15)", marginTop: "6px", paddingTop: "6px", display: "flex", flexDirection: "column", gap: "1px" }}>
               <p style={{ padding: "4px 12px 2px", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(252,211,77,0.5)", margin: 0 }}>
                 Master Admin
               </p>
@@ -472,7 +472,7 @@ export default function AppShell(props: AppShellProps) {
         </nav>
 
         {/* Sign Out — always visible to authenticated users */}
-        <div style={{ padding: "8px", borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+        <div style={{ padding: "8px", borderTop: "1px solid rgba(212,175,55,0.15)", flexShrink: 0 }}>
           <button
             type="button"
             onClick={handleSignOut}
@@ -494,7 +494,7 @@ export default function AppShell(props: AppShellProps) {
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.9)";
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(255,255,255,0.07)";
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(123,44,191,0.2)";
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)";
@@ -506,18 +506,18 @@ export default function AppShell(props: AppShellProps) {
         </div>
       </aside>
 
-      <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#f9fafb" }}>{children}</main>
+      <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#08060D" }}>{children}</main>
     </div>
   );
 }
 
 function LogoBlock() {
   return (
-    <div style={{ padding: "16px", display: "flex", justifyContent: "center", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+    <div style={{ padding: "16px", display: "flex", justifyContent: "center", alignItems: "center", borderBottom: "1px solid rgba(212,175,55,0.2)" }}>
       <img
         src="/shepherd-kids-logo.png"
         alt="ShepherdKids"
-        style={{ width: "140px", height: "140px", borderRadius: "50%", objectFit: "cover", objectPosition: "center", border: "2px solid rgba(240,192,64,0.4)" }}
+        style={{ width: "140px", height: "140px", borderRadius: "50%", objectFit: "cover", objectPosition: "center", border: "2px solid rgba(212,175,55,0.65)" }}
       />
     </div>
   );

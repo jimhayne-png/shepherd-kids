@@ -7,7 +7,7 @@ import { MINISTRY_CONFIG, isInvitationOnly, hasTeamChallenge, hasGrowthModule, h
 
 // Ministry accent colors
 const ACCENT_COLORS: Record<string, string> = {
-  childrens: "#F28C28",
+  childrens: "#7B2CBF",
   "middle-school": "#3b82f6",
   "high-school": "#7c3aed",
   "young-adults": "#0d9488",
@@ -21,7 +21,7 @@ const ACCENT_COLORS: Record<string, string> = {
 const SHEPHERD_GROUP_TYPES = new Set(["childrens", "middle-school", "high-school", "young-adults"]);
 
 function getAccent(type: string): string {
-  return ACCENT_COLORS[type] ?? "#F28C28";
+  return ACCENT_COLORS[type] ?? "#7B2CBF";
 }
 
 function buildNav(type: string) {
@@ -80,11 +80,11 @@ export default function MinistryShell({ type, children }: MinistryShellProps) {
     pathname === href || (href !== overviewHref && pathname.startsWith(href));
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "#1a2e1a" }}>
+    <div className="flex flex-col h-full" style={{ backgroundColor: "#08060D" }}>
       {/* Top: logo + back */}
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: "10px" }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(212,175,55,0.2)", display: "flex", alignItems: "center", gap: "10px" }}>
         <img src="/shepherd-kids-logo.png" alt="ShepherdKids" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-        <Link href="/dashboard" style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 600, textDecoration: "none", letterSpacing: "0.03em" }}
+        <Link href="/dashboard" style={{ color: "#D4AF37", fontSize: 12, fontWeight: 600, textDecoration: "none", letterSpacing: "0.03em" }}
           onClick={() => setSidebarOpen(false)}>
           ← Dashboard
         </Link>
@@ -138,7 +138,7 @@ export default function MinistryShell({ type, children }: MinistryShellProps) {
       </nav>
 
       {/* Footer */}
-      <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+      <div style={{ padding: "10px 16px", borderTop: "1px solid rgba(212,175,55,0.15)" }}>
         <Link href="/dashboard/settings" style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, textDecoration: "none" }}>
           ⚙️ Settings
         </Link>
