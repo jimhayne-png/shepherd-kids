@@ -27,6 +27,44 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/dashboard/settings" },
 ];
 
+const CERTIFICATES = [
+  {
+    key: "faith_milestone",
+    name: "Faith Milestone Certificate",
+    description: "Awarded when a child reaches a major faith milestone — first Bible, salvation decision, or completing a faith curriculum.",
+  },
+  {
+    key: "scripture_memory",
+    name: "Scripture Memory Award",
+    description: "Recognizes a child who has memorized key scripture verses as part of their discipleship journey.",
+  },
+  {
+    key: "baptism",
+    name: "Baptism Celebration Certificate",
+    description: "Commemorates a child's baptism — a beautiful keepsake to honor their public declaration of faith.",
+  },
+  {
+    key: "promotion_sunday",
+    name: "Promotion Sunday Certificate",
+    description: "Given to children moving up to the next grade or class level during the annual Promotion Sunday celebration.",
+  },
+  {
+    key: "servant_heart",
+    name: "Servant Heart Award",
+    description: "Honors a child who has demonstrated exceptional kindness, helpfulness, and servant leadership.",
+  },
+  {
+    key: "birthday",
+    name: "Birthday Celebration Certificate",
+    description: "A special birthday keepsake for children celebrating their birthday, personalized with age and a message.",
+  },
+  {
+    key: "spiritual_birthday",
+    name: "Spiritual Birthday Certificate",
+    description: "Celebrates the anniversary of a child's spiritual birthday — the day they gave their heart to Jesus.",
+  },
+] as const;
+
 type BirthdayEvent = {
   memberId: string;
   firstName: string;
@@ -308,6 +346,50 @@ export default function BirthdaysPage() {
             })}
           </div>
         )}
+
+        {/* Award Certificates */}
+        {/*
+          TODO: Certificate generation (Sprint 2+)
+          Each certificate will require the following inputs before generating:
+            - Child name (from member profile)
+            - Award / milestone type (selected certificate type)
+            - Leader / Children's Minister name (from church settings or manual input)
+            - Church name (from church profile)
+            - Date awarded (defaults to today, editable)
+            - Optional personal note or scripture (free text)
+          Output:
+            - Color template (branded, full-color PDF)
+            - B&W template (print-friendly grayscale PDF)
+          History:
+            - Save each issued certificate to the child's profile (certificate_logs table)
+          Route: /dashboard/birthdays/certificate/create?type=[key]
+        */}
+        <div className="mt-10">
+          <h2 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: "#A9A9B8" }}>
+            Award Certificates
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {CERTIFICATES.map((cert) => (
+              <div
+                key={cert.key}
+                className="rounded-2xl p-5 flex flex-col gap-3"
+                style={{ background: "#120A1F", border: "1px solid rgba(212, 175, 55, 0.25)" }}
+              >
+                <div>
+                  <p className="font-semibold text-sm" style={{ color: "#FFFFFF" }}>{cert.name}</p>
+                  <p className="text-xs mt-1 leading-relaxed" style={{ color: "#A9A9B8" }}>{cert.description}</p>
+                </div>
+                <button
+                  disabled
+                  className="mt-auto w-full py-2 rounded-lg text-xs font-semibold transition-opacity disabled:opacity-50 cursor-not-allowed"
+                  style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF" }}
+                >
+                  Coming Soon
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </AppShell>
   );
