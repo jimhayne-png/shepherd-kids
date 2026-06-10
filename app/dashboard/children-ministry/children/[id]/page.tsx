@@ -209,6 +209,13 @@ const PLACEHOLDER_EVENTS: TimelineEvent[] = [
   { id: "ph_ministry_care", icon: "❤️", title: "Ministry Care Note",  date: null, dateLabel: null, description: "Ministry care moments will be documented here.",          isPlaceholder: true, placeholderLabel: "No notes yet" },
 ];
 
+function getCertTypeForEvent(eventId: string): string | null {
+  if (eventId === "salvation") return "spiritual_birthday";
+  if (eventId === "baptism") return "baptism";
+  if (eventId.startsWith("birthday_")) return "birthday";
+  return null;
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SectionCard({ title, emoji, children }: { title: string; emoji: string; children: React.ReactNode }) {
@@ -522,6 +529,7 @@ export default function ChildProfilePage() {
             {/* Timeline */}
             {[...timelineEvents, ...PLACEHOLDER_EVENTS].map((event, idx, arr) => {
               const isLast = idx === arr.length - 1;
+              const certType = getCertTypeForEvent(event.id);
               return (
                 <div key={event.id} style={{ display: "flex" }}>
                   {/* Circle + connector line */}
@@ -587,15 +595,17 @@ export default function ChildProfilePage() {
                       {/* Action buttons (real events only) */}
                       {!event.isPlaceholder && (
                         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          {["📷 Add Photo", "🖨️ Certificate", "✏️ Edit", "🗑️ Delete"].map(lbl => (
-                            <button
-                              key={lbl}
-                              disabled
-                              style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a4a65", cursor: "not-allowed" }}
-                            >
-                              {lbl}
-                            </button>
-                          ))}
+                          <button disabled style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a4a65", cursor: "not-allowed" }}>📷 Add Photo</button>
+                          {certType ? (
+                            <Link
+                              href={`/dashboard/children-ministry/certificates/new?childId=${childId}&childName=${encodeURIComponent(fullName)}&type=${certType}`}
+                              style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.08)", color: GOLD, cursor: "pointer", textDecoration: "none" }}
+                            >🎓 Certificate</Link>
+                          ) : (
+                            <button disabled style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a4a65", cursor: "not-allowed" }}>🖨️ Certificate</button>
+                          )}
+                          <button disabled style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a4a65", cursor: "not-allowed" }}>✏️ Edit</button>
+                          <button disabled style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a4a65", cursor: "not-allowed" }}>🗑️ Delete</button>
                         </div>
                       )}
                     </div>
@@ -776,12 +786,12 @@ export default function ChildProfilePage() {
                 <span style={{ fontSize: "13px", color: "#4a4a65" }}>🏆 Awards & Certificates</span>
                 <span style={{ fontSize: "11px", color: "#4a4a65", fontStyle: "italic" }}>Coming soon</span>
               </div>
-              <button
-                disabled
-                style={{ width: "100%", marginTop: "4px", padding: "9px", borderRadius: "10px", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.3)", background: "rgba(123,44,191,0.12)", border: "1px solid rgba(123,44,191,0.2)", cursor: "not-allowed" }}
+              <Link
+                href={`/dashboard/children-ministry/certificates/new?childId=${childId}&childName=${encodeURIComponent(fullName)}`}
+                style={{ display: "block", width: "100%", marginTop: "4px", padding: "9px", borderRadius: "10px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: `linear-gradient(135deg, ${ACCENT}, #9D4EDD)`, textDecoration: "none", textAlign: "center", boxSizing: "border-box" as const }}
               >
-                🖨️ Print Certificate (coming soon)
-              </button>
+                🎓 Create Certificate
+              </Link>
             </div>
           </SectionCard>
 
