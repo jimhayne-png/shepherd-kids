@@ -54,6 +54,28 @@ const inputStyle = {
   boxSizing: "border-box" as const,
 };
 
+const PRINT_STYLES = `
+@media print {
+  @page { size: landscape; margin: 0.5in; }
+  body * { visibility: hidden; }
+  #certificate-print-area,
+  #certificate-print-area * { visibility: visible; }
+  #certificate-print-area {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #certificate-print-area > div {
+    width: 100%;
+    max-width: 9in;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+`;
+
 function CertPreview({ childName, certType, churchName, leaderName, date, note, style: certStyle }: {
   childName: string; certType: string; churchName: string; leaderName: string;
   date: string; note: string; style: "color" | "bw";
@@ -169,6 +191,9 @@ function CertificateCreatorInner() {
 
   return (
     <AppShell navItems={[]}>
+      {/* eslint-disable-next-line react/no-danger */}
+      <style dangerouslySetInnerHTML={{ __html: PRINT_STYLES }} />
+
       {/* Header */}
       <div style={{ padding: "32px 32px 24px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)", borderBottom: "1px solid rgba(212,175,55,0.15)" }}>
         <button
@@ -314,15 +339,17 @@ function CertificateCreatorInner() {
             Live Preview — {style === "color" ? "Full Color" : "Black & White"}
           </p>
 
-          <CertPreview
-            childName={childName}
-            certType={certType}
-            churchName={churchName}
-            leaderName={leaderName}
-            date={date}
-            note={note}
-            style={style}
-          />
+          <div id="certificate-print-area">
+            <CertPreview
+              childName={childName}
+              certType={certType}
+              churchName={churchName}
+              leaderName={leaderName}
+              date={date}
+              note={note}
+              style={style}
+            />
+          </div>
 
           {/* Action buttons */}
           <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
@@ -337,12 +364,17 @@ function CertificateCreatorInner() {
               💾 Save Draft
             </button>
             <button
-              disabled
-              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", cursor: "not-allowed", background: "rgba(255,255,255,0.03)", color: "#4a4a65", fontSize: "13px", fontWeight: 700 }}
+              onClick={() => window.print()}
+              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: `1px solid rgba(212,175,55,0.35)`, cursor: "pointer", background: "rgba(212,175,55,0.1)", color: GOLD, fontSize: "13px", fontWeight: 700 }}
             >
-              🖨️ Print (coming soon)
+              🖨️ Print Certificate
             </button>
           </div>
+
+          {/* Print instructions */}
+          <p style={{ fontSize: "11px", color: MUTED, margin: "10px 0 0", padding: "8px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "8px", lineHeight: 1.5 }}>
+            💡 <strong style={{ color: BODY }}>Print tip:</strong> Use landscape orientation and disable headers/footers for best results.
+          </p>
 
           {/* Certificate types reference */}
           <div style={{ marginTop: "28px", background: CARD, border: "1px solid rgba(212,175,55,0.18)", borderRadius: "14px", overflow: "hidden" }}>
