@@ -16,6 +16,7 @@ export interface CertTheme {
   subtitleColor: string;      // tagline, cert subtitle, church name in footer
   dimColor: string;           // section labels (PRESENTED BY / DATE OF PRESENTATION)
   scriptureTextColor: string; // scripture verse body
+  scriptureRefColor: string;  // scripture reference line (reference + translation label)
   blessingColor: string;      // personalized blessing text
   // Dividers and ornaments
   dividerColor: string;       // thin horizontal rules
@@ -50,6 +51,7 @@ const PURPLE_THEME: CertTheme = {
   subtitleColor:         "rgba(212,175,55,0.72)",
   dimColor:              "rgba(255,255,255,0.40)",
   scriptureTextColor:    "rgba(255,255,255,0.72)",
+  scriptureRefColor:     "#D4AF37",
   blessingColor:         "rgba(255,255,255,0.55)",
   dividerColor:          "rgba(212,175,55,0.28)",
   ornamentColor:         "rgba(212,175,55,0.58)",
@@ -78,6 +80,7 @@ const IVORY_THEME: CertTheme = {
   subtitleColor:         "#8B6914",
   dimColor:              "#8B7355",
   scriptureTextColor:    "#4A3728",
+  scriptureRefColor:     "#8B6914",
   blessingColor:         "#5C4A3A",
   dividerColor:          "rgba(175,135,40,0.38)",
   ornamentColor:         "#B8860B",
