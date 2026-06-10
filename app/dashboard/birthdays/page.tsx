@@ -64,6 +64,11 @@ const CERTIFICATES = [
   },
 ] as const;
 
+// Maps Celebrations cert keys to Certificate Creator cert type keys where they differ
+function certLinkType(key: string): string {
+  return key === "promotion_sunday" ? "promotion" : key;
+}
+
 type BirthdayEvent = {
   memberId: string;
   firstName: string;
@@ -203,23 +208,43 @@ export default function BirthdaysPage() {
               🎉 Celebrations
             </h1>
           </div>
-          <button
-            onClick={handleSendToday}
-            disabled={sending}
-            style={{
-              background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
-              color: "#FFFFFF",
-              border: "none",
-              borderRadius: "8px",
-              padding: "10px 20px",
-              fontSize: "14px",
-              fontWeight: 700,
-              cursor: sending ? "not-allowed" : "pointer",
-              opacity: sending ? 0.7 : 1,
-            }}
-          >
-            {sending ? "Sending…" : "📬 Send Today's Notifications"}
-          </button>
+          <div style={{ display: "flex", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <Link
+              href="/dashboard/children-ministry/certificates/new"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(212,175,55,0.12)",
+                color: "#D4AF37",
+                border: "1px solid rgba(212,175,55,0.35)",
+                borderRadius: "8px",
+                padding: "10px 20px",
+                fontSize: "14px",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              🎓 Create Certificate
+            </Link>
+            <button
+              onClick={handleSendToday}
+              disabled={sending}
+              style={{
+                background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "8px",
+                padding: "10px 20px",
+                fontSize: "14px",
+                fontWeight: 700,
+                cursor: sending ? "not-allowed" : "pointer",
+                opacity: sending ? 0.7 : 1,
+              }}
+            >
+              {sending ? "Sending…" : "📬 Send Today's Notifications"}
+            </button>
+          </div>
         </div>
         {sendResult && (
           <p style={{ marginTop: "12px", color: "#D4AF37", fontSize: "13px", background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", padding: "8px 16px", borderRadius: "8px", display: "inline-block" }}>
@@ -436,12 +461,12 @@ export default function BirthdaysPage() {
                   <p style={{ fontWeight: 600, fontSize: "14px", color: "#FFFFFF", margin: 0 }}>{cert.name}</p>
                   <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "6px 0 0", lineHeight: 1.5 }}>{cert.description}</p>
                 </div>
-                <button
-                  disabled
-                  style={{ marginTop: "auto", width: "100%", padding: "8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF", border: "none", opacity: 0.5, cursor: "not-allowed" }}
+                <Link
+                  href={`/dashboard/children-ministry/certificates/new?type=${certLinkType(cert.key)}`}
+                  style={{ marginTop: "auto", display: "block", textAlign: "center", width: "100%", padding: "8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#FFFFFF", textDecoration: "none", boxSizing: "border-box" }}
                 >
-                  Coming Soon
-                </button>
+                  🎓 Create Certificate
+                </Link>
               </div>
             ))}
           </div>
