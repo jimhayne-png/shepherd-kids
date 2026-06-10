@@ -121,6 +121,7 @@ export default function ParentsPage() {
               return (
                 <div
                   key={p.id}
+                  onClick={() => router.push(`/dashboard/children-ministry/parents/${p.id}`)}
                   style={{
                     padding: "16px 24px",
                     display: "flex",
@@ -128,7 +129,10 @@ export default function ParentsPage() {
                     justifyContent: "space-between",
                     gap: "16px",
                     borderBottom: i < filtered.length - 1 ? "1px solid rgba(212,175,55,0.1)" : "none",
+                    cursor: "pointer",
                   }}
+                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(123,44,191,0.1)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent"}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 600, color: "#ffffff", fontSize: "14px", margin: 0 }}>
