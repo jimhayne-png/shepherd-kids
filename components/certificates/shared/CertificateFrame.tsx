@@ -5,6 +5,7 @@ import {
   useCertificateTheme,
 } from "@/components/certificates/context/CertificateThemeContext";
 import { CertificateTemplate } from "@/lib/certificates/themes";
+import CertificateBorder from "./CertificateBorder";
 
 function CertificateFrameInner({ children }: { children: React.ReactNode }) {
   const theme = useCertificateTheme();
@@ -22,6 +23,7 @@ function CertificateFrameInner({ children }: { children: React.ReactNode }) {
         overflow: "hidden",
       }}
     >
+      <CertificateBorder />
       {children}
     </div>
   );
