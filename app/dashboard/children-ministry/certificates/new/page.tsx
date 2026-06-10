@@ -471,7 +471,7 @@ function CertificateCreatorInner() {
                     <div style={{ height: "28px", background: t === "purple" ? "linear-gradient(135deg, #1A083E, #32177A)" : "#FDFAEF", borderBottom: `1px solid ${t === "purple" ? "rgba(212,175,55,0.25)" : "#C9A84C"}` }} />
                     <div style={{ padding: "7px 8px" }}>
                       <p style={{ fontSize: "11px", fontWeight: 700, margin: 0, color: active ? (t === "purple" ? ACCENT2 : "#B8860B") : MUTED }}>
-                        {t === "purple" ? "👑 Royal Purple" : "📄 Classic White"}
+                        {t === "purple" ? "👑 Royal Purple" : "📄 Classic Ivory"}
                       </p>
                       <p style={{ fontSize: "9px", color: "#4a4a65", margin: "2px 0 0" }}>Premium</p>
                     </div>
@@ -509,7 +509,7 @@ function CertificateCreatorInner() {
         {/* ── Preview panel ────────────────────────────────────────────────── */}
         <div>
           <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>
-            Live Preview — {template === "purple" ? "Royal Purple Premium" : "Classic White Premium"}
+            Live Preview — {template === "purple" ? "Royal Purple Premium" : "Classic Ivory Premium"}
           </p>
 
           <div id="certificate-print-area">
