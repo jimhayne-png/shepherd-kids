@@ -115,6 +115,100 @@ const FAITH_STAGES = [
   { id: 7, label: "Discipleship",          icon: "🙏", short: "Discipleship" },
 ];
 
+// ── Celebration Timeline ──────────────────────────────────────────────────────
+
+type TimelineEvent = {
+  id: string;
+  icon: string;
+  title: string;
+  date: string | null;
+  dateLabel: string | null;
+  description: string;
+  isPlaceholder?: boolean;
+  placeholderLabel?: string;
+};
+
+function buildTimeline(
+  child: VisitorChild,
+  family: VisitorFamily | null,
+  milestones: MilestoneRecord[],
+  checkinHistory: CheckinRecord[],
+): TimelineEvent[] {
+  const events: TimelineEvent[] = [];
+
+  const visitDate =
+    family?.visit_date ??
+    checkinHistory[checkinHistory.length - 1]?.checked_in_at?.slice(0, 10) ??
+    child.created_at?.slice(0, 10);
+  if (visitDate) {
+    events.push({
+      id: "first_visit",
+      icon: "👋",
+      title: "First Visit",
+      date: visitDate,
+      dateLabel: fmtShortDate(visitDate),
+      description: "First time visiting ShepherdKids.",
+    });
+  }
+
+  const salvation = milestones.find(m => m.milestone_type === "salvation" && m.is_completed && m.completed_at);
+  if (salvation?.completed_at) {
+    events.push({
+      id: "salvation",
+      icon: "✝️",
+      title: "Spiritual Birthday",
+      date: salvation.completed_at,
+      dateLabel: fmtDate(salvation.completed_at),
+      description: "Accepted Christ and began their walk of faith.",
+    });
+  }
+
+  const baptism = milestones.find(m => m.milestone_type === "water_baptism" && m.is_completed && m.completed_at);
+  if (baptism?.completed_at) {
+    events.push({
+      id: "baptism",
+      icon: "💧",
+      title: "Water Baptism",
+      date: baptism.completed_at,
+      dateLabel: fmtDate(baptism.completed_at),
+      description: "Celebrated before the congregation.",
+    });
+  }
+
+  if (child.date_of_birth) {
+    const today = new Date();
+    const dob = new Date(child.date_of_birth + "T00:00:00");
+    let yr = today.getFullYear();
+    if (new Date(yr, dob.getMonth(), dob.getDate()) > today) yr--;
+    const mo = String(dob.getMonth() + 1).padStart(2, "0");
+    const dy = String(dob.getDate()).padStart(2, "0");
+    const bdStr = `${yr}-${mo}-${dy}`;
+    events.push({
+      id: `birthday_${yr}`,
+      icon: "🎂",
+      title: "Birthday",
+      date: bdStr,
+      dateLabel: fmtDate(bdStr),
+      description: "Celebrated with the Children's Ministry.",
+    });
+  }
+
+  events.sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date.localeCompare(a.date);
+  });
+
+  return events;
+}
+
+const PLACEHOLDER_EVENTS: TimelineEvent[] = [
+  { id: "ph_scripture",     icon: "📖", title: "Scripture Memory",    date: null, dateLabel: null, description: "Scripture memory achievements will be recorded here.",   isPlaceholder: true, placeholderLabel: "Not yet recorded" },
+  { id: "ph_award",         icon: "🏆", title: "Servant Heart Award", date: null, dateLabel: null, description: "Awards and recognitions will appear here.",               isPlaceholder: true, placeholderLabel: "No awards yet" },
+  { id: "ph_promotion",     icon: "🎓", title: "Promotion Sunday",    date: null, dateLabel: null, description: "Grade promotions will be recorded here.",                 isPlaceholder: true, placeholderLabel: "Not yet promoted" },
+  { id: "ph_ministry_care", icon: "❤️", title: "Ministry Care Note",  date: null, dateLabel: null, description: "Ministry care moments will be documented here.",          isPlaceholder: true, placeholderLabel: "No notes yet" },
+];
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SectionCard({ title, emoji, children }: { title: string; emoji: string; children: React.ReactNode }) {
@@ -238,6 +332,9 @@ export default function ChildProfilePage() {
   const checkedInRecently = recentCheckin ? (Date.now() - new Date(recentCheckin.checked_in_at).getTime()) < 30 * 24 * 3600 * 1000 : false;
 
   const birthdayInfo = child.date_of_birth ? nextBirthday(child.date_of_birth) : null;
+  const timelineEvents = buildTimeline(child, family, milestones, checkinHistory);
+  const spiritualMilestoneCount = milestones.filter(m => m.is_completed && m.completed_at).length;
+  const celebrationCount = [child.date_of_birth, salvationMilestone?.completed_at, baptismMilestone?.completed_at].filter(Boolean).length;
 
   const parent1Name = family ? [family.parent1_first_name, family.parent1_last_name].filter(Boolean).join(" ") : null;
   const parent2Name = family ? [family.parent2_first_name, family.parent2_last_name].filter(Boolean).join(" ") : null;
@@ -393,6 +490,128 @@ export default function ChildProfilePage() {
                 );
               })}
             </div>
+          </SectionCard>
+        </div>
+
+        {/* ── Celebration Timeline ─────────────────────────────────────── */}
+        <div id="celebration-timeline" style={{ marginBottom: "20px" }}>
+          <SectionCard title="Celebration Timeline" emoji="🎉">
+
+            {/* Highlights summary */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "24px" }}>
+              {[
+                { icon: "🏆", value: "0",                              label: "Certificates",  accent: false },
+                { icon: "✝️", value: String(spiritualMilestoneCount),  label: "Milestones",    accent: spiritualMilestoneCount > 0 },
+                { icon: "🎂", value: String(celebrationCount),         label: "Celebrations",  accent: celebrationCount > 0 },
+                { icon: "🌱", value: stageMeta.icon,                   label: stageMeta.short, accent: true },
+              ].map(item => (
+                <div key={item.label} style={{
+                  background: item.accent ? "rgba(123,44,191,0.15)" : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${item.accent ? "rgba(123,44,191,0.35)" : "rgba(255,255,255,0.07)"}`,
+                  borderRadius: "12px",
+                  padding: "14px 10px",
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: "18px", marginBottom: "5px" }}>{item.icon}</div>
+                  <div style={{ fontSize: "18px", fontWeight: 900, color: item.accent ? "#ffffff" : "#4a4a65", lineHeight: 1 }}>{item.value}</div>
+                  <div style={{ fontSize: "10px", fontWeight: 700, color: "#A9A9B8", marginTop: "4px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{item.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Timeline */}
+            {[...timelineEvents, ...PLACEHOLDER_EVENTS].map((event, idx, arr) => {
+              const isLast = idx === arr.length - 1;
+              return (
+                <div key={event.id} style={{ display: "flex" }}>
+                  {/* Circle + connector line */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "46px", flexShrink: 0 }}>
+                    <div style={{
+                      width: "38px",
+                      height: "38px",
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "17px",
+                      background: event.isPlaceholder ? "rgba(255,255,255,0.03)" : `linear-gradient(135deg, ${ACCENT}, #9D4EDD)`,
+                      border: event.isPlaceholder ? "1px dashed rgba(255,255,255,0.12)" : "2px solid rgba(212,175,55,0.3)",
+                      boxShadow: event.isPlaceholder ? "none" : "0 0 8px rgba(123,44,191,0.35)",
+                    }}>
+                      {event.icon}
+                    </div>
+                    {!isLast && (
+                      <div style={{
+                        width: "2px",
+                        flex: 1,
+                        minHeight: "20px",
+                        background: event.isPlaceholder ? "rgba(255,255,255,0.04)" : "linear-gradient(to bottom, rgba(212,175,55,0.25), rgba(212,175,55,0.08))",
+                        margin: "4px 0",
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Event card */}
+                  <div style={{ flex: 1, paddingLeft: "14px", paddingBottom: isLast ? "0" : "16px" }}>
+                    <div style={{
+                      background: event.isPlaceholder ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.03)",
+                      border: event.isPlaceholder ? "1px dashed rgba(255,255,255,0.08)" : "1px solid rgba(212,175,55,0.15)",
+                      borderRadius: "12px",
+                      padding: "14px 16px",
+                      opacity: event.isPlaceholder ? 0.5 : 1,
+                    }}>
+                      {/* Header */}
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "6px" }}>
+                        <div>
+                          <p style={{ fontSize: "14px", fontWeight: 700, color: event.isPlaceholder ? "#5a5a78" : "#ffffff", margin: 0 }}>
+                            {event.title}
+                          </p>
+                          {event.dateLabel ? (
+                            <p style={{ fontSize: "12px", color: GOLD, margin: "2px 0 0", fontWeight: 600 }}>{event.dateLabel}</p>
+                          ) : (
+                            <p style={{ fontSize: "11px", color: "#4a4a65", margin: "2px 0 0", fontStyle: "italic" }}>{event.placeholderLabel}</p>
+                          )}
+                        </div>
+                        {event.isPlaceholder && (
+                          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "20px", background: "rgba(255,255,255,0.04)", color: "#4a4a65", flexShrink: 0, fontStyle: "italic", whiteSpace: "nowrap" }}>
+                            Coming soon
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      <p style={{ fontSize: "13px", color: event.isPlaceholder ? "#4a4a65" : "#A9A9B8", margin: "0 0 10px", lineHeight: 1.5 }}>
+                        {event.description}
+                      </p>
+
+                      {/* Action buttons (real events only) */}
+                      {!event.isPlaceholder && (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {["📷 Add Photo", "🖨️ Certificate", "✏️ Edit", "🗑️ Delete"].map(lbl => (
+                            <button
+                              key={lbl}
+                              disabled
+                              style={{ fontSize: "11px", padding: "3px 9px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#4a4a65", cursor: "not-allowed" }}
+                            >
+                              {lbl}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Log Event placeholder */}
+            <button
+              disabled
+              style={{ width: "100%", marginTop: "12px", padding: "10px", borderRadius: "10px", border: "1px dashed rgba(212,175,55,0.2)", background: "transparent", color: "#4a4a65", fontSize: "13px", cursor: "not-allowed" }}
+            >
+              + Log Celebration Event (coming soon)
+            </button>
+
           </SectionCard>
         </div>
 

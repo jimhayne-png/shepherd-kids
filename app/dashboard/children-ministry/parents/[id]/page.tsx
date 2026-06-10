@@ -183,8 +183,9 @@ function ChildCard({ child }: { child: VisitorChild }) {
         {child.medical_notes && (
           <p style={{ fontSize: "12px", color: "#fbbf24", margin: "4px 0 0" }}>🏥 {child.medical_notes}</p>
         )}
-        <div style={{ marginTop: "10px", fontSize: "12px", color: ACCENT2, fontWeight: 600 }}>
-          View Profile →
+        <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={{ fontSize: "12px", color: ACCENT2, fontWeight: 600 }}>View Profile →</span>
+          <span style={{ fontSize: "11px", color: GOLD, fontWeight: 600 }}>🎉 View Celebration Timeline →</span>
         </div>
       </div>
     </Link>
