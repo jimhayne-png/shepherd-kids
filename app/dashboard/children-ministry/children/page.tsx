@@ -152,69 +152,70 @@ export default function ChildrenPage() {
     <AppShell navItems={[]}>
       <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
         <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Families</h1>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>🧒 ShepherdKids</h1>
         <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>{children.length} registered</p>
       </div>
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
-        <div className="mb-6">
+        <div style={{ marginBottom: "20px" }}>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or parent…"
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white shadow-sm"
+            style={{ width: "100%", padding: "10px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "12px", fontSize: "13px", color: "#ffffff", outline: "none", boxSizing: "border-box" }}
           />
         </div>
 
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
+        <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "18px", overflow: "hidden" }}>
           {filtered.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-5xl mb-4">🧒</div>
-              <p className="text-gray-400">
+            <div style={{ padding: "64px 32px", textAlign: "center" }}>
+              <div style={{ fontSize: "48px", marginBottom: "16px" }}>🧒</div>
+              <p style={{ color: "#A9A9B8", fontSize: "14px", margin: 0 }}>
                 {search ? "No children match your search." : "No children registered yet. They'll appear here after their first kiosk check-in."}
               </p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Child</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Parent</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">First Visit</th>
+                <tr style={{ borderBottom: "1px solid rgba(212,175,55,0.12)" }}>
+                  <th className="text-left px-6 py-3" style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.06em" }}>Child</th>
+                  <th className="text-left px-6 py-3" style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.06em" }}>Parent</th>
+                  <th className="text-left px-6 py-3" style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.06em" }}>First Visit</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(child => (
+                {filtered.map((child, idx) => (
                   <tr
                     key={child.id}
                     onClick={() => setSelectedChild(child)}
-                    className="border-b border-gray-50 hover:bg-orange-50 cursor-pointer transition-colors"
+                    style={{ borderBottom: idx < filtered.length - 1 ? "1px solid rgba(212,175,55,0.08)" : "none", cursor: "pointer" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "rgba(123,44,191,0.1)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "transparent"}
                   >
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                         <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                          style={{ backgroundColor: CM_ACCENT }}
+                          style={{ width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, color: "#ffffff", flexShrink: 0, backgroundColor: CM_ACCENT }}
                         >
                           {child.first_name[0]}{child.last_name[0]}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{child.first_name} {child.last_name}</p>
+                          <p style={{ fontWeight: 600, color: "#ffffff", fontSize: "14px", margin: 0 }}>{child.first_name} {child.last_name}</p>
                           {child.date_of_birth && (
-                            <p className="text-xs text-gray-400">{calcAge(child.date_of_birth)} years old</p>
+                            <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "2px 0 0" }}>{calcAge(child.date_of_birth)} years old</p>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {child.parent_name && (
-                        <p className="text-sm text-gray-700">{child.parent_name}</p>
+                        <p style={{ fontSize: "13px", color: "#D8D8E8", margin: 0 }}>{child.parent_name}</p>
                       )}
                       {child.parent_phone && (
-                        <p className="text-xs text-gray-400">{child.parent_phone}</p>
+                        <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "2px 0 0" }}>{child.parent_phone}</p>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4" style={{ fontSize: "13px", color: "#A9A9B8" }}>
                       {child.visit_date ? fmtDate(child.visit_date) : "—"}
                     </td>
                   </tr>
@@ -227,78 +228,76 @@ export default function ChildrenPage() {
 
       {/* Child Detail Modal */}
       {selectedChild && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setSelectedChild(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }} onClick={() => setSelectedChild(null)}>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "18px", width: "100%", maxWidth: "440px" }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(212,175,55,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Georgia, serif" }}>
+                <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
                   {selectedChild.first_name} {selectedChild.last_name}
                 </h2>
                 {selectedChild.date_of_birth && (
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "3px 0 0" }}>
                     {calcAge(selectedChild.date_of_birth)} years old · DOB {fmtDate(selectedChild.date_of_birth)}
                   </p>
                 )}
               </div>
-              <button onClick={() => setSelectedChild(null)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              <button onClick={() => setSelectedChild(null)} style={{ color: "#A9A9B8", background: "none", border: "none", cursor: "pointer", fontSize: "18px" }}>✕</button>
             </div>
-            <div className="p-6 space-y-4">
+            <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "18px" }}>
               {(selectedChild.parent_name || selectedChild.parent_phone || selectedChild.parent_email) && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Parent / Guardian</p>
-                  {selectedChild.parent_name && <p className="font-medium text-gray-800 text-sm">{selectedChild.parent_name}</p>}
-                  {selectedChild.parent_phone && <p className="text-xs text-gray-500 mt-0.5">{selectedChild.parent_phone}</p>}
-                  {selectedChild.parent_email && <p className="text-xs text-gray-500">{selectedChild.parent_email}</p>}
+                  <p style={{ fontSize: "10px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>Parent / Guardian</p>
+                  {selectedChild.parent_name && <p style={{ fontWeight: 600, color: "#ffffff", fontSize: "13px", margin: 0 }}>{selectedChild.parent_name}</p>}
+                  {selectedChild.parent_phone && <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "2px 0 0" }}>{selectedChild.parent_phone}</p>}
+                  {selectedChild.parent_email && <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "1px 0 0" }}>{selectedChild.parent_email}</p>}
                 </div>
               )}
               {selectedChild.visit_date && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">First Visit</p>
-                  <p className="text-sm text-gray-700">{fmtDate(selectedChild.visit_date)}</p>
+                  <p style={{ fontSize: "10px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "4px" }}>First Visit</p>
+                  <p style={{ fontSize: "13px", color: "#D8D8E8", margin: 0 }}>{fmtDate(selectedChild.visit_date)}</p>
                 </div>
               )}
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Faith Journey</p>
+                <p style={{ fontSize: "10px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>Faith Journey</p>
                 {milestonesLoading ? (
-                  <p className="text-xs text-gray-400">Loading…</p>
+                  <p style={{ fontSize: "12px", color: "#A9A9B8" }}>Loading…</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                     {(["salvation", "water_baptism"] as const).map((type) => {
                       const label = type === "salvation" ? "✝️ Spiritual Birthday" : "🌊 Baptism Date";
                       const current = milestones?.[type] ?? null;
                       return (
                         <div key={type}>
-                          <p className="text-xs text-gray-500 mb-1">{label}</p>
+                          <p style={{ fontSize: "12px", color: "#D8D8E8", marginBottom: "4px" }}>{label}</p>
                           {editField === type ? (
-                            <div className="flex gap-2 items-center flex-wrap">
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                               <input
                                 type="date"
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
-                                className="text-sm border border-gray-200 rounded-lg px-2 py-1"
+                                style={{ padding: "5px 8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "6px", fontSize: "12px", color: "#ffffff", outline: "none" }}
                               />
                               <button
                                 onClick={() => saveMilestone(type)}
                                 disabled={saving || !editValue}
-                                className="text-xs font-medium text-white px-3 py-1 rounded-lg disabled:opacity-50"
-                                style={{ backgroundColor: CM_ACCENT }}
+                                style={{ fontSize: "12px", fontWeight: 600, color: "#ffffff", padding: "5px 12px", borderRadius: "6px", border: "none", cursor: saving || !editValue ? "not-allowed" : "pointer", opacity: saving || !editValue ? 0.5 : 1, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}
                               >
                                 {saving ? "Saving…" : "Save"}
                               </button>
                               <button
                                 onClick={() => { setEditField(null); setEditValue(""); }}
-                                className="text-xs text-gray-400"
+                                style={{ fontSize: "12px", color: "#A9A9B8", background: "none", border: "none", cursor: "pointer" }}
                               >
                                 Cancel
                               </button>
                             </div>
                           ) : current?.completed_at ? (
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm text-gray-700">{fmtDate(current.completed_at)}</p>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <p style={{ fontSize: "13px", color: "#D8D8E8", margin: 0 }}>{fmtDate(current.completed_at)}</p>
                               <button
                                 onClick={() => { setEditField(type); setEditValue(current.completed_at ?? ""); }}
-                                className="text-xs font-medium"
-                                style={{ color: CM_ACCENT }}
+                                style={{ fontSize: "12px", fontWeight: 600, color: "#9D4EDD", background: "none", border: "none", cursor: "pointer" }}
                               >
                                 Edit
                               </button>
@@ -306,8 +305,7 @@ export default function ChildrenPage() {
                           ) : (
                             <button
                               onClick={() => { setEditField(type); setEditValue(""); }}
-                              className="text-xs font-medium"
-                              style={{ color: CM_ACCENT }}
+                              style={{ fontSize: "12px", fontWeight: 600, color: "#9D4EDD", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                             >
                               + Add date
                             </button>

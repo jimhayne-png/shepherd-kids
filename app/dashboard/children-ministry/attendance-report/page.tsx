@@ -154,13 +154,13 @@ export default function AttendanceReportPage() {
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Session selector */}
-        <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-gray-100">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-2">Select Session</label>
-          <div className="flex gap-3">
+        <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "20px 24px", marginBottom: "20px" }}>
+          <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "8px" }}>Select Session</label>
+          <div style={{ display: "flex", gap: "12px" }}>
             <select
               value={selectedId}
               onChange={e => { setSelectedId(e.target.value); loadReport(e.target.value); }}
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm"
+              style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", fontSize: "13px", color: "#ffffff", outline: "none" }}
             >
               <option value="">— Choose a session —</option>
               {sessions.map(s => (
@@ -172,108 +172,108 @@ export default function AttendanceReportPage() {
             {report && (
               <button
                 onClick={() => exportCSV(report)}
-                className="px-5 py-3 rounded-xl text-sm font-bold text-white"
-                style={{ backgroundColor: ACCENT }}
+                style={{ padding: "10px 18px", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer", flexShrink: 0 }}
               >⬇ Export CSV</button>
             )}
           </div>
         </div>
 
         {loadingReport && (
-          <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-gray-400">Loading report…</div></div>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "48px 32px", textAlign: "center" }}>
+            <div style={{ color: "#A9A9B8" }}>Loading report…</div>
+          </div>
         )}
 
         {report && !loadingReport && (
           <>
             {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" style={{ marginBottom: "20px" }}>
               {[
                 { label: "Total Children", value: report.summary.totalChildren, emoji: "👧" },
                 { label: "Rooms Used", value: report.summary.roomsUsed, emoji: "🏠" },
                 { label: "New Visitors", value: report.summary.newVisitors, emoji: "🆕" },
                 { label: "Returning", value: report.summary.returning, emoji: "🔄" },
               ].map(card => (
-                <div key={card.label} className="bg-white rounded-2xl shadow p-5 border border-gray-100 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: ACCENT + "22" }}>{card.emoji}</div>
+                <div key={card.label} style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "14px", padding: "18px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0, backgroundColor: ACCENT + "22" }}>{card.emoji}</div>
                   <div>
-                    <div className="text-2xl font-black text-gray-900">{card.value}</div>
-                    <div className="text-xs text-gray-400">{card.label}</div>
+                    <div style={{ fontSize: "24px", fontWeight: 900, color: "#ffffff" }}>{card.value}</div>
+                    <div style={{ fontSize: "11px", color: "#A9A9B8" }}>{card.label}</div>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Visitor Journey */}
-            <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>Visitor Journey</h2>
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "20px 24px", marginBottom: "20px" }}>
+              <h2 style={{ fontWeight: 700, color: "#ffffff", marginBottom: "16px", fontFamily: "Georgia, serif", fontSize: "17px" }}>Visitor Journey</h2>
               <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: "#eff6ff" }}>
-                  <div className="text-3xl font-black" style={{ color: "#3b82f6" }}>{report.visitorJourney.new}</div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: "#3b82f6" }}>🆕 New</div>
-                  <div className="text-xs text-gray-400 mt-0.5">1st visit</div>
+                <div style={{ textAlign: "center", padding: "16px", borderRadius: "12px", background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)" }}>
+                  <div style={{ fontSize: "30px", fontWeight: 900, color: "#60a5fa" }}>{report.visitorJourney.new}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 600, marginTop: "4px", color: "#60a5fa" }}>🆕 New</div>
+                  <div style={{ fontSize: "11px", color: "#A9A9B8", marginTop: "2px" }}>1st visit</div>
                 </div>
-                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: "#fef3c7" }}>
-                  <div className="text-3xl font-black" style={{ color: "#d97706" }}>{report.visitorJourney.returning}</div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: "#d97706" }}>🔄 Returning</div>
-                  <div className="text-xs text-gray-400 mt-0.5">2–3 visits</div>
+                <div style={{ textAlign: "center", padding: "16px", borderRadius: "12px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)" }}>
+                  <div style={{ fontSize: "30px", fontWeight: 900, color: "#fbbf24" }}>{report.visitorJourney.returning}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 600, marginTop: "4px", color: "#fbbf24" }}>🔄 Returning</div>
+                  <div style={{ fontSize: "11px", color: "#A9A9B8", marginTop: "2px" }}>2–3 visits</div>
                 </div>
-                <div className="text-center p-4 rounded-xl" style={{ backgroundColor: "#f0fdf4" }}>
-                  <div className="text-3xl font-black" style={{ color: "#16a34a" }}>{report.visitorJourney.regular}</div>
-                  <div className="text-sm font-semibold mt-1" style={{ color: "#16a34a" }}>⭐ Regular</div>
-                  <div className="text-xs text-gray-400 mt-0.5">4+ visits</div>
+                <div style={{ textAlign: "center", padding: "16px", borderRadius: "12px", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                  <div style={{ fontSize: "30px", fontWeight: 900, color: "#4ade80" }}>{report.visitorJourney.regular}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 600, marginTop: "4px", color: "#4ade80" }}>⭐ Regular</div>
+                  <div style={{ fontSize: "11px", color: "#A9A9B8", marginTop: "2px" }}>4+ visits</div>
                 </div>
               </div>
             </div>
 
             {/* Per-room breakdown */}
-            <h2 className="font-bold text-gray-800 mb-4 text-lg" style={{ fontFamily: "Georgia, serif" }}>Room Breakdown</h2>
+            <h2 style={{ fontWeight: 700, color: "#ffffff", marginBottom: "16px", fontSize: "17px", fontFamily: "Georgia, serif" }}>Room Breakdown</h2>
             {report.rooms.map(room => (
-              <div key={room.room_id} className="bg-white rounded-2xl shadow border border-gray-100 mb-4 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between" style={{ backgroundColor: ACCENT + "0d" }}>
-                  <h3 className="font-bold text-gray-900">{room.room_name}</h3>
-                  <span className="text-sm font-bold px-3 py-1 rounded-full text-white" style={{ backgroundColor: ACCENT }}>
+              <div key={room.room_id} style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", marginBottom: "16px", overflow: "hidden" }}>
+                <div style={{ padding: "14px 24px", borderBottom: "1px solid rgba(212,175,55,0.12)", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(123,44,191,0.2)" }}>
+                  <h3 style={{ fontWeight: 700, color: "#ffffff", margin: 0, fontSize: "15px" }}>{room.room_name}</h3>
+                  <span style={{ fontSize: "12px", fontWeight: 700, padding: "3px 12px", borderRadius: "20px", color: "#ffffff", backgroundColor: ACCENT }}>
                     {room.children.length} {room.children.length === 1 ? "child" : "children"}
                   </span>
                 </div>
-                <div className="divide-y divide-gray-50">
-                  {room.children.map(child => (
-                    <div key={child.id} className="px-6 py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-gray-900 text-sm">{child.child_name}</span>
-                            {child.is_new_visitor && <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: ACCENT }}>🆕 NEW</span>}
-                            <span className="text-xs px-1.5 py-0.5 rounded font-bold text-white" style={{ backgroundColor: visitColor(child.visit_count) }}>
+                <div>
+                  {room.children.map((child, idx) => (
+                    <div key={child.id} style={{ padding: "12px 24px", borderTop: idx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none" }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                            <span style={{ fontWeight: 600, color: "#ffffff", fontSize: "13px" }}>{child.child_name}</span>
+                            {child.is_new_visitor && <span style={{ fontSize: "11px", padding: "1px 8px", borderRadius: "20px", fontWeight: 700, color: "#ffffff", backgroundColor: ACCENT }}>🆕 NEW</span>}
+                            <span style={{ fontSize: "11px", padding: "1px 6px", borderRadius: "5px", fontWeight: 700, color: "#ffffff", backgroundColor: visitColor(child.visit_count) }}>
                               {visitLabel(child.visit_count)}
                             </span>
                           </div>
-                          <div className="text-xs text-gray-400 mt-0.5">{child.parent_name} · {fmtTime(child.checked_in_at)}{child.checked_out_at ? ` → ${fmtTime(child.checked_out_at)}` : " (still checked in)"}</div>
+                          <div style={{ fontSize: "12px", color: "#A9A9B8", marginTop: "2px" }}>{child.parent_name} · {fmtTime(child.checked_in_at)}{child.checked_out_at ? ` → ${fmtTime(child.checked_out_at)}` : " (still checked in)"}</div>
                           {(child.allergies.length > 0 || child.allergy_other) && (
-                            <div className="text-xs text-red-500 font-semibold mt-0.5">⚠️ {[...child.allergies, child.allergy_other].filter(Boolean).join(", ")}</div>
+                            <div style={{ fontSize: "12px", color: "#f87171", fontWeight: 600, marginTop: "2px" }}>⚠️ {[...child.allergies, child.allergy_other].filter(Boolean).join(", ")}</div>
                           )}
                           {child.date_of_birth && (
-                            <div className="text-xs text-gray-400 mt-0.5">{calcAge(child.date_of_birth)} years old · {fmtBirthday(child.date_of_birth)}</div>
+                            <div style={{ fontSize: "12px", color: "#A9A9B8", marginTop: "2px" }}>{calcAge(child.date_of_birth)} years old · {fmtBirthday(child.date_of_birth)}</div>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                           <button
                             onClick={() => { setEditingId(child.id); setEditRoomId(room.room_id === "unassigned" ? "" : room.room_id); }}
-                            className="text-xs px-2 py-0.5 rounded font-semibold border"
-                            style={{ borderColor: ACCENT, color: ACCENT }}
+                            style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "5px", fontWeight: 600, border: `1px solid ${ACCENT}`, color: ACCENT, background: "transparent", cursor: "pointer" }}
                           >Edit</button>
                           <button
                             onClick={() => handleDelete(child.id)}
                             disabled={deletingId === child.id}
-                            className="text-xs px-2 py-0.5 rounded font-semibold border border-red-300 text-red-500"
+                            style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "5px", fontWeight: 600, border: "1px solid rgba(239,68,68,0.5)", color: "#f87171", background: "transparent", cursor: "pointer" }}
                           >{deletingId === child.id ? "…" : "Delete"}</button>
                         </div>
                       </div>
                       {editingId === child.id && (
-                        <div className="mt-2 flex items-center gap-1.5">
+                        <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                           <select
                             value={editRoomId}
                             onChange={e => setEditRoomId(e.target.value)}
-                            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+                            style={{ flex: 1, fontSize: "12px", padding: "5px 8px", borderRadius: "7px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
                           >
                             <option value="">— No Room —</option>
                             {allRooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -281,12 +281,11 @@ export default function AttendanceReportPage() {
                           <button
                             onClick={() => handleSaveRoom(child.id)}
                             disabled={saving}
-                            className="text-xs px-2.5 py-1.5 rounded-lg font-bold text-white flex-shrink-0"
-                            style={{ backgroundColor: ACCENT }}
+                            style={{ fontSize: "11px", padding: "5px 10px", borderRadius: "7px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer", flexShrink: 0 }}
                           >{saving ? "…" : "Save"}</button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-xs px-2.5 py-1.5 rounded-lg font-semibold text-gray-500 border border-gray-200 flex-shrink-0"
+                            style={{ fontSize: "11px", padding: "5px 10px", borderRadius: "7px", fontWeight: 600, color: "#A9A9B8", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", cursor: "pointer", flexShrink: 0 }}
                           >Cancel</button>
                         </div>
                       )}
@@ -299,13 +298,15 @@ export default function AttendanceReportPage() {
         )}
 
         {!loadingReport && !report && selectedId && (
-          <div className="bg-white rounded-2xl shadow p-12 text-center"><p className="text-gray-400">No records found for this session.</p></div>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "48px 32px", textAlign: "center" }}>
+            <p style={{ color: "#A9A9B8", margin: 0 }}>No records found for this session.</p>
+          </div>
         )}
 
         {!selectedId && !loadingReport && (
-          <div className="bg-white rounded-2xl shadow p-12 text-center">
-            <div className="text-5xl mb-4">📊</div>
-            <p className="text-gray-500 font-semibold">Select a session above to view the report.</p>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "64px 32px", textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>📊</div>
+            <p style={{ color: "#A9A9B8", fontWeight: 600, margin: 0 }}>Select a session above to view the report.</p>
           </div>
         )}
       </div>

@@ -107,84 +107,85 @@ export default function LiveCheckinPage() {
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {loading && (
-          <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-gray-400">Loading…</div></div>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "48px 32px", textAlign: "center" }}>
+            <div style={{ color: "#A9A9B8" }}>Loading…</div>
+          </div>
         )}
 
         {!loading && !session && (
-          <div className="bg-white rounded-2xl shadow p-16 text-center">
-            <div className="text-5xl mb-4">🕐</div>
-            <p className="text-gray-600 font-bold text-lg">No open session right now</p>
-            <p className="text-gray-400 text-sm mt-1">Create and open a session in Check-In Setup to see live data here.</p>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "64px 32px", textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🕐</div>
+            <p style={{ color: "#ffffff", fontWeight: 700, fontSize: "18px", margin: 0 }}>No open session right now</p>
+            <p style={{ color: "#A9A9B8", fontSize: "13px", marginTop: "6px" }}>Create and open a session in Check-In Setup to see live data here.</p>
           </div>
         )}
 
         {!loading && session && (
           <>
             {/* Session info + total count */}
-            <div className="bg-white rounded-2xl shadow border border-gray-100 p-6 mb-6 flex items-center justify-between">
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "20px 24px", marginBottom: "20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Georgia, serif" }}>{session.service_name}</h2>
-                <p className="text-sm text-gray-500 mt-0.5">{fmtDate(session.date)}</p>
+                <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>{session.service_name}</h2>
+                <p style={{ fontSize: "13px", color: "#A9A9B8", margin: "3px 0 0" }}>{fmtDate(session.date)}</p>
               </div>
-              <div className="text-center">
-                <div className="text-5xl font-black" style={{ color: ACCENT }}>{totalCheckedIn}</div>
-                <div className="text-sm font-semibold text-gray-500 mt-0.5">Checked In</div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "44px", fontWeight: 900, color: ACCENT, lineHeight: 1 }}>{totalCheckedIn}</div>
+                <div style={{ fontSize: "12px", fontWeight: 600, color: "#A9A9B8", marginTop: "3px" }}>Checked In</div>
               </div>
             </div>
 
             {rooms.length === 0 && (
-              <div className="bg-white rounded-2xl shadow p-12 text-center">
-                <div className="text-5xl mb-4">👋</div>
-                <p className="text-gray-500 font-semibold">No children checked in yet.</p>
+              <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "48px 32px", textAlign: "center" }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>👋</div>
+                <p style={{ color: "#A9A9B8", fontWeight: 600, margin: 0 }}>No children checked in yet.</p>
               </div>
             )}
 
             {/* Per-room cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {rooms.map(room => (
-                <div key={room.room_id} className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
-                  <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: "#1a2e1a" }}>
-                    <h3 className="font-bold text-white text-base">{room.room_name}</h3>
-                    <span className="text-2xl font-black" style={{ color: "#4ade80" }}>{room.children.length}</span>
+                <div key={room.room_id} style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", overflow: "hidden" }}>
+                  <div style={{ padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(123,44,191,0.35)", borderBottom: "1px solid rgba(212,175,55,0.15)" }}>
+                    <h3 style={{ fontWeight: 700, color: "#ffffff", fontSize: "15px", margin: 0 }}>{room.room_name}</h3>
+                    <span style={{ fontSize: "22px", fontWeight: 900, color: "#D4AF37" }}>{room.children.length}</span>
                   </div>
-                  <div className="divide-y divide-gray-50">
-                    {room.children.map(child => {
+                  <div>
+                    {room.children.map((child, idx) => {
                       const hasAllergy = child.allergies.length > 0 || child.allergy_other;
                       const allergyText = [...child.allergies, child.allergy_other].filter(Boolean).join(", ");
                       return (
-                        <div key={child.id} className="px-5 py-3">
-                          <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-gray-900">{child.child_name}</span>
+                        <div key={child.id} style={{ padding: "12px 20px", borderTop: idx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none" }}>
+                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", marginBottom: "3px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <span style={{ fontWeight: 700, color: "#ffffff", fontSize: "14px" }}>{child.child_name}</span>
                               {child.is_new_visitor && (
-                                <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: ACCENT }}>🆕 NEW</span>
+                                <span style={{ fontSize: "11px", padding: "1px 8px", borderRadius: "20px", fontWeight: 700, color: "#ffffff", backgroundColor: ACCENT }}>🆕 NEW</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                               <button
                                 onClick={() => { setEditingId(child.id); setEditRoomId(room.room_id === "unassigned" ? "" : room.room_id); }}
-                                className="text-xs px-2 py-0.5 rounded font-semibold border"
-                                style={{ borderColor: ACCENT, color: ACCENT }}
+                                style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "5px", fontWeight: 600, border: `1px solid ${ACCENT}`, color: ACCENT, background: "transparent", cursor: "pointer" }}
                               >Edit</button>
                               <button
                                 onClick={() => handleDelete(child.id)}
                                 disabled={deletingId === child.id}
-                                className="text-xs px-2 py-0.5 rounded font-semibold border border-red-300 text-red-500"
+                                style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "5px", fontWeight: 600, border: "1px solid rgba(239,68,68,0.5)", color: "#f87171", background: "transparent", cursor: "pointer" }}
                               >{deletingId === child.id ? "…" : "Delete"}</button>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-400">{child.parent_name} · in {fmtTime(child.checked_in_at)}</div>
+                          <div style={{ fontSize: "12px", color: "#A9A9B8" }}>{child.parent_name} · in {fmtTime(child.checked_in_at)}</div>
                           {hasAllergy && (
-                            <div className="text-xs font-bold text-white mt-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "#dc2626" }}>
+                            <div style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", marginTop: "6px", padding: "4px 10px", borderRadius: "7px", backgroundColor: "#dc2626" }}>
                               ⚠️ {allergyText}
                             </div>
                           )}
                           {editingId === child.id && (
-                            <div className="mt-2 flex items-center gap-1.5">
+                            <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                               <select
                                 value={editRoomId}
                                 onChange={e => setEditRoomId(e.target.value)}
-                                className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white"
+                                style={{ flex: 1, fontSize: "12px", padding: "5px 8px", borderRadius: "7px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
                               >
                                 <option value="">— No Room —</option>
                                 {allRooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -192,12 +193,11 @@ export default function LiveCheckinPage() {
                               <button
                                 onClick={() => handleSaveRoom(child.id)}
                                 disabled={saving}
-                                className="text-xs px-2.5 py-1.5 rounded-lg font-bold text-white flex-shrink-0"
-                                style={{ backgroundColor: ACCENT }}
+                                style={{ fontSize: "11px", padding: "5px 10px", borderRadius: "7px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer", flexShrink: 0 }}
                               >{saving ? "…" : "Save"}</button>
                               <button
                                 onClick={() => setEditingId(null)}
-                                className="text-xs px-2.5 py-1.5 rounded-lg font-semibold text-gray-500 border border-gray-200 flex-shrink-0"
+                                style={{ fontSize: "11px", padding: "5px 10px", borderRadius: "7px", fontWeight: 600, color: "#A9A9B8", border: "1px solid rgba(255,255,255,0.15)", background: "transparent", cursor: "pointer", flexShrink: 0 }}
                               >Cancel</button>
                             </div>
                           )}

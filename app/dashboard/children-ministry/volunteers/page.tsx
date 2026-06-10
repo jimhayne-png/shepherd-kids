@@ -25,7 +25,7 @@ function reliabilityColor(score: number) { return score >= 80 ? "#22c55e" : scor
 function fmtDate(iso: string) { return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); }
 function fmtTime(t: string | null) { if (!t) return ""; try { const [h, m] = t.split(":"); const d = new Date(); d.setHours(parseInt(h), parseInt(m)); return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); } catch { return t; } }
 
-const COLORS = ["#6366f1","#F28C28","#22c55e","#3b82f6","#ec4899","#14b8a6","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
+const COLORS = ["#6366f1","#9D4EDD","#22c55e","#3b82f6","#ec4899","#14b8a6","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
 
 function VolunteersPageContent() {
   const router = useRouter();
@@ -215,10 +215,10 @@ function VolunteersPageContent() {
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 px-8 pt-4 overflow-x-auto bg-white" style={{ borderBottom: "1px solid #e5e7eb" }}>
+      <div className="flex gap-1 px-8 pt-4 overflow-x-auto" style={{ backgroundColor: "#08060D", borderBottom: "1px solid rgba(212,175,55,0.2)" }}>
         {["Volunteers", "Schedule", "Roles"].map(tab => (
           <Link key={tab} href={`/dashboard/children-ministry/volunteers?tab=${tab.toLowerCase()}`} className="px-5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-            style={{ borderColor: activeTab === tab.toLowerCase() ? ACCENT : "transparent", color: activeTab === tab.toLowerCase() ? ACCENT : "#6b7280" }}>
+            style={{ borderColor: activeTab === tab.toLowerCase() ? ACCENT : "transparent", color: activeTab === tab.toLowerCase() ? ACCENT : "#A9A9B8" }}>
             {tab}
           </Link>
         ))}
@@ -231,9 +231,9 @@ function VolunteersPageContent() {
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             {[{ label: "Total", value: stats.total, emoji: "👥" }, { label: "Active", value: stats.active, emoji: "✅" }, { label: "BG Cleared", value: stats.cleared, emoji: "🛡️" }, { label: "Avg Reliability", value: `${stats.avgReliability}%`, emoji: "⭐" }].map(s => (
-              <div key={s.label} className="bg-white rounded-xl shadow-sm px-5 py-4 flex items-center gap-3 border border-gray-100">
+              <div key={s.label} className="rounded-xl px-5 py-4 flex items-center gap-3" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: ACCENT + "22" }}>{s.emoji}</div>
-                <div><p className="text-xl font-bold text-gray-900">{s.value}</p><p className="text-xs text-gray-400">{s.label}</p></div>
+                <div><p className="text-xl font-bold" style={{ color: "#ffffff" }}>{s.value}</p><p className="text-xs" style={{ color: "#A9A9B8" }}>{s.label}</p></div>
               </div>
             ))}
           </div>
@@ -242,25 +242,27 @@ function VolunteersPageContent() {
             <button onClick={() => { setEditVol(null); setVolForm({ first_name: "", last_name: "", email: "", phone: "", roles: [], background_check_status: "pending", background_check_date: "", notes: "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ Add Volunteer</button>
           </div>
 
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
             {volunteers.filter(v => v.is_active).length === 0 ? (
-              <div className="p-12 text-center"><div className="text-5xl mb-4">👥</div><p className="text-gray-400">No volunteers yet. Add your first volunteer to get started.</p></div>
+              <div className="p-12 text-center"><div className="text-5xl mb-4">👥</div><p style={{ color: "#A9A9B8" }}>No volunteers yet. Add your first volunteer to get started.</p></div>
             ) : (
               <table className="w-full">
-                <thead><tr className="border-b border-gray-100">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Volunteer</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Roles</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">BG Check</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-widest">Reliability</th>
+                <thead><tr style={{ borderBottom: "1px solid rgba(212,175,55,0.12)" }}>
+                  <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Volunteer</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest hidden md:table-cell" style={{ color: "#A9A9B8" }}>Roles</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>BG Check</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Reliability</th>
                   <th className="px-4 py-3" />
                 </tr></thead>
                 <tbody>
                   {volunteers.filter(v => v.is_active).map(v => (
-                    <tr key={v.id} className="border-b border-gray-50 hover:bg-orange-50 transition-colors">
+                    <tr key={v.id} style={{ borderBottom: "1px solid rgba(212,175,55,0.08)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "rgba(123,44,191,0.1)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "transparent"}>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-gray-900">{v.first_name} {v.last_name}</p>
-                        {v.email && <p className="text-xs text-gray-400">{v.email}</p>}
-                        {v.assignment_count > 0 && <p className="text-xs text-gray-400">{v.assignment_count} times in 90d</p>}
+                        <p className="font-medium" style={{ color: "#ffffff" }}>{v.first_name} {v.last_name}</p>
+                        {v.email && <p className="text-xs" style={{ color: "#A9A9B8" }}>{v.email}</p>}
+                        {v.assignment_count > 0 && <p className="text-xs" style={{ color: "#A9A9B8" }}>{v.assignment_count} times in 90d</p>}
                       </td>
                       <td className="px-4 py-4 hidden md:table-cell">
                         <div className="flex flex-wrap gap-1">{v.roles.slice(0, 3).map(r => { const role = roles.find(ro => ro.name === r); return <span key={r} className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: role?.color ?? "#6366f1" }}>{r}</span>; })}</div>
@@ -270,7 +272,7 @@ function VolunteersPageContent() {
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <div className="w-16 rounded-full h-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
                             <div className="h-2 rounded-full" style={{ width: `${v.reliability_score}%`, backgroundColor: reliabilityColor(v.reliability_score) }} />
                           </div>
                           <span className="text-xs font-bold" style={{ color: reliabilityColor(v.reliability_score) }}>{v.reliability_score}</span>
@@ -278,8 +280,8 @@ function VolunteersPageContent() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex gap-2 justify-end">
-                          <button onClick={() => openEditVol(v)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">Edit</button>
-                          <button onClick={() => { setUnavailVol(v); setUnavailDate(new Date().toISOString().slice(0, 10)); }} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">Unavail.</button>
+                          <button onClick={() => openEditVol(v)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Edit</button>
+                          <button onClick={() => { setUnavailVol(v); setUnavailDate(new Date().toISOString().slice(0, 10)); }} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Unavail.</button>
                         </div>
                       </td>
                     </tr>
@@ -297,7 +299,7 @@ function VolunteersPageContent() {
           </div>
 
           {events.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-5xl mb-4">📅</div><p className="text-gray-400">No service events yet.</p></div>
+            <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div className="text-5xl mb-4">📅</div><p style={{ color: "#A9A9B8" }}>No service events yet.</p></div>
           ) : (
             <div className="space-y-3">
               {events.map(e => {
@@ -305,32 +307,34 @@ function VolunteersPageContent() {
                 const totalAssigned = e.assignment_count;
                 const staffColor = totalAssigned === 0 ? "#ef4444" : e.confirmed_count < totalAssigned ? "#f59e0b" : "#22c55e";
                 return (
-                  <div key={e.id} className="bg-white rounded-2xl shadow overflow-hidden">
-                    <div className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => toggleEvent(e.id)}>
+                  <div key={e.id} className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                    <div className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors" onClick={() => toggleEvent(e.id)}
+                      onMouseEnter={e2 => (e2.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(123,44,191,0.08)"}
+                      onMouseLeave={e2 => (e2.currentTarget as HTMLDivElement).style.backgroundColor = "transparent"}>
                       <div className="w-1.5 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: staffColor }} />
-                      <div className="flex-shrink-0 text-center bg-orange-50 rounded-xl px-4 py-2 min-w-[60px]">
-                        <p className="text-xs font-bold text-orange-600 uppercase">{new Date(e.event_date + "T00:00:00").toLocaleDateString("en-US", { month: "short" })}</p>
-                        <p className="text-xl font-black text-orange-800">{new Date(e.event_date + "T00:00:00").getDate()}</p>
+                      <div className="flex-shrink-0 text-center rounded-xl px-4 py-2 min-w-[60px]" style={{ background: "rgba(123,44,191,0.15)" }}>
+                        <p className="text-xs font-bold uppercase" style={{ color: "#c084fc" }}>{new Date(e.event_date + "T00:00:00").toLocaleDateString("en-US", { month: "short" })}</p>
+                        <p className="text-xl font-black" style={{ color: "#ffffff" }}>{new Date(e.event_date + "T00:00:00").getDate()}</p>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900">{e.title}</p>
-                        <p className="text-xs text-gray-400">{[fmtTime(e.start_time), fmtTime(e.end_time)].filter(Boolean).join(" – ") || "Time TBD"}</p>
+                        <p className="font-bold" style={{ color: "#ffffff" }}>{e.title}</p>
+                        <p className="text-xs" style={{ color: "#A9A9B8" }}>{[fmtTime(e.start_time), fmtTime(e.end_time)].filter(Boolean).join(" – ") || "Time TBD"}</p>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <span className="text-sm font-bold" style={{ color: staffColor }}>{totalAssigned} volunteer{totalAssigned !== 1 ? "s" : ""}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${e.status === "completed" ? "bg-gray-100 text-gray-500" : e.status === "cancelled" ? "bg-red-100 text-red-500" : "bg-green-100 text-green-700"}`}>{e.status}</span>
-                        <span className="text-gray-300">{isOpen ? "▲" : "▼"}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: e.status === "completed" ? "rgba(255,255,255,0.07)" : e.status === "cancelled" ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)", color: e.status === "completed" ? "#A9A9B8" : e.status === "cancelled" ? "#f87171" : "#4ade80" }}>{e.status}</span>
+                        <span style={{ color: "#A9A9B8" }}>{isOpen ? "▲" : "▼"}</span>
                       </div>
                     </div>
 
                     {isOpen && (
-                      <div className="px-5 pb-5 border-t border-gray-50 pt-4">
+                      <div className="px-5 pb-5 pt-4" style={{ borderTop: "1px solid rgba(212,175,55,0.12)" }}>
                         {/* Assignment table */}
                         <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Volunteers</p>
+                          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Volunteers</p>
                           <div className="flex items-center gap-2">
-                            {reminderMsg[e.id] && <span className="text-xs font-medium text-green-600">{reminderMsg[e.id]}</span>}
-                            <button onClick={() => sendReminders(e.id)} disabled={sendingReminders === e.id} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">
+                            {reminderMsg[e.id] && <span className="text-xs font-medium" style={{ color: "#4ade80" }}>{reminderMsg[e.id]}</span>}
+                            <button onClick={() => sendReminders(e.id)} disabled={sendingReminders === e.id} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>
                               {sendingReminders === e.id ? "Sending…" : "📧 Send Reminders"}
                             </button>
                             <button onClick={() => { setAssignEvent(e); setAssignSearch(""); setAssignRole(roles[0]?.name ?? ""); setAssignWarning(""); }} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: ACCENT }}>+ Assign</button>
@@ -338,23 +342,23 @@ function VolunteersPageContent() {
                         </div>
 
                         {(eventAssignments[e.id] ?? []).length === 0 ? (
-                          <p className="text-xs text-gray-400 mb-3">No volunteers assigned yet.</p>
+                          <p className="text-xs mb-3" style={{ color: "#A9A9B8" }}>No volunteers assigned yet.</p>
                         ) : (
                           <table className="w-full mb-3">
-                            <thead><tr className="border-b border-gray-100"><th className="text-left py-2 text-xs text-gray-400">Name</th><th className="text-left py-2 text-xs text-gray-400">Role</th><th className="text-left py-2 text-xs text-gray-400">Status</th><th className="py-2" /></tr></thead>
+                            <thead><tr style={{ borderBottom: "1px solid rgba(212,175,55,0.1)" }}><th className="text-left py-2 text-xs" style={{ color: "#A9A9B8" }}>Name</th><th className="text-left py-2 text-xs" style={{ color: "#A9A9B8" }}>Role</th><th className="text-left py-2 text-xs" style={{ color: "#A9A9B8" }}>Status</th><th className="py-2" /></tr></thead>
                             <tbody>
                               {(eventAssignments[e.id] ?? []).map(a => (
-                                <tr key={a.id} className="border-b border-gray-50">
-                                  <td className="py-2 text-sm font-medium text-gray-900">{a.volunteer?.first_name} {a.volunteer?.last_name}
+                                <tr key={a.id} style={{ borderBottom: "1px solid rgba(212,175,55,0.06)" }}>
+                                  <td className="py-2 text-sm font-medium" style={{ color: "#ffffff" }}>{a.volunteer?.first_name} {a.volunteer?.last_name}
                                     <span className="ml-2 text-xs" style={{ color: reliabilityColor(a.volunteer?.reliability_score ?? 100) }}>({a.volunteer?.reliability_score ?? 100})</span>
                                   </td>
-                                  <td className="py-2 text-xs text-gray-500">{a.role_name}</td>
+                                  <td className="py-2 text-xs" style={{ color: "#A9A9B8" }}>{a.role_name}</td>
                                   <td className="py-2">
-                                    <select value={a.status} onChange={ev => updateAssignment(e.id, a.id, { status: ev.target.value })} className="px-2 py-1 border border-gray-200 rounded-lg text-xs font-bold" style={{ color: STATUS_COLORS[a.status] ?? "#374151" }}>
+                                    <select value={a.status} onChange={ev => updateAssignment(e.id, a.id, { status: ev.target.value })} className="px-2 py-1 rounded-lg text-xs font-bold" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", color: STATUS_COLORS[a.status] ?? "#D8D8E8", outline: "none" }}>
                                       {["assigned","confirmed","declined","no_show"].map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
                                     </select>
                                   </td>
-                                  <td className="py-2 text-right"><button onClick={() => removeAssignment(e.id, a.id)} className="text-xs text-red-400 hover:text-red-600">Remove</button></td>
+                                  <td className="py-2 text-right"><button onClick={() => removeAssignment(e.id, a.id)} className="text-xs" style={{ color: "#f87171" }}>Remove</button></td>
                                 </tr>
                               ))}
                             </tbody>
@@ -363,7 +367,7 @@ function VolunteersPageContent() {
 
                         {/* Event status */}
                         <div className="flex items-center gap-3 mt-2">
-                          <select value={e.status} onChange={async ev => { if (!token) return; await fetch(`/api/children-ministry/service-events/${e.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: ev.target.value }) }); await loadAll(token); }} className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-medium">
+                          <select value={e.status} onChange={async ev => { if (!token) return; await fetch(`/api/children-ministry/service-events/${e.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status: ev.target.value }) }); await loadAll(token); }} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", color: "#D8D8E8", outline: "none" }}>
                             <option value="scheduled">Scheduled</option>
                             <option value="completed">Completed</option>
                             <option value="cancelled">Cancelled</option>
@@ -383,26 +387,26 @@ function VolunteersPageContent() {
           <div className="flex justify-end mb-4">
             <button onClick={() => { setEditRole(null); setRoleForm({ name: "", description: "", color: COLORS[roles.length % COLORS.length] }); setShowRoleModal(true); }} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ Add Role</button>
           </div>
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
             {roles.length === 0 ? (
-              <div className="p-12 text-center"><div className="text-5xl mb-4">🎯</div><p className="text-gray-400">No roles yet. Create roles like "Teacher", "Helper", "Check-In".</p></div>
+              <div className="p-12 text-center"><div className="text-5xl mb-4">🎯</div><p style={{ color: "#A9A9B8" }}>No roles yet. Create roles like &quot;Teacher&quot;, &quot;Helper&quot;, &quot;Check-In&quot;.</p></div>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div>
                 {roles.map((role, idx) => {
                   const volCount = volunteers.filter(v => v.roles.includes(role.name)).length;
                   return (
-                    <div key={role.id} className="flex items-center gap-4 px-6 py-4">
+                    <div key={role.id} className="flex items-center gap-4 px-6 py-4" style={{ borderTop: idx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none" }}>
                       <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: role.color }} />
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900">{role.name}</p>
-                        {role.description && <p className="text-xs text-gray-400">{role.description}</p>}
-                        <p className="text-xs text-gray-400">{volCount} volunteer{volCount !== 1 ? "s" : ""} can fill this role</p>
+                        <p className="font-bold" style={{ color: "#ffffff" }}>{role.name}</p>
+                        {role.description && <p className="text-xs" style={{ color: "#A9A9B8" }}>{role.description}</p>}
+                        <p className="text-xs" style={{ color: "#A9A9B8" }}>{volCount} volunteer{volCount !== 1 ? "s" : ""} can fill this role</p>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
-                        <button onClick={() => { if (idx > 0) { fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ sort_order: role.sort_order - 1 }) }).then(() => loadAll(token!)); } }} disabled={idx === 0} className="text-gray-300 hover:text-gray-500 disabled:opacity-30 text-sm px-1">▲</button>
-                        <button onClick={() => { if (idx < roles.length - 1) { fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ sort_order: role.sort_order + 1 }) }).then(() => loadAll(token!)); } }} disabled={idx === roles.length - 1} className="text-gray-300 hover:text-gray-500 disabled:opacity-30 text-sm px-1">▼</button>
-                        <button onClick={() => { setEditRole(role); setRoleForm({ name: role.name, description: role.description ?? "", color: role.color }); setShowRoleModal(true); }} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:border-orange-300 transition-colors">Edit</button>
-                        <button onClick={async () => { if (!confirm("Delete this role?") || !token) return; await fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); await loadAll(token); }} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 text-red-400 hover:border-red-300 transition-colors">Delete</button>
+                        <button onClick={() => { if (idx > 0) { fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ sort_order: role.sort_order - 1 }) }).then(() => loadAll(token!)); } }} disabled={idx === 0} className="disabled:opacity-30 text-sm px-1" style={{ color: "#A9A9B8" }}>▲</button>
+                        <button onClick={() => { if (idx < roles.length - 1) { fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ sort_order: role.sort_order + 1 }) }).then(() => loadAll(token!)); } }} disabled={idx === roles.length - 1} className="disabled:opacity-30 text-sm px-1" style={{ color: "#A9A9B8" }}>▼</button>
+                        <button onClick={() => { setEditRole(role); setRoleForm({ name: role.name, description: role.description ?? "", color: role.color }); setShowRoleModal(true); }} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Edit</button>
+                        <button onClick={async () => { if (!confirm("Delete this role?") || !token) return; await fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); await loadAll(token); }} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", background: "transparent" }}>Delete</button>
                       </div>
                     </div>
                   );
@@ -415,21 +419,23 @@ function VolunteersPageContent() {
 
       {/* ====== VOLUNTEER MODAL ====== */}
       {showVolModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowVolModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100 sticky top-0 bg-white">
-              <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif" }}>{editVol ? "Edit Volunteer" : "Add Volunteer"}</h2>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowVolModal(false)}>
+          <div className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 sticky top-0" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)", background: "#120A1F" }}>
+              <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>{editVol ? "Edit Volunteer" : "Add Volunteer"}</h2>
             </div>
             <div className="p-6 space-y-4">
               {!editVol && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Search existing members</label>
-                  <input value={volForm.memberSearch} onChange={e => setVolForm(f => ({ ...f, memberSearch: e.target.value }))} placeholder="Name or email…" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-1" />
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Search existing members</label>
+                  <input value={volForm.memberSearch} onChange={e => setVolForm(f => ({ ...f, memberSearch: e.target.value }))} placeholder="Name or email…" className="w-full px-3 py-2 rounded-lg text-sm mb-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   {volForm.memberSearch && filteredMembers.length > 0 && (
-                    <div className="border border-gray-100 rounded-xl overflow-hidden max-h-36 overflow-y-auto mb-2">
+                    <div className="rounded-xl overflow-hidden max-h-36 overflow-y-auto mb-2" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
                       {filteredMembers.map(m => (
-                        <button key={m.id} onClick={() => setVolForm(f => ({ ...f, first_name: m.first_name, last_name: m.last_name, email: m.email ?? "", phone: m.phone ?? "", memberSearch: "" }))} className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50 border-b border-gray-50 last:border-0">
-                          {m.first_name} {m.last_name} {m.email && <span className="text-gray-400 text-xs">· {m.email}</span>}
+                        <button key={m.id} onClick={() => setVolForm(f => ({ ...f, first_name: m.first_name, last_name: m.last_name, email: m.email ?? "", phone: m.phone ?? "", memberSearch: "" }))} className="w-full text-left px-3 py-2 text-sm" style={{ color: "#D8D8E8", borderBottom: "1px solid rgba(212,175,55,0.08)" }}
+                          onMouseEnter={e2 => (e2.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(123,44,191,0.15)"}
+                          onMouseLeave={e2 => (e2.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"}>
+                          {m.first_name} {m.last_name} {m.email && <span className="text-xs" style={{ color: "#A9A9B8" }}>· {m.email}</span>}
                         </button>
                       ))}
                     </div>
@@ -437,27 +443,27 @@ function VolunteersPageContent() {
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">First Name *</label><input value={volForm.first_name} onChange={e => setVolForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">Last Name *</label><input value={volForm.last_name} onChange={e => setVolForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>First Name *</label><input value={volForm.first_name} onChange={e => setVolForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Last Name *</label><input value={volForm.last_name} onChange={e => setVolForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">Email</label><input type="email" value={volForm.email} onChange={e => setVolForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">Phone</label><input value={volForm.phone} onChange={e => setVolForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Email</label><input type="email" value={volForm.email} onChange={e => setVolForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Phone</label><input value={volForm.phone} onChange={e => setVolForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">Roles (can fill)</label>
+                <label className="block text-xs font-medium mb-2" style={{ color: "#A9A9B8" }}>Roles (can fill)</label>
                 <div className="flex flex-wrap gap-2">{roles.map(r => (
-                  <button key={r.id} onClick={() => setVolForm(f => ({ ...f, roles: f.roles.includes(r.name) ? f.roles.filter(x => x !== r.name) : [...f.roles, r.name] }))} className="px-3 py-1.5 rounded-full text-xs font-bold transition-all" style={{ backgroundColor: volForm.roles.includes(r.name) ? r.color : "#f3f4f6", color: volForm.roles.includes(r.name) ? "white" : "#374151" }}>{r.name}</button>
+                  <button key={r.id} onClick={() => setVolForm(f => ({ ...f, roles: f.roles.includes(r.name) ? f.roles.filter(x => x !== r.name) : [...f.roles, r.name] }))} className="px-3 py-1.5 rounded-full text-xs font-bold transition-all" style={{ backgroundColor: volForm.roles.includes(r.name) ? r.color : "rgba(255,255,255,0.07)", color: volForm.roles.includes(r.name) ? "white" : "#A9A9B8" }}>{r.name}</button>
                 ))}</div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">Background Check</label><select value={volForm.background_check_status} onChange={e => setVolForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"><option value="pending">Pending</option><option value="cleared">Cleared</option><option value="expired">Expired</option><option value="failed">Failed</option></select></div>
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">Check Date</label><input type="date" value={volForm.background_check_date} onChange={e => setVolForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check</label><select value={volForm.background_check_status} onChange={e => setVolForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}><option value="pending">Pending</option><option value="cleared">Cleared</option><option value="expired">Expired</option><option value="failed">Failed</option></select></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Check Date</label><input type="date" value={volForm.background_check_date} onChange={e => setVolForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               </div>
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Notes</label><textarea value={volForm.notes} onChange={e => setVolForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" /></div>
-              {volError && <p className="text-sm text-red-600">{volError}</p>}
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label><textarea value={volForm.notes} onChange={e => setVolForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              {volError && <p className="text-sm" style={{ color: "#f87171" }}>{volError}</p>}
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowVolModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={() => setShowVolModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 <button onClick={saveVolunteer} disabled={savingVol} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{savingVol ? "Saving…" : "Save"}</button>
               </div>
             </div>
@@ -467,19 +473,19 @@ function VolunteersPageContent() {
 
       {/* ====== EVENT MODAL ====== */}
       {showEventModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowEventModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100"><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif" }}>New Service Event</h2></div>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowEventModal(false)}>
+          <div className="rounded-2xl w-full max-w-sm" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>New Service Event</h2></div>
             <div className="p-6 space-y-4">
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Title *</label><input value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))} placeholder="Sunday Morning Service" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Date *</label><input type="date" value={eventForm.event_date} onChange={e => setEventForm(f => ({ ...f, event_date: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Title *</label><input value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))} placeholder="Sunday Morning Service" className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Date *</label><input type="date" value={eventForm.event_date} onChange={e => setEventForm(f => ({ ...f, event_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">Start Time</label><input type="time" value={eventForm.start_time} onChange={e => setEventForm(f => ({ ...f, start_time: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
-                <div><label className="block text-xs font-medium text-gray-600 mb-1">End Time</label><input type="time" value={eventForm.end_time} onChange={e => setEventForm(f => ({ ...f, end_time: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Start Time</label><input type="time" value={eventForm.start_time} onChange={e => setEventForm(f => ({ ...f, start_time: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>End Time</label><input type="time" value={eventForm.end_time} onChange={e => setEventForm(f => ({ ...f, end_time: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               </div>
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Notes</label><textarea value={eventForm.notes} onChange={e => setEventForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none" /></div>
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label><textarea value={eventForm.notes} onChange={e => setEventForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowEventModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={() => setShowEventModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 <button onClick={saveEvent} disabled={savingEvent} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{savingEvent ? "Creating…" : "Create Event"}</button>
               </div>
             </div>
@@ -489,46 +495,46 @@ function VolunteersPageContent() {
 
       {/* ====== ASSIGN MODAL ====== */}
       {assignEvent && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setAssignEvent(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100 sticky top-0 bg-white">
-              <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif" }}>Assign Volunteer — {assignEvent.title}</h2>
-              <p className="text-xs text-gray-400 mt-1">{fmtDate(assignEvent.event_date)}</p>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setAssignEvent(null)}>
+          <div className="rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6 sticky top-0" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)", background: "#120A1F" }}>
+              <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Assign Volunteer — {assignEvent.title}</h2>
+              <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>{fmtDate(assignEvent.event_date)}</p>
             </div>
             <div className="p-6">
               <div className="mb-4">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Role *</label>
-                <select value={assignRole} onChange={e => setAssignRole(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Role *</label>
+                <select value={assignRole} onChange={e => setAssignRole(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}>
                   {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
                   {roles.length === 0 && <option value="Helper">Helper</option>}
                 </select>
               </div>
               <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Search volunteers</label>
-                <input value={assignSearch} onChange={e => setAssignSearch(e.target.value)} placeholder="Name…" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Search volunteers</label>
+                <input value={assignSearch} onChange={e => setAssignSearch(e.target.value)} placeholder="Name…" className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
               </div>
-              {assignWarning && <p className="text-xs text-amber-600 mb-3">{assignWarning}</p>}
+              {assignWarning && <p className="text-xs mb-3" style={{ color: "#fbbf24" }}>{assignWarning}</p>}
               <div className="space-y-2">
                 {filteredVols.map(v => {
                   const alreadyAssigned = (eventAssignments[assignEvent.id] ?? []).some(a => a.volunteer_id === v.id);
                   return (
-                    <div key={v.id} className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${alreadyAssigned ? "border-green-100 bg-green-50" : "border-gray-100 hover:border-orange-200"}`}>
+                    <div key={v.id} className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ border: `1px solid ${alreadyAssigned ? "rgba(34,197,94,0.3)" : "rgba(212,175,55,0.2)"}`, background: alreadyAssigned ? "rgba(34,197,94,0.08)" : "transparent" }}>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{v.first_name} {v.last_name}</p>
+                        <p className="text-sm font-medium" style={{ color: "#ffffff" }}>{v.first_name} {v.last_name}</p>
                         <div className="flex items-center gap-2">
                           <span className="text-xs" style={{ color: reliabilityColor(v.reliability_score) }}>⭐ {v.reliability_score}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: BG_STATUS[v.background_check_status] ?? "#9ca3af" }}>{v.background_check_status}</span>
                         </div>
                       </div>
                       {alreadyAssigned ? (
-                        <span className="text-xs font-bold text-green-600">✓ Assigned</span>
+                        <span className="text-xs font-bold" style={{ color: "#4ade80" }}>✓ Assigned</span>
                       ) : (
                         <button onClick={() => assignVolunteer(assignEvent.id, v.id)} disabled={assigning === v.id || !assignRole} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: ACCENT }}>{assigning === v.id ? "…" : "Assign"}</button>
                       )}
                     </div>
                   );
                 })}
-                {filteredVols.length === 0 && <p className="text-xs text-gray-400 text-center py-4">No volunteers found.</p>}
+                {filteredVols.length === 0 && <p className="text-xs text-center py-4" style={{ color: "#A9A9B8" }}>No volunteers found.</p>}
               </div>
             </div>
           </div>
@@ -537,18 +543,18 @@ function VolunteersPageContent() {
 
       {/* ====== ROLE MODAL ====== */}
       {showRoleModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setShowRoleModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100"><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif" }}>{editRole ? "Edit Role" : "Add Role"}</h2></div>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowRoleModal(false)}>
+          <div className="rounded-2xl w-full max-w-sm" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>{editRole ? "Edit Role" : "Add Role"}</h2></div>
             <div className="p-6 space-y-4">
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Role Name *</label><input value={roleForm.name} onChange={e => setRoleForm(f => ({ ...f, name: e.target.value }))} placeholder="Teacher, Helper, Check-In…" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Description</label><input value={roleForm.description} onChange={e => setRoleForm(f => ({ ...f, description: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Role Name *</label><input value={roleForm.name} onChange={e => setRoleForm(f => ({ ...f, name: e.target.value }))} placeholder="Teacher, Helper, Check-In…" className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Description</label><input value={roleForm.description} onChange={e => setRoleForm(f => ({ ...f, description: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-2">Color</label>
-                <div className="flex flex-wrap gap-2">{COLORS.map(c => <button key={c} onClick={() => setRoleForm(f => ({ ...f, color: c }))} className="w-8 h-8 rounded-full border-2 transition-all" style={{ backgroundColor: c, borderColor: roleForm.color === c ? "#111" : "transparent" }} />)}</div>
+                <label className="block text-xs font-medium mb-2" style={{ color: "#A9A9B8" }}>Color</label>
+                <div className="flex flex-wrap gap-2">{COLORS.map(c => <button key={c} onClick={() => setRoleForm(f => ({ ...f, color: c }))} className="w-8 h-8 rounded-full border-2 transition-all" style={{ backgroundColor: c, borderColor: roleForm.color === c ? "#ffffff" : "transparent" }} />)}</div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowRoleModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={() => setShowRoleModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 <button onClick={saveRole} disabled={savingRole} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{savingRole ? "Saving…" : "Save"}</button>
               </div>
             </div>
@@ -558,13 +564,13 @@ function VolunteersPageContent() {
 
       {/* ====== UNAVAILABILITY MODAL ====== */}
       {unavailVol && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setUnavailVol(null)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif" }}>Mark Unavailable</h2><p className="text-sm text-gray-500 mt-1">{unavailVol.first_name} {unavailVol.last_name}</p></div>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setUnavailVol(null)}>
+          <div className="rounded-2xl w-full max-w-sm" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
+            <div className="p-6" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}><h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Mark Unavailable</h2><p className="text-sm mt-1" style={{ color: "#A9A9B8" }}>{unavailVol.first_name} {unavailVol.last_name}</p></div>
             <div className="p-6 space-y-4">
-              <div><label className="block text-xs font-medium text-gray-600 mb-1">Date</label><input type="date" value={unavailDate} onChange={e => setUnavailDate(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" /></div>
+              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Date</label><input type="date" value={unavailDate} onChange={e => setUnavailDate(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setUnavailVol(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium">Cancel</button>
+                <button onClick={() => setUnavailVol(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 <button onClick={markUnavailable} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>Mark Unavailable</button>
               </div>
             </div>

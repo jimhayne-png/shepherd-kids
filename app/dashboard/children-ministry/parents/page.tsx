@@ -7,8 +7,6 @@ import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const ACCENT = "#7B2CBF";
-
 type Parent = {
   id: string;
   parent1_first_name: string;
@@ -20,10 +18,10 @@ type Parent = {
 };
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  new: { bg: "#eff6ff", text: "#1d4ed8" },
-  contacted: { bg: "#fef3c7", text: "#92400e" },
-  returning: { bg: "#f3e8ff", text: "#6b21a8" },
-  converted: { bg: "#f0fdf4", text: "#166534" },
+  new:       { bg: "rgba(59,130,246,0.15)",  text: "#60a5fa" },
+  contacted: { bg: "rgba(245,158,11,0.15)",  text: "#fbbf24" },
+  returning: { bg: "rgba(157,78,221,0.2)",   text: "#c084fc" },
+  converted: { bg: "rgba(34,197,94,0.15)",   text: "#4ade80" },
 };
 
 function fmtDate(d: string) {
@@ -63,74 +61,107 @@ export default function ParentsPage() {
   });
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#08060D" }}>
       <div style={{ color: "#D8D8E8" }}>Loading…</div>
     </div>
   );
 
   return (
     <AppShell navItems={[]}>
-      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
-        <p className="text-sm font-medium mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>👪 Families</h1>
-        <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>{parents.length} registered {parents.length === 1 ? "family" : "families"}</p>
+      <div style={{ padding: "40px 32px 32px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.06em", color: "#D4AF37", marginBottom: "6px", textTransform: "uppercase" }}>
+          ShepherdKids
+        </p>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>👪 Families</h1>
+        <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "6px 0 0" }}>
+          {parents.length} registered {parents.length === 1 ? "family" : "families"}
+        </p>
       </div>
 
-      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
-        <div className="bg-white rounded-2xl shadow border border-gray-100 p-4 mb-6">
+      <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px" }}>
+        {/* Search */}
+        <div style={{ marginBottom: "20px" }}>
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or phone…"
             autoFocus
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-orange-300"
+            style={{
+              width: "100%",
+              padding: "10px 16px",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(212,175,55,0.3)",
+              borderRadius: "12px",
+              fontSize: "13px",
+              color: "#ffffff",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
           />
         </div>
 
+        {/* Empty state */}
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-12 text-center border border-gray-100">
-            <div className="text-5xl mb-4">👨‍👩‍👧</div>
-            <p className="text-gray-500 font-semibold">
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "18px", padding: "64px 32px", textAlign: "center" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>👨‍👩‍👧</div>
+            <p style={{ color: "#A9A9B8", fontWeight: 600, fontSize: "14px", margin: 0 }}>
               {search ? "No parents match your search." : "No parents registered yet."}
             </p>
             {search && (
-              <p className="text-xs text-gray-400 mt-1">Parents appear here after their first kiosk check-in.</p>
+              <p style={{ color: "#A9A9B8", fontSize: "12px", marginTop: "6px" }}>
+                Parents appear here after their first kiosk check-in.
+              </p>
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
-            <div className="divide-y divide-gray-50">
-              {filtered.map(p => {
-                const sc = STATUS_COLORS[p.status] ?? { bg: "#f3f4f6", text: "#6b7280" };
-                return (
-                  <div key={p.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm">
-                        {p.parent1_first_name} {p.parent1_last_name}
-                      </p>
-                      <div className="flex flex-wrap gap-3 mt-0.5">
-                        {p.parent1_phone && (
-                          <span className="text-xs text-gray-400">{p.parent1_phone}</span>
-                        )}
-                        {p.parent1_email && (
-                          <span className="text-xs text-gray-400">{p.parent1_email}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <span
-                        className="text-xs font-bold px-2.5 py-1 rounded-full capitalize"
-                        style={{ backgroundColor: sc.bg, color: sc.text }}
-                      >
-                        {p.status}
-                      </span>
-                      <p className="text-xs text-gray-400 mt-1">{fmtDate(p.visit_date)}</p>
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "18px", overflow: "hidden" }}>
+            {filtered.map((p, i) => {
+              const sc = STATUS_COLORS[p.status] ?? { bg: "rgba(255,255,255,0.08)", text: "#A9A9B8" };
+              return (
+                <div
+                  key={p.id}
+                  style={{
+                    padding: "16px 24px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "16px",
+                    borderBottom: i < filtered.length - 1 ? "1px solid rgba(212,175,55,0.1)" : "none",
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 600, color: "#ffffff", fontSize: "14px", margin: 0 }}>
+                      {p.parent1_first_name} {p.parent1_last_name}
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "3px" }}>
+                      {p.parent1_phone && (
+                        <span style={{ fontSize: "12px", color: "#A9A9B8" }}>{p.parent1_phone}</span>
+                      )}
+                      {p.parent1_email && (
+                        <span style={{ fontSize: "12px", color: "#A9A9B8" }}>{p.parent1_email}</span>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{ flexShrink: 0, textAlign: "right" }}>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: "20px",
+                        textTransform: "capitalize",
+                        backgroundColor: sc.bg,
+                        color: sc.text,
+                      }}
+                    >
+                      {p.status}
+                    </span>
+                    <p style={{ fontSize: "11px", color: "#A9A9B8", margin: "4px 0 0" }}>{fmtDate(p.visit_date)}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -8,8 +8,6 @@ import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-const ACCENT = "#7B2CBF";
-
 type Child = { id: string; first_name: string; last_name: string; date_of_birth: string | null };
 type SessionSummary = { id: string; service_name: string; date: string; status: string };
 type SpiritualBirthdayEntry = {
@@ -21,7 +19,7 @@ type SpiritualBirthdayEntry = {
   last_name: string;
 };
 
-function upcomingBirthdays(children: Child[], days = 30) {
+function upcomingBirthdays(children: Child[], days: number) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const results: { child: Child; next: Date; daysAway: number }[] = [];
@@ -36,7 +34,7 @@ function upcomingBirthdays(children: Child[], days = 30) {
   return results.sort((a, b) => a.daysAway - b.daysAway);
 }
 
-function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days = 7) {
+function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days: number) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const results: { entry: SpiritualBirthdayEntry; next: Date; daysAway: number; years: number }[] = [];
@@ -52,13 +50,72 @@ function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days = 7)
   return results.sort((a, b) => a.daysAway - b.daysAway);
 }
 
-const SECTIONS = [
-  { label: "📋 Check-In Setup",         href: "/dashboard/children-ministry/checkin-setup",   desc: "Manage sessions & rooms" },
-  { label: "✅ Check-In",               href: "/dashboard/children-ministry/live-checkin",     desc: "View who's checked in now" },
-  { label: "📊 Reports",                href: "/dashboard/children-ministry/attendance-report", desc: "Historical attendance data" },
-  { label: "👪 Families",               href: "/dashboard/children-ministry/parents",          desc: "Households, parents & pickups" },
-  { label: "🧒 ShepherdKids",           href: "/dashboard/children-ministry/children",         desc: "Child directory & profiles" },
-  { label: "📧 Parent Communication",   href: "/dashboard/children-ministry/parent-update",    desc: "Email updates & family messages" },
+const ACTION_CARDS = [
+  {
+    emoji: "👋",
+    title: "First-Time Families",
+    desc: "Welcome and connect with new visitors.",
+    action: "Review",
+    href: "/dashboard/children-ministry/visitors",
+  },
+  {
+    emoji: "❤️",
+    title: "Families Needing Encouragement",
+    desc: "Families absent multiple weeks.",
+    action: "Review",
+    href: "/dashboard/children-ministry/parents",
+  },
+  {
+    emoji: "🎂",
+    title: "Birthdays This Week",
+    desc: "Celebrate children and families.",
+    action: "View",
+    href: "/dashboard/birthdays",
+  },
+  {
+    emoji: "✝️",
+    title: "Upcoming Spiritual Birthdays",
+    desc: "Celebrate faith milestones.",
+    action: "View",
+    href: "/dashboard/birthdays",
+  },
+  {
+    emoji: "🏫",
+    title: "Promotion Sunday Ready",
+    desc: "Children ready for next classroom.",
+    action: "Review",
+    href: "/dashboard/children-ministry/children",
+  },
+  {
+    emoji: "📧",
+    title: "Parent Updates Needed",
+    desc: "Missing allergies, pickups or information.",
+    action: "Review",
+    href: "/dashboard/children-ministry/parent-update",
+  },
+  {
+    emoji: "🏆",
+    title: "Certificates Ready",
+    desc: "Faith milestones and awards ready to print.",
+    action: "Print",
+    href: "/dashboard/children-ministry/print-station",
+  },
+  {
+    emoji: "🌱",
+    title: "Faith Journey Activity",
+    desc: "Children progressing through discipleship.",
+    action: "View",
+    href: "/dashboard/children-ministry/faith-journey",
+  },
+];
+
+const ACTIVITY_FEED = [
+  { emoji: "👋", text: "Smith family checked in for the first time" },
+  { emoji: "✝️", text: "Emma received a Faith Milestone" },
+  { emoji: "🎂", text: "Noah has a birthday this week" },
+  { emoji: "🌱", text: "Jackson moved to Baptism stage" },
+  { emoji: "📋", text: "Parent profile updated" },
+  { emoji: "🏫", text: "Promotion Sunday candidate identified" },
 ];
 
 export default function ChildrenMinistryPage() {
@@ -78,7 +135,9 @@ export default function ChildrenMinistryPage() {
       }
       const urlParams = new URLSearchParams(window.location.search);
       selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
-      const churchHeader: Record<string, string> = selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
+      const churchHeader: Record<string, string> = selectedChurchIdRef.current
+        ? { "x-selected-church-id": selectedChurchIdRef.current }
+        : {};
       const [childrenRes, sessionsRes, spiritualBdRes] = await Promise.all([
         fetch("/api/children-ministry/children", { credentials: "include", headers: churchHeader }),
         fetch("/api/checkin/attendance-report", { credentials: "include", headers: churchHeader }),
@@ -92,139 +151,200 @@ export default function ChildrenMinistryPage() {
     init();
   }, [router]);
 
-  const birthdays = upcomingBirthdays(children);
-  const spiritualBirthdays = upcomingSpiritualBirthdays(spiritualBirthdayEntries);
+  const birthdaysThisWeek = upcomingBirthdays(children, 7);
+  const upcomingSpiritual = upcomingSpiritualBirthdays(spiritualBirthdayEntries, 30);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}>
-      <div style={{ color: "#D8D8E8", fontFamily: "Georgia, serif" }}>Loading…</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#08060D" }}>
+        <div style={{ color: "#D8D8E8", fontFamily: "Georgia, serif" }}>Loading…</div>
+      </div>
+    );
+  }
 
   return (
     <AppShell navItems={[]}>
-      <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
-        <p className="text-sm font-medium mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Ministry Care</h1>
-        <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>{children.length} children enrolled</p>
+      {/* Hero */}
+      <div style={{ padding: "40px 32px 32px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
+        <p style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.06em", color: "#D4AF37", marginBottom: "6px", textTransform: "uppercase" }}>
+          ShepherdKids
+        </p>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
+          Ministry Care
+        </h1>
+        <p style={{ fontSize: "13px", color: "#D8D8E8", marginTop: "6px", margin: "6px 0 0" }}>
+          {children.length} children enrolled
+        </p>
       </div>
 
-      <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
-        {/* Stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px" }}>
+
+        {/* Stat row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" style={{ marginBottom: "36px" }}>
           {[
-            { label: "Total Children", value: children.length, emoji: "🧒" },
-            { label: "Upcoming Birthdays", value: birthdays.length, emoji: "🎂", sub: "next 30 days" },
-            { label: "Spiritual Birthdays", value: spiritualBirthdays.length, emoji: "✝️", sub: "this week" },
-            { label: "Recent Sessions", value: recentSessions.length, emoji: "📋" },
-          ].map(card => (
-            <div key={card.label} className="bg-white rounded-xl shadow-md px-5 py-4 flex items-center gap-3 border border-gray-100">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: ACCENT + "22" }}>
-                {card.emoji}
+            { label: "Total Children",       value: children.length,          emoji: "🧒", color: "#7B2CBF" },
+            { label: "Birthdays This Week",   value: birthdaysThisWeek.length, emoji: "🎂", color: "#D4AF37" },
+            { label: "Spiritual Birthdays",   value: upcomingSpiritual.length, emoji: "✝️", color: "#9D4EDD" },
+            { label: "Recent Sessions",       value: recentSessions.length,    emoji: "📋", color: "#6366f1" },
+          ].map(stat => (
+            <div
+              key={stat.label}
+              style={{
+                background: "#120A1F",
+                border: "1px solid rgba(212,175,55,0.22)",
+                borderRadius: "14px",
+                padding: "18px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+              }}
+            >
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                  flexShrink: 0,
+                  backgroundColor: stat.color + "22",
+                }}
+              >
+                {stat.emoji}
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{card.label}</p>
+                <p style={{ fontSize: "24px", fontWeight: 700, color: "#ffffff", margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                <p style={{ fontSize: "11px", color: "#A9A9B8", margin: "3px 0 0" }}>{stat.label}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Quick Links */}
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Sections</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          {SECTIONS.map(s => (
-            <Link
-              key={s.href}
-              href={s.href}
-              className="bg-white rounded-xl shadow border border-gray-100 px-5 py-4 hover:border-orange-200 hover:shadow-md transition-all block"
-            >
-              <p className="font-bold text-gray-900 text-sm mb-0.5">{s.label}</p>
-              <p className="text-xs text-gray-400">{s.desc}</p>
-            </Link>
-          ))}
+        {/* Ministry Care Overview */}
+        <div style={{ marginBottom: "18px" }}>
+          <h2 style={{ fontSize: "19px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
+            Ministry Care Overview
+          </h2>
+          <p style={{ fontSize: "13px", color: "#A9A9B8", margin: "4px 0 0" }}>
+            Your actionable care items for this week.
+          </p>
         </div>
 
-        {/* Spiritual Birthdays This Week */}
-        {spiritualBirthdays.length > 0 && (
-          <div className="bg-white rounded-2xl shadow p-6 border border-gray-100 mb-6">
-            <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>✝️ Spiritual Birthdays This Week</h2>
-            <div className="space-y-1">
-              {spiritualBirthdays.map(({ entry, next, daysAway, years }) => (
-                <div key={entry.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{entry.first_name} {entry.last_name}</p>
-                    <p className="text-xs text-gray-400">
-                      {next.toLocaleDateString("en-US", { month: "long", day: "numeric" })} · {years} {years === 1 ? "year" : "years"} ago
+        {/* 8 Action cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" style={{ marginBottom: "40px" }}>
+          {ACTION_CARDS.map(card => (
+            <div
+              key={card.title}
+              style={{
+                background: "#120A1F",
+                border: "1px solid rgba(212,175,55,0.28)",
+                borderRadius: "16px",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "18px", flexShrink: 0 }}>{card.emoji}</span>
+                    <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "13px", lineHeight: 1.3, margin: 0 }}>
+                      {card.title}
                     </p>
                   </div>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{
-                    backgroundColor: daysAway === 0 ? "#fef9c3" : daysAway <= 3 ? "#fef3c7" : "#f0fdf4",
-                    color: daysAway === 0 ? "#713f12" : daysAway <= 3 ? "#92400e" : "#166534",
-                  }}>
-                    {daysAway === 0 ? "Today! 🎉" : daysAway === 1 ? "Tomorrow" : `${daysAway} days`}
-                  </span>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", lineHeight: 1.5, margin: 0 }}>
+                    {card.desc}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Upcoming Birthdays */}
-          <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
-            <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "Georgia, serif" }}>🎂 Upcoming Birthdays</h2>
-            {birthdays.length === 0 ? (
-              <p className="text-sm text-gray-400">No birthdays in the next 30 days.</p>
-            ) : (
-              <div className="space-y-1">
-                {birthdays.map(({ child, next, daysAway }) => (
-                  <div key={child.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{child.first_name} {child.last_name}</p>
-                      <p className="text-xs text-gray-400">{next.toLocaleDateString("en-US", { month: "long", day: "numeric" })}</p>
-                    </div>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{
-                      backgroundColor: daysAway === 0 ? "#fef9c3" : daysAway <= 7 ? "#fef3c7" : "#f0fdf4",
-                      color: daysAway === 0 ? "#713f12" : daysAway <= 7 ? "#92400e" : "#166534",
-                    }}>
-                      {daysAway === 0 ? "Today! 🎉" : daysAway === 1 ? "Tomorrow" : `${daysAway} days`}
-                    </span>
-                  </div>
-                ))}
+                <div style={{ flexShrink: 0, textAlign: "right" }}>
+                  <p style={{ color: "#D4AF37", fontSize: "28px", fontWeight: 700, lineHeight: 1, margin: 0 }}>0</p>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Recent Check-In Sessions */}
-          <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>📋 Recent Check-Ins</h2>
-              <Link href="/dashboard/children-ministry/attendance-report" className="text-xs font-medium" style={{ color: ACCENT }}>View all →</Link>
+              <Link
+                href={card.href}
+                style={{
+                  alignSelf: "flex-start",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "#ffffff",
+                  background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                  borderRadius: "8px",
+                  padding: "5px 12px",
+                  textDecoration: "none",
+                }}
+              >
+                {card.action} →
+              </Link>
             </div>
-            {recentSessions.length === 0 ? (
-              <p className="text-sm text-gray-400">
-                No sessions yet.{" "}
-                <Link href="/dashboard/children-ministry/checkin-setup" className="underline" style={{ color: ACCENT }}>Set one up →</Link>
-              </p>
-            ) : (
-              <div className="space-y-1">
-                {recentSessions.map(s => (
-                  <div key={s.id} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{s.service_name}</p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(s.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                      </p>
-                    </div>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${s.status === "open" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                      {s.status}
-                    </span>
-                  </div>
-                ))}
+          ))}
+        </div>
+
+        {/* Recent Ministry Activity */}
+        <div style={{ marginBottom: "18px" }}>
+          <h2 style={{ fontSize: "19px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
+            Recent Ministry Activity
+          </h2>
+          <p style={{ fontSize: "13px", color: "#A9A9B8", margin: "4px 0 0" }}>
+            Latest updates across your ministry.
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: "#120A1F",
+            border: "1px solid rgba(212,175,55,0.22)",
+            borderRadius: "16px",
+            overflow: "hidden",
+          }}
+        >
+          {ACTIVITY_FEED.map((item, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                padding: "16px 24px",
+                borderBottom: i < ACTIVITY_FEED.length - 1 ? "1px solid rgba(212,175,55,0.1)" : "none",
+              }}
+            >
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(123,44,191,0.2)",
+                  border: "1px solid rgba(157,78,221,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                  flexShrink: 0,
+                }}
+              >
+                {item.emoji}
               </div>
-            )}
-          </div>
+              <p style={{ fontSize: "13px", color: "#D8D8E8", margin: 0, flex: 1 }}>{item.text}</p>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "#A9A9B8",
+                  flexShrink: 0,
+                  background: "rgba(255,255,255,0.05)",
+                  borderRadius: "6px",
+                  padding: "2px 8px",
+                }}
+              >
+                Placeholder
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </AppShell>

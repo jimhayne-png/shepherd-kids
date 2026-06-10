@@ -34,7 +34,7 @@ export default function ChildrenMinistrySettingsPage() {
   }
 
   const [loading, setLoading] = useState(true);
-  const [sidebarLabel, setSidebarLabel] = useState("Children's Ministry");
+  const [sidebarLabel, setSidebarLabel] = useState("ShepherdKids");
   const [gradeLevels, setGradeLevels] = useState<string[]>(DEFAULT_GRADES);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -58,7 +58,7 @@ export default function ChildrenMinistrySettingsPage() {
       if (res.ok) {
         const d = await res.json();
         if (d.config) {
-         setSidebarLabel(d.config.sidebar_label ?? "Children's Ministry");
+         setSidebarLabel(d.config.sidebar_label ?? "ShepherdKids");
           setGradeLevels(d.config.grade_levels ?? DEFAULT_GRADES);
         }
       }
@@ -122,33 +122,32 @@ export default function ChildrenMinistrySettingsPage() {
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         <div className="max-w-xl">
-          <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
+          <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "18px", padding: "28px" }}>
             <h2
-              className="text-lg font-bold text-gray-800 mb-6"
-              style={{ fontFamily: "Georgia, serif" }}
+              style={{ fontSize: "17px", fontWeight: 700, color: "#ffffff", marginBottom: "24px", fontFamily: "Georgia, serif" }}
             >
               Ministry Configuration
             </h2>
 
             {/* Sidebar Label */}
             <div className="mb-7">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#A9A9B8", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "6px" }}>
                 Sidebar Label
               </label>
               <input
                 value={sidebarLabel}
                 onChange={(e) => setSidebarLabel(e.target.value)}
                 placeholder="e.g. Nursery–6th Grade"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm"
+                style={{ width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", boxSizing: "border-box" }}
               />
-              <p className="text-xs text-gray-400 mt-1">
-                This label appears under Children&apos;s Ministry in the sidebar.
+              <p style={{ fontSize: "11px", color: "#A9A9B8", marginTop: "5px" }}>
+                This label appears in the ShepherdKids sidebar.
               </p>
             </div>
 
             {/* Grade Checkboxes */}
             <div className="mb-7">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#A9A9B8", letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: "10px" }}>
                 Grade Levels Covered
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -157,38 +156,42 @@ export default function ChildrenMinistrySettingsPage() {
                   return (
                     <label
                       key={g.value}
-                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors ${
-                        checked
-                          ? "bg-orange-50 border-orange-300"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: checked ? "1px solid rgba(157,78,221,0.6)" : "1px solid rgba(255,255,255,0.1)",
+                        background: checked ? "rgba(123,44,191,0.2)" : "rgba(255,255,255,0.03)",
+                        cursor: "pointer",
+                      }}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleGrade(g.value)}
-                        className="rounded accent-orange-500"
+                        className="rounded accent-violet-500"
                       />
-                      <span className="text-sm text-gray-700">{g.label}</span>
+                      <span style={{ fontSize: "13px", color: checked ? "#ffffff" : "#D8D8E8" }}>{g.label}</span>
                     </label>
                   );
                 })}
               </div>
             </div>
 
-            {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+            {error && <p style={{ fontSize: "13px", color: "#f87171", marginBottom: "16px" }}>{error}</p>}
 
-            <div className="flex items-center gap-3">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <button
                 onClick={save}
                 disabled={saving}
-                className="px-6 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ backgroundColor: ACCENT, opacity: saving ? 0.7 : 1 }}
+                style={{ padding: "9px 20px", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#ffffff", background: saving ? "rgba(123,44,191,0.5)" : "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: saving ? "not-allowed" : "pointer" }}
               >
                 {saving ? "Saving…" : "Save Settings"}
               </button>
               {saved && (
-                <span className="text-sm text-green-600 font-medium">✓ Saved</span>
+                <span style={{ fontSize: "13px", color: "#4ade80", fontWeight: 600 }}>✓ Saved</span>
               )}
             </div>
           </div>

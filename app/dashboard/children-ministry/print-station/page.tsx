@@ -471,9 +471,9 @@ export default function PrintStationPage() {
                     <div
                       key={group.securityCode}
                       style={{
-                        backgroundColor: "white",
+                        backgroundColor: "#120A1F",
                         borderRadius: 16,
-                        border: "2px solid #e5e7eb",
+                        border: "1px solid rgba(212,175,55,0.28)",
                         overflow: "hidden",
                       }}
                     >
@@ -573,8 +573,8 @@ export default function PrintStationPage() {
                               onClick={() => toggleJob(job.id)}
                               style={{
                                 padding: "16px 20px",
-                                borderTop: idx > 0 ? "1px solid #f3f4f6" : undefined,
-                                backgroundColor: isChecked ? ACCENT + "0e" : "white",
+                                borderTop: idx > 0 ? "1px solid rgba(212,175,55,0.1)" : undefined,
+                                backgroundColor: isChecked ? ACCENT + "33" : "rgba(255,255,255,0.02)",
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "flex-start",
@@ -712,9 +712,9 @@ function btnStyle(bg: string, disabled = false): React.CSSProperties {
 }
 
 const emptyCard: React.CSSProperties = {
-  backgroundColor: "white",
+  backgroundColor: "#120A1F",
   borderRadius: 20,
   padding: "60px 32px",
   textAlign: "center",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+  border: "1px solid rgba(212,175,55,0.22)",
 };

@@ -339,9 +339,9 @@ export default function CheckinSetupPage() {
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit flex-wrap">
+        <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
           {(["rooms", "templates", "sessions", "visitors", "automation"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#6b7280" }}>
+            <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
               {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Templates" : t === "sessions" ? "🔑 Sessions" : t === "visitors" ? "🆕 New Visitors" : "⚡ Automation"}
             </button>
           ))}
@@ -352,51 +352,51 @@ export default function CheckinSetupPage() {
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>Check-In Rooms</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Children are assigned by age range</p>
+                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Check-In Rooms</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Children are assigned by age range</p>
               </div>
               <button onClick={() => setShowAddRoom(true)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>+ Add Room</button>
             </div>
 
             {showAddRoom && (
-              <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-orange-100">
-                <h3 className="font-bold text-gray-800 mb-4">New Room</h3>
+              <div className="rounded-2xl p-6 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                <h3 className="font-bold mb-4" style={{ color: "#ffffff" }}>New Room</h3>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Room Name *</label>
-                    <input value={roomForm.name} onChange={e => setRoomForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Nursery, K–2nd Grade" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Room Name *</label>
+                    <input value={roomForm.name} onChange={e => setRoomForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Nursery, K–2nd Grade" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Min Age</label>
-                    <input type="number" value={roomForm.minAge} onChange={e => setRoomForm(f => ({ ...f, minAge: e.target.value }))} placeholder="e.g. 0" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Min Age</label>
+                    <input type="number" value={roomForm.minAge} onChange={e => setRoomForm(f => ({ ...f, minAge: e.target.value }))} placeholder="e.g. 0" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Max Age</label>
-                    <input type="number" value={roomForm.maxAge} onChange={e => setRoomForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="e.g. 3" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Max Age</label>
+                    <input type="number" value={roomForm.maxAge} onChange={e => setRoomForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="e.g. 3" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Capacity</label>
-                    <input type="number" value={roomForm.capacity} onChange={e => setRoomForm(f => ({ ...f, capacity: e.target.value }))} placeholder="e.g. 20" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Capacity</label>
+                    <input type="number" value={roomForm.capacity} onChange={e => setRoomForm(f => ({ ...f, capacity: e.target.value }))} placeholder="e.g. 20" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={saveRoom} disabled={savingRoom || !roomForm.name.trim()} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: savingRoom ? 0.6 : 1 }}>{savingRoom ? "Saving…" : "Save Room"}</button>
-                  <button onClick={() => setShowAddRoom(false)} className="px-4 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">Cancel</button>
+                  <button onClick={() => setShowAddRoom(false)} className="px-4 py-2.5 rounded-xl text-sm" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 </div>
               </div>
             )}
 
             {rooms.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-4xl mb-3">🏠</div><p className="text-gray-400">No rooms yet. Add your first room above.</p></div>
+              <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div className="text-4xl mb-3">🏠</div><p style={{ color: "#A9A9B8" }}>No rooms yet. Add your first room above.</p></div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {rooms.map(room => (
-                  <div key={room.id} className="bg-white rounded-2xl shadow border border-gray-100 p-5">
+                  <div key={room.id} className="rounded-2xl p-5" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-bold text-gray-900">{room.name}</h3>
-                        <p className="text-sm text-gray-500">{ageRange(room)}</p>
-                        {room.capacity && <p className="text-xs text-gray-400 mt-0.5">Capacity: {room.capacity}</p>}
+                        <h3 className="font-bold" style={{ color: "#ffffff" }}>{room.name}</h3>
+                        <p className="text-sm" style={{ color: "#A9A9B8" }}>{ageRange(room)}</p>
+                        {room.capacity && <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Capacity: {room.capacity}</p>}
                       </div>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${room.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>{room.is_active ? "Active" : "Inactive"}</span>
                     </div>
@@ -427,51 +427,51 @@ export default function CheckinSetupPage() {
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>Service Templates</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Reusable service definitions for quick session creation</p>
+                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Service Templates</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Reusable service definitions for quick session creation</p>
               </div>
               <button onClick={() => setShowAddTemplate(true)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>+ Add Template</button>
             </div>
 
             {showAddTemplate && (
-              <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-orange-100">
-                <h3 className="font-bold text-gray-800 mb-4">New Template</h3>
+              <div className="rounded-2xl p-6 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                <h3 className="font-bold mb-4" style={{ color: "#ffffff" }}>New Template</h3>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Service Name *</label>
-                    <input value={tplForm.name} onChange={e => setTplForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Sunday Morning Service" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Service Name *</label>
+                    <input value={tplForm.name} onChange={e => setTplForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Sunday Morning Service" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Typical Day</label>
-                    <input value={tplForm.typicalDay} onChange={e => setTplForm(f => ({ ...f, typicalDay: e.target.value }))} placeholder="e.g. Sunday" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Typical Day</label>
+                    <input value={tplForm.typicalDay} onChange={e => setTplForm(f => ({ ...f, typicalDay: e.target.value }))} placeholder="e.g. Sunday" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Typical Time</label>
-                    <input type="time" value={tplForm.typicalTime} onChange={e => setTplForm(f => ({ ...f, typicalTime: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Typical Time</label>
+                    <input type="time" value={tplForm.typicalTime} onChange={e => setTplForm(f => ({ ...f, typicalTime: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={saveTemplate} disabled={savingTemplate || !tplForm.name.trim()} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: savingTemplate ? 0.6 : 1 }}>{savingTemplate ? "Saving…" : "Save Template"}</button>
-                  <button onClick={() => setShowAddTemplate(false)} className="px-4 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">Cancel</button>
+                  <button onClick={() => setShowAddTemplate(false)} className="px-4 py-2.5 rounded-xl text-sm" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 </div>
               </div>
             )}
 
             {templates.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-4xl mb-3">📅</div><p className="text-gray-400">No templates yet. Add your first service template above.</p></div>
+              <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div className="text-4xl mb-3">📅</div><p style={{ color: "#A9A9B8" }}>No templates yet. Add your first service template above.</p></div>
             ) : (
               <div className="space-y-3">
                 {templates.map(tpl => (
-                  <div key={tpl.id} className="bg-white rounded-2xl shadow border border-gray-100 p-5 flex items-center justify-between">
+                  <div key={tpl.id} className="rounded-2xl p-5 flex items-center justify-between" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                     <div>
-                      <h3 className="font-bold text-gray-900">{tpl.name}</h3>
-                      <p className="text-sm text-gray-500 mt-0.5">
+                      <h3 className="font-bold" style={{ color: "#ffffff" }}>{tpl.name}</h3>
+                      <p className="text-sm mt-0.5" style={{ color: "#A9A9B8" }}>
                         {[tpl.typical_day, tpl.typical_time ? fmtTime(tpl.typical_time) : null].filter(Boolean).join(" · ") || "No schedule set"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${tpl.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>{tpl.is_active ? "Active" : "Inactive"}</span>
-                      <button onClick={() => toggleTemplate(tpl)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-500">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-bold" style={{ background: tpl.is_active ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)", color: tpl.is_active ? "#4ade80" : "#A9A9B8" }}>{tpl.is_active ? "Active" : "Inactive"}</span>
+                      <button onClick={() => toggleTemplate(tpl)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>
                         {tpl.is_active ? "Deactivate" : "Activate"}
                       </button>
                     </div>
@@ -491,12 +491,12 @@ export default function CheckinSetupPage() {
                 <div className="flex items-start gap-3 mb-3">
                   <span className="text-2xl flex-shrink-0">📱</span>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-base">Church Check-In Kiosk</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">This link never changes — bookmark it on your check-in tablet</p>
+                    <h3 className="font-bold text-base" style={{ color: "#ffffff" }}>Church Check-In Kiosk</h3>
+                    <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>This link never changes — bookmark it on your check-in tablet</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5 border border-orange-200">
-                  <code className="text-sm text-gray-700 flex-1 truncate min-w-0">
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                  <code className="text-sm flex-1 truncate min-w-0" style={{ color: "#D8D8E8" }}>
                     {APP_URL}/kiosk/church/{selectedChurchIdRef.current}
                   </code>
                   <button
@@ -525,12 +525,12 @@ export default function CheckinSetupPage() {
                 <div className="flex items-start gap-3 mb-3">
                   <span className="text-2xl flex-shrink-0">👥</span>
                   <div>
-                    <h3 className="font-bold text-gray-900 text-base">Volunteer Room View</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Share with room volunteers — they enter today&apos;s PIN and select their room</p>
+                    <h3 className="font-bold text-base" style={{ color: "#ffffff" }}>Volunteer Room View</h3>
+                    <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Share with room volunteers — they enter today&apos;s PIN and select their room</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2.5 border border-purple-200">
-                  <code className="text-sm text-gray-700 flex-1 truncate min-w-0">
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                  <code className="text-sm flex-1 truncate min-w-0" style={{ color: "#D8D8E8" }}>
                     {APP_URL}/kiosk/volunteer/{selectedChurchIdRef.current}
                   </code>
                   <button
@@ -559,20 +559,21 @@ export default function CheckinSetupPage() {
               const todaySessions = sessions.filter(s => s.date === today);
               const todayPin = todaySessions[0]?.kiosk_pin ?? null;
               return (
-                <div className="bg-white rounded-2xl shadow p-5 mb-6 border border-gray-100">
+                <div className="rounded-2xl p-5 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-bold text-gray-800 text-sm mb-0.5">🔑 Today&apos;s PIN</h3>
+                      <h3 className="font-bold text-sm mb-0.5" style={{ color: "#ffffff" }}>🔑 Today&apos;s PIN</h3>
                       {todayPin ? (
-                        <p className="text-2xl font-mono font-bold tracking-widest text-gray-900">{todayPin}</p>
+                        <p className="text-2xl font-mono font-bold tracking-widest" style={{ color: "#D4AF37" }}>{todayPin}</p>
                       ) : (
-                        <p className="text-sm text-gray-400 mt-0.5">No sessions today</p>
+                        <p className="text-sm mt-0.5" style={{ color: "#A9A9B8" }}>No sessions today</p>
                       )}
                     </div>
                     {!showChangePIN && (
                       <button
                         onClick={() => { setNewPINInput(todayPin ?? ""); setShowChangePIN(true); }}
-                        className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-600 hover:border-gray-300 flex-shrink-0"
+                        className="px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0"
+                        style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}
                       >
                         Change PIN
                       </button>
@@ -587,7 +588,8 @@ export default function CheckinSetupPage() {
                         onChange={e => setNewPINInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                         placeholder="New 4-digit PIN"
                         maxLength={4}
-                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono w-36"
+                        className="px-3 py-2 rounded-lg text-sm font-mono w-36"
+                        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
                         autoFocus
                       />
                       <button
@@ -600,7 +602,8 @@ export default function CheckinSetupPage() {
                       </button>
                       <button
                         onClick={() => { setShowChangePIN(false); setNewPINInput(""); }}
-                        className="px-3 py-2 rounded-xl text-sm border border-gray-200 text-gray-500"
+                        className="px-3 py-2 rounded-xl text-sm"
+                        style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}
                       >
                         Cancel
                       </button>
@@ -612,16 +615,16 @@ export default function CheckinSetupPage() {
 
             {/* Classroom access links */}
             {activeRooms.length > 0 && APP_URL && (
-              <div className="bg-white rounded-2xl shadow p-5 mb-6 border border-gray-100">
-                <h3 className="font-bold text-gray-800 mb-3 text-sm">🏫 Classroom Tablet Links</h3>
+              <div className="rounded-2xl p-5 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                <h3 className="font-bold mb-3 text-sm" style={{ color: "#ffffff" }}>🏫 Classroom Tablet Links</h3>
                 <div className="flex flex-wrap gap-2">
                   {activeRooms.map(room => {
                     const url = `${APP_URL}/classroom/${room.id}`;
                     return (
-                      <div key={room.id} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
-                        <span className="text-sm font-medium text-gray-700">{room.name}</span>
+                      <div key={room.id} className="flex items-center gap-1.5 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)" }}>
+                        <span className="text-sm font-medium" style={{ color: "#D8D8E8" }}>{room.name}</span>
                         <button onClick={() => handleCopy(url)} className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: ACCENT }}>{copiedUrl === url ? "Copied!" : "Copy"}</button>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-gray-600">↗</a>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "#A9A9B8" }}>↗</a>
                       </div>
                     );
                   })}
@@ -631,8 +634,8 @@ export default function CheckinSetupPage() {
 
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>Check-In Sessions</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Create a session to open the kiosk for check-in</p>
+                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Check-In Sessions</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Create a session to open the kiosk for check-in</p>
               </div>
               <button
                 onClick={() => {
@@ -650,41 +653,41 @@ export default function CheckinSetupPage() {
             </div>
 
             {showAddSession && (
-              <div className="bg-white rounded-2xl shadow p-6 mb-6 border border-orange-100">
-                <h3 className="font-bold text-gray-800 mb-4">New Check-In Session</h3>
+              <div className="rounded-2xl p-6 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                <h3 className="font-bold mb-4" style={{ color: "#ffffff" }}>New Check-In Session</h3>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Service Name *</label>
-                    <input value={sessionForm.serviceName} onChange={e => setSessionForm(f => ({ ...f, serviceName: e.target.value }))} placeholder="e.g. Sunday Morning Service" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Service Name *</label>
+                    <input value={sessionForm.serviceName} onChange={e => setSessionForm(f => ({ ...f, serviceName: e.target.value }))} placeholder="e.g. Sunday Morning Service" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-2">Use Template (optional)</label>
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-2" style={{ color: "#A9A9B8" }}>Use Template (optional)</label>
                     <div className="space-y-1.5">
-                      <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${sessionForm.templateId === "" ? "border-orange-300 bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
+                      <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors" style={{ borderColor: sessionForm.templateId === "" ? ACCENT : "rgba(212,175,55,0.2)", background: sessionForm.templateId === "" ? ACCENT + "18" : "transparent" }}>
                         <input
                           type="radio"
                           name="sessionTemplate"
                           value=""
                           checked={sessionForm.templateId === ""}
                           onChange={() => setSessionForm(f => ({ ...f, templateId: "" }))}
-                          className="accent-orange-500"
+                          className="accent-violet-500"
                         />
-                        <span className="text-sm text-gray-400 italic">No template</span>
+                        <span className="text-sm italic" style={{ color: "#A9A9B8" }}>No template</span>
                       </label>
                       {templates.filter(t => t.is_active).map(t => (
-                        <label key={t.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${sessionForm.templateId === t.id ? "border-orange-300 bg-orange-50" : "border-gray-200 hover:border-gray-300"}`}>
+                        <label key={t.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors" style={{ borderColor: sessionForm.templateId === t.id ? ACCENT : "rgba(212,175,55,0.2)", background: sessionForm.templateId === t.id ? ACCENT + "18" : "transparent" }}>
                           <input
                             type="radio"
                             name="sessionTemplate"
                             value={t.id}
                             checked={sessionForm.templateId === t.id}
                             onChange={() => setSessionForm(f => ({ ...f, templateId: t.id, serviceName: t.name, scheduledTime: t.typical_time ?? f.scheduledTime }))}
-                            className="accent-orange-500"
+                            className="accent-violet-500"
                           />
                           <div>
-                            <p className="text-sm font-medium text-gray-800">{t.name}</p>
+                            <p className="text-sm font-medium" style={{ color: "#ffffff" }}>{t.name}</p>
                             {(t.typical_day || t.typical_time) && (
-                              <p className="text-xs text-gray-400">{[t.typical_day, t.typical_time ? fmtTime(t.typical_time) : null].filter(Boolean).join(" · ")}</p>
+                              <p className="text-xs" style={{ color: "#A9A9B8" }}>{[t.typical_day, t.typical_time ? fmtTime(t.typical_time) : null].filter(Boolean).join(" · ")}</p>
                             )}
                           </div>
                         </label>
@@ -692,49 +695,49 @@ export default function CheckinSetupPage() {
                     </div>
                   </div>
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Session Group (optional)</label>
-                    <input value={sessionForm.sessionGroup} onChange={e => setSessionForm(f => ({ ...f, sessionGroup: e.target.value }))} placeholder="e.g. Sunday Morning" className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
-                    <p className="text-xs text-gray-400 mt-1">Sessions with the same group name on the same date will share a security code at check-in.</p>
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Session Group (optional)</label>
+                    <input value={sessionForm.sessionGroup} onChange={e => setSessionForm(f => ({ ...f, sessionGroup: e.target.value }))} placeholder="e.g. Sunday Morning" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
+                    <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>Sessions with the same group name on the same date will share a security code at check-in.</p>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Date *</label>
-                    <input type="date" value={sessionForm.date} onChange={e => setSessionForm(f => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Date *</label>
+                    <input type="date" value={sessionForm.date} onChange={e => setSessionForm(f => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Time</label>
-                    <input type="time" value={sessionForm.scheduledTime} onChange={e => setSessionForm(f => ({ ...f, scheduledTime: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Time</label>
+                    <input type="time" value={sessionForm.scheduledTime} onChange={e => setSessionForm(f => ({ ...f, scheduledTime: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest block mb-1">Kiosk PIN (4 digits) *</label>
-                    <input value={sessionForm.kioskPin} onChange={e => setSessionForm(f => ({ ...f, kioskPin: e.target.value.replace(/\D/g, "").slice(0, 4) }))} placeholder="e.g. 1234" maxLength={4} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm font-mono" />
+                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Kiosk PIN (4 digits) *</label>
+                    <input value={sessionForm.kioskPin} onChange={e => setSessionForm(f => ({ ...f, kioskPin: e.target.value.replace(/\D/g, "").slice(0, 4) }))} placeholder="e.g. 1234" maxLength={4} className="w-full px-3 py-2.5 rounded-lg text-sm font-mono" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={saveSession} disabled={savingSession || !sessionForm.serviceName.trim() || !sessionForm.date || sessionForm.kioskPin.length !== 4} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: savingSession ? 0.6 : 1 }}>{savingSession ? "Creating…" : "Create Session"}</button>
-                  <button onClick={() => setShowAddSession(false)} className="px-4 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500">Cancel</button>
+                  <button onClick={() => setShowAddSession(false)} className="px-4 py-2.5 rounded-xl text-sm" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 </div>
               </div>
             )}
 
             {sessions.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-4xl mb-3">🔑</div><p className="text-gray-400">No sessions yet. Create one to start check-in.</p></div>
+              <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div className="text-4xl mb-3">🔑</div><p style={{ color: "#A9A9B8" }}>No sessions yet. Create one to start check-in.</p></div>
             ) : (
               <div className="space-y-4">
                 {sessions.map(session => {
                   const isOpen = session.status === "open";
                   return (
-                    <div key={session.id} className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+                    <div key={session.id} className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                       <div className="p-5">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-bold text-gray-900">{session.service_name}</h3>
-                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold ${isOpen ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{isOpen ? "Open" : "Closed"}</span>
+                              <h3 className="font-bold" style={{ color: "#ffffff" }}>{session.service_name}</h3>
+                              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold" style={{ background: isOpen ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.07)", color: isOpen ? "#4ade80" : "#A9A9B8" }}>{isOpen ? "Open" : "Closed"}</span>
                             </div>
-                            <p className="text-sm text-gray-500">{fmtDate(session.date)}{session.scheduled_time ? ` · ${fmtTime(session.scheduled_time)}` : ""}</p>
-                            <p className="text-xs text-gray-400 font-mono mt-0.5">PIN: {session.kiosk_pin}</p>
+                            <p className="text-sm" style={{ color: "#A9A9B8" }}>{fmtDate(session.date)}{session.scheduled_time ? ` · ${fmtTime(session.scheduled_time)}` : ""}</p>
+                            <p className="text-xs font-mono mt-0.5" style={{ color: "#A9A9B8" }}>PIN: {session.kiosk_pin}</p>
                           </div>
-                          <button onClick={() => toggleSession(session)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ backgroundColor: isOpen ? "#fee2e2" : "#dcfce7", color: isOpen ? "#dc2626" : "#16a34a" }}>
+                          <button onClick={() => toggleSession(session)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ backgroundColor: isOpen ? "rgba(220,38,38,0.15)" : "rgba(34,197,94,0.15)", color: isOpen ? "#f87171" : "#4ade80" }}>
                             {isOpen ? "Close Session" : "Reopen"}
                           </button>
                         </div>
@@ -742,7 +745,7 @@ export default function CheckinSetupPage() {
                         {/* Classroom links for this session */}
                         {isOpen && activeRooms.length > 0 && APP_URL && (
                           <div>
-                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Classroom Links</p>
+                            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#A9A9B8" }}>Classroom Links</p>
                             <div className="flex flex-wrap gap-2">
                               {activeRooms.map(room => {
                                 const url = `${APP_URL}/classroom/${room.id}`;
@@ -1004,29 +1007,29 @@ export default function CheckinSetupPage() {
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-bold text-gray-800" style={{ fontFamily: "Georgia, serif" }}>New Visitor Follow-Up</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Send welcome emails or print letters for first-time families</p>
+                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>New Visitor Follow-Up</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Send welcome emails or print letters for first-time families</p>
               </div>
-              <button onClick={() => loadVisitors()} className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-500">↻ Refresh</button>
+              <button onClick={() => loadVisitors()} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>↻ Refresh</button>
             </div>
 
-            {nvLoading && <div className="bg-white rounded-2xl shadow p-12 text-center"><div className="text-gray-400">Loading new visitors…</div></div>}
+            {nvLoading && <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div style={{ color: "#A9A9B8" }}>Loading new visitors…</div></div>}
 
             {!nvLoading && nvSessions.length === 0 && (
-              <div className="bg-white rounded-2xl shadow p-12 text-center">
+              <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                 <div className="text-5xl mb-4">🎉</div>
-                <p className="text-gray-500 font-semibold">No new visitors recorded yet.</p>
-                <p className="text-xs text-gray-400 mt-1">New families who check in for the first time will appear here.</p>
+                <p className="font-semibold" style={{ color: "#D8D8E8" }}>No new visitors recorded yet.</p>
+                <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>New families who check in for the first time will appear here.</p>
               </div>
             )}
 
             {!nvLoading && nvSessions.map(({ session: sess, families }) => (
-              <div key={sess.id} className="bg-white rounded-2xl shadow border border-gray-100 mb-6 overflow-hidden">
+              <div key={sess.id} className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
                 {/* Session header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(212,175,55,0.12)" }}>
                   <div>
-                    <h3 className="font-bold text-gray-900">{sess.service_name}</h3>
-                    <p className="text-sm text-gray-500">{fmtDate(sess.date)} · {families.length} new {families.length === 1 ? "family" : "families"}</p>
+                    <h3 className="font-bold" style={{ color: "#ffffff" }}>{sess.service_name}</h3>
+                    <p className="text-sm" style={{ color: "#A9A9B8" }}>{fmtDate(sess.date)} · {families.length} new {families.length === 1 ? "family" : "families"}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     {sess.auto_followup && (
@@ -1043,8 +1046,8 @@ export default function CheckinSetupPage() {
                 </div>
 
                 {/* Family cards */}
-                <div className="divide-y divide-gray-50">
-                  {families.map(family => {
+                <div>
+                  {families.map((family, fIdx) => {
                     const key = `${sess.id}-${family.parentPhone}`;
                     const log = family.followupLog;
                     const isSent = log?.status === "sent";
@@ -1053,19 +1056,19 @@ export default function CheckinSetupPage() {
                     const personalizeOn = nvPersonalizeOpen[key] ?? false;
 
                     return (
-                      <div key={family.parentPhone} className="px-6 py-5">
+                      <div key={family.parentPhone} className="px-6 py-5" style={{ borderTop: fIdx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none" }}>
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div>
                             <div className="flex items-center gap-2 mb-0.5">
-                              <div className="font-bold text-gray-900 text-base">{family.parentName}</div>
+                              <div className="font-bold text-base" style={{ color: "#ffffff" }}>{family.parentName}</div>
                               <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: family.visitCount === 1 ? "#3b82f6" : family.visitCount === 2 ? "#8b5cf6" : family.visitCount === 3 ? ACCENT : "#16a34a" }}>
                                 {family.visitCount === 1 ? "1st Visit" : family.visitCount === 2 ? "2nd Visit" : family.visitCount === 3 ? "3rd Visit" : "4+ Visits"}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-500">{family.parentPhone}</div>
+                            <div className="text-sm" style={{ color: "#A9A9B8" }}>{family.parentPhone}</div>
                             <div className="mt-1 space-y-0.5">
                               {family.children.map(c => (
-                                <div key={c.id} className="text-sm text-gray-600">
+                                <div key={c.id} className="text-sm" style={{ color: "#D8D8E8" }}>
                                   🧒 {c.child_name}{c.room_name ? ` — ${c.room_name}` : ""}
                                 </div>
                               ))}
@@ -1073,12 +1076,12 @@ export default function CheckinSetupPage() {
                           </div>
                           <div className="flex-shrink-0 text-right">
                             {isSent && (
-                              <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-green-100 text-green-700 block mb-1">
+                              <span className="text-xs px-2.5 py-1 rounded-full font-bold block mb-1" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
                                 ✅ {log!.follow_up_type === "email" ? "Email sent" : log!.follow_up_type === "letter" ? "Letter printed" : "Both sent"}
                               </span>
                             )}
                             {isSkipped && (
-                              <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-500 block mb-1">Skipped</span>
+                              <span className="text-xs px-2.5 py-1 rounded-full font-bold block mb-1" style={{ background: "rgba(255,255,255,0.07)", color: "#A9A9B8" }}>Skipped</span>
                             )}
                           </div>
                         </div>
@@ -1091,12 +1094,13 @@ export default function CheckinSetupPage() {
                                 value={nvEmails[key] ?? ""}
                                 onChange={e => setNvEmails(m => ({ ...m, [key]: e.target.value }))}
                                 placeholder="Parent email address"
-                                className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-xl text-sm"
+                                className="flex-1 min-w-0 px-3 py-2 rounded-xl text-sm"
+                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
                               />
                               <button
                                 onClick={() => setNvPersonalizeOpen(m => ({ ...m, [key]: !m[key] }))}
                                 className="px-3 py-2 rounded-xl text-xs font-bold border"
-                                style={{ borderColor: personalizeOn ? ACCENT : "#e5e7eb", color: personalizeOn ? ACCENT : "#6b7280", backgroundColor: personalizeOn ? ACCENT + "11" : "white" }}
+                                style={{ borderColor: personalizeOn ? ACCENT : "rgba(212,175,55,0.3)", color: personalizeOn ? ACCENT : "#A9A9B8", backgroundColor: personalizeOn ? ACCENT + "18" : "transparent" }}
                               >
                                 ✏️ Personalize
                               </button>
@@ -1107,7 +1111,8 @@ export default function CheckinSetupPage() {
                                 onChange={e => setNvPersonalize(m => ({ ...m, [key]: e.target.value }))}
                                 placeholder="Add a personal note that will appear in the email or letter…"
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none mb-2"
+                                className="w-full px-3 py-2 rounded-xl text-sm resize-none mb-2"
+                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
                               />
                             )}
                             <div className="flex gap-2 flex-wrap">
@@ -1118,9 +1123,9 @@ export default function CheckinSetupPage() {
                                   disabled={!!sending}
                                   className="px-4 py-2 rounded-xl text-xs font-bold border transition-colors"
                                   style={{
-                                    backgroundColor: sending === type ? ACCENT : type === "skip" ? "white" : ACCENT,
-                                    color: type === "skip" ? "#6b7280" : "white",
-                                    borderColor: type === "skip" ? "#e5e7eb" : ACCENT,
+                                    backgroundColor: type === "skip" ? "transparent" : ACCENT,
+                                    color: type === "skip" ? "#A9A9B8" : "white",
+                                    borderColor: type === "skip" ? "rgba(212,175,55,0.3)" : ACCENT,
                                     opacity: sending && sending !== type ? 0.5 : 1,
                                   }}
                                 >
