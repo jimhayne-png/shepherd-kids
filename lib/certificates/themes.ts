@@ -34,6 +34,8 @@ export interface CertTheme {
   topAccentType: "cross-glow" | "crown";
   topAccentColor: string;      // color of the ✝ cross; empty string when topAccentType is "crown"
   crossGlowTextShadow: string; // CSS textShadow for glowing cross; empty string for Ivory
+  // Child name
+  nameTextShadow: string;      // optional CSS textShadow for child name; empty string disables
 }
 
 const PURPLE_THEME: CertTheme = {
@@ -61,6 +63,7 @@ const PURPLE_THEME: CertTheme = {
   topAccentType:         "cross-glow",
   topAccentColor:        "#D4AF37",
   crossGlowTextShadow:   "0 0 18px rgba(212,175,55,0.70), 0 0 40px rgba(212,175,55,0.30)",
+  nameTextShadow:        "",
 };
 
 const IVORY_THEME: CertTheme = {
@@ -88,6 +91,7 @@ const IVORY_THEME: CertTheme = {
   topAccentType:         "crown",
   topAccentColor:        "",
   crossGlowTextShadow:   "",
+  nameTextShadow:        "",
 };
 
 export function getCertificateTheme(template: CertificateTemplate): CertTheme {
