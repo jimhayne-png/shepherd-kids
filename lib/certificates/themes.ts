@@ -37,6 +37,12 @@ export interface CertTheme {
   crossGlowTextShadow: string; // CSS textShadow for glowing cross; empty string for Ivory
   // Child name
   nameTextShadow: string;      // optional CSS textShadow for child name; empty string disables
+  // Birthday motif balloon palette
+  motifBalloon1: string;       // left balloon
+  motifBalloon2: string;       // center balloon (typically gold/accent)
+  motifBalloon3: string;       // right balloon
+  motifStringColor: string;    // balloon strings
+  motifShineColor: string;     // balloon shine highlights
 }
 
 const PURPLE_THEME: CertTheme = {
@@ -66,6 +72,11 @@ const PURPLE_THEME: CertTheme = {
   topAccentColor:        "#D4AF37",
   crossGlowTextShadow:   "0 0 18px rgba(212,175,55,0.70), 0 0 40px rgba(212,175,55,0.30)",
   nameTextShadow:        "",
+  motifBalloon1:         "#9D4EDD",
+  motifBalloon2:         "#D4AF37",
+  motifBalloon3:         "#7B2CBF",
+  motifStringColor:      "rgba(212,175,55,0.55)",
+  motifShineColor:       "rgba(255,255,255,0.20)",
 };
 
 const IVORY_THEME: CertTheme = {
@@ -95,6 +106,11 @@ const IVORY_THEME: CertTheme = {
   topAccentColor:        "",
   crossGlowTextShadow:   "",
   nameTextShadow:        "",
+  motifBalloon1:         "#5B1E8C",
+  motifBalloon2:         "#B8860B",
+  motifBalloon3:         "#8B4513",
+  motifStringColor:      "rgba(100,50,10,0.50)",
+  motifShineColor:       "rgba(255,255,255,0.40)",
 };
 
 export function getCertificateTheme(template: CertificateTemplate): CertTheme {
