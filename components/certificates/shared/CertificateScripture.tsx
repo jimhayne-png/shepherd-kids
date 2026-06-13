@@ -31,7 +31,7 @@ export default function CertificateScripture({
         border: `1px solid ${theme.medallionBorder}`,
         background: theme.medallionBackground,
         borderRadius: "4px",
-        padding: "12px 20px",
+        padding: "10px 18px",
         maxWidth: resolvedMaxWidth,
         margin: "0 auto 14px",
         boxSizing: "border-box",

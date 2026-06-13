@@ -1,38 +1,23 @@
 import { type NextRequest } from 'next/server';
 import { getAuthContext, adminClient } from '@/lib/api-auth';
 
-const BASE_STREAK_BONUSES: Record<number, number> = {
-  3: 3000,
-  5: 5000,
-  10: 10000,
-};
-const FULL_SEASON_BONUS = 25000;
-
-function buildStreakBonuses(seasonLengthWeeks: number): Record<number, number> {
-  const bonuses = { ...BASE_STREAK_BONUSES };
-  // Add full-season threshold only if it doesn't overlap a fixed milestone
-  if (![3, 5, 10].includes(seasonLengthWeeks)) {
-    bonuses[seasonLengthWeeks] = FULL_SEASON_BONUS;
-  }
-  return bonuses;
-}
-
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request);
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const { userId, churchId } = ctx;
+  const { churchId } = ctx;
 
-  const seasonId = request.nextUrl.searchParams.get('season_id');
-  if (!seasonId) return Response.json({ error: 'season_id required' }, { status: 400 });
-
+  const childId = request.nextUrl.searchParams.get('child_id');
   const admin = adminClient();
-  const { data, error } = await admin
+
+  let query = admin
     .from('children_ministry_attendance')
     .select('*')
     .eq('church_id', churchId)
-    .eq('season_id', seasonId)
     .order('session_date', { ascending: false });
 
+  if (childId) query = query.eq('child_id', childId);
+
+  const { data, error } = await query;
   if (error) return Response.json({ error: error.message }, { status: 400 });
   return Response.json({ attendance: data ?? [] });
 }
@@ -40,30 +25,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ctx = await getAuthContext(request);
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const { userId, churchId } = ctx;
+  const { churchId } = ctx;
 
   const body = await request.json();
-  const { seasonId, childId, sessionDate, present } = body;
+  const { childId, sessionDate, present } = body;
 
-  if (!seasonId || !childId || !sessionDate) return Response.json({ error: 'seasonId, childId, sessionDate required' }, { status: 400 });
+  if (!childId || !sessionDate) return Response.json({ error: 'childId and sessionDate required' }, { status: 400 });
 
   const admin = adminClient();
 
-  // Look up season to determine actual length for full-season bonus threshold
-  const { data: season } = await admin
-    .from('children_ministry_seasons')
-    .select('start_date, end_date, season_length_weeks')
-    .eq('id', seasonId)
-    .maybeSingle();
-
-  let seasonLengthWeeks = season?.season_length_weeks ?? null;
-  if (!seasonLengthWeeks && season?.start_date && season?.end_date) {
-    const ms = new Date(season.end_date + 'T00:00:00').getTime() - new Date(season.start_date + 'T00:00:00').getTime();
-    seasonLengthWeeks = Math.round(ms / (7 * 24 * 60 * 60 * 1000)) + 1;
-  }
-  const STREAK_BONUSES = buildStreakBonuses(seasonLengthWeeks ?? 8);
-
-  // Upsert attendance record
   const { data: existing } = await admin
     .from('children_ministry_attendance')
     .select('id, consecutive_weeks')
@@ -74,24 +44,20 @@ export async function POST(request: NextRequest) {
   let consecutiveWeeks = 1;
 
   if (present !== false) {
-    // Calculate streak: count consecutive present Sundays ending at sessionDate
     const { data: recentAtt } = await admin
       .from('children_ministry_attendance')
       .select('session_date, present')
       .eq('child_id', childId)
-      .eq('season_id', seasonId)
       .eq('present', true)
       .order('session_date', { ascending: false })
       .limit(30);
 
-    // Build a sorted list of present dates
     const presentDates = (recentAtt ?? [])
       .map((a: any) => a.session_date)
       .filter((d: string) => d !== sessionDate)
       .sort()
       .reverse();
 
-    // Count consecutive weeks (7-day intervals)
     let streak = 1;
     let prev = new Date(sessionDate + 'T00:00:00');
     for (const dateStr of presentDates) {
@@ -119,52 +85,11 @@ export async function POST(request: NextRequest) {
   } else {
     const { data } = await admin
       .from('children_ministry_attendance')
-      .insert({ church_id: churchId, season_id: seasonId, child_id: childId, session_date: sessionDate, present: present !== false, consecutive_weeks: consecutiveWeeks })
+      .insert({ church_id: churchId, child_id: childId, session_date: sessionDate, present: present !== false, consecutive_weeks: consecutiveWeeks })
       .select('*')
       .single();
     record = data;
   }
 
-  // Auto-award streak bonus if milestone hit and not already awarded
-  if (present !== false && STREAK_BONUSES[consecutiveWeeks]) {
-    const bonusPoints = STREAK_BONUSES[consecutiveWeeks];
-
-    const { count } = await admin
-      .from('children_ministry_points')
-      .select('*', { count: 'exact', head: true })
-      .eq('child_id', childId)
-      .eq('season_id', seasonId)
-      .eq('category', 'streak_bonus')
-      .eq('points', bonusPoints);
-
-    if ((count ?? 0) === 0) {
-      // Get team
-      const { data: membership } = await admin
-        .from('children_ministry_team_members')
-        .select('team_id')
-        .eq('child_id', childId)
-        .eq('season_id', seasonId)
-        .maybeSingle();
-
-      const teamId = membership?.team_id ?? null;
-
-      await admin.from('children_ministry_points').insert({
-        church_id: churchId,
-        season_id: seasonId,
-        team_id: teamId,
-        child_id: childId,
-        category: 'streak_bonus',
-        points: bonusPoints,
-        awarded_by: userId,
-        note: `${consecutiveWeeks}-week attendance streak bonus`,
-      });
-
-      if (teamId) {
-        const { data: teamData } = await admin.from('children_ministry_teams').select('total_points').eq('id', teamId).single();
-        await admin.from('children_ministry_teams').update({ total_points: Number(teamData?.total_points ?? 0) + bonusPoints }).eq('id', teamId);
-      }
-    }
-  }
-
-  return Response.json({ record, consecutiveWeeks, streakBonusAwarded: !!(present !== false && STREAK_BONUSES[consecutiveWeeks]) });
+  return Response.json({ record, consecutiveWeeks });
 }

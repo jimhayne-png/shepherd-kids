@@ -60,22 +60,6 @@ type FormState = {
   senior_ministry_leader: string;
 };
 
-type YouthFormState = {
-  middle_school_pastor: string;
-  senior_high_pastor: string;
-  same_pastor: boolean;
-  include_6th_grade: boolean;
-  permission_renewal_months: number;
-};
-
-const EMPTY_YOUTH_FORM: YouthFormState = {
-  middle_school_pastor: "",
-  senior_high_pastor: "",
-  same_pastor: false,
-  include_6th_grade: true,
-  permission_renewal_months: 12,
-};
-
 const EMPTY_FORM: FormState = {
   name: "",
   email: "",
@@ -147,9 +131,6 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
-  const [youthForm, setYouthForm] =
-    useState<YouthFormState>(EMPTY_YOUTH_FORM);
-
   const [billing, setBilling] = useState<{
     subscription_status?: string;
     subscription_tier?: string;
@@ -191,19 +172,11 @@ export default function SettingsPage() {
 
       const t = session.access_token;
 
-      const [churchRes, youthRes] = await Promise.all([
-        fetch("/api/settings", {
-          headers: {
-            Authorization: `Bearer ${t}`,
-          },
-        }),
-
-        fetch("/api/youth-ministry/settings", {
-          headers: {
-            Authorization: `Bearer ${t}`,
-          },
-        }),
-      ]);
+      const churchRes = await fetch("/api/settings", {
+        headers: {
+          Authorization: `Bearer ${t}`,
+        },
+      });
 
       if (churchRes.ok) {
         const { church } = await churchRes.json();
@@ -241,23 +214,6 @@ export default function SettingsPage() {
           trial_ends_at:
             church.trial_ends_at ?? "",
         });
-      }      if (youthRes.ok) {
-        const { settings } = await youthRes.json();
-
-        if (settings && Object.keys(settings).length > 0) {
-          setYouthForm({
-            middle_school_pastor:
-              settings.middle_school_pastor ?? "",
-            senior_high_pastor:
-              settings.senior_high_pastor ?? "",
-            same_pastor:
-              settings.same_pastor ?? false,
-            include_6th_grade:
-              settings.include_6th_grade ?? true,
-            permission_renewal_months:
-              settings.permission_renewal_months ?? 12,
-          });
-        }
       }
 
       setLoading(false);
@@ -284,35 +240,22 @@ export default function SettingsPage() {
         return;
       }
 
-      const [res, youthRes] = await Promise.all([
-        fetch("/api/settings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${freshToken}`,
-          },
-          body: JSON.stringify(form),
-        }),
-
-        fetch("/api/youth-ministry/settings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${freshToken}`,
-          },
-          body: JSON.stringify(youthForm),
-        }),
-      ]);
+      const res = await fetch("/api/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${freshToken}`,
+        },
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json().catch(() => ({}));
-      const youthData = await youthRes.json().catch(() => ({}));
 
       console.log("Main settings response:", data);
-      console.log("Youth settings response:", youthData);
 
       setSaving(false);
 
-      if (res.ok && youthRes.ok) {
+      if (res.ok) {
         setSuccess("Settings saved successfully.");
 
         setTimeout(() => {
@@ -321,9 +264,7 @@ export default function SettingsPage() {
       } else {
         setError(
           data.error ||
-            youthData.error ||
             data.message ||
-            youthData.message ||
             "Failed to save settings."
         );
       }
@@ -585,136 +526,6 @@ export default function SettingsPage() {
                 name="senior_ministry_leader"
                 value={form.senior_ministry_leader}
                 onChange={set("senior_ministry_leader")}
-              />
-
-              <div>
-                <label
-                  htmlFor="middle_school_pastor"
-                  className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5"
-                >
-                  Middle School Pastor
-                </label>
-
-                <input
-                  id="middle_school_pastor"
-                  name="middle_school_pastor"
-                  type="text"
-                  value={youthForm.middle_school_pastor}
-                  onChange={(e) =>
-                    setYouthForm((f) => ({
-                      ...f,
-                      middle_school_pastor: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="senior_high_pastor"
-                  className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5"
-                >
-                  Senior High Pastor
-                </label>
-
-                <input
-                  id="senior_high_pastor"
-                  name="senior_high_pastor"
-                  type="text"
-                  value={youthForm.senior_high_pastor}
-                  onChange={(e) =>
-                    setYouthForm((f) => ({
-                      ...f,
-                      senior_high_pastor: e.target.value,
-                    }))
-                  }
-                  disabled={youthForm.same_pastor}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white disabled:opacity-50 disabled:bg-gray-50"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-0.5">
-              Youth Ministry Preferences
-            </h2>
-
-            <p className="text-sm text-gray-500 mb-5">
-              Grade groupings and permission form settings for Middle School and
-              Senior High.
-            </p>
-
-            <div className="space-y-3 mb-4">
-              <label
-                htmlFor="same_pastor"
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <input
-                  id="same_pastor"
-                  name="same_pastor"
-                  type="checkbox"
-                  checked={youthForm.same_pastor}
-                  onChange={(e) =>
-                    setYouthForm((f) => ({
-                      ...f,
-                      same_pastor: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4 rounded border-gray-300 text-green-800 focus:ring-green-800"
-                />
-
-                <span className="text-sm text-gray-700">
-                  Same pastor leads both Middle School and Senior High
-                </span>
-              </label>
-
-              <label
-                htmlFor="include_6th_grade"
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                <input
-                  id="include_6th_grade"
-                  name="include_6th_grade"
-                  type="checkbox"
-                  checked={youthForm.include_6th_grade}
-                  onChange={(e) =>
-                    setYouthForm((f) => ({
-                      ...f,
-                      include_6th_grade: e.target.checked,
-                    }))
-                  }
-                  className="w-4 h-4 rounded border-gray-300 text-green-800 focus:ring-green-800"
-                />
-
-                <span className="text-sm text-gray-700">
-                  Include 6th grade in Middle School
-                </span>
-              </label>
-            </div>            <div className="max-w-xs">
-              <label
-                htmlFor="permission_renewal_months"
-                className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5"
-              >
-                Permission Form Renewal (months)
-              </label>
-
-              <input
-                id="permission_renewal_months"
-                name="permission_renewal_months"
-                type="number"
-                min={1}
-                max={60}
-                value={youthForm.permission_renewal_months}
-                onChange={(e) =>
-                  setYouthForm((f) => ({
-                    ...f,
-                    permission_renewal_months:
-                      parseInt(e.target.value) || 12,
-                  }))
-                }
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-800 bg-white"
               />
             </div>
           </section>

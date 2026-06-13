@@ -22,8 +22,8 @@ const CERT_TYPES: Record<string, CertMeta> = {
     label: 'Birthday Celebration', icon: '🎈', scriptureRef: 'Psalm 139:13–14',
     subtitle: 'Celebrating the Wonderful Gift God Has Given',
     scripture: {
-      kjv: `“For thou hast possessed my reins: thou hast covered me in my mother’s womb. I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well.”`,
-      niv: `“For you created my inmost being; you knit me together in my mother’s womb. I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.”`,
+      kjv: `“For thou hast possessed my reins: thou hast covered me in my mother's womb. I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well.”`,
+      niv: `“For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.”`,
     },
   },
   spiritual_birthday: {
@@ -248,10 +248,10 @@ function CertPreview({
   template: "purple" | "white"; translation: Translation;
 }) {
   const meta      = CERT_TYPES[certType] ?? CERT_TYPES["spiritual_birthday"];
-  const dispChild = childName     || "Child’s Name";
+  const dispChild = childName     || "Child's Name";
   const dispChurch= churchName    || "Your Church Name";
-  const dispMin   = ministerName  || "Minister’s Name";
-  const dispTitle = ministerTitle || "Children’s Ministry Director";
+  const dispMin   = ministerName  || "Minister's Name";
+  const dispTitle = ministerTitle || "Children's Ministry Director";
   const dispDate  = date ? fmtCertDate(date) : "—";
   const isPurple  = template === "purple";
 
@@ -447,16 +447,55 @@ function CertificateCreatorInner() {
   const [churchName,    setChurchName]    = useState("");
   const [churchTagline, setChurchTagline] = useState("");
   const [ministerName,  setMinisterName]  = useState("");
-  const [ministerTitle, setMinisterTitle] = useState("Children’s Ministry Director");
+  const [ministerTitle, setMinisterTitle] = useState("Children's Ministry Director");
+  const [parentEmail,   setParentEmail]   = useState("");
   const [date,          setDate]          = useState(new Date().toISOString().slice(0, 10));
   const [blessing,       setBlessing]       = useState("");
   const [blessingPreset, setBlessingPreset] = useState<BlessingPreset | 'custom' | 'none'>('none');
   const [template,       setTemplate]       = useState<"purple" | "white">("purple");
   const [translation,   setTranslation]   = useState<Translation>("kjv");
+  const [saving,        setSaving]        = useState(false);
+  const [saveError,     setSaveError]     = useState<string | null>(null);
 
   const backHref = childIdParam
     ? `/dashboard/children-ministry/children/${childIdParam}#celebration-timeline`
     : "/dashboard/children-ministry/children";
+
+  async function saveDraft() {
+    if (!childName.trim()) { setSaveError("Child name is required."); return; }
+    setSaving(true); setSaveError(null);
+    try {
+      const meta = CERT_TYPES[certType];
+      const r = await fetch("/api/children-ministry/certificates", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          child_id:        childIdParam || null,
+          cert_type:       certType,
+          template,
+          child_name:      childName.trim(),
+          church_name:     churchName.trim() || null,
+          church_tagline:  churchTagline.trim() || null,
+          minister_name:   ministerName.trim() || null,
+          minister_title:  ministerTitle.trim() || null,
+          verse:           meta?.scripture[translation] ?? null,
+          reference:       meta?.scriptureRef ?? null,
+          translation,
+          blessing:        blessing.trim() || null,
+          presentation_date: date || null,
+          parent_email:    parentEmail.trim() || null,
+          status:          "draft",
+        }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setSaveError(d.error ?? "Failed to save."); return; }
+      router.push(`/dashboard/children-ministry/certificates/${d.certificate.id}`);
+    } catch {
+      setSaveError("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <AppShell navItems={[]}>
@@ -505,6 +544,11 @@ function CertificateCreatorInner() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <FieldLabel>Parent Email <span style={{ color: "#4a4a65", fontWeight: 400, textTransform: "none" }}>(optional — for sending PDF later)</span></FieldLabel>
+              <input type="email" value={parentEmail} onChange={e => setParentEmail(e.target.value)}
+                placeholder="parent@example.com" style={inputStyle} />
             </div>
           </FormSection>
 
@@ -699,9 +743,11 @@ function CertificateCreatorInner() {
               👁️ Preview
             </button>
             <button
-              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(212,175,55,0.25)", cursor: "pointer", background: "transparent", color: BODY, fontSize: "13px", fontWeight: 700 }}
+              onClick={saveDraft}
+              disabled={saving}
+              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(212,175,55,0.25)", cursor: saving ? "not-allowed" : "pointer", background: "transparent", color: BODY, fontSize: "13px", fontWeight: 700, opacity: saving ? 0.6 : 1 }}
             >
-              💾 Save Draft
+              {saving ? "Saving…" : "💾 Save Draft"}
             </button>
             <button
               onClick={() => window.print()}
@@ -710,6 +756,10 @@ function CertificateCreatorInner() {
               🖨️ Print Certificate
             </button>
           </div>
+
+          {saveError && (
+            <p style={{ fontSize: "11px", color: "#FF6B6B", margin: "8px 0 0" }}>{saveError}</p>
+          )}
 
           {/* Print tip */}
           <p style={{ fontSize: "11px", color: MUTED, margin: "10px 0 0", padding: "8px 12px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(212,175,55,0.1)", borderRadius: "8px", lineHeight: 1.5 }}>

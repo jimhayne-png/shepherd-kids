@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { MINISTRY_CONFIG, isInvitationOnly, hasTeamChallenge, hasGrowthModule, hasMetamorphosis } from "@/lib/ministry-config";
+import { MINISTRY_CONFIG, isInvitationOnly, hasGrowthModule, hasMetamorphosis } from "@/lib/ministry-config";
 
 // Ministry accent colors
 const ACCENT_COLORS: Record<string, string> = {
@@ -18,7 +18,7 @@ const ACCENT_COLORS: Record<string, string> = {
   drama: "#7c3aed",
 };
 
-const SHEPHERD_GROUP_TYPES = new Set(["childrens", "middle-school", "high-school", "young-adults"]);
+const SHEPHERD_GROUP_TYPES = new Set(["childrens", "young-adults"]);
 
 function getAccent(type: string): string {
   return ACCENT_COLORS[type] ?? "#7B2CBF";
@@ -47,9 +47,6 @@ function buildNav(type: string) {
 
   if (SHEPHERD_GROUP_TYPES.has(type)) {
     items.push({ label: "👫 Shepherd Groups", href: `${base}/shepherd-groups` });
-  }
-  if (hasTeamChallenge(type)) {
-    items.push({ label: "🏆 Growth Challenge", href: `${base}/growth-challenge` });
   }
   if (hasGrowthModule(type)) {
     items.push({ label: "🌱 Growth", href: `${base}/growth` });

@@ -7,28 +7,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { userId, churchId } = ctx;
 
-  const seasonId = request.nextUrl.searchParams.get('season_id');
   const admin = adminClient();
 
   const { data: child, error } = await admin.from('children_ministry_children').select('*').eq('id', id).eq('church_id', churchId).maybeSingle();
   if (error || !child) return Response.json({ error: 'Not found' }, { status: 404 });
 
-  let team = null;
-  let points: any[] = [];
-  let attendance: any[] = [];
-
-  if (seasonId) {
-    const [tmRes, ptRes, attRes] = await Promise.all([
-      admin.from('children_ministry_team_members').select('team_id, children_ministry_teams(id, name, color, total_points)').eq('child_id', id).eq('season_id', seasonId).maybeSingle(),
-      admin.from('children_ministry_points').select('*').eq('child_id', id).eq('season_id', seasonId).order('created_at', { ascending: false }),
-      admin.from('children_ministry_attendance').select('*').eq('child_id', id).eq('season_id', seasonId).order('session_date', { ascending: false }),
-    ]);
-    team = (tmRes.data as any)?.children_ministry_teams ?? null;
-    points = ptRes.data ?? [];
-    attendance = attRes.data ?? [];
-  }
-
-  return Response.json({ child, team, points, attendance });
+  return Response.json({ child });
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

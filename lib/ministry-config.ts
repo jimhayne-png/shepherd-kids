@@ -8,7 +8,6 @@ export type MinistryConfig = {
   ageRange?: string;
   grades?: string[];
   pipelineStages: string[];
-  hasTeamChallenge: boolean;
   hasGrowthModule: boolean;
   invitationOnly: boolean;
   hasMetamorphosis: boolean;
@@ -63,63 +62,11 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: CHILDREN_PIPELINE_STAGES,
     stages: CHILDREN_PIPELINE_STAGES,
     hasShepherdGroups: true,
-    hasTeamChallenge: true,
     hasGrowthModule: false,
     invitationOnly: false,
     hasMetamorphosis: true,
     metamorphosisRole: 'sending',
     volunteerGrades: [],
-    stageDescriptions: {
-      "Visitor": "First-time guest",
-      "Regular": "Attends 4+ times",
-      "Engaged": "Participates and builds relationships",
-      "Growing in God's Word": "Learning God’s Word, prayer, and Bible truth",
-      "Faith Decision": "Made a personal decision to follow Christ",
-      "Baptism": "Publicly declared faith through baptism",
-      "Discipleship": "Taking next steps in discipleship and helping others grow",
-    },
-  },
-  "middle-school": {
-    name: "Middle School",
-    label: "Middle School",
-    emoji: "🎒",
-    ageRange: "7th–8th Grade",
-    grades: ["7th", "8th"],
-    pipelineStages: CHILDREN_PIPELINE_STAGES,
-    stages: CHILDREN_PIPELINE_STAGES,
-    hasShepherdGroups: true,
-    hasTeamChallenge: true,
-    hasGrowthModule: false,
-    invitationOnly: false,
-    hasMetamorphosis: true,
-    metamorphosisRole: 'receiving',
-    volunteerGrades: [],
-    stageDescriptions: {
-      "Visitor": "First-time guest",
-      "Regular": "Attends 4+ times",
-      "Engaged": "Participates and builds relationships",
-      "Growing in God's Word": "Learning God's Word, prayer, and Bible truth",
-      "Faith Decision": "Made a personal decision to follow Christ",
-      "Baptism": "Publicly declared faith through baptism",
-      "Discipleship": "Taking next steps in discipleship and helping others grow",
-    },
-  },
-  "high-school": {
-    name: "High School",
-    label: "High School",
-    emoji: "🎓",
-    ageRange: "9th–12th Grade",
-    grades: ["9th", "10th", "11th", "12th"],
-    pipelineStages: CHILDREN_PIPELINE_STAGES,
-    stages: CHILDREN_PIPELINE_STAGES,
-    hasShepherdGroups: true,
-    hasTeamChallenge: true,
-    hasGrowthModule: false,
-    invitationOnly: false,
-    hasMetamorphosis: true,
-    metamorphosisRole: 'receiving',
-    metamorphosisMentorGrades: ["11th", "12th"],
-    volunteerGrades: ["11th", "12th"],
     stageDescriptions: {
       "Visitor": "First-time guest",
       "Regular": "Attends 4+ times",
@@ -138,7 +85,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: YOUNG_ADULTS_PIPELINE_STAGES,
     stages: YOUNG_ADULTS_PIPELINE_STAGES,
     hasShepherdGroups: false,
-    hasTeamChallenge: false,
     hasGrowthModule: true,
     invitationOnly: false,
     hasMetamorphosis: false,
@@ -161,7 +107,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: YOUNG_ADULTS_PIPELINE_STAGES,
     stages: YOUNG_ADULTS_PIPELINE_STAGES,
     hasShepherdGroups: false,
-    hasTeamChallenge: false,
     hasGrowthModule: true,
     invitationOnly: false,
     hasMetamorphosis: false,
@@ -175,7 +120,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: YOUNG_ADULTS_PIPELINE_STAGES,
     stages: YOUNG_ADULTS_PIPELINE_STAGES,
     hasShepherdGroups: false,
-    hasTeamChallenge: false,
     hasGrowthModule: true,
     invitationOnly: false,
     hasMetamorphosis: false,
@@ -190,7 +134,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: YOUNG_ADULTS_PIPELINE_STAGES,
     stages: YOUNG_ADULTS_PIPELINE_STAGES,
     hasShepherdGroups: false,
-    hasTeamChallenge: false,
     hasGrowthModule: true,
     invitationOnly: false,
     hasMetamorphosis: false,
@@ -204,7 +147,6 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: ["New", "Training", "Active", "Senior Usher", "Head Usher"],
     stages: ["New", "Training", "Active", "Senior Usher", "Head Usher"],
     hasShepherdGroups: false,
-    hasTeamChallenge: false,
     hasGrowthModule: false,
     invitationOnly: true,
     hasMetamorphosis: false,
@@ -216,16 +158,11 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     pipelineStages: ["New", "Ensemble", "Featured", "Lead", "Director Track"],
     stages: ["New", "Ensemble", "Featured", "Lead", "Director Track"],
     hasShepherdGroups: false,
-    hasTeamChallenge: false,
     hasGrowthModule: false,
     invitationOnly: true,
     hasMetamorphosis: false,
   },
 };
-
-export function hasTeamChallenge(type: string): boolean {
-  return MINISTRY_CONFIG[type]?.hasTeamChallenge ?? false;
-}
 
 export function hasGrowthModule(type: string): boolean {
   return MINISTRY_CONFIG[type]?.hasGrowthModule ?? false;
@@ -279,8 +216,6 @@ export function getAutoMinistries(member: {
 
   if (age !== null) {
     if (age >= 8 && age < 12) types.push('childrens');
-    if (age >= 12 && age < 14) types.push('middle-school');
-    if (age >= 14 && age < 18) types.push('high-school');
     if (age >= 18 && age < 30) types.push('young-adults');
     if (age >= 55) types.push('seniors');
 
@@ -300,8 +235,6 @@ export function getAutoMinistries(member: {
 
 export const MINISTRY_NAV_ITEMS = [
   { label: "🧒 Children's Ministry", href: "/dashboard/ministry/childrens" },
-  { label: "🎒 Middle School", href: "/dashboard/ministry/middle-school" },
-  { label: "🎓 High School", href: "/dashboard/ministry/high-school" },
   { label: "🎉 Young Adults", href: "/dashboard/ministry/young-adults" },
   { label: "👔 Men's Ministry", href: "/dashboard/ministry/mens" },
   { label: "👗 Women's Ministry", href: "/dashboard/ministry/womens" },

@@ -42,7 +42,15 @@ function BirthdayCertificateContent(props: ContentProps) {
   const theme = useCertificateTheme();
 
   return (
-    <div style={{ position: "relative", textAlign: "center", padding: "30px 44px 26px" }}>
+    <div style={{ position: "relative", textAlign: "center", padding: "24px 44px 20px" }}>
+
+      {/* Side balloon clusters — large, absolutely positioned, clipped by frame */}
+      <div style={{ position: "absolute", left: "-20px", top: "20px", pointerEvents: "none" }}>
+        <BirthdayMotif side="left" size={110} />
+      </div>
+      <div style={{ position: "absolute", right: "-20px", top: "20px", pointerEvents: "none" }}>
+        <BirthdayMotif side="right" size={110} />
+      </div>
 
       {/* Church identity */}
       <CertificateHeader
@@ -54,30 +62,26 @@ function BirthdayCertificateContent(props: ContentProps) {
       {/* ❖ ❖ ❖ ornamental rule */}
       <CertificateRibbon variant="triple" />
 
-      {/* Birthday motif */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "4px" }}>
-        <BirthdayMotif side="center" />
-      </div>
-
-      {/* Certificate title */}
+      {/* Certificate title — strong and prominent */}
       <h2 style={{
-        fontSize: "22px",
-        fontWeight: 700,
+        fontSize: "26px",
+        fontWeight: 800,
         color: theme.titleColor,
         fontFamily: "Georgia, serif",
-        letterSpacing: "0.06em",
+        letterSpacing: "0.14em",
         textTransform: "uppercase" as const,
-        margin: "0 0 2px",
+        margin: "0 0 3px",
       }}>
         BIRTHDAY CELEBRATION
       </h2>
 
-      {/* Certificate subtitle */}
+      {/* Subtitle ribbon */}
       <p style={{
-        fontSize: "13px",
+        fontSize: "14px",
         color: theme.subtitleColor,
+        fontFamily: "Georgia, serif",
         fontStyle: "italic",
-        letterSpacing: "0.04em",
+        letterSpacing: "0.06em",
         margin: "0 0 2px",
       }}>
         Celebrating the Wonderful Gift God Has Given
@@ -90,7 +94,7 @@ function BirthdayCertificateContent(props: ContentProps) {
       <CertificateName childName={props.childName} />
 
       {/* Rule below name */}
-      <div style={{ height: "1px", background: theme.dividerColor, margin: "0 8% 14px" }} />
+      <div style={{ height: "1px", background: theme.dividerColor, margin: "0 8% 12px" }} />
 
       {/* Scripture medallion */}
       <CertificateScripture

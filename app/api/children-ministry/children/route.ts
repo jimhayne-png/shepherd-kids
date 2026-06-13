@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
     parent1Name, parent1Email, parent1Phone,
     parent2Name, parent2Email, parent2Phone,
     authorizedPickups, photoPermission,
-    seasonId, teamId,
   } = body;
 
   if (!firstName?.trim() || !lastName?.trim()) return Response.json({ error: 'First and last name required' }, { status: 400 });
@@ -84,18 +83,5 @@ export async function POST(request: NextRequest) {
   }).select('*').single();
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
-
-  // Optionally assign to team in a season
-  if (seasonId && teamId) {
-    await admin.from('children_ministry_team_members').insert({
-      church_id: churchId,
-      season_id: seasonId,
-      team_id: teamId,
-      child_id: child.id,
-    });
-    const { count } = await admin.from('children_ministry_team_members').select('*', { count: 'exact', head: true }).eq('team_id', teamId);
-    await admin.from('children_ministry_teams').update({ member_count: count ?? 0 }).eq('id', teamId);
-  }
-
   return Response.json({ child });
 }

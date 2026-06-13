@@ -7,7 +7,6 @@ import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
 
-type Season = { id: string; name: string; status: string; reward_description: string | null };
 type UpdateRecord = {
   id: string; session_date: string; memory_verse: string | null;
   lesson_summary: string | null; conversation_starter: string | null;
@@ -40,8 +39,6 @@ export default function ParentUpdatePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
-  const [seasons, setSeasons] = useState<Season[]>([]);
-  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [history, setHistory] = useState<UpdateRecord[]>([]);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -57,8 +54,8 @@ export default function ParentUpdatePage() {
   const [saveError, setSaveError] = useState("");
   const [sendSuccess, setSendSuccess] = useState("");
 
-  async function loadHistory(t: string, sid: string) {
-    const res = await fetch(`/api/children-ministry/parent-update?season_id=${sid}`, { headers: { Authorization: `Bearer ${t}` } });
+  async function loadHistory(t: string) {
+    const res = await fetch(`/api/children-ministry/parent-update`, { headers: { Authorization: `Bearer ${t}` } });
     const data = await res.json();
     setHistory(data.updates ?? []);
   }
@@ -74,20 +71,11 @@ export default function ParentUpdatePage() {
       if (!session) return;
       const t = session.access_token;
       setToken(t);
-      const sRes = await fetch("/api/children-ministry/seasons", { headers: { Authorization: `Bearer ${t}` } });
-      const sData = await sRes.json();
-      const allSeasons: Season[] = sData.seasons ?? [];
-      setSeasons(allSeasons);
-      const active = allSeasons.find(s => s.status === "active") ?? allSeasons[0] ?? null;
-      setActiveSeason(active);
-      if (active) await loadHistory(t, active.id);
+      await loadHistory(t);
       setLoading(false);
     }
     init();
   }, [router]);
-
-  // suppress unused warning — seasons available for future season switcher
-  void seasons;
 
   function loadPastUpdate(u: UpdateRecord) {
     setForm({
@@ -100,14 +88,13 @@ export default function ParentUpdatePage() {
   }
 
   async function save(sendNow: boolean) {
-    if (!activeSeason) { setSaveError("No active season"); return; }
     if (sendNow) { setSending(true); } else { setSaving(true); }
     setSaveError(""); setSendSuccess("");
 
     const res = await fetch("/api/children-ministry/parent-update", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ seasonId: activeSeason.id, ...form, sendNow }),
+      body: JSON.stringify({ ...form, sendNow }),
     });
     const data = await res.json();
 
@@ -118,7 +105,7 @@ export default function ParentUpdatePage() {
       setSendSuccess(`✅ Parent Communication sent to ${data.emailsSent} families!`);
       setTimeout(() => setSendSuccess(""), 5000);
     }
-    if (token && activeSeason) await loadHistory(token, activeSeason.id);
+    if (token) await loadHistory(token);
   }
 
   if (loading) {
@@ -139,11 +126,6 @@ export default function ParentUpdatePage() {
         <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
           Parent Communication
         </h1>
-        {activeSeason && (
-          <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "6px 0 0" }}>
-            {activeSeason.name}
-          </p>
-        )}
       </div>
 
       <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px" }}>
@@ -369,9 +351,6 @@ export default function ParentUpdatePage() {
                   </p>
                 </div>
                 <div style={{ background: "white", padding: "26px" }}>
-                  <div style={{ background: "#f5f3ff", borderLeft: "4px solid #7B2CBF", padding: "12px 16px", borderRadius: "0 8px 8px 0", marginBottom: "18px" }}>
-                    <p style={{ margin: 0, fontSize: "14px", color: "#374151" }}>Team <strong style={{ color: "#7B2CBF" }}>Eagles</strong> · <strong>1st place</strong> · <strong>45,000 pts</strong></p>
-                  </div>
                   {form.memoryVerse && (
                     <div style={{ marginBottom: "18px" }}>
                       <h3 style={{ color: "#1A4A2E", fontSize: "14px", margin: "0 0 7px" }}>📖 Memory Verse This Week</h3>
@@ -390,11 +369,6 @@ export default function ParentUpdatePage() {
                       <p style={{ fontSize: "14px", color: "#374151", fontStyle: "italic", margin: 0 }}>Ask [child&apos;s name]: &ldquo;{form.conversationStarter}&rdquo;</p>
                     </div>
                   )}
-                  {activeSeason?.reward_description && (
-                    <div style={{ background: "#fef3c7", borderRadius: "8px", padding: "10px 14px", marginBottom: "18px" }}>
-                      <p style={{ margin: 0, fontSize: "13px", color: "#92400e" }}>🎉 Working toward: <strong>{activeSeason.reward_description}</strong></p>
-                    </div>
-                  )}
                   {form.specialNotes && (
                     <div>
                       <h3 style={{ color: "#1A4A2E", fontSize: "14px", margin: "0 0 7px" }}>📢 Special Notes</h3>
@@ -402,7 +376,7 @@ export default function ParentUpdatePage() {
                     </div>
                   )}
                   <hr style={{ border: "none", borderTop: "1px solid #e5e7eb", margin: "18px 0" }} />
-                  <p style={{ fontSize: "11px", color: "#9ca3af", textAlign: "center", margin: 0 }}>Each email is personalized with the child&apos;s name, team standing, points, and streak.</p>
+                  <p style={{ fontSize: "11px", color: "#9ca3af", textAlign: "center", margin: 0 }}>Each email is personalized with the child&apos;s name.</p>
                 </div>
               </div>
             </div>

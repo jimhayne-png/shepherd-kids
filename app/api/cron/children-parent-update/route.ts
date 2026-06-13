@@ -15,41 +15,27 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = adminClient();
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Find all active seasons across all churches
-  const { data: seasons } = await admin
-    .from('children_ministry_seasons')
-    .select('id, church_id')
-    .eq('status', 'active');
+  const { data: updates } = await admin
+    .from('children_ministry_parent_updates')
+    .select('*')
+    .eq('session_date', todayStr)
+    .is('sent_at', null);
 
-  if (!seasons?.length) return Response.json({ sent: 0, mode: 'cron', reason: 'No active seasons' });
+  if (!updates?.length) return Response.json({ sent: 0, mode: 'cron', reason: 'No pending updates for today' });
 
   let totalSent = 0;
 
-  for (const season of seasons) {
-    // Check if pastor has filled in this week's parent update
-    const { data: update } = await admin
-      .from('children_ministry_parent_updates')
-      .select('*')
-      .eq('church_id', season.church_id)
-      .eq('season_id', season.id)
-      .eq('session_date', todayStr)
-      .is('sent_at', null)
-      .maybeSingle();
-
-    if (!update) continue; // No update for today, skip
-
-    // Lazy import to avoid circular issues
+  for (const update of updates) {
     const { sendParentEmails } = await import('@/app/api/children-ministry/parent-update/route');
 
-    const sent = await sendParentEmails(admin, season.church_id, season.id, todayStr, {
+    const sent = await sendParentEmails(admin, update.church_id, todayStr, {
       memoryVerse: update.memory_verse ?? '',
       lessonSummary: update.lesson_summary ?? '',
       conversationStarter: update.conversation_starter ?? '',
       specialNotes: update.special_notes ?? '',
-    }, '');
+    });
 
     await admin
       .from('children_ministry_parent_updates')
