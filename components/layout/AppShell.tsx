@@ -29,7 +29,7 @@ const SK_ITEMS: SkItem[] = [
   { label: "Families",               href: "/dashboard/children-ministry/parents",        emoji: "👪" },
   { label: "ShepherdKids",           href: "/dashboard/children-ministry/children",       emoji: "🧒" },
   { label: "Parent Communication",   href: "/dashboard/children-ministry/parent-update",  emoji: "📧" },
-  { label: "Check-In",               href: "/dashboard/children-ministry/live-checkin",   emoji: "✅" },
+  { label: "Check-In",               href: "/dashboard/children-ministry/checkin-setup",   emoji: "✅" },
   { label: "Celebrations",           href: "/dashboard/birthdays",                              emoji: "🎉" },
   { label: "Certificates",           href: "/dashboard/children-ministry/certificates/new", emoji: "🎓", exact: true },
   { label: "Faith Journey",          href: "/dashboard/children-ministry/faith-journey",    emoji: "✝️" },

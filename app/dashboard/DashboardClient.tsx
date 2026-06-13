@@ -94,7 +94,7 @@ const MODULE_CARDS = [
   { label: "Families",              href: "/dashboard/children-ministry/parents",        desc: "Households, parents & pickups",                emoji: "👪",   gradient: "linear-gradient(135deg, #16a34a, #15803d)" },
   { label: "ShepherdKids",          href: "/dashboard/children-ministry/children",       desc: "Child directory & profiles",                   emoji: "🧒",   gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
   { label: "Parent Communication",  href: "/dashboard/children-ministry/parent-update",  desc: "Email updates & family messages",              emoji: "📧",   gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
-  { label: "Check-In",              href: "/dashboard/children-ministry/live-checkin",   desc: "Today's check-in activity",                    emoji: "✅",   gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
+  { label: "Check-In",              href: "/dashboard/children-ministry/checkin-setup",  desc: "Rooms, sessions & live dashboard",             emoji: "✅",   gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
   { label: "Celebrations",          href: "/dashboard/birthdays",                       desc: "Birthdays, spiritual birthdays & certificates",  emoji: "🎉",   gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
   { label: "Faith Journey",         href: "/dashboard/children-ministry/faith-journey", desc: "Spiritual milestones",                          emoji: "✝️",  gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
   { label: "Volunteers",            href: "/dashboard/children-ministry/volunteers",    desc: "Team management",                              emoji: "🙋",   gradient: "linear-gradient(135deg, #14b8a6, #0f766e)" },
