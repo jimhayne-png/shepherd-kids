@@ -201,7 +201,7 @@ export default function FollowUpPage() {
       {/* Header */}
       <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
         <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>📞 Follow Up</h1>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Follow Up</h1>
         <p className="text-sm mt-1" style={{ color: "#D8D8E8" }}>First visit letters & shepherd touches</p>
       </div>
 
@@ -231,7 +231,7 @@ export default function FollowUpPage() {
 
         {/* Section 1: Parent First Visit Follow Up */}
         <section className="mb-10">
-          <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "Georgia, serif", color: "#D4AF37" }}>✉️ Parent First Visit Follow Up</h2>
+          <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "Georgia, serif", color: "#D4AF37" }}>Parent First Visit Follow Up</h2>
           {noSection1 ? (
             <div className="rounded-2xl p-10 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
               <div className="text-4xl mb-3">{filterTab === "completed" ? "✅" : "📬"}</div>
@@ -294,7 +294,7 @@ export default function FollowUpPage() {
 
         {/* Section 2: Child Shepherd Follow Up */}
         <section>
-          <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "Georgia, serif", color: "#D4AF37" }}>🐑 Child Shepherd Follow Up</h2>
+          <h2 className="text-lg font-bold mb-4" style={{ fontFamily: "Georgia, serif", color: "#D4AF37" }}>Child Shepherd Follow Up</h2>
           {noSection2 ? (
             <div className="rounded-2xl p-10 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
               <div className="text-4xl mb-3">{filterTab === "completed" ? "✅" : "🐑"}</div>
@@ -361,7 +361,7 @@ export default function FollowUpPage() {
         >
           <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "20px", width: "100%", maxWidth: "580px", maxHeight: "90vh", overflowY: "auto", padding: "28px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-              <h2 style={{ color: "#ffffff", fontWeight: 700, fontSize: "18px", fontFamily: "Georgia, serif", margin: 0 }}>✉️ Welcome Letter</h2>
+              <h2 style={{ color: "#ffffff", fontWeight: 700, fontSize: "18px", fontFamily: "Georgia, serif", margin: 0 }}>Welcome Letter</h2>
               <button onClick={closeModal} style={{ background: "none", border: "none", color: "#A9A9B8", cursor: "pointer", fontSize: "20px", lineHeight: 1 }}>✕</button>
             </div>
 

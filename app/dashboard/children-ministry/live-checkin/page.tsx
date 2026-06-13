@@ -101,7 +101,7 @@ export default function LiveCheckinPage() {
     <AppShell navItems={[]}>
       <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
         <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>✅ Check-In</h1>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Check-In</h1>
         {lastUpdated && <p className="text-xs mt-1" style={{ color: "#D8D8E8" }}>Last updated {lastUpdated.toLocaleTimeString()} · auto-refreshes every 30s</p>}
       </div>
 

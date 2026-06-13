@@ -369,7 +369,7 @@ export default function PrintStationPage() {
                 margin: 0,
               }}
             >
-              🏷️ Label Printing
+              Label Printing
             </h1>
             {lastRefresh && (
               <p style={{ color: "#86efac", fontSize: 12, marginTop: 4 }}>

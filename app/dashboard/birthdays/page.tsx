@@ -205,7 +205,7 @@ export default function BirthdaysPage() {
           <div>
             <p style={{ color: "#D4AF37", fontSize: "13px", marginBottom: "4px", fontWeight: 600 }}>ShepherdKids</p>
             <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#FFFFFF", fontFamily: "Georgia, serif", margin: 0 }}>
-              🎉 Celebrations
+              Celebrations
             </h1>
           </div>
           <div style={{ display: "flex", gap: "10px", flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>

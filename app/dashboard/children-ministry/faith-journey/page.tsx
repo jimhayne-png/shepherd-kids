@@ -266,7 +266,7 @@ export default function FaithJourneyPage() {
           <div>
             <p style={{ color: "#D4AF37", fontSize: "13px", marginBottom: "4px", fontWeight: 600 }}>ShepherdKids</p>
             <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#FFFFFF", fontFamily: "Georgia, serif", margin: 0 }}>
-              ✝️ Faith Journey
+              Faith Journey
             </h1>
             <p style={{ color: "#D8D8E8", fontSize: "14px", marginTop: "8px" }}>
               Helping every child take their next step toward Christ.

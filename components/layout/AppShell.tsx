@@ -147,7 +147,7 @@ export default function AppShell(props: AppShellProps) {
               marginBottom: "8px",
             }}
           >
-            🏠 Dashboard
+            Dashboard
           </Link>
 
           {/* ShepherdKids section label */}
@@ -167,7 +167,7 @@ export default function AppShell(props: AppShellProps) {
           <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
             {SK_ITEMS.map(item => (
               <Link key={item.href} href={item.href} style={itemStyle(isItemActive(pathname, item))}>
-                {item.emoji} {item.label}
+                {item.label}
               </Link>
             ))}
           </div>
@@ -182,7 +182,7 @@ export default function AppShell(props: AppShellProps) {
                 href="/dashboard/master-admin/subscriptions"
                 style={masterAdminItemStyle(pathActive(pathname, "/dashboard/master-admin/subscriptions"))}
               >
-                🔑 Subscription Management
+                Subscription Management
               </Link>
             </div>
           )}
@@ -218,7 +218,7 @@ export default function AppShell(props: AppShellProps) {
               (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
             }}
           >
-            🚪 Sign Out
+            Sign Out
           </button>
         </div>
       </aside>

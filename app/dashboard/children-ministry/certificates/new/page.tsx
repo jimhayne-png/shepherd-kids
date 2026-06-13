@@ -514,7 +514,7 @@ function CertificateCreatorInner() {
           Certificates
         </p>
         <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
-          🎓 Certificate Creator
+          Certificate Creator
         </h1>
         <p style={{ fontSize: "13px", color: MUTED, margin: "6px 0 0" }}>
           Design a premium keepsake certificate your families will treasure.

@@ -72,7 +72,7 @@ export default function ParentsPage() {
         <p style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.06em", color: "#D4AF37", marginBottom: "6px", textTransform: "uppercase" }}>
           ShepherdKids
         </p>
-        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>👪 Families</h1>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>Families</h1>
         <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "6px 0 0" }}>
           {parents.length} registered {parents.length === 1 ? "family" : "families"}
         </p>
