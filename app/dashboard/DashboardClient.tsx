@@ -90,17 +90,15 @@ const CARE_CARDS = [
 ];
 
 const MODULE_CARDS = [
-  { label: "Ministry Care",         href: "/dashboard/children-ministry",                desc: "Families needing encouragement",               emoji: "👨‍👩‍👧", gradient: "linear-gradient(135deg, #7B2CBF, #5b21b6)" },
-  { label: "Families",              href: "/dashboard/children-ministry/parents",        desc: "Households, parents & pickups",                emoji: "👪",   gradient: "linear-gradient(135deg, #16a34a, #15803d)" },
-  { label: "ShepherdKids",          href: "/dashboard/children-ministry/children",       desc: "Child directory & profiles",                   emoji: "🧒",   gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
-  { label: "Parent Communication",  href: "/dashboard/children-ministry/parent-update",  desc: "Email updates & family messages",              emoji: "📧",   gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
-  { label: "Check-In",              href: "/dashboard/children-ministry/checkin-setup",  desc: "Rooms, sessions & live dashboard",             emoji: "✅",   gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
-  { label: "Follow Up",             href: "/dashboard/children-ministry/followup",       desc: "First visit letters & shepherd touches",        emoji: "📞",   gradient: "linear-gradient(135deg, #10b981, #047857)" },
-  { label: "Celebrations",          href: "/dashboard/birthdays",                       desc: "Birthdays, spiritual birthdays & certificates",  emoji: "🎉",   gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
-  { label: "Faith Journey",         href: "/dashboard/children-ministry/faith-journey", desc: "Spiritual milestones",                          emoji: "✝️",  gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
-  { label: "Volunteers",            href: "/dashboard/children-ministry/volunteers",    desc: "Team management",                              emoji: "🙋",   gradient: "linear-gradient(135deg, #14b8a6, #0f766e)" },
-  { label: "Label Printing",        href: "/dashboard/children-ministry/print-station", desc: "Name tags & pickup labels",                    emoji: "🏷️",  gradient: "linear-gradient(135deg, #f59e0b, #b45309)" },
-  { label: "Reports",               href: "/dashboard/children-ministry/attendance-report", desc: "Attendance & trends",                      emoji: "📊",   gradient: "linear-gradient(135deg, #3b82f6, #1d4ed8)" },
+  { label: "Ministry Care",         href: "/dashboard/children-ministry",                desc: "Families needing encouragement",          emoji: "👨‍👩‍👧", gradient: "linear-gradient(135deg, #7B2CBF, #5b21b6)" },
+  { label: "Check-In Settings",     href: "/dashboard/children-ministry/checkin-setup",  desc: "Rooms, sessions & live dashboard",        emoji: "✅",   gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
+  { label: "Follow Up",             href: "/dashboard/children-ministry/followup",       desc: "First visit letters & shepherd touches",  emoji: "📞",   gradient: "linear-gradient(135deg, #10b981, #047857)" },
+  { label: "ShepherdKids",          href: "/dashboard/children-ministry/children",       desc: "Child directory & profiles",              emoji: "🧒",   gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
+  { label: "Shepherd Families",     href: "/dashboard/children-ministry/parents",        desc: "Households, parents & pickups",           emoji: "👪",   gradient: "linear-gradient(135deg, #16a34a, #15803d)" },
+  { label: "Parent Communication",  href: "/dashboard/children-ministry/parent-update",  desc: "Email updates & family messages",         emoji: "📧",   gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
+  { label: "Faith Journey",         href: "/dashboard/children-ministry/faith-journey",  desc: "Spiritual milestones",                    emoji: "✝️",  gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
+  { label: "Celebrations",          href: "/dashboard/birthdays",                        desc: "Birthdays, spiritual birthdays & certificates", emoji: "🎉", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
+  { label: "Certificates",          href: "/dashboard/children-ministry/certificates/new", desc: "Print & send faith certificates",       emoji: "🎓",   gradient: "linear-gradient(135deg, #a855f7, #6d28d9)" },
 ];
 
 function getGreeting() {

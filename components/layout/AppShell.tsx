@@ -25,20 +25,15 @@ interface AppShellProps {
 type SkItem = { label: string; href: string; emoji: string; exact?: boolean };
 
 const SK_ITEMS: SkItem[] = [
-  { label: "Ministry Care",          href: "/dashboard/children-ministry",                emoji: "👨‍👩‍👧", exact: true },
-  { label: "Families",               href: "/dashboard/children-ministry/parents",        emoji: "👪" },
-  { label: "ShepherdKids",           href: "/dashboard/children-ministry/children",       emoji: "🧒" },
-  { label: "Parent Communication",   href: "/dashboard/children-ministry/parent-update",  emoji: "📧" },
-  { label: "Check-In",               href: "/dashboard/children-ministry/checkin-setup",   emoji: "✅" },
-  { label: "Follow Up",              href: "/dashboard/children-ministry/followup",            emoji: "📞" },
-  { label: "Celebrations",           href: "/dashboard/birthdays",                              emoji: "🎉" },
-  { label: "Certificates",           href: "/dashboard/children-ministry/certificates/new", emoji: "🎓", exact: true },
-  { label: "Faith Journey",          href: "/dashboard/children-ministry/faith-journey",    emoji: "✝️" },
-  { label: "Volunteers",             href: "/dashboard/children-ministry/volunteers",    emoji: "🙋" },
-  { label: "Label Printing",         href: "/dashboard/children-ministry/print-station", emoji: "🏷️" },
-  { label: "Reports",                href: "/dashboard/children-ministry/attendance-report", emoji: "📊" },
-  { label: "Settings",               href: "/dashboard/children-ministry/settings",      emoji: "⚙️" },
-  { label: "Subscription & Billing", href: "/dashboard/billing",                         emoji: "💳" },
+  { label: "Ministry Care",          href: "/dashboard/children-ministry",                emoji: "", exact: true },
+  { label: "Check-In Settings",      href: "/dashboard/children-ministry/checkin-setup",  emoji: "" },
+  { label: "Follow Up",              href: "/dashboard/children-ministry/followup",        emoji: "" },
+  { label: "ShepherdKids",           href: "/dashboard/children-ministry/children",        emoji: "" },
+  { label: "Shepherd Families",      href: "/dashboard/children-ministry/parents",         emoji: "" },
+  { label: "Parent Communication",   href: "/dashboard/children-ministry/parent-update",   emoji: "" },
+  { label: "Faith Journey",          href: "/dashboard/children-ministry/faith-journey",   emoji: "" },
+  { label: "Celebrations",           href: "/dashboard/birthdays",                         emoji: "" },
+  { label: "Certificates",           href: "/dashboard/children-ministry/certificates/new", emoji: "", exact: true },
 ];
 
 function pathActive(pathname: string, href: string) {

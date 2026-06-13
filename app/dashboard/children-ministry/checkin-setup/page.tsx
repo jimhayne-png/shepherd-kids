@@ -13,9 +13,6 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined
 type Room = { id: string; name: string; min_age: number | null; max_age: number | null; capacity: number | null; is_active: boolean };
 type Template = { id: string; name: string; typical_day: string | null; typical_time: string | null; is_active: boolean };
 type Session = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string; kiosk_pin: string };
-type NVChild = { id: string; child_name: string; room_id: string | null; room_name: string | null; checked_in_at: string };
-type NVFamily = { parentName: string; parentPhone: string; primaryRecordId: string; children: NVChild[]; followupLog: { id: string; status: string; follow_up_type: string; sent_at: string | null; parent_email: string | null } | null; visitCount: number };
-type NVSession = { session: { id: string; service_name: string; date: string; auto_followup: boolean }; families: NVFamily[] };
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -53,7 +50,7 @@ export default function CheckinSetupPage() {
     return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
   }
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "visitors" | "automation">("rooms");
+  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -90,30 +87,12 @@ export default function CheckinSetupPage() {
   const [scheduleForm, setScheduleForm] = useState({ name: "", day: "Sunday", time: "", sessionGroup: "" });
   const [savingSchedule, setSavingSchedule] = useState(false);
 
-  // New Visitors tab
-  const [nvSessions, setNvSessions] = useState<NVSession[]>([]);
-  const [nvLoaded, setNvLoaded] = useState(false);
-  const [nvLoading, setNvLoading] = useState(false);
   // Letter template (Automation Settings tab)
   const [letterSubject, setLetterSubject] = useState("");
   const [letterBody, setLetterBody] = useState("");
   const [letterSaving, setLetterSaving] = useState(false);
   const [letterSaved, setLetterSaved] = useState(false);
   const [letterLoaded, setLetterLoaded] = useState(false);
-
-  async function loadVisitors() {
-    setNvLoading(true);
-    const res = await fetch("/api/checkin/new-visitors", { credentials: "include", headers: ch() });
-    if (res.ok) { const d = await res.json(); setNvSessions(d.sessions ?? []); }
-    setNvLoading(false);
-  }
-
-  useEffect(() => {
-    if (tab === "visitors" && !loading && !nvLoaded) {
-      setNvLoaded(true);
-      loadVisitors();
-    }
-  }, [tab, loading, nvLoaded]);
 
   useEffect(() => {
     if (tab === "automation" && !loading && !letterLoaded) {
@@ -154,16 +133,6 @@ export default function CheckinSetupPage() {
       setShowAddSchedule(false);
     }
     setSavingSchedule(false);
-  }
-
-  async function toggleAutoFollowup(sessionId: string, current: boolean) {
-    await fetch("/api/checkin/sessions", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...ch() },
-      credentials: "include",
-      body: JSON.stringify({ id: sessionId, autoFollowup: !current }),
-    });
-    setNvSessions(ss => ss.map(s => s.session.id === sessionId ? { ...s, session: { ...s.session, auto_followup: !current } } : s));
   }
 
   async function loadLetterTemplate() {
@@ -351,11 +320,18 @@ export default function CheckinSetupPage() {
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Tabs */}
         <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
-          {(["rooms", "templates", "sessions", "visitors", "automation"] as const).map(t => (
+          {(["rooms", "templates", "sessions", "automation"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
-              {t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : t === "visitors" ? "New Visitors" : "Automation Settings"}
+              {t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : "Automation Settings"}
             </button>
           ))}
+          <a
+            href="/dashboard/children-ministry/print-station"
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+            style={{ backgroundColor: "transparent", color: "#A9A9B8", textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+          >
+            Label Printing ↗
+          </a>
         </div>
 
         {/* ── ROOMS TAB ── */}
@@ -1061,94 +1037,6 @@ export default function CheckinSetupPage() {
           </div>
         )}
 
-        {/* ── NEW VISITORS TAB ── */}
-        {tab === "visitors" && (
-          <div>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>New Visitors</h2>
-                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>First-time families per session · toggle auto-send · manage follow-up in Follow Up module</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <a
-                  href="/dashboard/children-ministry/followup"
-                  className="px-4 py-2 rounded-xl text-sm font-bold"
-                  style={{ backgroundColor: ACCENT, color: "#ffffff", textDecoration: "none" }}
-                >
-                  📞 Manage Follow Up →
-                </a>
-                <button onClick={() => loadVisitors()} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>↻ Refresh</button>
-              </div>
-            </div>
-
-            {nvLoading && <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div style={{ color: "#A9A9B8" }}>Loading new visitors…</div></div>}
-
-            {!nvLoading && nvSessions.length === 0 && (
-              <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                <div className="text-5xl mb-4">🎉</div>
-                <p className="font-semibold" style={{ color: "#D8D8E8" }}>No new visitors recorded yet.</p>
-                <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>New families who check in for the first time will appear here.</p>
-              </div>
-            )}
-
-            {!nvLoading && nvSessions.map(({ session: sess, families }) => (
-              <div key={sess.id} className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                {/* Session header */}
-                <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(212,175,55,0.12)" }}>
-                  <div>
-                    <h3 className="font-bold" style={{ color: "#ffffff" }}>{sess.service_name}</h3>
-                    <p className="text-sm" style={{ color: "#A9A9B8" }}>{fmtDate(sess.date)} · {families.length} new {families.length === 1 ? "family" : "families"}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {sess.auto_followup && (
-                      <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-green-100 text-green-700">⚡ Auto 24hr follow-up active</span>
-                    )}
-                    <button
-                      onClick={() => toggleAutoFollowup(sess.id, sess.auto_followup)}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold border"
-                      style={{ borderColor: sess.auto_followup ? "#dc2626" : ACCENT, color: sess.auto_followup ? "#dc2626" : ACCENT, backgroundColor: sess.auto_followup ? "#fee2e2" : ACCENT + "11" }}
-                    >
-                      {sess.auto_followup ? "Disable Auto-Send" : "Enable Auto-Send"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Family cards — read only, actions in Follow Up module */}
-                <div>
-                  {families.map((family, fIdx) => {
-                    const log = family.followupLog;
-                    const isSent = log?.status === "sent";
-                    return (
-                      <div key={family.parentPhone} className="px-6 py-4" style={{ borderTop: fIdx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-                        <div>
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <div className="font-bold text-sm" style={{ color: "#ffffff" }}>{family.parentName}</div>
-                            <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: family.visitCount === 1 ? "#3b82f6" : family.visitCount === 2 ? "#8b5cf6" : ACCENT }}>
-                              {family.visitCount === 1 ? "1st Visit" : family.visitCount === 2 ? "2nd Visit" : "3rd+ Visit"}
-                            </span>
-                          </div>
-                          <div className="text-xs mb-0.5" style={{ color: "#A9A9B8" }}>{family.parentPhone}</div>
-                          <div className="space-y-0.5">
-                            {family.children.map(c => (
-                              <div key={c.id} className="text-xs" style={{ color: "#D8D8E8" }}>
-                                🧒 {c.child_name}{c.room_name ? ` — ${c.room_name}` : ""}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        {isSent && (
-                          <span className="text-xs px-2.5 py-1 rounded-full font-bold flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
-                            ✅ Followed Up
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </AppShell>
   );
