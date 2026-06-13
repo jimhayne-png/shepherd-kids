@@ -1,13 +1,18 @@
 import { type NextRequest } from 'next/server';
 import { getAuthContext, adminClient } from '@/lib/api-auth';
 
-const DEFAULT_SUBJECT = "Welcome to Children's Ministry, {parent_name}!";
-const DEFAULT_BODY = `<p>Dear {parent_name},</p>
-<p>We were so blessed to have {child_name} join us this past {visit_date}! It was wonderful to meet your family and we hope you felt welcomed.</p>
-<p>Our Children's Ministry is a place where kids grow in faith, make friends, and have fun learning about God's love. We would love to see {child_name} again soon!</p>
-<p>If you have any questions or would like to learn more about our programs, please don't hesitate to reach out.</p>
-<p>With warm regards,</p>
-<p>{pastor_name}<br/>{church_name}</p>`;
+const DEFAULT_SUBJECT = "Welcome to our Children's Ministry, {{parent_name}}!";
+const DEFAULT_BODY = `Dear {{parent_name}},
+
+What a joy it was to have {{child_names}} join us this past {{visit_date}}! We hope you felt the warmth of our church family and that your children had a wonderful time learning about God's love.
+
+Our Children's Ministry is a place where kids can grow in faith, make lasting friendships, and discover the joy of knowing Jesus. We would love to see your family again soon!
+
+If you have any questions about our programs or would like to get more connected, please don't hesitate to reach out. We are here for you.
+
+With warm regards,
+{{pastor_name}}
+{{church_name}}`;
 
 export async function GET(request: NextRequest) {
   const auth = await getAuthContext(request);

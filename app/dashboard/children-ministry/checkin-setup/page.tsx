@@ -94,10 +94,12 @@ export default function CheckinSetupPage() {
   const [nvSessions, setNvSessions] = useState<NVSession[]>([]);
   const [nvLoaded, setNvLoaded] = useState(false);
   const [nvLoading, setNvLoading] = useState(false);
-  const [nvEmails, setNvEmails] = useState<Record<string, string>>({});
-  const [nvPersonalize, setNvPersonalize] = useState<Record<string, string>>({});
-  const [nvPersonalizeOpen, setNvPersonalizeOpen] = useState<Record<string, boolean>>({});
-  const [nvSending, setNvSending] = useState<Record<string, string>>({});
+  // Letter template (Automation Settings tab)
+  const [letterSubject, setLetterSubject] = useState("");
+  const [letterBody, setLetterBody] = useState("");
+  const [letterSaving, setLetterSaving] = useState(false);
+  const [letterSaved, setLetterSaved] = useState(false);
+  const [letterLoaded, setLetterLoaded] = useState(false);
 
   async function loadVisitors() {
     setNvLoading(true);
@@ -112,6 +114,12 @@ export default function CheckinSetupPage() {
       loadVisitors();
     }
   }, [tab, loading, nvLoaded]);
+
+  useEffect(() => {
+    if (tab === "automation" && !loading && !letterLoaded) {
+      loadLetterTemplate();
+    }
+  }, [tab, loading, letterLoaded]);
 
   useEffect(() => {
     try {
@@ -158,30 +166,23 @@ export default function CheckinSetupPage() {
     setNvSessions(ss => ss.map(s => s.session.id === sessionId ? { ...s, session: { ...s.session, auto_followup: !current } } : s));
   }
 
-  async function sendFollowup(sessionId: string, family: NVFamily, type: "email" | "letter" | "both" | "skip") {
-    const key = `${sessionId}-${family.parentPhone}`;
-    const email = (nvEmails[key] ?? "").trim();
-    if ((type === "email" || type === "both") && !email) { alert("Enter an email address to send."); return; }
-    if (type === "letter" || type === "both") {
-      window.open(`/api/checkin/followup/letter/${family.primaryRecordId}`, "_blank");
-    }
-    setNvSending(s => ({ ...s, [key]: type }));
-    await fetch("/api/checkin/followup", {
+  async function loadLetterTemplate() {
+    const res = await fetch("/api/children-ministry/letter-template", { credentials: "include", headers: ch() });
+    if (res.ok) { const d = await res.json(); setLetterSubject(d.template.subject); setLetterBody(d.template.body_html); }
+    setLetterLoaded(true);
+  }
+
+  async function saveLetterTemplate() {
+    setLetterSaving(true);
+    await fetch("/api/children-ministry/letter-template", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
-      body: JSON.stringify({
-        sessionId,
-        recordIds: family.children.map(c => c.id),
-        parentName: family.parentName,
-        parentEmail: email || null,
-        childNames: family.children.map(c => c.child_name),
-        followUpType: type,
-        personalizedMessage: nvPersonalize[key] || null,
-      }),
+      body: JSON.stringify({ subject: letterSubject, body_html: letterBody }),
     });
-    setNvSending(s => { const n = { ...s }; delete n[key]; return n; });
-    await loadVisitors();
+    setLetterSaving(false);
+    setLetterSaved(true);
+    setTimeout(() => setLetterSaved(false), 2000);
   }
 
   async function load() {
@@ -352,7 +353,7 @@ export default function CheckinSetupPage() {
         <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
           {(["rooms", "templates", "sessions", "visitors", "automation"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
-              {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Templates" : t === "sessions" ? "🔑 Sessions" : t === "visitors" ? "🆕 New Visitors" : "⚡ Automation"}
+              {t === "rooms" ? "🏠 Rooms" : t === "templates" ? "📅 Templates" : t === "sessions" ? "🔑 Sessions" : t === "visitors" ? "🆕 New Visitors" : "⚙️ Automation Settings"}
             </button>
           ))}
         </div>
@@ -993,6 +994,54 @@ export default function CheckinSetupPage() {
               )}
             </div>
 
+            {/* Welcome Letter Template */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>✉️</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Welcome Letter Template</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Customize the letter sent to first-time visiting families</p>
+                </div>
+              </div>
+              <p style={{ color: "#A9A9B8", fontSize: "12px", marginBottom: "16px" }}>
+                Use merge fields: <code style={{ color: "#D4AF37", fontSize: "11px" }}>{"{{parent_name}}"}</code> <code style={{ color: "#D4AF37", fontSize: "11px" }}>{"{{child_names}}"}</code> <code style={{ color: "#D4AF37", fontSize: "11px" }}>{"{{church_name}}"}</code> <code style={{ color: "#D4AF37", fontSize: "11px" }}>{"{{visit_date}}"}</code> <code style={{ color: "#D4AF37", fontSize: "11px" }}>{"{{pastor_name}}"}</code>
+              </p>
+              <div style={{ marginBottom: "14px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Subject</label>
+                <input
+                  value={letterSubject}
+                  onChange={e => setLetterSubject(e.target.value)}
+                  placeholder="Loading…"
+                  style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", color: "#ffffff", fontSize: "14px", outline: "none", boxSizing: "border-box" as const }}
+                />
+              </div>
+              <div style={{ marginBottom: "18px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Letter Body</label>
+                <textarea
+                  value={letterBody}
+                  onChange={e => setLetterBody(e.target.value)}
+                  rows={10}
+                  placeholder="Loading…"
+                  style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", color: "#D8D8E8", fontSize: "13px", outline: "none", resize: "vertical" as const, lineHeight: 1.75, boxSizing: "border-box" as const, fontFamily: "Georgia, serif" }}
+                />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveLetterTemplate}
+                  disabled={letterSaving || !letterSubject.trim() || !letterBody.trim()}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: (letterSaving || !letterSubject.trim() || !letterBody.trim()) ? "not-allowed" : "pointer", opacity: (letterSaving || !letterSubject.trim() || !letterBody.trim()) ? 0.6 : 1 }}
+                >
+                  {letterSaved ? "✓ Saved" : letterSaving ? "Saving…" : "Save Template"}
+                </button>
+                <a
+                  href="/dashboard/children-ministry/followup"
+                  style={{ fontSize: "13px", color: "#D4AF37", textDecoration: "none", fontWeight: 600 }}
+                >
+                  Manage Follow Up →
+                </a>
+              </div>
+            </div>
+
             {/* How it works */}
             <div style={{ background: "rgba(123,44,191,0.07)", border: "1px solid rgba(123,44,191,0.2)", borderRadius: "16px", padding: "20px" }}>
               <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: "0 0 12px" }}>⚙️ How Automation Works</h3>
@@ -1017,10 +1066,19 @@ export default function CheckinSetupPage() {
           <div>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>New Visitor Follow-Up</h2>
-                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Send welcome emails or print letters for first-time families</p>
+                <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>New Visitors</h2>
+                <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>First-time families per session · toggle auto-send · manage follow-up in Follow Up module</p>
               </div>
-              <button onClick={() => loadVisitors()} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>↻ Refresh</button>
+              <div className="flex items-center gap-3">
+                <a
+                  href="/dashboard/children-ministry/followup"
+                  className="px-4 py-2 rounded-xl text-sm font-bold"
+                  style={{ backgroundColor: ACCENT, color: "#ffffff", textDecoration: "none" }}
+                >
+                  📞 Manage Follow Up →
+                </a>
+                <button onClick={() => loadVisitors()} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>↻ Refresh</button>
+              </div>
             </div>
 
             {nvLoading && <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div style={{ color: "#A9A9B8" }}>Loading new visitors…</div></div>}
@@ -1055,95 +1113,33 @@ export default function CheckinSetupPage() {
                   </div>
                 </div>
 
-                {/* Family cards */}
+                {/* Family cards — read only, actions in Follow Up module */}
                 <div>
                   {families.map((family, fIdx) => {
-                    const key = `${sess.id}-${family.parentPhone}`;
                     const log = family.followupLog;
                     const isSent = log?.status === "sent";
-                    const isSkipped = log?.status === "skipped";
-                    const sending = nvSending[key];
-                    const personalizeOn = nvPersonalizeOpen[key] ?? false;
-
                     return (
-                      <div key={family.parentPhone} className="px-6 py-5" style={{ borderTop: fIdx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none" }}>
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <div className="font-bold text-base" style={{ color: "#ffffff" }}>{family.parentName}</div>
-                              <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: family.visitCount === 1 ? "#3b82f6" : family.visitCount === 2 ? "#8b5cf6" : family.visitCount === 3 ? ACCENT : "#16a34a" }}>
-                                {family.visitCount === 1 ? "1st Visit" : family.visitCount === 2 ? "2nd Visit" : family.visitCount === 3 ? "3rd Visit" : "4+ Visits"}
-                              </span>
-                            </div>
-                            <div className="text-sm" style={{ color: "#A9A9B8" }}>{family.parentPhone}</div>
-                            <div className="mt-1 space-y-0.5">
-                              {family.children.map(c => (
-                                <div key={c.id} className="text-sm" style={{ color: "#D8D8E8" }}>
-                                  🧒 {c.child_name}{c.room_name ? ` — ${c.room_name}` : ""}
-                                </div>
-                              ))}
-                            </div>
+                      <div key={family.parentPhone} className="px-6 py-4" style={{ borderTop: fIdx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                        <div>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <div className="font-bold text-sm" style={{ color: "#ffffff" }}>{family.parentName}</div>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: family.visitCount === 1 ? "#3b82f6" : family.visitCount === 2 ? "#8b5cf6" : ACCENT }}>
+                              {family.visitCount === 1 ? "1st Visit" : family.visitCount === 2 ? "2nd Visit" : "3rd+ Visit"}
+                            </span>
                           </div>
-                          <div className="flex-shrink-0 text-right">
-                            {isSent && (
-                              <span className="text-xs px-2.5 py-1 rounded-full font-bold block mb-1" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
-                                ✅ {log!.follow_up_type === "email" ? "Email sent" : log!.follow_up_type === "letter" ? "Letter printed" : "Both sent"}
-                              </span>
-                            )}
-                            {isSkipped && (
-                              <span className="text-xs px-2.5 py-1 rounded-full font-bold block mb-1" style={{ background: "rgba(255,255,255,0.07)", color: "#A9A9B8" }}>Skipped</span>
-                            )}
+                          <div className="text-xs mb-0.5" style={{ color: "#A9A9B8" }}>{family.parentPhone}</div>
+                          <div className="space-y-0.5">
+                            {family.children.map(c => (
+                              <div key={c.id} className="text-xs" style={{ color: "#D8D8E8" }}>
+                                🧒 {c.child_name}{c.room_name ? ` — ${c.room_name}` : ""}
+                              </div>
+                            ))}
                           </div>
                         </div>
-
-                        {!isSent && !isSkipped && (
-                          <>
-                            <div className="flex gap-2 mb-2 flex-wrap">
-                              <input
-                                type="email"
-                                value={nvEmails[key] ?? ""}
-                                onChange={e => setNvEmails(m => ({ ...m, [key]: e.target.value }))}
-                                placeholder="Parent email address"
-                                className="flex-1 min-w-0 px-3 py-2 rounded-xl text-sm"
-                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
-                              />
-                              <button
-                                onClick={() => setNvPersonalizeOpen(m => ({ ...m, [key]: !m[key] }))}
-                                className="px-3 py-2 rounded-xl text-xs font-bold border"
-                                style={{ borderColor: personalizeOn ? ACCENT : "rgba(212,175,55,0.3)", color: personalizeOn ? ACCENT : "#A9A9B8", backgroundColor: personalizeOn ? ACCENT + "18" : "transparent" }}
-                              >
-                                ✏️ Personalize
-                              </button>
-                            </div>
-                            {personalizeOn && (
-                              <textarea
-                                value={nvPersonalize[key] ?? ""}
-                                onChange={e => setNvPersonalize(m => ({ ...m, [key]: e.target.value }))}
-                                placeholder="Add a personal note that will appear in the email or letter…"
-                                rows={3}
-                                className="w-full px-3 py-2 rounded-xl text-sm resize-none mb-2"
-                                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
-                              />
-                            )}
-                            <div className="flex gap-2 flex-wrap">
-                              {(["email", "letter", "both", "skip"] as const).map(type => (
-                                <button
-                                  key={type}
-                                  onClick={() => sendFollowup(sess.id, family, type)}
-                                  disabled={!!sending}
-                                  className="px-4 py-2 rounded-xl text-xs font-bold border transition-colors"
-                                  style={{
-                                    backgroundColor: type === "skip" ? "transparent" : ACCENT,
-                                    color: type === "skip" ? "#A9A9B8" : "white",
-                                    borderColor: type === "skip" ? "rgba(212,175,55,0.3)" : ACCENT,
-                                    opacity: sending && sending !== type ? 0.5 : 1,
-                                  }}
-                                >
-                                  {sending === type ? "…" : type === "email" ? "📧 Send Email" : type === "letter" ? "🖨️ Print Letter" : type === "both" ? "📧🖨️ Both" : "Skip"}
-                                </button>
-                              ))}
-                            </div>
-                          </>
+                        {isSent && (
+                          <span className="text-xs px-2.5 py-1 rounded-full font-bold flex-shrink-0" style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
+                            ✅ Followed Up
+                          </span>
                         )}
                       </div>
                     );
