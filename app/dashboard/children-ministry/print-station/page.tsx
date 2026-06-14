@@ -25,6 +25,7 @@ type PrintJob = {
   special_instructions: string | null;
   label_type: "child" | "parent";
   label_mode: string | null;
+  smart_label_qr_enabled: boolean | null;
   status: string;
   created_at: string;
   qr_token: string | null;
@@ -143,7 +144,7 @@ function ChildLabel({ job }: { job: PrintJob }) {
 
       {/* Bottom: QR left, security code right */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
-        {job.qr_token ? (
+        {job.qr_token && job.smart_label_qr_enabled !== false ? (
           <QRCodeImage
             value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${job.qr_token}`}
             size={56}

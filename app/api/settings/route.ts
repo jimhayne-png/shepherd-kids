@@ -20,8 +20,8 @@ const CHURCH_FIELDS = [
   'senior_pastor', 'children_pastor', 'youth_pastor', 'choir_director',
   'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
   'subscription_status', 'subscription_tier', 'trial_ends_at', 'timezone',
-  'check_in_opens_minutes_before', 'check_in_closes_minutes_after',
-  'label_mode',
+  'check_in_opens_minutes_before', 'typical_class_duration_minutes', 'check_in_closes_minutes_after',
+  'label_mode', 'smart_label_qr_enabled', 'volunteer_checkin_qr_enabled',
 ].join(', ');
 
 export async function GET(req: NextRequest) {
@@ -53,8 +53,9 @@ export async function POST(req: NextRequest) {
     'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
     'timezone',
   ];
-  const integerFields = ['check_in_opens_minutes_before', 'check_in_closes_minutes_after'];
+  const integerFields = ['check_in_opens_minutes_before', 'typical_class_duration_minutes', 'check_in_closes_minutes_after'];
   const enumFields: Record<string, string[]> = { label_mode: ['smart', 'classic'] };
+  const booleanFields = ['smart_label_qr_enabled', 'volunteer_checkin_qr_enabled'];
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key] ?? '';
@@ -72,6 +73,14 @@ export async function POST(req: NextRequest) {
     if (key in body) {
       if (!validValues.includes(body[key])) {
         return Response.json({ error: `${key} must be one of: ${validValues.join(', ')}` }, { status: 400 });
+      }
+      updates[key] = body[key];
+    }
+  }
+  for (const key of booleanFields) {
+    if (key in body) {
+      if (typeof body[key] !== 'boolean') {
+        return Response.json({ error: `${key} must be a boolean` }, { status: 400 });
       }
       updates[key] = body[key];
     }

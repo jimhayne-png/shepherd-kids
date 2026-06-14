@@ -45,6 +45,7 @@ type Props = {
   ungrouped: Session[];
   rooms: Room[];
   labelMode: "smart" | "classic";
+  smartLabelQrEnabled: boolean;
 };
 
 const BG = "#08060D";
@@ -87,7 +88,7 @@ function emptyChild(): ChildForm {
   };
 }
 
-export default function ChurchKioskForm({ churchId, churchName, groups, ungrouped, rooms, labelMode }: Props) {
+export default function ChurchKioskForm({ churchId, churchName, groups, ungrouped, rooms, labelMode, smartLabelQrEnabled }: Props) {
   const displayGroups: DisplayGroup[] = [
     ...groups.map((g) => ({ ...g, isNamed: true })),
     ...ungrouped.map((s) => ({ name: s.service_name, sessions: [s], isNamed: false })),
@@ -805,7 +806,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             label.labelType === "parent" ? (
               <KioskParentLabel key={i} label={label} churchName={churchName} />
             ) : (
-              <KioskChildLabel key={i} label={label} churchName={churchName} labelMode={labelMode} />
+              <KioskChildLabel key={i} label={label} churchName={churchName} labelMode={labelMode} smartLabelQrEnabled={smartLabelQrEnabled} />
             ),
           )}
         </div>
@@ -834,7 +835,7 @@ const LABEL_STYLE: React.CSSProperties = {
   color: "#000000",
 };
 
-function KioskChildLabel({ label, churchName, labelMode }: { label: ImmediateLabel; churchName: string; labelMode: "smart" | "classic" }) {
+function KioskChildLabel({ label, churchName, labelMode, smartLabelQrEnabled }: { label: ImmediateLabel; churchName: string; labelMode: "smart" | "classic"; smartLabelQrEnabled: boolean }) {
   const hasCareNotes = !!(label.allergies || label.medicalNotes || label.specialInstructions);
 
   const careLines: string[] = [];
@@ -920,7 +921,7 @@ function KioskChildLabel({ label, churchName, labelMode }: { label: ImmediateLab
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
-        {label.qrToken ? (
+        {label.qrToken && smartLabelQrEnabled ? (
           <QRCodeImage
             value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${label.qrToken}`}
             size={56}

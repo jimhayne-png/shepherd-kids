@@ -34,31 +34,35 @@ function timeStringToMinutes(value: string | null | undefined): number | null {
   return h * 60 + m;
 }
 
+function fmtMinutes(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60) % 24;
+  const m = totalMinutes % 60;
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
 export default async function ChurchKioskPage({ params, searchParams }: Props) {
   noStore();
   const [{ churchId }, sp] = await Promise.all([params, searchParams]);
   const debug = sp.debug === "1";
   const admin = adminClient();
 
-  // Attempt to read window settings. If the migration hasn't been applied yet,
-  // the query will error — we catch that and fall back to base columns so the
-  // timezone is still correct.
   let tz = "America/Los_Angeles";
   let opensBefore = 30;
+  let classDuration = 60;
   let closesAfter = 30;
   let churchName = "";
   let labelMode: "smart" | "classic" = "smart";
+  let smartLabelQrEnabled = true;
   let churchQueryError: string | null = null;
 
   const { data: churchRow, error: churchError } = await admin
     .from("churches")
-    .select("name, timezone, check_in_opens_minutes_before, check_in_closes_minutes_after, label_mode")
+    .select("name, timezone, check_in_opens_minutes_before, typical_class_duration_minutes, check_in_closes_minutes_after, label_mode, smart_label_qr_enabled")
     .eq("id", churchId)
     .maybeSingle();
 
   if (churchError) {
     churchQueryError = churchError.message;
-    // Columns may not exist yet — fall back to the always-present columns.
     const { data: fallbackRow } = await admin
       .from("churches")
       .select("name, timezone")
@@ -74,14 +78,18 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
       name?: string;
       timezone?: string;
       check_in_opens_minutes_before?: number | null;
+      typical_class_duration_minutes?: number | null;
       check_in_closes_minutes_after?: number | null;
       label_mode?: string | null;
+      smart_label_qr_enabled?: boolean | null;
     };
     tz = cr.timezone ?? tz;
     opensBefore = cr.check_in_opens_minutes_before ?? 30;
+    classDuration = cr.typical_class_duration_minutes ?? 60;
     closesAfter = cr.check_in_closes_minutes_after ?? 30;
     churchName = cr.name ?? "";
     labelMode = cr.label_mode === "classic" ? "classic" : "smart";
+    smartLabelQrEnabled = cr.smart_label_qr_enabled !== false;
   }
 
   const now = new Date();
@@ -132,6 +140,7 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
     scheduledTime: string | null;
     scheduledMinutes: number | null;
     openAtMinutes: number | null;
+    classEndMinutes: number | null;
     closeAtMinutes: number | null;
     isWithinWindow: boolean | null;
     verdict: string;
@@ -139,29 +148,49 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
   const debugEntries: DebugEntry[] = [];
 
   const availableSessions: Session[] = [];
-  let nextSessionMinutes: number | null = null;
+  // Next upcoming session (not yet open)
+  let nextSessionOpenAt: number | null = null;
   let nextSessionName: string | null = null;
+  // Most recently closed session (past window)
+  let lastClosedAtMinutes: number | null = null;
+  let lastClosedSessionName: string | null = null;
 
   for (const s of allTodaySessions) {
-    // All status filtering is done here in JS — no server-side status filter.
-    if (s.status === "closed") {
-      debugEntries.push({ id: s.id, service: s.service_name, date: s.date, status: s.status, scheduledTime: s.scheduled_time, scheduledMinutes: null, openAtMinutes: null, closeAtMinutes: null, isWithinWindow: null, verdict: "skipped (status=closed)" });
+    if (s.status === "closed" || s.status === "cancelled") {
+      debugEntries.push({
+        id: s.id, service: s.service_name, date: s.date, status: s.status,
+        scheduledTime: s.scheduled_time, scheduledMinutes: null,
+        openAtMinutes: null, classEndMinutes: null, closeAtMinutes: null,
+        isWithinWindow: null, verdict: `skipped (status=${s.status})`,
+      });
       continue;
     }
 
     const scheduledMinutes = timeStringToMinutes(s.scheduled_time);
 
     if (scheduledMinutes === null) {
-      const verdict = s.status === "open" ? "available (manual, no scheduled_time)" : `skipped (status=${s.status}, no scheduled_time)`;
-      debugEntries.push({ id: s.id, service: s.service_name, date: s.date, status: s.status, scheduledTime: s.scheduled_time, scheduledMinutes: null, openAtMinutes: null, closeAtMinutes: null, isWithinWindow: null, verdict });
+      const verdict = s.status === "open"
+        ? "available (manual, no scheduled_time)"
+        : `skipped (status=${s.status}, no scheduled_time)`;
+      debugEntries.push({
+        id: s.id, service: s.service_name, date: s.date, status: s.status,
+        scheduledTime: s.scheduled_time, scheduledMinutes: null,
+        openAtMinutes: null, classEndMinutes: null, closeAtMinutes: null,
+        isWithinWindow: null, verdict,
+      });
       if (s.status === "open") {
         availableSessions.push({ id: s.id, service_name: s.service_name, date: s.date, session_group: s.session_group });
       }
       continue;
     }
 
+    // New window formula:
+    //   openAt  = scheduled_time - check_in_opens_minutes_before
+    //   classEnd = scheduled_time + typical_class_duration_minutes
+    //   closeAt = classEnd + check_in_closes_minutes_after
     const openAtMinutes = scheduledMinutes - opensBefore;
-    const closeAtMinutes = scheduledMinutes + closesAfter;
+    const classEndMinutes = scheduledMinutes + classDuration;
+    const closeAtMinutes = classEndMinutes + closesAfter;
     const isWithinWindow = currentChurchMinutes >= openAtMinutes && currentChurchMinutes <= closeAtMinutes;
 
     let verdict: string;
@@ -169,24 +198,31 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
       verdict = "available (within window)";
       availableSessions.push({ id: s.id, service_name: s.service_name, date: s.date, session_group: s.session_group });
     } else if (currentChurchMinutes < openAtMinutes) {
-      const hh = Math.floor(openAtMinutes / 60) % 24;
-      const mm = openAtMinutes % 60;
-      verdict = `upcoming — opens at ${hh % 12 || 12}:${String(mm).padStart(2, "0")} ${hh < 12 ? "AM" : "PM"}`;
-      if (nextSessionMinutes === null || openAtMinutes < nextSessionMinutes) {
-        nextSessionMinutes = openAtMinutes;
+      verdict = `upcoming — opens at ${fmtMinutes(openAtMinutes)}`;
+      if (nextSessionOpenAt === null || openAtMinutes < nextSessionOpenAt) {
+        nextSessionOpenAt = openAtMinutes;
         nextSessionName = s.service_name;
       }
     } else {
-      verdict = "past window";
+      verdict = `past window — closed at ${fmtMinutes(closeAtMinutes)}`;
+      if (lastClosedAtMinutes === null || closeAtMinutes > lastClosedAtMinutes) {
+        lastClosedAtMinutes = closeAtMinutes;
+        lastClosedSessionName = s.service_name;
+      }
     }
 
-    debugEntries.push({ id: s.id, service: s.service_name, date: s.date, status: s.status, scheduledTime: s.scheduled_time, scheduledMinutes, openAtMinutes, closeAtMinutes, isWithinWindow, verdict });
+    debugEntries.push({
+      id: s.id, service: s.service_name, date: s.date, status: s.status,
+      scheduledTime: s.scheduled_time, scheduledMinutes,
+      openAtMinutes, classEndMinutes, closeAtMinutes, isWithinWindow, verdict,
+    });
 
     console.log("[kiosk:session]", {
       service: s.service_name,
       scheduledTime: s.scheduled_time,
       scheduledMinutes,
       openAtMinutes,
+      classEndMinutes,
       closeAtMinutes,
       currentChurchMinutes,
       isWithinWindow,
@@ -201,22 +237,22 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
     currentChurchMinutes,
     today,
     opensBefore,
+    classDuration,
     closesAfter,
     churchQueryError,
     sessionQueryError,
     totalTodaySessions: allTodaySessions.length,
     availableSessionCount: availableSessions.length,
     nextSessionName,
-    nextSessionMinutes,
+    nextSessionOpenAt,
   });
 
   if (availableSessions.length === 0) {
     let nextHint: string | null = null;
-    if (nextSessionMinutes !== null && nextSessionName) {
-      const h = Math.floor(nextSessionMinutes / 60) % 24;
-      const m = nextSessionMinutes % 60;
-      const label = `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
-      nextHint = `${nextSessionName} check-in opens at ${label}`;
+    if (nextSessionOpenAt !== null && nextSessionName) {
+      nextHint = `${nextSessionName} check-in opens at ${fmtMinutes(nextSessionOpenAt)}`;
+    } else if (lastClosedAtMinutes !== null && lastClosedSessionName) {
+      nextHint = `${lastClosedSessionName} check-in closed at ${fmtMinutes(lastClosedAtMinutes)}`;
     }
 
     return (
@@ -250,8 +286,9 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
                 {currentChurchMinutes} ({String(Math.floor(currentChurchMinutes / 60)).padStart(2, "0")}:{String(currentChurchMinutes % 60).padStart(2, "0")})
               </p>
               <p><span style={{ color: "#D4AF37" }}>Today (church-local):</span> {today}</p>
-              <p><span style={{ color: "#D4AF37" }}>Opens before service:</span> {opensBefore} min</p>
-              <p><span style={{ color: "#D4AF37" }}>Closes after service:</span> {closesAfter} min</p>
+              <p><span style={{ color: "#D4AF37" }}>Open before class starts:</span> {opensBefore} min</p>
+              <p><span style={{ color: "#D4AF37" }}>Typical class duration:</span> {classDuration} min</p>
+              <p><span style={{ color: "#D4AF37" }}>Close after class ends:</span> {closesAfter} min</p>
               {churchQueryError && (
                 <p><span className="text-red-400">⚠ Church query error:</span> {churchQueryError}</p>
               )}
@@ -272,9 +309,17 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
                     <p className="font-bold text-white">{e.service}</p>
                     <p>status: <b>{e.status}</b> | date: {e.date} | scheduled_time: <b>{e.scheduledTime ?? "null"}</b></p>
                     {e.scheduledMinutes !== null && (
-                      <p>
-                        scheduled: {e.scheduledMinutes}m | openAt: {e.openAtMinutes}m | closeAt: {e.closeAtMinutes}m | now: {currentChurchMinutes}m
-                      </p>
+                      <>
+                        <p>
+                          scheduled: {e.scheduledMinutes}m ({fmtMinutes(e.scheduledMinutes)})
+                          {" | "}openAt: {e.openAtMinutes}m ({e.openAtMinutes !== null ? fmtMinutes(e.openAtMinutes) : "—"})
+                        </p>
+                        <p>
+                          classEnd: {e.classEndMinutes}m ({e.classEndMinutes !== null ? fmtMinutes(e.classEndMinutes) : "—"})
+                          {" | "}closeAt: {e.closeAtMinutes}m ({e.closeAtMinutes !== null ? fmtMinutes(e.closeAtMinutes) : "—"})
+                        </p>
+                        <p>now: {currentChurchMinutes}m ({fmtMinutes(currentChurchMinutes)})</p>
+                      </>
                     )}
                     <p
                       className="font-semibold"
@@ -315,6 +360,7 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
       ungrouped={ungrouped}
       rooms={rooms}
       labelMode={labelMode}
+      smartLabelQrEnabled={smartLabelQrEnabled}
     />
   );
 }

@@ -90,10 +90,12 @@ export default function CheckinSetupPage() {
   const [labelExpiryMinutes, setLabelExpiryMinutes] = useState(15);
   const [labelExpirySaved, setLabelExpirySaved] = useState(false);
 
-  // Label Mode setting
+  // Label Mode + QR settings
   const [labelMode, setLabelMode] = useState<"smart" | "classic">("smart");
-  const [labelModeSaving, setLabelModeSaving] = useState(false);
-  const [labelModeSaved, setLabelModeSaved] = useState(false);
+  const [smartLabelQrEnabled, setSmartLabelQrEnabled] = useState(true);
+  const [volunteerCheckinQrEnabled, setVolunteerCheckinQrEnabled] = useState(true);
+  const [labelSettingsSaving, setLabelSettingsSaving] = useState(false);
+  const [labelSettingsSaved, setLabelSettingsSaved] = useState(false);
 
   // Automation: add-service-schedule form (session_group UI-only — DB field pending)
   const [showAddSchedule, setShowAddSchedule] = useState(false);
@@ -107,6 +109,7 @@ export default function CheckinSetupPage() {
 
   // Automation — check-in time window
   const [checkInOpensBefore, setCheckInOpensBefore] = useState(30);
+  const [typicalClassDuration, setTypicalClassDuration] = useState(60);
   const [checkInClosesAfter, setCheckInClosesAfter] = useState(30);
   const [windowSaving, setWindowSaving] = useState(false);
   const [windowSaved, setWindowSaved] = useState(false);
@@ -194,7 +197,7 @@ export default function CheckinSetupPage() {
       method: "POST",
       headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
-      body: JSON.stringify({ check_in_opens_minutes_before: checkInOpensBefore, check_in_closes_minutes_after: checkInClosesAfter }),
+      body: JSON.stringify({ check_in_opens_minutes_before: checkInOpensBefore, typical_class_duration_minutes: typicalClassDuration, check_in_closes_minutes_after: checkInClosesAfter }),
     });
     setWindowSaving(false);
     if (res.ok) {
@@ -203,18 +206,18 @@ export default function CheckinSetupPage() {
     }
   }
 
-  async function saveLabelMode() {
-    setLabelModeSaving(true);
+  async function saveLabelSettings() {
+    setLabelSettingsSaving(true);
     const res = await fetch("/api/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
-      body: JSON.stringify({ label_mode: labelMode }),
+      body: JSON.stringify({ label_mode: labelMode, smart_label_qr_enabled: smartLabelQrEnabled, volunteer_checkin_qr_enabled: volunteerCheckinQrEnabled }),
     });
-    setLabelModeSaving(false);
+    setLabelSettingsSaving(false);
     if (res.ok) {
-      setLabelModeSaved(true);
-      setTimeout(() => setLabelModeSaved(false), 2500);
+      setLabelSettingsSaved(true);
+      setTimeout(() => setLabelSettingsSaved(false), 2500);
     }
   }
 
@@ -265,8 +268,11 @@ export default function CheckinSetupPage() {
         const settingsData = await settingsRes.json();
         if (settingsData.church?.timezone) setTimezone(settingsData.church.timezone);
         if (settingsData.church?.check_in_opens_minutes_before) setCheckInOpensBefore(settingsData.church.check_in_opens_minutes_before);
+        if (settingsData.church?.typical_class_duration_minutes) setTypicalClassDuration(settingsData.church.typical_class_duration_minutes);
         if (settingsData.church?.check_in_closes_minutes_after) setCheckInClosesAfter(settingsData.church.check_in_closes_minutes_after);
         if (settingsData.church?.label_mode === "classic" || settingsData.church?.label_mode === "smart") setLabelMode(settingsData.church.label_mode);
+        if (typeof settingsData.church?.smart_label_qr_enabled === "boolean") setSmartLabelQrEnabled(settingsData.church.smart_label_qr_enabled);
+        if (typeof settingsData.church?.volunteer_checkin_qr_enabled === "boolean") setVolunteerCheckinQrEnabled(settingsData.church.volunteer_checkin_qr_enabled);
       }
       setLoading(false);
     }
@@ -529,7 +535,7 @@ export default function CheckinSetupPage() {
                       <button onClick={() => toggleRoom(room)} className="flex-1 py-2 rounded-xl text-xs font-bold border" style={{ borderColor: ACCENT, color: room.is_active ? "#6b7280" : ACCENT, backgroundColor: room.is_active ? "transparent" : ACCENT + "11" }}>
                         {room.is_active ? "Deactivate" : "Activate"}
                       </button>
-                      {room.is_active && APP_URL && room.classroom_qr_token && (
+                      {room.is_active && APP_URL && room.classroom_qr_token && volunteerCheckinQrEnabled && (
                         <>
                           <button onClick={() => setQrRoom(room)} className="py-2 px-3 rounded-xl text-xs font-bold" style={{ border: `1px solid ${ACCENT}`, color: ACCENT, backgroundColor: "transparent" }}>
                             QR Code
@@ -651,36 +657,45 @@ export default function CheckinSetupPage() {
 
             {/* Volunteer Room View card */}
             {selectedChurchIdRef.current && APP_URL && (
-              <div className="rounded-2xl shadow p-5 mb-6 border-2" style={{ backgroundColor: "#7c3aed0d", borderColor: "#7c3aed" }}>
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="text-2xl flex-shrink-0">👥</span>
-                  <div>
-                    <h3 className="font-bold text-base" style={{ color: "#ffffff" }}>Volunteer Room View</h3>
-                    <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Share with room volunteers — they enter today&apos;s PIN and select their room</p>
+              volunteerCheckinQrEnabled ? (
+                <div className="rounded-2xl shadow p-5 mb-6 border-2" style={{ backgroundColor: "#7c3aed0d", borderColor: "#7c3aed" }}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <span className="text-2xl flex-shrink-0">👥</span>
+                    <div>
+                      <h3 className="font-bold text-base" style={{ color: "#ffffff" }}>Volunteer Room View</h3>
+                      <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Share with room volunteers — they enter today&apos;s PIN and select their room</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                    <code className="text-sm flex-1 truncate min-w-0" style={{ color: "#D8D8E8" }}>
+                      {APP_URL}/kiosk/volunteer/{selectedChurchIdRef.current}
+                    </code>
+                    <button
+                      onClick={() => handleCopy(`${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current!}`)}
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: "#7c3aed22", color: "#7c3aed" }}
+                    >
+                      {copiedUrl === `${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current}` ? "Copied!" : "Copy"}
+                    </button>
+                    <a
+                      href={`${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg text-white flex-shrink-0"
+                      style={{ backgroundColor: "#7c3aed" }}
+                    >
+                      Open ↗
+                    </a>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)" }}>
-                  <code className="text-sm flex-1 truncate min-w-0" style={{ color: "#D8D8E8" }}>
-                    {APP_URL}/kiosk/volunteer/{selectedChurchIdRef.current}
-                  </code>
-                  <button
-                    onClick={() => handleCopy(`${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current!}`)}
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0"
-                    style={{ backgroundColor: "#7c3aed22", color: "#7c3aed" }}
-                  >
-                    {copiedUrl === `${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current}` ? "Copied!" : "Copy"}
-                  </button>
-                  <a
-                    href={`${APP_URL}/kiosk/volunteer/${selectedChurchIdRef.current}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg text-white flex-shrink-0"
-                    style={{ backgroundColor: "#7c3aed" }}
-                  >
-                    Open ↗
-                  </a>
+              ) : (
+                <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.25)" }}>
+                  <p style={{ color: "#6b7280", fontSize: "13px", margin: 0 }}>
+                    👥 <strong style={{ color: "#9ca3af" }}>Volunteer Room View</strong> — Volunteer QR tools are turned off in{" "}
+                    <button onClick={() => setTab("automation")} style={{ color: "#D4AF37", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "13px", fontWeight: 600 }}>Label Printing settings</button>.
+                  </p>
                 </div>
-              </div>
+              )
             )}
 
             {/* Today's PIN card */}
@@ -745,21 +760,23 @@ export default function CheckinSetupPage() {
 
             {/* Classroom access links */}
             {activeRooms.length > 0 && APP_URL && (
-              <div className="rounded-2xl p-5 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                <h3 className="font-bold mb-3 text-sm" style={{ color: "#ffffff" }}>🏫 Classroom Tablet Links</h3>
-                <div className="flex flex-wrap gap-2">
-                  {activeRooms.map(room => {
-                    const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
-                    return (
-                      <div key={room.id} className="flex items-center gap-1.5 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)" }}>
-                        <span className="text-sm font-medium" style={{ color: "#D8D8E8" }}>{room.name}</span>
-                        <button onClick={() => handleCopy(url)} className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: ACCENT }}>{copiedUrl === url ? "Copied!" : "Copy"}</button>
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "#A9A9B8" }}>↗</a>
-                      </div>
-                    );
-                  })}
+              volunteerCheckinQrEnabled ? (
+                <div className="rounded-2xl p-5 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                  <h3 className="font-bold mb-3 text-sm" style={{ color: "#ffffff" }}>🏫 Classroom Tablet Links</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {activeRooms.map(room => {
+                      const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
+                      return (
+                        <div key={room.id} className="flex items-center gap-1.5 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)" }}>
+                          <span className="text-sm font-medium" style={{ color: "#D8D8E8" }}>{room.name}</span>
+                          <button onClick={() => handleCopy(url)} className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: ACCENT }}>{copiedUrl === url ? "Copied!" : "Copy"}</button>
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "#A9A9B8" }}>↗</a>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : null
             )}
 
             <div className="flex items-center justify-between mb-5">
@@ -873,7 +890,7 @@ export default function CheckinSetupPage() {
                         </div>
 
                         {/* Classroom links for this session */}
-                        {isOpen && activeRooms.length > 0 && APP_URL && (
+                        {isOpen && activeRooms.length > 0 && APP_URL && volunteerCheckinQrEnabled && (
                           <div>
                             <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#A9A9B8" }}>Classroom Links</p>
                             <div className="flex flex-wrap gap-2">
@@ -966,27 +983,53 @@ export default function CheckinSetupPage() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" as const }}>
-                  <span style={{ color: "#D8D8E8", fontSize: "13px", minWidth: "170px" }}>Check-in opens before service</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px", marginBottom: "20px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "8px" }}>
+                    Open check-in before class starts
+                  </label>
                   <select
                     value={checkInOpensBefore}
                     onChange={e => setCheckInOpensBefore(Number(e.target.value))}
                     style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
                   >
-                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} min</option>)}
+                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} minutes</option>)}
                   </select>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" as const }}>
-                  <span style={{ color: "#D8D8E8", fontSize: "13px", minWidth: "170px" }}>Check-in closes after service starts</span>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "8px" }}>
+                    Typical time in class
+                  </label>
+                  <select
+                    value={typicalClassDuration}
+                    onChange={e => setTypicalClassDuration(Number(e.target.value))}
+                    style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
+                  >
+                    {[45, 60, 75, 90, 120].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} minutes</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "8px" }}>
+                    Close check-in after class ends
+                  </label>
                   <select
                     value={checkInClosesAfter}
                     onChange={e => setCheckInClosesAfter(Number(e.target.value))}
                     style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
                   >
-                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} min</option>)}
+                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} minutes</option>)}
                   </select>
                 </div>
+              </div>
+
+              {/* Live formula preview */}
+              <div style={{ marginBottom: "20px", padding: "12px 14px", background: "rgba(123,44,191,0.08)", border: "1px solid rgba(123,44,191,0.25)", borderRadius: "10px", fontSize: "12px", color: "#D8D8E8", lineHeight: 1.7 }}>
+                <p style={{ margin: "0 0 4px", fontWeight: 700, color: "#c084fc" }}>Example — 10:00 AM service</p>
+                <p style={{ margin: 0 }}>
+                  Check-in opens at <strong style={{ color: "#4ade80" }}>{(() => { const open = 600 - checkInOpensBefore; const h = Math.floor(open / 60) % 24; const m = open % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}</strong>
+                  {" · "}Class ends at <strong style={{ color: "#fbbf24" }}>{(() => { const end = 600 + typicalClassDuration; const h = Math.floor(end / 60) % 24; const m = end % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}</strong>
+                  {" · "}Check-in closes at <strong style={{ color: "#f87171" }}>{(() => { const close = 600 + typicalClassDuration + checkInClosesAfter; const h = Math.floor(close / 60) % 24; const m = close % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}</strong>
+                </p>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -1055,8 +1098,9 @@ export default function CheckinSetupPage() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
-                {/* Smart Label option */}
+              {/* Label Mode */}
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>Label Mode</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
                 <label
                   style={{
                     display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px",
@@ -1065,23 +1109,14 @@ export default function CheckinSetupPage() {
                     background: labelMode === "smart" ? "rgba(123,44,191,0.12)" : "transparent",
                   }}
                 >
-                  <input
-                    type="radio"
-                    name="labelMode"
-                    value="smart"
-                    checked={labelMode === "smart"}
-                    onChange={() => setLabelMode("smart")}
-                    style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }}
-                  />
+                  <input type="radio" name="labelMode" value="smart" checked={labelMode === "smart"} onChange={() => setLabelMode("smart")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
                   <div>
                     <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
                     <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge on child labels. Full allergy and medical details are accessed securely by scanning the QR code — not printed in plain sight.
+                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge. Full allergy and medical details are accessed by scanning the QR code — not printed in plain sight.
                     </p>
                   </div>
                 </label>
-
-                {/* Classic Label option */}
                 <label
                   style={{
                     display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px",
@@ -1090,30 +1125,59 @@ export default function CheckinSetupPage() {
                     background: labelMode === "classic" ? "rgba(123,44,191,0.12)" : "transparent",
                   }}
                 >
-                  <input
-                    type="radio"
-                    name="labelMode"
-                    value="classic"
-                    checked={labelMode === "classic"}
-                    onChange={() => setLabelMode("classic")}
-                    style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }}
-                  />
+                  <input type="radio" name="labelMode" value="classic" checked={labelMode === "classic"} onChange={() => setLabelMode("classic")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
                   <div>
                     <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
                     <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints allergies, medical notes, and special instructions directly on child labels. QR code is still included. Best for environments where volunteers may not have a scanner.
+                      Prints allergies, medical notes, and special instructions directly on child labels. QR code included if enabled below.
                     </p>
                   </div>
                 </label>
               </div>
 
+              {/* QR Toggles */}
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>QR Features</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+                {/* Smart Label QR */}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(212,175,55,0.18)", background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}>
+                    <div
+                      onClick={() => setSmartLabelQrEnabled(v => !v)}
+                      style={{ width: 44, height: 24, borderRadius: 12, background: smartLabelQrEnabled ? ACCENT : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", border: `1px solid ${smartLabelQrEnabled ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}
+                    >
+                      <div style={{ position: "absolute", top: 2, left: smartLabelQrEnabled ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label QR <span style={{ fontWeight: 400, fontSize: "12px", color: smartLabelQrEnabled ? "#4ade80" : "#6b7280" }}>{smartLabelQrEnabled ? "ON" : "OFF"}</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Print a QR code on child labels so volunteers can scan Care Notes. Applies in both Smart and Classic modes.</p>
+                  </div>
+                </div>
+
+                {/* Volunteer Check-In QR */}
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(212,175,55,0.18)", background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}>
+                    <div
+                      onClick={() => setVolunteerCheckinQrEnabled(v => !v)}
+                      style={{ width: 44, height: 24, borderRadius: 12, background: volunteerCheckinQrEnabled ? ACCENT : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", border: `1px solid ${volunteerCheckinQrEnabled ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}
+                    >
+                      <div style={{ position: "absolute", top: 2, left: volunteerCheckinQrEnabled ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Volunteer Check-In QR <span style={{ fontWeight: 400, fontSize: "12px", color: volunteerCheckinQrEnabled ? "#4ade80" : "#6b7280" }}>{volunteerCheckinQrEnabled ? "ON" : "OFF"}</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Enable classroom and volunteer QR check-in tools (Volunteer Room View, classroom tablet links).</p>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <button
-                  onClick={saveLabelMode}
-                  disabled={labelModeSaving}
-                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: labelModeSaving ? "not-allowed" : "pointer", opacity: labelModeSaving ? 0.6 : 1 }}
+                  onClick={saveLabelSettings}
+                  disabled={labelSettingsSaving}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: labelSettingsSaving ? "not-allowed" : "pointer", opacity: labelSettingsSaving ? 0.6 : 1 }}
                 >
-                  {labelModeSaved ? "✓ Saved" : labelModeSaving ? "Saving…" : "Save Setting"}
+                  {labelSettingsSaved ? "✓ Saved" : labelSettingsSaving ? "Saving…" : "Save Settings"}
                 </button>
               </div>
             </div>

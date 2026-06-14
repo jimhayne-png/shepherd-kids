@@ -205,13 +205,14 @@ export async function POST(
 
   const { data: churchRow } = await admin
     .from('churches')
-    .select('timezone, label_mode')
+    .select('timezone, label_mode, smart_label_qr_enabled')
     .eq('id', churchId)
     .maybeSingle();
 
-  const cr = churchRow as { timezone?: string; label_mode?: string | null } | null;
+  const cr = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null } | null;
   const tz = cr?.timezone ?? 'America/Los_Angeles';
   const labelMode = cr?.label_mode === 'classic' ? 'classic' : 'smart';
+  const smartLabelQrEnabled = cr?.smart_label_qr_enabled !== false;
 
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
@@ -346,6 +347,7 @@ export async function POST(
         special_instructions: clean(child?.specialInstructions) || null,
         label_type: 'child',
         label_mode: labelMode,
+        smart_label_qr_enabled: smartLabelQrEnabled,
         status: 'pending',
         qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
       };
@@ -371,6 +373,7 @@ export async function POST(
           special_instructions: null,
           label_type: 'parent',
           label_mode: labelMode,
+          smart_label_qr_enabled: smartLabelQrEnabled,
           status: 'pending',
         }
       : null;

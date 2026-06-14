@@ -165,7 +165,7 @@ export async function POST(
   }
 
   const [{ data: churchRow }, { data: activeRoomsRaw }] = await Promise.all([
-    admin.from('churches').select('timezone, label_mode').eq('id', session.church_id).maybeSingle(),
+    admin.from('churches').select('timezone, label_mode, smart_label_qr_enabled').eq('id', session.church_id).maybeSingle(),
     admin
       .from('cm_checkin_rooms')
       .select('id, name, min_age, max_age')
@@ -174,9 +174,10 @@ export async function POST(
       .order('min_age', { ascending: true }),
   ]);
 
-  const cr2 = churchRow as { timezone?: string; label_mode?: string | null } | null;
+  const cr2 = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null } | null;
   const tz = cr2?.timezone ?? 'America/Los_Angeles';
   const labelMode = cr2?.label_mode === 'classic' ? 'classic' : 'smart';
+  const smartLabelQrEnabled = cr2?.smart_label_qr_enabled !== false;
 
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 
@@ -392,6 +393,7 @@ export async function POST(
         special_instructions: child?.specialInstructions || null,
         label_type: 'child',
         label_mode: labelMode,
+        smart_label_qr_enabled: smartLabelQrEnabled,
         status: 'pending',
         qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
       };
@@ -419,6 +421,7 @@ export async function POST(
           special_instructions: null,
           label_type: 'parent',
           label_mode: labelMode,
+          smart_label_qr_enabled: smartLabelQrEnabled,
           status: 'pending',
         }
       : null;
