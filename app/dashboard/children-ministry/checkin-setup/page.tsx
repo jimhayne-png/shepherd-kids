@@ -1376,6 +1376,102 @@ export default function CheckinSetupPage() {
               </div>
             </div>
 
+            {/* Recommended Printer */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>🖨️</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Recommended Label Printer</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Choosing the right printer for your check-in station</p>
+                </div>
+              </div>
+
+              {/* QL-810W */}
+              <div style={{ background: "rgba(123,44,191,0.1)", border: "2px solid rgba(123,44,191,0.4)", borderRadius: "12px", padding: "18px 20px", marginBottom: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "16px" }}>⭐</span>
+                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: 0, fontFamily: "Georgia, serif" }}>Brother QL-810W <span style={{ fontSize: "12px", fontWeight: 400, color: "#c084fc" }}>(Recommended)</span></h3>
+                </div>
+                <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 12px", lineHeight: 1.6 }}>
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-810W</strong> is the recommended label printer for most Shepherd Kids churches. For approximately <strong style={{ color: "#D4AF37" }}>90% of churches</strong>, this printer provides everything needed for child check-in labels.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                  {["Wi-Fi connectivity", "USB connectivity", "Fast 4\" × 2\" label printing", "Simple setup", "Lower cost"].map(f => (
+                    <div key={f} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8" }}>
+                      <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span> {f}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* QL-820NWB */}
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "18px 20px", marginBottom: "20px" }}>
+                <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: "0 0 10px", fontFamily: "Georgia, serif" }}>Brother QL-820NWB <span style={{ fontSize: "12px", fontWeight: 400, color: "#A9A9B8" }}>(Advanced Installations)</span></h3>
+                <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 10px", lineHeight: 1.6 }}>
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> supports all the same printing capabilities as the QL-810W, but adds <strong style={{ color: "#D4AF37" }}>two additional connectivity options</strong> — these are the <strong style={{ color: "#FFFFFF" }}>primary differences</strong> between the two printers:
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
+                    <span style={{ color: "#4ade80" }}>✅</span> Ethernet (wired network connection)
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
+                    <span style={{ color: "#4ade80" }}>✅</span> Bluetooth connectivity
+                  </div>
+                </div>
+                <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "0 0 8px" }}>Recommended for churches that:</p>
+                <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {[
+                    "Have multiple check-in stations",
+                    "Want to place the printer on a wired network using Ethernet",
+                    "Need Bluetooth printing from tablets or mobile devices",
+                    "Require additional installation flexibility",
+                  ].map(item => (
+                    <li key={item} style={{ fontSize: "12px", color: "#A9A9B8", lineHeight: 1.5 }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Quick Recommendation */}
+              <div style={{ background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "10px", padding: "14px 16px", marginBottom: "20px" }}>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#D4AF37", margin: "0 0 6px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Quick Recommendation</p>
+                <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "0 0 8px", lineHeight: 1.6 }}>
+                  <strong style={{ color: "#FFFFFF" }}>Most churches should purchase the Brother QL-810W.</strong>
+                </p>
+                <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "0 0 8px", lineHeight: 1.6 }}>
+                  Upgrade to the <strong style={{ color: "#FFFFFF" }}>QL-820NWB only if your installation specifically requires Ethernet or Bluetooth.</strong> Aside from those two options, both printers provide the same excellent label printing experience.
+                </p>
+              </div>
+
+              {/* Comparison Table */}
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", margin: "0 0 10px" }}>Comparison</p>
+              <div style={{ overflowX: "auto" as const }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" as const, fontSize: "12px" }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left" as const, padding: "8px 12px", color: "#A9A9B8", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>Feature</th>
+                      <th style={{ textAlign: "center" as const, padding: "8px 12px", color: "#c084fc", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>QL-810W ⭐</th>
+                      <th style={{ textAlign: "center" as const, padding: "8px 12px", color: "#A9A9B8", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>QL-820NWB</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { feature: "Wi-Fi", w810: "✅", w820: "✅", highlight: false },
+                      { feature: "USB", w810: "✅", w820: "✅", highlight: false },
+                      { feature: "Ethernet", w810: "❌", w820: "✅", highlight: true },
+                      { feature: "Bluetooth", w810: "❌", w820: "✅", highlight: true },
+                      { feature: "Recommended for Most Churches", w810: "⭐ Yes", w820: "Optional Upgrade", highlight: false },
+                    ].map(({ feature, w810, w820, highlight }) => (
+                      <tr key={feature} style={{ background: highlight ? "rgba(212,175,55,0.05)" : "transparent" }}>
+                        <td style={{ padding: "8px 12px", color: highlight ? "#D4AF37" : "#D8D8E8", fontWeight: highlight ? 700 : 400, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>{feature}</td>
+                        <td style={{ padding: "8px 12px", textAlign: "center" as const, color: "#D8D8E8", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>{w810}</td>
+                        <td style={{ padding: "8px 12px", textAlign: "center" as const, color: "#D8D8E8", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>{w820}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )}
 
