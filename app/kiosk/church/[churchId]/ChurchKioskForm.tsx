@@ -168,6 +168,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             medicalNotes?: string;
             specialInstructions?: string;
             authorizedPickups?: string;
+            roomId?: string;
           };
           setChildren(
             (data.children as LookupChild[]).map((c) => {
@@ -183,11 +184,12 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                 medicalNotes: c.medicalNotes ?? "",
                 specialInstructions: c.specialInstructions ?? "",
                 authorizedPickups: c.authorizedPickups ?? "",
+                roomId: c.roomId ?? "",
               };
             }),
           );
           setLookingUp(false);
-          setStep("children");
+          setStep("review");  // returning families skip child-info entry and go straight to confirm
           return;
         }
       }
@@ -576,7 +578,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               Continue →
             </button>
             <button
-              onClick={() => setStep(returning ? "welcome" : "parent")}
+              onClick={() => setStep(returning ? "review" : "parent")}
               className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-[#A9A9B8]"
             >
               ← Back
@@ -607,69 +609,103 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             <p className="text-[#A9A9B8] text-sm">{parentPhone}</p>
             {parentEmail && <p className="text-[#A9A9B8] text-sm">{parentEmail}</p>}
           </div>
-          {children.map((child, i) => (
-            <div
-              key={i}
-              className="rounded-2xl p-5 mb-4 transition-opacity"
-              style={{
-                backgroundColor: CARD,
-                border: `1px solid ${child.checkedIn ? "rgba(123,44,191,0.5)" : "rgba(123,44,191,0.15)"}`,
-                opacity: child.checkedIn ? 1 : 0.5,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <p className={labelCls} style={{ margin: 0 }}>Child {i + 1}</p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setChildren((cs) =>
-                      cs.map((c, j) => (j === i ? { ...c, checkedIn: !c.checkedIn } : c)),
-                    )
-                  }
-                  className="flex items-center gap-2 text-sm font-semibold rounded-xl px-3 py-1.5 transition-colors"
-                  style={{
-                    backgroundColor: child.checkedIn ? "#3D1080" : "rgba(255,255,255,0.05)",
-                    border: `1.5px solid ${child.checkedIn ? PURPLE : "rgba(123,44,191,0.3)"}`,
-                    color: child.checkedIn ? "#FFFFFF" : "#A9A9B8",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 4,
-                      border: `2px solid ${child.checkedIn ? PURPLE : "rgba(123,44,191,0.4)"}`,
-                      backgroundColor: child.checkedIn ? PURPLE : "transparent",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 11,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {child.checkedIn ? "✓" : ""}
-                  </span>
-                  Checking in today
-                </button>
-              </div>
-              <p className="text-white text-lg font-bold">
-                {child.firstName} {child.lastName}
-              </p>
-              {child.dateOfBirth && <p className="text-[#A9A9B8] text-sm">DOB: {child.dateOfBirth}</p>}
-              {child.roomId && <p className="text-[#A9A9B8] text-sm">Room: {roomMap[child.roomId] ?? child.roomId}</p>}
-              {child.allergies.length > 0 && (
-                <p className="text-red-400 text-sm mt-1">
-                  ⚠️ Allergies: {[...child.allergies, child.allergyOther].filter(Boolean).join(", ")}
+          {children.map((child, i) => {
+            const hasCareNotes =
+              (child.allergies.length > 0 && !child.allergies.every((a) => a === "No Known Allergies")) ||
+              !!child.medicalNotes.trim() ||
+              !!child.specialInstructions.trim();
+            return (
+              <div
+                key={i}
+                className="rounded-2xl p-5 mb-4 transition-opacity"
+                style={{
+                  backgroundColor: CARD,
+                  border: `1px solid ${child.checkedIn ? "rgba(123,44,191,0.5)" : "rgba(123,44,191,0.15)"}`,
+                  opacity: child.checkedIn ? 1 : 0.5,
+                }}
+              >
+                {/* Row 1: label + action buttons */}
+                <div className="flex items-center justify-between mb-3">
+                  <p className={labelCls} style={{ margin: 0 }}>Child {i + 1}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStep("children")}
+                      className="text-xs font-semibold rounded-lg px-2 py-1"
+                      style={{
+                        color: "#A9A9B8",
+                        border: "1px solid rgba(123,44,191,0.3)",
+                        backgroundColor: "transparent",
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setChildren((cs) =>
+                          cs.map((c, j) => (j === i ? { ...c, checkedIn: !c.checkedIn } : c)),
+                        )
+                      }
+                      className="flex items-center gap-2 text-sm font-semibold rounded-xl px-3 py-1.5 transition-colors"
+                      style={{
+                        backgroundColor: child.checkedIn ? "#3D1080" : "rgba(255,255,255,0.05)",
+                        border: `1.5px solid ${child.checkedIn ? PURPLE : "rgba(123,44,191,0.3)"}`,
+                        color: child.checkedIn ? "#FFFFFF" : "#A9A9B8",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 4,
+                          border: `2px solid ${child.checkedIn ? PURPLE : "rgba(123,44,191,0.4)"}`,
+                          backgroundColor: child.checkedIn ? PURPLE : "transparent",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 11,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {child.checkedIn ? "✓" : ""}
+                      </span>
+                      Checking in today
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 2: name */}
+                <p className="text-white text-lg font-bold">
+                  {child.firstName} {child.lastName}
                 </p>
-              )}
-              {child.specialInstructions && (
-                <p className="text-[#A9A9B8] text-sm mt-1">Notes: {child.specialInstructions}</p>
-              )}
-              {child.authorizedPickups && (
-                <p className="text-[#A9A9B8] text-sm mt-1">Authorized pickups: {child.authorizedPickups}</p>
-              )}
-            </div>
-          ))}
+
+                {/* Row 3: room + care notes badge */}
+                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                  {child.roomId && (
+                    <p className="text-[#A9A9B8] text-sm">
+                      Room: {roomMap[child.roomId] ?? child.roomId}
+                    </p>
+                  )}
+                  {hasCareNotes && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "#fbbf24",
+                        padding: "1px 8px",
+                        borderRadius: 6,
+                        border: "1px solid rgba(251,191,36,0.35)",
+                        backgroundColor: "rgba(251,191,36,0.1)",
+                      }}
+                    >
+                      ⚠ Care Notes
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
           {!anyCheckedIn && (
             <p className="text-red-400 text-sm text-center mb-4">
               Please select at least one child to check in.
