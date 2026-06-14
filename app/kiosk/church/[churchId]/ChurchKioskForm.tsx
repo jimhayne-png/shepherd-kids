@@ -181,8 +181,10 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                 dateOfBirth: c.dateOfBirth ?? "",
                 allergies: c.allergies ?? [],
                 allergyOther: c.allergyOther ?? "",
-                medicalNotes: c.medicalNotes ?? "",
-                specialInstructions: c.specialInstructions ?? "",
+                // The textarea is bound to specialInstructions. medicalNotes has no separate
+                // UI input, so merge it here as a fallback so nothing is silently dropped.
+                specialInstructions: (c.specialInstructions || c.medicalNotes || "").trim(),
+                medicalNotes: "",
                 authorizedPickups: c.authorizedPickups ?? "",
                 roomId: c.roomId ?? "",
               };
