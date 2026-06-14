@@ -14,7 +14,7 @@ export async function GET(
   const { data: record, error } = await admin
     .from("cm_checkin_records")
     .select(
-      "id, church_id, session_id, child_name, parent_name, parent_phone, room_id, security_code, allergies, allergy_other, medical_notes, special_instructions, authorized_pickups, date_of_birth, checked_in_at",
+      "id, church_id, session_id, child_name, parent_name, parent_phone, room_id, security_code, allergies, allergy_other, medical_notes, authorized_pickups, date_of_birth, checked_in_at",
     )
     .eq("qr_token", token)
     .maybeSingle();
@@ -33,11 +33,57 @@ export async function GET(
     return Response.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const { data: session } = await admin
-    .from("cm_checkin_sessions")
-    .select("id, service_name, status, closed_at, label_expiry_minutes")
-    .eq("id", record.session_id)
-    .maybeSingle();
+  // Run session, room, and visitor family lookups in parallel.
+  // Family lookup enables fetching special_instructions from cm_visitor_children.
+  const [
+    { data: session },
+    { data: roomRow },
+    { data: family },
+  ] = await Promise.all([
+    admin
+      .from("cm_checkin_sessions")
+      .select("id, service_name, status, closed_at, label_expiry_minutes")
+      .eq("id", record.session_id)
+      .maybeSingle(),
+    record.room_id
+      ? admin.from("cm_checkin_rooms").select("name").eq("id", record.room_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    record.parent_phone
+      ? admin
+          .from("cm_visitor_families")
+          .select("id")
+          .eq("church_id", record.church_id)
+          .eq("parent1_phone", record.parent_phone)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+
+  // Fetch visitor child to get special_instructions (not stored in cm_checkin_records).
+  // medical_notes: prefer checkin record, fall back to visitor child.
+  let specialInstructions: string | null = null;
+  let medicalNotes: string | null = (record.medical_notes as string | null)?.trim() || null;
+
+  if (family) {
+    const nameParts = (record.child_name as string ?? "").trim().split(/\s+/);
+    const firstName = nameParts[0] ?? "";
+    const lastName = nameParts.slice(1).join(" ");
+
+    const { data: visitorChild } = await admin
+      .from("cm_visitor_children")
+      .select("special_instructions, medical_notes")
+      .eq("family_id", (family as { id: string }).id)
+      .eq("first_name", firstName)
+      .eq("last_name", lastName)
+      .maybeSingle();
+
+    if (visitorChild) {
+      const vc = visitorChild as { special_instructions?: string | null; medical_notes?: string | null };
+      specialInstructions = vc.special_instructions?.trim() || null;
+      if (!medicalNotes && vc.medical_notes?.trim()) {
+        medicalNotes = vc.medical_notes.trim();
+      }
+    }
+  }
 
   let result: "valid" | "expired" = "valid";
   let expiredReason: string | null = null;
@@ -59,15 +105,7 @@ export async function GET(
     }
   }
 
-  let roomName: string | null = null;
-  if (record.room_id) {
-    const { data: room } = await admin
-      .from("cm_checkin_rooms")
-      .select("name")
-      .eq("id", record.room_id)
-      .maybeSingle();
-    roomName = (room as { name: string } | null)?.name ?? null;
-  }
+  const roomName = (roomRow as { name: string } | null)?.name ?? null;
 
   await admin.from("cm_label_scan_log").insert({
     church_id: auth.churchId,
@@ -91,8 +129,8 @@ export async function GET(
       securityCode: record.security_code,
       allergies: record.allergies,
       allergyOther: record.allergy_other,
-      medicalNotes: record.medical_notes,
-      specialInstructions: record.special_instructions,
+      medicalNotes,
+      specialInstructions,
       authorizedPickups: record.authorized_pickups,
     },
     parent: {

@@ -181,10 +181,8 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                 dateOfBirth: c.dateOfBirth ?? "",
                 allergies: c.allergies ?? [],
                 allergyOther: c.allergyOther ?? "",
-                // The textarea is bound to specialInstructions. medicalNotes has no separate
-                // UI input, so merge it here as a fallback so nothing is silently dropped.
-                specialInstructions: (c.specialInstructions || c.medicalNotes || "").trim(),
-                medicalNotes: "",
+                medicalNotes: c.medicalNotes ?? "",
+                specialInstructions: c.specialInstructions ?? "",
                 authorizedPickups: c.authorizedPickups ?? "",
                 roomId: c.roomId ?? "",
               };
@@ -1107,11 +1105,22 @@ function ChildCard({
       </div>
 
       <div className="mb-4">
-        <label className={labelCls}>Special Instructions / Medical Notes (optional)</label>
+        <label className={labelCls}>Medical Notes (optional)</label>
+        <textarea
+          value={child.medicalNotes}
+          onChange={(e) => onChange({ ...child, medicalNotes: e.target.value })}
+          placeholder="e.g. EpiPen is in backpack, asthma inhaler, medication notes"
+          rows={2}
+          className="w-full px-5 py-4 rounded-2xl bg-white/10 border border-purple-900 text-white placeholder-purple-400 focus:outline-none focus:border-purple-400 resize-none text-base"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className={labelCls}>Special Instructions (optional)</label>
         <textarea
           value={child.specialInstructions}
           onChange={(e) => onChange({ ...child, specialInstructions: e.target.value })}
-          placeholder="e.g. carries EpiPen, bathroom reminder every hour"
+          placeholder="e.g. bathroom reminder, separation anxiety, pickup note"
           rows={2}
           className="w-full px-5 py-4 rounded-2xl bg-white/10 border border-purple-900 text-white placeholder-purple-400 focus:outline-none focus:border-purple-400 resize-none text-base"
         />
