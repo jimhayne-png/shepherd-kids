@@ -33,6 +33,7 @@ type ImmediateLabel = {
   medicalNotes: string | null;
   specialInstructions: string | null;
   visitNumber: number | null;
+  qrToken: string | null;
 };
 
 function serializeAllergies(allergies: string[], allergyOther: string): string | null {
@@ -164,7 +165,7 @@ export async function POST(
   }
 
   const [{ data: churchRow }, { data: activeRoomsRaw }] = await Promise.all([
-    admin.from('churches').select('timezone').eq('id', session.church_id).maybeSingle(),
+    admin.from('churches').select('timezone, label_mode').eq('id', session.church_id).maybeSingle(),
     admin
       .from('cm_checkin_rooms')
       .select('id, name, min_age, max_age')
@@ -173,8 +174,9 @@ export async function POST(
       .order('min_age', { ascending: true }),
   ]);
 
-  const tz =
-    (churchRow as { timezone?: string } | null)?.timezone ?? 'America/Los_Angeles';
+  const cr2 = churchRow as { timezone?: string; label_mode?: string | null } | null;
+  const tz = cr2?.timezone ?? 'America/Los_Angeles';
+  const labelMode = cr2?.label_mode === 'classic' ? 'classic' : 'smart';
 
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 
@@ -312,12 +314,13 @@ export async function POST(
     allergies: child.allergies ?? [],
     allergy_other: child.allergyOther ?? null,
     date_of_birth: child.childDateOfBirth ?? null,
+    qr_token: crypto.randomUUID(),
   }));
 
   const { data: records, error } = await admin
     .from('cm_checkin_records')
     .insert(inserts)
-    .select('id, child_name, room_id, security_code');
+    .select('id, child_name, room_id, security_code, qr_token');
 
   if (error) {
     return Response.json({ error: error.message }, { status: 400 });
@@ -339,6 +342,7 @@ export async function POST(
       medicalNotes: child?.medicalNotes || null,
       specialInstructions: child?.specialInstructions || null,
       visitNumber: null,
+      qrToken: (record as { qr_token?: string | null }).qr_token ?? null,
     };
   });
 
@@ -359,6 +363,7 @@ export async function POST(
         medicalNotes: null,
         specialInstructions: null,
         visitNumber: null,
+        qrToken: null,
       }
     : null;
 
@@ -386,7 +391,9 @@ export async function POST(
         medical_notes: child?.medicalNotes || null,
         special_instructions: child?.specialInstructions || null,
         label_type: 'child',
+        label_mode: labelMode,
         status: 'pending',
+        qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
       };
     });
 
@@ -411,6 +418,7 @@ export async function POST(
           medical_notes: null,
           special_instructions: null,
           label_type: 'parent',
+          label_mode: labelMode,
           status: 'pending',
         }
       : null;

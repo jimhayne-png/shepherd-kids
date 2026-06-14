@@ -21,6 +21,7 @@ const CHURCH_FIELDS = [
   'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
   'subscription_status', 'subscription_tier', 'trial_ends_at', 'timezone',
   'check_in_opens_minutes_before', 'check_in_closes_minutes_after',
+  'label_mode',
 ].join(', ');
 
 export async function GET(req: NextRequest) {
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
     'timezone',
   ];
   const integerFields = ['check_in_opens_minutes_before', 'check_in_closes_minutes_after'];
+  const enumFields: Record<string, string[]> = { label_mode: ['smart', 'classic'] };
   const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key] ?? '';
@@ -64,6 +66,14 @@ export async function POST(req: NextRequest) {
         return Response.json({ error: `${key} must be a positive integer` }, { status: 400 });
       }
       updates[key] = val;
+    }
+  }
+  for (const [key, validValues] of Object.entries(enumFields)) {
+    if (key in body) {
+      if (!validValues.includes(body[key])) {
+        return Response.json({ error: `${key} must be one of: ${validValues.join(', ')}` }, { status: 400 });
+      }
+      updates[key] = body[key];
     }
   }
 

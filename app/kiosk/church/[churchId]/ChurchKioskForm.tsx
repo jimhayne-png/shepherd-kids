@@ -44,6 +44,7 @@ type Props = {
   groups: Group[];
   ungrouped: Session[];
   rooms: Room[];
+  labelMode: "smart" | "classic";
 };
 
 const BG = "#08060D";
@@ -86,7 +87,7 @@ function emptyChild(): ChildForm {
   };
 }
 
-export default function ChurchKioskForm({ churchId, churchName, groups, ungrouped, rooms }: Props) {
+export default function ChurchKioskForm({ churchId, churchName, groups, ungrouped, rooms, labelMode }: Props) {
   const displayGroups: DisplayGroup[] = [
     ...groups.map((g) => ({ ...g, isNamed: true })),
     ...ungrouped.map((s) => ({ name: s.service_name, sessions: [s], isNamed: false })),
@@ -804,7 +805,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             label.labelType === "parent" ? (
               <KioskParentLabel key={i} label={label} churchName={churchName} />
             ) : (
-              <KioskChildLabel key={i} label={label} churchName={churchName} />
+              <KioskChildLabel key={i} label={label} churchName={churchName} labelMode={labelMode} />
             ),
           )}
         </div>
@@ -833,8 +834,14 @@ const LABEL_STYLE: React.CSSProperties = {
   color: "#000000",
 };
 
-function KioskChildLabel({ label, churchName }: { label: ImmediateLabel; churchName: string }) {
+function KioskChildLabel({ label, churchName, labelMode }: { label: ImmediateLabel; churchName: string; labelMode: "smart" | "classic" }) {
   const hasCareNotes = !!(label.allergies || label.medicalNotes || label.specialInstructions);
+
+  const careLines: string[] = [];
+  if (label.allergies) careLines.push(`Allergies: ${label.allergies}`);
+  if (label.medicalNotes) careLines.push(`Medical: ${label.medicalNotes}`);
+  if (label.specialInstructions) careLines.push(`Special: ${label.specialInstructions}`);
+
   return (
     <div style={LABEL_STYLE}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -875,7 +882,27 @@ function KioskChildLabel({ label, churchName }: { label: ImmediateLabel; churchN
         Parent: {label.parentName}
         {label.parentPhone ? ` · ${label.parentPhone}` : ""}
       </div>
-      {hasCareNotes && (
+      {hasCareNotes && labelMode === "classic" && (
+        <div style={{ marginTop: 3 }}>
+          {careLines.map((line, i) => (
+            <div
+              key={i}
+              style={{
+                fontSize: 9,
+                color: "#000",
+                fontWeight: i === 0 && label.allergies ? 700 : 400,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "3.2in",
+              }}
+            >
+              {line}
+            </div>
+          ))}
+        </div>
+      )}
+      {hasCareNotes && labelMode === "smart" && (
         <div style={{ marginTop: 4 }}>
           <div
             style={{

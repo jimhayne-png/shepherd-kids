@@ -47,11 +47,12 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
   let opensBefore = 30;
   let closesAfter = 30;
   let churchName = "";
+  let labelMode: "smart" | "classic" = "smart";
   let churchQueryError: string | null = null;
 
   const { data: churchRow, error: churchError } = await admin
     .from("churches")
-    .select("name, timezone, check_in_opens_minutes_before, check_in_closes_minutes_after")
+    .select("name, timezone, check_in_opens_minutes_before, check_in_closes_minutes_after, label_mode")
     .eq("id", churchId)
     .maybeSingle();
 
@@ -74,11 +75,13 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
       timezone?: string;
       check_in_opens_minutes_before?: number | null;
       check_in_closes_minutes_after?: number | null;
+      label_mode?: string | null;
     };
     tz = cr.timezone ?? tz;
     opensBefore = cr.check_in_opens_minutes_before ?? 30;
     closesAfter = cr.check_in_closes_minutes_after ?? 30;
     churchName = cr.name ?? "";
+    labelMode = cr.label_mode === "classic" ? "classic" : "smart";
   }
 
   const now = new Date();
@@ -311,6 +314,7 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
       groups={groups}
       ungrouped={ungrouped}
       rooms={rooms}
+      labelMode={labelMode}
     />
   );
 }

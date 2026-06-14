@@ -20,6 +20,26 @@ export async function GET(
     .maybeSingle();
 
   if (error || !record) {
+    // Debug: check both tables so we can identify token-mismatch vs missing-column issues.
+    const tokenPrefix = (token ?? "").slice(0, 6);
+    const tokenLength = (token ?? "").length;
+
+    const [{ data: printJobMatch, error: printJobError }, { data: checkinMatch, error: checkinError }] =
+      await Promise.all([
+        admin.from("cm_label_print_jobs").select("id").eq("qr_token", token).maybeSingle(),
+        admin.from("cm_checkin_records").select("id").eq("qr_token", token).maybeSingle(),
+      ]);
+
+    console.error("[scan:not_found]", {
+      tokenLength,
+      tokenPrefix,
+      queryError: error?.message ?? null,
+      inCheckinRecords: !!checkinMatch,
+      checkinLookupError: checkinError?.message ?? null,
+      inPrintJobs: !!printJobMatch,
+      printJobLookupError: printJobError?.message ?? null,
+    });
+
     await admin.from("cm_label_scan_log").insert({
       church_id: auth.churchId,
       qr_token: token,

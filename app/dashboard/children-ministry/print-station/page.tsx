@@ -24,6 +24,7 @@ type PrintJob = {
   medical_notes: string | null;
   special_instructions: string | null;
   label_type: "child" | "parent";
+  label_mode: string | null;
   status: string;
   created_at: string;
   qr_token: string | null;
@@ -102,8 +103,27 @@ function ChildLabel({ job }: { job: PrintJob }) {
         {job.parent_phone ? ` · ${job.parent_phone}` : ""}
       </div>
 
-      {/* Care note indicator — full details available via QR scan */}
-      {(job.allergies || job.medical_notes || job.special_instructions) && (
+      {/* Care notes — classic: print inline; smart (default): show badge only */}
+      {(job.allergies || job.medical_notes || job.special_instructions) && job.label_mode === "classic" && (
+        <div style={{ marginTop: 3 }}>
+          {job.allergies && (
+            <div style={{ fontSize: 9, fontWeight: 700, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "3.2in" }}>
+              Allergies: {job.allergies}
+            </div>
+          )}
+          {job.medical_notes && (
+            <div style={{ fontSize: 9, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "3.2in" }}>
+              Medical: {job.medical_notes}
+            </div>
+          )}
+          {job.special_instructions && (
+            <div style={{ fontSize: 9, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "3.2in" }}>
+              Special: {job.special_instructions}
+            </div>
+          )}
+        </div>
+      )}
+      {(job.allergies || job.medical_notes || job.special_instructions) && job.label_mode !== "classic" && (
         <div style={{ marginTop: 4 }}>
           <div
             style={{

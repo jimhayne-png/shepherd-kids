@@ -90,6 +90,11 @@ export default function CheckinSetupPage() {
   const [labelExpiryMinutes, setLabelExpiryMinutes] = useState(15);
   const [labelExpirySaved, setLabelExpirySaved] = useState(false);
 
+  // Label Mode setting
+  const [labelMode, setLabelMode] = useState<"smart" | "classic">("smart");
+  const [labelModeSaving, setLabelModeSaving] = useState(false);
+  const [labelModeSaved, setLabelModeSaved] = useState(false);
+
   // Automation: add-service-schedule form (session_group UI-only — DB field pending)
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ name: "", day: "Sunday", time: "", sessionGroup: "" });
@@ -198,6 +203,21 @@ export default function CheckinSetupPage() {
     }
   }
 
+  async function saveLabelMode() {
+    setLabelModeSaving(true);
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...ch() },
+      credentials: "include",
+      body: JSON.stringify({ label_mode: labelMode }),
+    });
+    setLabelModeSaving(false);
+    if (res.ok) {
+      setLabelModeSaved(true);
+      setTimeout(() => setLabelModeSaved(false), 2500);
+    }
+  }
+
   async function saveTimezone() {
     setTimezoneSaving(true);
     const res = await fetch("/api/settings", {
@@ -246,6 +266,7 @@ export default function CheckinSetupPage() {
         if (settingsData.church?.timezone) setTimezone(settingsData.church.timezone);
         if (settingsData.church?.check_in_opens_minutes_before) setCheckInOpensBefore(settingsData.church.check_in_opens_minutes_before);
         if (settingsData.church?.check_in_closes_minutes_after) setCheckInClosesAfter(settingsData.church.check_in_closes_minutes_after);
+        if (settingsData.church?.label_mode === "classic" || settingsData.church?.label_mode === "smart") setLabelMode(settingsData.church.label_mode);
       }
       setLoading(false);
     }
@@ -1021,6 +1042,79 @@ export default function CheckinSetupPage() {
                 <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
                   💡 This expiry applies to new sessions. Staff scanning a QR code after the window closes will see an expired status. Set to 0 to never expire.
                 </p>
+              </div>
+            </div>
+
+            {/* Label Printing */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>🏷️</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Label Printing</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Choose how care information appears on child check-in labels</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+                {/* Smart Label option */}
+                <label
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px",
+                    borderRadius: "12px", cursor: "pointer",
+                    border: `2px solid ${labelMode === "smart" ? ACCENT : "rgba(212,175,55,0.2)"}`,
+                    background: labelMode === "smart" ? "rgba(123,44,191,0.12)" : "transparent",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="labelMode"
+                    value="smart"
+                    checked={labelMode === "smart"}
+                    onChange={() => setLabelMode("smart")}
+                    style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }}
+                  />
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
+                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge on child labels. Full allergy and medical details are accessed securely by scanning the QR code — not printed in plain sight.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Classic Label option */}
+                <label
+                  style={{
+                    display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px",
+                    borderRadius: "12px", cursor: "pointer",
+                    border: `2px solid ${labelMode === "classic" ? ACCENT : "rgba(212,175,55,0.2)"}`,
+                    background: labelMode === "classic" ? "rgba(123,44,191,0.12)" : "transparent",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="labelMode"
+                    value="classic"
+                    checked={labelMode === "classic"}
+                    onChange={() => setLabelMode("classic")}
+                    style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }}
+                  />
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
+                      Prints allergies, medical notes, and special instructions directly on child labels. QR code is still included. Best for environments where volunteers may not have a scanner.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveLabelMode}
+                  disabled={labelModeSaving}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: labelModeSaving ? "not-allowed" : "pointer", opacity: labelModeSaving ? 0.6 : 1 }}
+                >
+                  {labelModeSaved ? "✓ Saved" : labelModeSaving ? "Saving…" : "Save Setting"}
+                </button>
               </div>
             </div>
 

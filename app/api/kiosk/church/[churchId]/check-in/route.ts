@@ -205,13 +205,13 @@ export async function POST(
 
   const { data: churchRow } = await admin
     .from('churches')
-    .select('timezone')
+    .select('timezone, label_mode')
     .eq('id', churchId)
     .maybeSingle();
 
-  const tz =
-    (churchRow as { timezone?: string } | null)?.timezone ??
-    'America/Los_Angeles';
+  const cr = churchRow as { timezone?: string; label_mode?: string | null } | null;
+  const tz = cr?.timezone ?? 'America/Los_Angeles';
+  const labelMode = cr?.label_mode === 'classic' ? 'classic' : 'smart';
 
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
@@ -345,6 +345,7 @@ export async function POST(
         medical_notes: clean(child?.medicalNotes) || null,
         special_instructions: clean(child?.specialInstructions) || null,
         label_type: 'child',
+        label_mode: labelMode,
         status: 'pending',
         qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
       };
@@ -369,6 +370,7 @@ export async function POST(
           medical_notes: null,
           special_instructions: null,
           label_type: 'parent',
+          label_mode: labelMode,
           status: 'pending',
         }
       : null;
