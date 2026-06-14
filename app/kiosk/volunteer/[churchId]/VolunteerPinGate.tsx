@@ -36,11 +36,11 @@ function Logo() {
   return (
     <div className="flex items-center justify-center gap-2">
       <svg width="24" height="24" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-        <rect width="36" height="36" rx="8" fill="#1A4A2E" />
+        <rect width="36" height="36" rx="8" fill="#1C0A30" />
         <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="#F28C28" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
-      <span className="text-lg font-bold" style={{ color: "#1A4A2E" }}>
-        Shepherd<span style={{ color: ACCENT }}>Well</span>
+      <span className="text-lg font-bold" style={{ color: "#1C0A30" }}>
+        Shepherd<span style={{ color: ACCENT }}>Kids</span>
       </span>
     </div>
   );
@@ -138,16 +138,16 @@ export default function VolunteerPinGate({
   // ── PIN STEP ──────────────────────────────────────────────────────────────────
   if (step === "pin") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#08060D" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="mb-3"><Logo /></div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Volunteer Check-In Access</h1>
-            <p className="text-sm text-gray-500">{churchName}</p>
+            <h1 className="text-2xl font-bold text-white mb-1">Volunteer Check-In Access</h1>
+            <p className="text-sm text-[#A9A9B8]">{churchName}</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <label className="block text-sm font-semibold text-gray-700 mb-2 text-center">
+          <div className="rounded-2xl border p-8" style={{ backgroundColor: "#1C0A30", borderColor: "rgba(123,44,191,0.4)" }}>
+            <label className="block text-sm font-semibold text-[#D8D8E8] mb-2 text-center">
               Enter Today&apos;s PIN
             </label>
             <input
@@ -191,10 +191,10 @@ export default function VolunteerPinGate({
   // ── ROOM SELECTION STEP ───────────────────────────────────────────────────────
   if (step === "rooms") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen" style={{ backgroundColor: "#08060D" }}>
         <div
           className="px-6 py-6"
-          style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}
+          style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}
         >
           <div className="flex items-center gap-2 mb-1 opacity-80">
             <svg width="18" height="18" viewBox="0 0 36 36" fill="none" aria-hidden="true">
@@ -242,11 +242,11 @@ export default function VolunteerPinGate({
   const checkedOut = records.filter(r => r.checked_out_at).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: "#08060D" }}>
       {/* Header */}
       <div
         className="px-6 py-5"
-        style={{ background: `linear-gradient(135deg, #c2570a 0%, ${ACCENT} 100%)` }}
+        style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}
       >
         <button
           onClick={() => { setStep("rooms"); setRecords([]); setSelectedRoom(null); }}

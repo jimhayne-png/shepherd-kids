@@ -625,11 +625,13 @@ export default function KioskCheckInForm({
 
   const serviceSubtitle = `${serviceName} · ${fmtDate(serviceDate)}`;
 
-  function Header({ title, green }: { title: string; green?: boolean }) {
+  function Header({ title, purple }: { title: string; purple?: boolean }) {
     return (
       <div
         style={{
-          backgroundColor: green ? "#16a34a" : ACCENT,
+          background: purple
+            ? "linear-gradient(135deg, #1C0A30 0%, #7B2CBF 100%)"
+            : `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)`,
           padding: "24px 32px",
           flexShrink: 0,
         }}
@@ -694,7 +696,7 @@ if (step === "success") {
         }
       `}</style>
 
-      <div className="min-h-screen bg-[#0f2e17] text-white flex flex-col items-center px-6 py-10">
+      <div className="min-h-screen bg-[#08060D] text-white flex flex-col items-center px-6 py-10">
         <div className="no-print text-center max-w-xl w-full">
           <div className="text-7xl mb-4">✅</div>
 
@@ -702,16 +704,16 @@ if (step === "success") {
             Checked In!
           </h1>
 
-          <p className="text-green-300 text-xl mb-6">
+          <p className="text-[#D4AF37] text-xl mb-6">
             Your security code is:
           </p>
 
-          <div className="border-4 border-green-400 rounded-3xl p-8 mb-6">
+          <div className="border-4 border-[#7B2CBF] rounded-3xl p-8 mb-6">
             <div className="text-8xl font-black tracking-widest">
               {securityCode}
             </div>
 
-            <div className="mt-4 text-green-300 text-xl">
+            <div className="mt-4 text-[#D8D8E8] text-xl">
               You will need this code to pick up your child
             </div>
           </div>
@@ -786,7 +788,7 @@ if (step === "success") {
         <div className="no-print max-w-xl w-full mt-8">
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-green-400 text-black text-2xl font-bold py-5 rounded-2xl"
+            className="w-full bg-[#7B2CBF] text-white text-2xl font-bold py-5 rounded-2xl"
           >
             Check In Another Family
           </button>
@@ -803,7 +805,7 @@ if (step === "success") {
       <div
         style={{
           minHeight: "100dvh",
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#08060D",
           display: "flex",
           flexDirection: "column",
         }}
@@ -824,7 +826,7 @@ if (step === "success") {
               style={{
                 fontSize: 36,
                 fontWeight: 800,
-                color: "#111827",
+                color: "#FFFFFF",
                 marginBottom: 8,
                 textAlign: "center",
               }}
@@ -834,7 +836,7 @@ if (step === "success") {
             <p
               style={{
                 fontSize: 20,
-                color: "#6b7280",
+                color: "#D8D8E8",
                 textAlign: "center",
                 marginBottom: 40,
               }}
@@ -898,7 +900,7 @@ if (step === "success") {
             <p
               style={{
                 fontSize: 13,
-                color: "#6b7280",
+                color: "#A9A9B8",
                 textAlign: "center",
                 marginTop: 20,
                 lineHeight: 1.6,
@@ -927,7 +929,7 @@ if (step === "success") {
       <div
         style={{
           minHeight: "100dvh",
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#08060D",
           display: "flex",
           flexDirection: "column",
         }}
@@ -948,7 +950,7 @@ if (step === "success") {
             style={{
               fontSize: 28,
               fontWeight: 800,
-              color: "#111827",
+              color: "#FFFFFF",
               marginBottom: 4,
             }}
           >
@@ -985,7 +987,7 @@ if (step === "success") {
             />
           </div>
 
-          <p style={{ fontSize: 16, color: "#6b7280", marginBottom: 16 }}>
+          <p style={{ fontSize: 16, color: "#D8D8E8", marginBottom: 16 }}>
             Select children to check in today:
           </p>
 
@@ -1229,9 +1231,9 @@ if (step === "success") {
               width: "100%",
               padding: "16px",
               borderRadius: 20,
-              border: "2px solid #e5e7eb",
-              backgroundColor: "white",
-              color: "#6b7280",
+              border: "2px solid rgba(123,44,191,0.4)",
+              backgroundColor: "#1C0A30",
+              color: "#D8D8E8",
               fontSize: 18,
               fontWeight: 600,
               cursor: "pointer",
@@ -1260,7 +1262,7 @@ if (step === "success") {
       <div
         style={{
           minHeight: "100dvh",
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#08060D",
           display: "flex",
           flexDirection: "column",
         }}
@@ -1281,7 +1283,7 @@ if (step === "success") {
             style={{
               fontSize: 26,
               fontWeight: 800,
-              color: "#111827",
+              color: "#FFFFFF",
               marginBottom: 20,
             }}
           >
@@ -1294,7 +1296,7 @@ if (step === "success") {
                 display: "block",
                 fontSize: 15,
                 fontWeight: 700,
-                color: "#374151",
+                color: "#D8D8E8",
                 marginBottom: 8,
               }}
             >
@@ -1323,7 +1325,7 @@ if (step === "success") {
                 display: "block",
                 fontSize: 15,
                 fontWeight: 700,
-                color: "#374151",
+                color: "#D8D8E8",
                 marginBottom: 8,
               }}
             >
@@ -1353,7 +1355,7 @@ if (step === "success") {
                 display: "block",
                 fontSize: 15,
                 fontWeight: 700,
-                color: "#374151",
+                color: "#D8D8E8",
                 marginBottom: 8,
               }}
             >
@@ -1381,7 +1383,7 @@ if (step === "success") {
             style={{
               fontSize: 22,
               fontWeight: 800,
-              color: "#111827",
+              color: "#FFFFFF",
               marginBottom: 16,
             }}
           >
@@ -1434,7 +1436,7 @@ if (step === "success") {
           <p
             style={{
               fontSize: 13,
-              color: "#6b7280",
+              color: "#A9A9B8",
               textAlign: "center",
               marginBottom: 20,
               lineHeight: 1.6,
@@ -1484,9 +1486,9 @@ if (step === "success") {
               width: "100%",
               padding: "16px",
               borderRadius: 20,
-              border: "2px solid #e5e7eb",
-              backgroundColor: "white",
-              color: "#6b7280",
+              border: "2px solid rgba(123,44,191,0.4)",
+              backgroundColor: "#1C0A30",
+              color: "#D8D8E8",
               fontSize: 18,
               fontWeight: 600,
               cursor: "pointer",

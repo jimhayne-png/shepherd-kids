@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 
 const ACCENT = "#F28C28";
-const BG = "#fff7ed";
+const BG = "#08060D";
 
 const GRADES = ["Pre-K", "Kindergarten", "1st Grade", "2nd Grade", "3rd Grade", "4th Grade", "5th Grade", "6th Grade"];
 const HOW_OPTIONS = ["Friend or Family", "Social Media", "Drive By", "Church Website", "Google Search", "Other"];
@@ -15,7 +15,7 @@ type Child = {
 
 function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
-    <div style={{ height: 4, background: "#fde8d0", borderRadius: 2, marginBottom: 24 }}>
+    <div style={{ height: 4, background: "rgba(123,44,191,0.3)", borderRadius: 2, marginBottom: 24 }}>
       <div style={{ height: 4, background: ACCENT, borderRadius: 2, width: `${(step / total) * 100}%`, transition: "width 0.3s ease" }} />
     </div>
   );
@@ -24,7 +24,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#D8D8E8", marginBottom: 6 }}>
         {label}{required && <span style={{ color: ACCENT }}>*</span>}
       </label>
       {children}
@@ -145,7 +145,7 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
   // ---- Loading / Error ----
   if (step === 0) return (
     <div style={{ minHeight: "100dvh", background: BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#9ca3af", fontSize: 16 }}>Loading…</p>
+      <p style={{ color: "#A9A9B8", fontSize: 16 }}>Loading…</p>
     </div>
   );
 
@@ -153,8 +153,8 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
     <div style={{ minHeight: "100dvh", background: BG, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
-        <p style={{ fontSize: 18, color: "#374151", fontWeight: 600 }}>Check-In Unavailable</p>
-        <p style={{ fontSize: 14, color: "#9ca3af", marginTop: 8 }}>{error}</p>
+        <p style={{ fontSize: 18, color: "#D8D8E8", fontWeight: 600 }}>Check-In Unavailable</p>
+        <p style={{ fontSize: 14, color: "#A9A9B8", marginTop: 8 }}>{error}</p>
       </div>
     </div>
   );
@@ -170,20 +170,20 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
     <div style={{ paddingTop: 48 }}>
       <div style={{ textAlign: "center", marginBottom: 48 }}>
         <div style={{ width: 80, height: 80, background: ACCENT, borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, margin: "0 auto 24px" }}>🧒</div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 12px", lineHeight: 1.2 }}>Welcome!</h1>
-        <p style={{ fontSize: 18, color: "#374151", margin: "0 0 8px", fontWeight: 600 }}>Let's get your family checked in.</p>
-        <p style={{ fontSize: 15, color: "#9ca3af", margin: 0 }}>This takes less than a minute ⚡</p>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#FFFFFF", margin: "0 0 12px", lineHeight: 1.2 }}>Welcome!</h1>
+        <p style={{ fontSize: 18, color: "#D8D8E8", margin: "0 0 8px", fontWeight: 600 }}>Let's get your family checked in.</p>
+        <p style={{ fontSize: 15, color: "#A9A9B8", margin: 0 }}>This takes less than a minute ⚡</p>
       </div>
       <button onClick={() => setStep(2)} style={btnStyle}>Get Started →</button>
-      <p style={{ textAlign: "center", marginTop: 20, fontSize: 14, color: "#d1d5db" }}>Returning family? Sign in here (coming soon)</p>
+      <p style={{ textAlign: "center", marginTop: 20, fontSize: 14, color: "#A9A9B8" }}>Returning family? Sign in here (coming soon)</p>
     </div>
   );
 
   // ---- Step 2: Parent Info ----
   if (step === 2) return wrap(<>
     <ProgressBar step={1} total={3} />
-    <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 6px" }}>Your Information</h2>
-    <p style={{ fontSize: 14, color: "#9ca3af", margin: "0 0 24px" }}>Step 1 of 3 — Parent or guardian</p>
+    <h2 style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF", margin: "0 0 6px" }}>Your Information</h2>
+    <p style={{ fontSize: 14, color: "#A9A9B8", margin: "0 0 24px" }}>Step 1 of 3 — Parent or guardian</p>
 
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 0 }}>
       <Field label="First name" required>
@@ -205,8 +205,8 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
         + Add second parent / guardian
       </button>
     ) : (
-      <div style={{ borderTop: "2px dashed #fde8d0", paddingTop: 16, marginBottom: 8 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 12 }}>Second parent / guardian (optional)</p>
+      <div style={{ borderTop: "2px dashed rgba(123,44,191,0.4)", paddingTop: 16, marginBottom: 8 }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: "#D8D8E8", marginBottom: 12 }}>Second parent / guardian (optional)</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="First name"><input style={inputStyle} value={p2First} onChange={e => setP2First(e.target.value)} placeholder="John" /></Field>
           <Field label="Last name"><input style={inputStyle} value={p2Last} onChange={e => setP2Last(e.target.value)} placeholder="Smith" /></Field>
@@ -226,11 +226,11 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
   // ---- Step 3: Children ----
   if (step === 3) return wrap(<>
     <ProgressBar step={2} total={3} />
-    <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 6px" }}>Your Children</h2>
-    <p style={{ fontSize: 14, color: "#9ca3af", margin: "0 0 24px" }}>Step 2 of 3 — Who's joining us today?</p>
+    <h2 style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF", margin: "0 0 6px" }}>Your Children</h2>
+    <p style={{ fontSize: 14, color: "#A9A9B8", margin: "0 0 24px" }}>Step 2 of 3 — Who's joining us today?</p>
 
     {children.map((child, idx) => (
-      <div key={idx} style={{ background: "white", borderRadius: 16, padding: "20px 16px", marginBottom: 16, border: "2px solid #fde8d0", position: "relative" }}>
+      <div key={idx} style={{ background: "white", borderRadius: 16, padding: "20px 16px", marginBottom: 16, border: "2px solid rgba(123,44,191,0.3)", position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: ACCENT, margin: 0 }}>Child {idx + 1}</p>
           {children.length > 1 && <button onClick={() => removeChild(idx)} style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 20, cursor: "pointer", padding: 4 }}>✕</button>}
@@ -281,13 +281,13 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
   // ---- Step 4: How did you hear ----
   if (step === 4) return wrap(<>
     <ProgressBar step={3} total={3} />
-    <h2 style={{ fontSize: 22, fontWeight: 800, color: "#111827", margin: "0 0 6px" }}>One last thing!</h2>
-    <p style={{ fontSize: 14, color: "#9ca3af", margin: "0 0 24px" }}>Step 3 of 3</p>
+    <h2 style={{ fontSize: 22, fontWeight: 800, color: "#FFFFFF", margin: "0 0 6px" }}>One last thing!</h2>
+    <p style={{ fontSize: 14, color: "#A9A9B8", margin: "0 0 24px" }}>Step 3 of 3</p>
 
     <Field label="How did you hear about us? (optional)">
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
         {HOW_OPTIONS.map(opt => (
-          <button key={opt} onClick={() => setHowHeard(opt)} style={{ padding: "12px 10px", borderRadius: 12, border: `2px solid ${howHeard === opt ? ACCENT : "#e5e7eb"}`, background: howHeard === opt ? "#fff7ed" : "white", color: howHeard === opt ? "#9a3412" : "#374151", fontSize: 14, fontWeight: howHeard === opt ? 700 : 400, cursor: "pointer" }}>
+          <button key={opt} onClick={() => setHowHeard(opt)} style={{ padding: "12px 10px", borderRadius: 12, border: `2px solid ${howHeard === opt ? ACCENT : "rgba(123,44,191,0.3)"}`, background: howHeard === opt ? "#1C0A30" : "rgba(255,255,255,0.07)", color: howHeard === opt ? "#F28C28" : "#D8D8E8", fontSize: 14, fontWeight: howHeard === opt ? 700 : 400, cursor: "pointer" }}>
             {opt}
           </button>
         ))}
@@ -308,18 +308,18 @@ export default function KidsCheckinPage({ params }: { params: Promise<{ token: s
   if (step === 5) return wrap(
     <div style={{ paddingTop: 32, textAlign: "center" }}>
       <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 28px" }}>
-        <div style={{ width: 96, height: 96, borderRadius: "50%", background: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44 }}>✓</div>
-        <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "4px solid #86efac", animation: "none", opacity: 0.6 }} />
+        <div style={{ width: 96, height: 96, borderRadius: "50%", background: "#7B2CBF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44 }}>✓</div>
+        <div style={{ position: "absolute", inset: -4, borderRadius: "50%", border: "4px solid rgba(123,44,191,0.5)", animation: "none", opacity: 0.6 }} />
       </div>
-      <h1 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 10px" }}>Welcome to {churchName}!</h1>
-      <p style={{ fontSize: 17, color: "#374151", margin: "0 0 8px" }}>Your children have been checked in 🎉</p>
-      <div style={{ background: "white", borderRadius: 16, padding: "16px 20px", margin: "24px 0", border: "2px solid #fde8d0", textAlign: "left" }}>
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#9ca3af", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 1 }}>Checked in today</p>
+      <h1 style={{ fontSize: 28, fontWeight: 800, color: "#FFFFFF", margin: "0 0 10px" }}>Welcome to {churchName}!</h1>
+      <p style={{ fontSize: 17, color: "#D8D8E8", margin: "0 0 8px" }}>Your children have been checked in 🎉</p>
+      <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 16, padding: "16px 20px", margin: "24px 0", border: "2px solid rgba(123,44,191,0.3)", textAlign: "left" }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: "#D4AF37", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 1 }}>Checked in today</p>
         {children.filter(c => c.first_name.trim()).map((c, i) => (
-          <p key={i} style={{ fontSize: 16, color: "#111827", margin: "4px 0", fontWeight: 600 }}>🧒 {c.first_name} {c.last_name || p1Last}</p>
+          <p key={i} style={{ fontSize: 16, color: "#FFFFFF", margin: "4px 0", fontWeight: 600 }}>🧒 {c.first_name} {c.last_name || p1Last}</p>
         ))}
       </div>
-      {p1Email && <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 32px" }}>A welcome message has been sent to <strong>{p1Email}</strong></p>}
+      {p1Email && <p style={{ fontSize: 14, color: "#A9A9B8", margin: "0 0 32px" }}>A welcome message has been sent to <strong>{p1Email}</strong></p>}
       <p style={{ fontSize: 17, color: ACCENT, fontWeight: 700 }}>We can't wait to see you again! 🙏</p>
     </div>
   );

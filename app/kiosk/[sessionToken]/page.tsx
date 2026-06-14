@@ -17,7 +17,7 @@ export default async function KioskPage({ params }: Props) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "#1a2e1a" }}
+        style={{ backgroundColor: "#08060D" }}
       >
         <div className="text-center text-white p-8">
           <div className="text-6xl mb-4">⛔</div>

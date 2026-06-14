@@ -44,9 +44,10 @@ type Props = {
   rooms: Room[];
 };
 
-const BG = "#1a2e1a";
-const CARD = "#0d1f0d";
-const GREEN = "#4ade80";
+const BG = "#08060D";
+const CARD = "#1C0A30";
+const PURPLE = "#7B2CBF";
+const GOLD = "#D4AF37";
 
 const ALLERGY_OPTIONS = [
   "No Known Allergies",
@@ -65,8 +66,8 @@ const ALLERGY_OPTIONS = [
 ] as const;
 
 const inputCls =
-  "w-full text-xl px-5 py-4 rounded-2xl bg-white/10 border border-green-800 text-white placeholder-green-700 focus:outline-none focus:border-green-400";
-const labelCls = "block text-green-400 text-xs font-bold uppercase tracking-widest mb-2";
+  "w-full text-xl px-5 py-4 rounded-2xl bg-white/10 border border-purple-900 text-white placeholder-purple-400 focus:outline-none focus:border-purple-400";
+const labelCls = "block text-[#D4AF37] text-xs font-bold uppercase tracking-widest mb-2";
 
 function emptyChild(): ChildForm {
   return {
@@ -254,13 +255,13 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
       <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
         <div className="w-full max-w-lg">
           <div className="text-center mb-10">
-            <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-2">
+            <p className="text-[#D4AF37] text-sm font-semibold uppercase tracking-widest mb-2">
               {churchName || "Children's Ministry"}
             </p>
             <h1 className="text-4xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
               Check-In
             </h1>
-            <p className="text-green-600 mt-2">Select your service</p>
+            <p className="text-[#A9A9B8] mt-2">Select your service</p>
           </div>
           <div className="space-y-4">
             {displayGroups.map((g, idx) => (
@@ -268,17 +269,17 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                 key={idx}
                 onClick={() => selectGroup(idx)}
                 className="w-full text-left rounded-3xl p-6 transition-all hover:scale-[1.02]"
-                style={{ backgroundColor: CARD, border: "2px solid #2d5a2d" }}
+                style={{ backgroundColor: CARD, border: "2px solid rgba(123,44,191,0.3)" }}
               >
                 <p className="font-bold text-white text-xl" style={{ fontFamily: "Georgia, serif" }}>
                   {g.name}
                 </p>
                 {g.sessions.length > 1 && (
-                  <p className="text-green-500 text-sm mt-1">
+                  <p className="text-[#A9A9B8] text-sm mt-1">
                     {g.sessions.length} services · {g.sessions.map((s) => s.service_name).join(", ")}
                   </p>
                 )}
-                <p className="text-green-700 text-xs mt-2">Tap to select →</p>
+                <p className="text-[#A9A9B8] text-xs mt-2">Tap to select →</p>
               </button>
             ))}
           </div>
@@ -294,13 +295,13 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
       <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
         <div className="w-full max-w-lg">
           <div className="text-center mb-10">
-            <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-2">
+            <p className="text-[#D4AF37] text-sm font-semibold uppercase tracking-widest mb-2">
               {currentGroup.name}
             </p>
             <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
               Which services today?
             </h1>
-            <p className="text-green-600 mt-2 text-sm">
+            <p className="text-[#A9A9B8] mt-2 text-sm">
               All services are pre-selected. Uncheck any you&apos;re not attending.
             </p>
           </div>
@@ -313,16 +314,16 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                   onClick={() => toggleSession(s.id)}
                   className="w-full text-left rounded-2xl p-5 flex items-center gap-4 transition-all"
                   style={{
-                    backgroundColor: checked ? "#1a4d1a" : CARD,
-                    border: `2px solid ${checked ? GREEN : "#2d5a2d"}`,
+                    backgroundColor: checked ? "#3D1080" : CARD,
+                    border: `2px solid ${checked ? PURPLE : "rgba(123,44,191,0.3)"}`,
                   }}
                 >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
                     style={{
-                      backgroundColor: checked ? GREEN : "transparent",
-                      border: `2px solid ${checked ? GREEN : "#4b7a4b"}`,
-                      color: BG,
+                      backgroundColor: checked ? PURPLE : "transparent",
+                      border: `2px solid ${checked ? PURPLE : "rgba(123,44,191,0.4)"}`,
+                      color: "#FFFFFF",
                     }}
                   >
                     {checked ? "✓" : ""}
@@ -336,14 +337,14 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             onClick={() => { if (selectedSessionIds.size > 0) setStep("welcome"); }}
             disabled={selectedSessionIds.size === 0}
             className="w-full py-4 rounded-2xl text-xl font-bold"
-            style={{ backgroundColor: selectedSessionIds.size > 0 ? GREEN : "#2d5a2d", color: BG }}
+            style={{ backgroundColor: selectedSessionIds.size > 0 ? PURPLE : "#3D1080", color: "#FFFFFF" }}
           >
             Continue →
           </button>
           {displayGroups.length > 1 && (
             <button
               onClick={() => setStep("pick-group")}
-              className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-green-600"
+              className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-[#A9A9B8]"
             >
               ← Back to services
             </button>
@@ -361,7 +362,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
       <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
         <div className="w-full max-w-lg text-center">
           <div className="text-6xl mb-6">⛪</div>
-          <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-3">
+          <p className="text-[#D4AF37] text-sm font-semibold uppercase tracking-widest mb-3">
             {churchName || "Children's Ministry"}
           </p>
           <h1 className="text-4xl font-bold text-white mb-6" style={{ fontFamily: "Georgia, serif" }}>
@@ -369,9 +370,9 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           </h1>
           <div
             className="rounded-3xl p-6 mb-8 text-left"
-            style={{ backgroundColor: CARD, border: "1px solid #2d5a2d" }}
+            style={{ backgroundColor: CARD, border: "1px solid rgba(123,44,191,0.3)" }}
           >
-            <p className="text-green-300 text-base leading-relaxed">
+            <p className="text-[#D8D8E8] text-base leading-relaxed">
               Your privacy matters to us. We collect your information only to ensure your child&apos;s
               safety and will never sell or share it with third parties.
             </p>
@@ -393,7 +394,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             onClick={handleGetStarted}
             disabled={!canStart || lookingUp}
             className="w-full py-5 rounded-2xl text-xl font-bold transition-opacity"
-            style={{ backgroundColor: GREEN, color: BG, opacity: !canStart || lookingUp ? 0.5 : 1 }}
+            style={{ backgroundColor: PURPLE, color: "#FFFFFF", opacity: !canStart || lookingUp ? 0.5 : 1 }}
           >
             {lookingUp ? "Looking up…" : "Get Started →"}
           </button>
@@ -402,7 +403,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               onClick={() =>
                 setStep(currentGroup && currentGroup.sessions.length > 1 ? "pick-sessions" : "pick-group")
               }
-              className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-green-600"
+              className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-[#A9A9B8]"
             >
               ← Back
             </button>
@@ -421,7 +422,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
       <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
         <div className="w-full max-w-lg">
           <div className="text-center mb-8">
-            <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-2">
+            <p className="text-[#D4AF37] text-sm font-semibold uppercase tracking-widest mb-2">
               {churchName || "Children's Ministry"}
             </p>
             <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
@@ -482,13 +483,13 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             onClick={handleParentContinue}
             disabled={!canContinue}
             className="w-full mt-8 py-5 rounded-2xl text-xl font-bold transition-opacity"
-            style={{ backgroundColor: GREEN, color: BG, opacity: !canContinue ? 0.5 : 1 }}
+            style={{ backgroundColor: PURPLE, color: "#FFFFFF", opacity: !canContinue ? 0.5 : 1 }}
           >
             Continue →
           </button>
           <button
             onClick={() => setStep("welcome")}
-            className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-green-600"
+            className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-[#A9A9B8]"
           >
             ← Back
           </button>
@@ -508,9 +509,9 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             {returning && (
               <div
                 className="rounded-2xl p-4 mb-6"
-                style={{ backgroundColor: "#1a4d1a", border: "1px solid #4ade80" }}
+                style={{ backgroundColor: "#3D1080", border: "1px solid #7B2CBF" }}
               >
-                <p className="text-green-300 font-semibold text-center">
+                <p className="text-[#D8D8E8] font-semibold text-center">
                   Welcome back, {parentFirstName}! We pre-filled your children&apos;s information.
                 </p>
               </div>
@@ -519,7 +520,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
                 Children
               </h1>
-              <p className="text-green-600 mt-1 text-sm">Add each child checking in today</p>
+              <p className="text-[#A9A9B8] mt-1 text-sm">Add each child checking in today</p>
             </div>
             {children.map((child, i) => (
               <ChildCard
@@ -535,7 +536,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             <button
               onClick={() => setChildren((cs) => [...cs, emptyChild()])}
               className="w-full py-4 rounded-2xl text-lg font-bold mb-6"
-              style={{ backgroundColor: "transparent", border: "2px dashed #2d5a2d", color: GREEN }}
+              style={{ backgroundColor: "transparent", border: "2px dashed rgba(123,44,191,0.4)", color: PURPLE }}
             >
               + Add Another Child
             </button>
@@ -543,13 +544,13 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               onClick={() => setStep("review")}
               disabled={!canContinue}
               className="w-full py-5 rounded-2xl text-xl font-bold transition-opacity"
-              style={{ backgroundColor: GREEN, color: BG, opacity: canContinue ? 1 : 0.4 }}
+              style={{ backgroundColor: PURPLE, color: "#FFFFFF", opacity: canContinue ? 1 : 0.4 }}
             >
               Continue →
             </button>
             <button
               onClick={() => setStep(returning ? "welcome" : "parent")}
-              className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-green-600"
+              className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-[#A9A9B8]"
             >
               ← Back
             </button>
@@ -570,32 +571,32 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               Review &amp; Confirm
             </h1>
           </div>
-          <div className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid #2d5a2d" }}>
+          <div className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid rgba(123,44,191,0.3)" }}>
             <p className={labelCls}>Parent</p>
             <p className="text-white text-lg font-bold">
               {parentFirstName} {parentLastName}
             </p>
-            <p className="text-green-500 text-sm">{parentPhone}</p>
-            {parentEmail && <p className="text-green-600 text-sm">{parentEmail}</p>}
+            <p className="text-[#A9A9B8] text-sm">{parentPhone}</p>
+            {parentEmail && <p className="text-[#A9A9B8] text-sm">{parentEmail}</p>}
           </div>
           {children.map((child, i) => (
-            <div key={i} className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid #2d5a2d" }}>
+            <div key={i} className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid rgba(123,44,191,0.3)" }}>
               <p className={labelCls}>Child {i + 1}</p>
               <p className="text-white text-lg font-bold">
                 {child.firstName} {child.lastName}
               </p>
-              {child.dateOfBirth && <p className="text-green-500 text-sm">DOB: {child.dateOfBirth}</p>}
-              {child.roomId && <p className="text-green-500 text-sm">Room: {roomMap[child.roomId] ?? child.roomId}</p>}
+              {child.dateOfBirth && <p className="text-[#A9A9B8] text-sm">DOB: {child.dateOfBirth}</p>}
+              {child.roomId && <p className="text-[#A9A9B8] text-sm">Room: {roomMap[child.roomId] ?? child.roomId}</p>}
               {child.allergies.length > 0 && (
                 <p className="text-red-400 text-sm mt-1">
                   ⚠️ Allergies: {[...child.allergies, child.allergyOther].filter(Boolean).join(", ")}
                 </p>
               )}
               {child.specialInstructions && (
-                <p className="text-green-600 text-sm mt-1">Notes: {child.specialInstructions}</p>
+                <p className="text-[#A9A9B8] text-sm mt-1">Notes: {child.specialInstructions}</p>
               )}
               {child.authorizedPickups && (
-                <p className="text-green-600 text-sm mt-1">Authorized pickups: {child.authorizedPickups}</p>
+                <p className="text-[#A9A9B8] text-sm mt-1">Authorized pickups: {child.authorizedPickups}</p>
               )}
             </div>
           ))}
@@ -604,13 +605,13 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             onClick={handleSubmit}
             disabled={submitting}
             className="w-full py-5 rounded-2xl text-xl font-bold transition-opacity"
-            style={{ backgroundColor: GREEN, color: BG, opacity: submitting ? 0.7 : 1 }}
+            style={{ backgroundColor: PURPLE, color: "#FFFFFF", opacity: submitting ? 0.7 : 1 }}
           >
             {submitting ? "Checking In…" : "Confirm Check-In →"}
           </button>
           <button
             onClick={() => setStep("children")}
-            className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-green-600"
+            className="w-full mt-4 py-3 rounded-2xl text-sm font-medium text-[#A9A9B8]"
           >
             ← Edit Children
           </button>
@@ -641,10 +642,10 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             <h1 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "Georgia, serif" }}>
               Checked In!
             </h1>
-            <p className="text-green-400 text-sm mb-6">Your security code is:</p>
+            <p className="text-[#D4AF37] text-sm mb-6">Your security code is:</p>
             <div
               className="rounded-3xl p-8 mb-6"
-              style={{ backgroundColor: CARD, border: "2px solid #4ade80" }}
+              style={{ backgroundColor: CARD, border: "2px solid #7B2CBF" }}
             >
               <p
                 className="font-bold text-white tracking-widest"
@@ -652,7 +653,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               >
                 {securityCode}
               </p>
-              <p className="text-green-500 text-sm mt-4">
+              <p className="text-[#A9A9B8] text-sm mt-4">
                 You will need this code to pick up your child
               </p>
             </div>
@@ -661,7 +662,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                 {resultChildren.map((c, i) => (
                   <div key={i} className="rounded-2xl px-4 py-3" style={{ backgroundColor: CARD }}>
                     <p className="text-white font-semibold">{c.name}</p>
-                    {c.room && <p className="text-green-500 text-sm">Room: {c.room}</p>}
+                    {c.room && <p className="text-[#A9A9B8] text-sm">Room: {c.room}</p>}
                   </div>
                 ))}
               </div>
@@ -678,7 +679,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             <button
               onClick={reset}
               className="w-full py-4 rounded-2xl text-lg font-bold"
-              style={{ backgroundColor: GREEN, color: BG }}
+              style={{ backgroundColor: PURPLE, color: "#FFFFFF" }}
             >
               Check In Another Family
             </button>
@@ -892,9 +893,9 @@ function ChildCard({
   }
 
   return (
-    <div className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid #2d5a2d" }}>
+    <div className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid rgba(123,44,191,0.3)" }}>
       <div className="flex justify-between items-center mb-4">
-        <p className="text-green-400 text-xs font-bold uppercase tracking-widest">Child {index + 1}</p>
+        <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">Child {index + 1}</p>
         {showRemove && (
           <button onClick={onRemove} className="text-red-400 text-sm font-bold">
             Remove
@@ -971,9 +972,9 @@ function ChildCard({
                 onClick={() => toggleAllergy(opt)}
                 className="text-left rounded-xl px-3 py-2 text-sm font-semibold transition-colors"
                 style={{
-                  backgroundColor: selected ? "#1a4d1a" : "rgba(255,255,255,0.05)",
-                  border: `1.5px solid ${selected ? GREEN : "#2d5a2d"}`,
-                  color: selected ? GREEN : "#6b9b6b",
+                  backgroundColor: selected ? "#3D1080" : "rgba(255,255,255,0.05)",
+                  border: `1.5px solid ${selected ? PURPLE : "rgba(123,44,191,0.3)"}`,
+                  color: selected ? PURPLE : "#A9A9B8",
                 }}
               >
                 {selected ? "✓ " : ""}{opt}
@@ -1000,7 +1001,7 @@ function ChildCard({
           onChange={(e) => onChange({ ...child, specialInstructions: e.target.value })}
           placeholder="e.g. carries EpiPen, bathroom reminder every hour"
           rows={2}
-          className="w-full px-5 py-4 rounded-2xl bg-white/10 border border-green-800 text-white placeholder-green-700 focus:outline-none focus:border-green-400 resize-none text-base"
+          className="w-full px-5 py-4 rounded-2xl bg-white/10 border border-purple-900 text-white placeholder-purple-400 focus:outline-none focus:border-purple-400 resize-none text-base"
         />
       </div>
 
@@ -1014,7 +1015,7 @@ function ChildCard({
           className={inputCls}
           style={{ fontSize: "1rem" }}
         />
-        <p className="text-green-700 text-xs mt-1">Comma-separated names</p>
+        <p className="text-[#A9A9B8] text-xs mt-1">Comma-separated names</p>
       </div>
     </div>
   );
