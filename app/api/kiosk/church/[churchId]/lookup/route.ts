@@ -7,9 +7,16 @@ type VisitorChildRow = {
   last_name: string;
   date_of_birth: string | null;
   allergies: string | null;
+  allergy_other: string | null;
   medical_notes: string | null;
   special_instructions: string | null;
+  authorized_pickups: string | null;
 };
+
+function parseAllergies(raw: string | null): string[] {
+  if (!raw) return [];
+  try { return JSON.parse(raw) as string[]; } catch { return []; }
+}
 
 type CheckinRecordRow = {
   parent_name: string | null;
@@ -50,7 +57,7 @@ export async function GET(
 
     const { data: visitorChildren } = await admin
       .from('cm_visitor_children')
-      .select('id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions')
+      .select('id, first_name, last_name, date_of_birth, allergies, allergy_other, medical_notes, special_instructions, authorized_pickups')
       .eq('family_id', f.id)
       .order('created_at', { ascending: true });
 
@@ -67,9 +74,11 @@ export async function GET(
           firstName: c.first_name,
           lastName: c.last_name,
           dateOfBirth: c.date_of_birth ?? null,
-          allergies: c.allergies,
-          medicalNotes: c.medical_notes,
-          specialInstructions: c.special_instructions,
+          allergies: parseAllergies(c.allergies),
+          allergyOther: c.allergy_other ?? "",
+          medicalNotes: c.medical_notes ?? "",
+          specialInstructions: c.special_instructions ?? "",
+          authorizedPickups: c.authorized_pickups ?? "",
         })),
       });
     }

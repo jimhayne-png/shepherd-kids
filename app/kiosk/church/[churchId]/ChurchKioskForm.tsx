@@ -18,8 +18,10 @@ type ChildForm = {
   roomId: string;
   allergies: string[];
   allergyOther: string;
+  medicalNotes: string;
   specialInstructions: string;
   authorizedPickups: string;
+  checkedIn: boolean;
 };
 
 type ImmediateLabel = {
@@ -77,8 +79,10 @@ function emptyChild(): ChildForm {
     roomId: "",
     allergies: [],
     allergyOther: "",
+    medicalNotes: "",
     specialInstructions: "",
     authorizedPickups: "",
+    checkedIn: true,
   };
 }
 
@@ -153,15 +157,32 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           setParentFirstName(data.parentFirstName ?? "");
           setParentLastName(data.parentLastName ?? "");
           setParentPhone(data.parentPhone ?? welcomePhone);
+          type LookupChild = {
+            id?: string;
+            name: string;
+            firstName?: string;
+            lastName?: string;
+            dateOfBirth: string | null;
+            allergies?: string[];
+            allergyOther?: string;
+            medicalNotes?: string;
+            specialInstructions?: string;
+            authorizedPickups?: string;
+          };
           setChildren(
-            (data.children as { id?: string; name: string; dateOfBirth: string | null }[]).map((c) => {
+            (data.children as LookupChild[]).map((c) => {
               const parts = c.name.trim().split(/\s+/);
               return {
                 ...emptyChild(),
                 childId: c.id,
-                firstName: parts[0] ?? "",
-                lastName: parts.slice(1).join(" "),
+                firstName: c.firstName ?? parts[0] ?? "",
+                lastName: c.lastName ?? parts.slice(1).join(" "),
                 dateOfBirth: c.dateOfBirth ?? "",
+                allergies: c.allergies ?? [],
+                allergyOther: c.allergyOther ?? "",
+                medicalNotes: c.medicalNotes ?? "",
+                specialInstructions: c.specialInstructions ?? "",
+                authorizedPickups: c.authorizedPickups ?? "",
               };
             }),
           );
@@ -185,6 +206,11 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   }
 
   async function handleSubmit() {
+    const childrenToSubmit = children.filter((c) => c.checkedIn);
+    if (childrenToSubmit.length === 0) {
+      setSubmitError("Please select at least one child to check in.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -197,7 +223,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           parentPhone: parentPhone.trim(),
           parentEmail: parentEmail.trim() || undefined,
           sessionIds: [...selectedSessionIds],
-          children: children.map((c) => ({
+          children: childrenToSubmit.map((c) => ({
             childId: c.childId || undefined,
             firstName: c.firstName.trim(),
             lastName: c.lastName.trim(),
@@ -205,6 +231,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             roomId: c.roomId || undefined,
             allergies: c.allergies,
             allergyOther: c.allergyOther || undefined,
+            medicalNotes: c.medicalNotes.trim() || undefined,
             specialInstructions: c.specialInstructions.trim() || undefined,
             authorizedPickups: c.authorizedPickups.trim() || undefined,
           })),
@@ -219,7 +246,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
       setSecurityCode(data.securityCode);
       setLabels(data.labels ?? []);
       setResultChildren(
-        children.map((c) => ({
+        childrenToSubmit.map((c) => ({
           name: `${c.firstName.trim()} ${c.lastName.trim()}`,
           room: c.roomId ? (roomMap[c.roomId] ?? null) : null,
         })),
@@ -563,6 +590,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   // ── review ────────────────────────────────────────────────────────────────
 
   if (step === "review") {
+    const anyCheckedIn = children.some((c) => c.checkedIn);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: BG }}>
         <div className="w-full max-w-lg">
@@ -580,8 +608,50 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             {parentEmail && <p className="text-[#A9A9B8] text-sm">{parentEmail}</p>}
           </div>
           {children.map((child, i) => (
-            <div key={i} className="rounded-2xl p-5 mb-4" style={{ backgroundColor: CARD, border: "1px solid rgba(123,44,191,0.3)" }}>
-              <p className={labelCls}>Child {i + 1}</p>
+            <div
+              key={i}
+              className="rounded-2xl p-5 mb-4 transition-opacity"
+              style={{
+                backgroundColor: CARD,
+                border: `1px solid ${child.checkedIn ? "rgba(123,44,191,0.5)" : "rgba(123,44,191,0.15)"}`,
+                opacity: child.checkedIn ? 1 : 0.5,
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className={labelCls} style={{ margin: 0 }}>Child {i + 1}</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setChildren((cs) =>
+                      cs.map((c, j) => (j === i ? { ...c, checkedIn: !c.checkedIn } : c)),
+                    )
+                  }
+                  className="flex items-center gap-2 text-sm font-semibold rounded-xl px-3 py-1.5 transition-colors"
+                  style={{
+                    backgroundColor: child.checkedIn ? "#3D1080" : "rgba(255,255,255,0.05)",
+                    border: `1.5px solid ${child.checkedIn ? PURPLE : "rgba(123,44,191,0.3)"}`,
+                    color: child.checkedIn ? "#FFFFFF" : "#A9A9B8",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      border: `2px solid ${child.checkedIn ? PURPLE : "rgba(123,44,191,0.4)"}`,
+                      backgroundColor: child.checkedIn ? PURPLE : "transparent",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {child.checkedIn ? "✓" : ""}
+                  </span>
+                  Checking in today
+                </button>
+              </div>
               <p className="text-white text-lg font-bold">
                 {child.firstName} {child.lastName}
               </p>
@@ -600,12 +670,17 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               )}
             </div>
           ))}
+          {!anyCheckedIn && (
+            <p className="text-red-400 text-sm text-center mb-4">
+              Please select at least one child to check in.
+            </p>
+          )}
           {submitError && <p className="text-red-400 text-sm text-center mb-4">{submitError}</p>}
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || !anyCheckedIn}
             className="w-full py-5 rounded-2xl text-xl font-bold transition-opacity"
-            style={{ backgroundColor: PURPLE, color: "#FFFFFF", opacity: submitting ? 0.7 : 1 }}
+            style={{ backgroundColor: PURPLE, color: "#FFFFFF", opacity: submitting || !anyCheckedIn ? 0.4 : 1 }}
           >
             {submitting ? "Checking In…" : "Confirm Check-In →"}
           </button>
@@ -629,6 +704,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
           @page { size: 4in 2in; margin: 0; }
           @media print {
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: #fff !important; color: #000 !important; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
           }
@@ -690,9 +766,9 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
         <div className="print-only">
           {labels.map((label, i) =>
             label.labelType === "parent" ? (
-              <KioskParentLabel key={i} label={label} />
+              <KioskParentLabel key={i} label={label} churchName={churchName} />
             ) : (
-              <KioskChildLabel key={i} label={label} />
+              <KioskChildLabel key={i} label={label} churchName={churchName} />
             ),
           )}
         </div>
@@ -717,9 +793,12 @@ const LABEL_STYLE: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
+  backgroundColor: "#ffffff",
+  color: "#000000",
 };
 
-function KioskChildLabel({ label }: { label: ImmediateLabel }) {
+function KioskChildLabel({ label, churchName }: { label: ImmediateLabel; churchName: string }) {
+  const hasCareNotes = !!(label.allergies || label.medicalNotes || label.specialInstructions);
   return (
     <div style={LABEL_STYLE}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -737,6 +816,7 @@ function KioskChildLabel({ label }: { label: ImmediateLabel }) {
         >
           Child Check-In
         </span>
+        <span style={{ fontSize: 9, color: "#555", textAlign: "right" }}>{churchName}</span>
         {label.roomName && (
           <span
             style={{
@@ -745,47 +825,35 @@ function KioskChildLabel({ label }: { label: ImmediateLabel }) {
               border: "1.5px solid #000",
               padding: "1px 8px",
               borderRadius: 3,
+              color: "#000",
             }}
           >
             {label.roomName}
           </span>
         )}
       </div>
-      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: "4px 0 0" }}>
+      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: "4px 0 0", color: "#000" }}>
         {label.childName}
       </div>
       <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
         Parent: {label.parentName}
         {label.parentPhone ? ` · ${label.parentPhone}` : ""}
       </div>
-      {(label.allergies || label.medicalNotes || label.specialInstructions) && (
+      {hasCareNotes && (
         <div style={{ marginTop: 4 }}>
-          {label.allergies && (
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "#fff",
-                backgroundColor: "#dc2626",
-                padding: "2px 6px",
-                borderRadius: 3,
-                display: "inline-block",
-                marginBottom: 2,
-              }}
-            >
-              ⚠ ALLERGY: {label.allergies}
-            </div>
-          )}
-          {label.medicalNotes && (
-            <div style={{ fontSize: 10, color: "#333" }}>
-              <strong>Medical:</strong> {label.medicalNotes}
-            </div>
-          )}
-          {label.specialInstructions && (
-            <div style={{ fontSize: 10, color: "#333" }}>
-              <strong>Instr:</strong> {label.specialInstructions}
-            </div>
-          )}
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 900,
+              color: "#000",
+              border: "1.5px solid #000",
+              padding: "2px 6px",
+              borderRadius: 3,
+              display: "inline-block",
+            }}
+          >
+            ⚠ SEE CARE NOTES
+          </div>
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
@@ -806,6 +874,7 @@ function KioskChildLabel({ label }: { label: ImmediateLabel }) {
               fontFamily: "monospace",
               letterSpacing: "0.18em",
               lineHeight: 1,
+              color: "#000",
             }}
           >
             {label.securityCode}
@@ -816,25 +885,29 @@ function KioskChildLabel({ label }: { label: ImmediateLabel }) {
   );
 }
 
-function KioskParentLabel({ label }: { label: ImmediateLabel }) {
+function KioskParentLabel({ label, churchName }: { label: ImmediateLabel; churchName: string }) {
   return (
     <div style={LABEL_STYLE}>
-      <div
-        style={{
-          backgroundColor: "#000",
-          color: "#fff",
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          padding: "2px 8px",
-          alignSelf: "flex-start",
-          borderRadius: 3,
-        }}
-      >
-        👪 Parent Pickup
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div
+          style={{
+            backgroundColor: "#000",
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            padding: "2px 8px",
+            borderRadius: 3,
+          }}
+        >
+          Parent Pickup
+        </div>
+        {churchName && (
+          <span style={{ fontSize: 9, color: "#555" }}>{churchName}</span>
+        )}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 6 }}>
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 6, color: "#000" }}>
         {label.parentName}
       </div>
       <div style={{ fontSize: 12, color: "#333", marginTop: 4 }}>
@@ -849,6 +922,7 @@ function KioskParentLabel({ label }: { label: ImmediateLabel }) {
             fontFamily: "monospace",
             letterSpacing: "0.2em",
             lineHeight: 1,
+            color: "#000",
           }}
         >
           {label.securityCode}
