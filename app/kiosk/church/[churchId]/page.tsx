@@ -103,14 +103,12 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
     hour12: true,
   }).format(now);
 
-  const [{ data: sessionRows }, { data: roomRows }] = await Promise.all([
+  const [sessionResult, { data: roomRows }] = await Promise.all([
     admin
       .from("cm_checkin_sessions")
-      .select("id, service_name, date, session_group, scheduled_time, status")
+      .select("*")
       .eq("church_id", churchId)
-      .eq("date", today)
-      .neq("status", "closed")
-      .order("created_at", { ascending: true }),
+      .eq("date", today),
     admin
       .from("cm_checkin_rooms")
       .select("id, name")
@@ -119,7 +117,8 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
       .order("name"),
   ]);
 
-  const allTodaySessions = (sessionRows ?? []) as RawSession[];
+  const sessionQueryError: string | null = sessionResult.error?.message ?? null;
+  const allTodaySessions = (sessionResult.data ?? []) as RawSession[];
   const rooms: Room[] = (roomRows ?? []) as Room[];
 
   type DebugEntry = {
@@ -141,10 +140,16 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
   let nextSessionName: string | null = null;
 
   for (const s of allTodaySessions) {
+    // All status filtering is done here in JS — no server-side status filter.
+    if (s.status === "closed") {
+      debugEntries.push({ id: s.id, service: s.service_name, date: s.date, status: s.status, scheduledTime: s.scheduled_time, scheduledMinutes: null, openAtMinutes: null, closeAtMinutes: null, isWithinWindow: null, verdict: "skipped (status=closed)" });
+      continue;
+    }
+
     const scheduledMinutes = timeStringToMinutes(s.scheduled_time);
 
     if (scheduledMinutes === null) {
-      const verdict = s.status === "open" ? "available (manual, no scheduled_time)" : "skipped (manual, status not open)";
+      const verdict = s.status === "open" ? "available (manual, no scheduled_time)" : `skipped (status=${s.status}, no scheduled_time)`;
       debugEntries.push({ id: s.id, service: s.service_name, date: s.date, status: s.status, scheduledTime: s.scheduled_time, scheduledMinutes: null, openAtMinutes: null, closeAtMinutes: null, isWithinWindow: null, verdict });
       if (s.status === "open") {
         availableSessions.push({ id: s.id, service_name: s.service_name, date: s.date, session_group: s.session_group });
@@ -187,6 +192,7 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
   }
 
   console.log("[kiosk:availability]", {
+    churchId,
     churchTimezone: tz,
     currentChurchTime,
     currentChurchMinutes,
@@ -194,6 +200,7 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
     opensBefore,
     closesAfter,
     churchQueryError,
+    sessionQueryError,
     totalTodaySessions: allTodaySessions.length,
     availableSessionCount: availableSessions.length,
     nextSessionName,
@@ -232,6 +239,7 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
           >
             <p className="font-bold mb-3" style={{ color: "#D4AF37" }}>🔍 Debug — add ?debug=1 to URL</p>
             <div className="space-y-1 mb-4">
+              <p><span style={{ color: "#D4AF37" }}>church_id:</span> {churchId}</p>
               <p><span style={{ color: "#D4AF37" }}>Timezone:</span> {tz}</p>
               <p><span style={{ color: "#D4AF37" }}>Church time:</span> {currentChurchTime}</p>
               <p>
@@ -242,7 +250,10 @@ export default async function ChurchKioskPage({ params, searchParams }: Props) {
               <p><span style={{ color: "#D4AF37" }}>Opens before service:</span> {opensBefore} min</p>
               <p><span style={{ color: "#D4AF37" }}>Closes after service:</span> {closesAfter} min</p>
               {churchQueryError && (
-                <p><span className="text-red-400">⚠ Church query error (migration not applied?):</span> {churchQueryError}</p>
+                <p><span className="text-red-400">⚠ Church query error:</span> {churchQueryError}</p>
+              )}
+              {sessionQueryError && (
+                <p><span className="text-red-400">⚠ Session query error:</span> {sessionQueryError}</p>
               )}
             </div>
 
