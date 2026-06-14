@@ -479,21 +479,37 @@ export async function POST(
             ? child.childId
             : existingNameMap.get(nameKey);
 
-        const childPayload = {
-          date_of_birth: childBirthDate(child),
-          allergies: allergyProfileValue(child),
-          medical_notes: clean(child.medicalNotes) || null,
-          special_instructions: clean(child.specialInstructions) || null,
-        };
+        const medNotes = clean(child.medicalNotes);
+        const specInstr = clean(child.specialInstructions);
+
+        console.log('[check-in:visitor-child]', {
+          name: `${firstName} ${lastName}`,
+          hasSpecialInstructions: specInstr.length > 0,
+          specialInstructionsLength: specInstr.length,
+          hasMedicalNotes: medNotes.length > 0,
+          matched: !!matchedChildId,
+        });
 
         if (matchedChildId) {
+          // UPDATE: always refresh DOB and allergies.
+          // Only write notes fields when a non-empty value was submitted —
+          // an empty value means the field wasn't shown/edited this visit,
+          // not that the parent intentionally cleared it.
+          const updatePayload: Record<string, unknown> = {
+            date_of_birth: childBirthDate(child),
+            allergies: allergyProfileValue(child),
+          };
+          if (medNotes) updatePayload.medical_notes = medNotes;
+          if (specInstr) updatePayload.special_instructions = specInstr;
+
           const { error: childUpdateError } = await admin
             .from('cm_visitor_children')
-            .update(childPayload)
+            .update(updatePayload)
             .eq('id', matchedChildId);
 
           if (childUpdateError) throw childUpdateError;
         } else {
+          // INSERT: include all fields; null is correct for an empty new row.
           const { error: childInsertError } = await admin
             .from('cm_visitor_children')
             .insert({
@@ -501,7 +517,10 @@ export async function POST(
               family_id: familyId,
               first_name: firstName,
               last_name: lastName,
-              ...childPayload,
+              date_of_birth: childBirthDate(child),
+              allergies: allergyProfileValue(child),
+              medical_notes: medNotes || null,
+              special_instructions: specInstr || null,
             });
 
           if (childInsertError) throw childInsertError;
