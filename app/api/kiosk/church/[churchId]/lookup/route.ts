@@ -38,6 +38,41 @@ function parseAllergies(raw: string | null): string[] {
   try { return JSON.parse(raw) as string[]; } catch { return []; }
 }
 
+/**
+ * cm_visitor_children.allergies stores allergyArray() output, which expands
+ * "Other" → "Other: <detail>". This converts that back to the form's expected
+ * format so allergy buttons render as selected and the Other text input appears.
+ */
+function normalizeAllergiesForForm(allergies: string[]): { allergies: string[]; allergyOther: string } {
+  const normalized: string[] = [];
+  let allergyOther = '';
+  for (const a of allergies) {
+    if (a.startsWith('Other: ')) {
+      normalized.push('Other');
+      if (!allergyOther) allergyOther = a.slice(7).trim();
+    } else {
+      normalized.push(a);
+    }
+  }
+  return { allergies: normalized, allergyOther };
+}
+
+/** Returns the first non-null/non-empty string value from an array of candidates. */
+function firstNonEmpty(...values: (string | null | undefined)[]): string {
+  for (const v of values) {
+    if (v && v.trim()) return v.trim();
+  }
+  return '';
+}
+
+/** Returns the first non-empty string array from a list of candidates. */
+function firstNonEmptyArray(...arrays: (string[] | null | undefined)[]): string[] {
+  for (const a of arrays) {
+    if (a && a.length > 0) return a;
+  }
+  return [];
+}
+
 function calcRoomId(dob: string | null, rooms: RoomRow[], today: string): string | null {
   if (!dob) return null;
   try {
@@ -140,23 +175,54 @@ export async function GET(
     console.log('[lookup] visitor children:', visitorChildren?.length ?? 0, 'checkin records:', recentCheckins?.length ?? 0);
 
     if (visitorChildren?.length) {
-      // Most-recent check-in record per child name (keyed lowercase)
-      const supplementMap = new Map<string, CheckinSupplementRow>();
+      // Group ALL check-in records per child (most-recent first from query ordering).
+      // We scan all records instead of just the first so that older entries with
+      // non-empty care data are used as fallback when recent (previously buggy)
+      // check-ins wiped allergies/notes back to empty.
+      const checkinsByChild = new Map<string, CheckinSupplementRow[]>();
       for (const r of ((recentCheckins ?? []) as CheckinSupplementRow[])) {
         const key = (r.child_name ?? '').trim().toLowerCase();
-        if (!supplementMap.has(key)) supplementMap.set(key, r);
+        if (!checkinsByChild.has(key)) checkinsByChild.set(key, []);
+        checkinsByChild.get(key)!.push(r);
       }
 
       const children = (visitorChildren as VisitorChildRow[]).map((c) => {
         const childName = `${c.first_name} ${c.last_name}`.trim();
-        const sup = supplementMap.get(childName.toLowerCase());
+        const recs = checkinsByChild.get(childName.toLowerCase()) ?? [];
 
-        // Allergies: visitor record stores JSON string; checkin record stores text[].
-        const visitorAllergies = parseAllergies(c.allergies);
-        const allergies = visitorAllergies.length > 0 ? visitorAllergies : (sup?.allergies ?? []);
+        // Room: most recent non-null checkin room wins; fall back to DOB calculation.
+        const roomId =
+          recs.find((r) => r.room_id)?.room_id ??
+          calcRoomId(c.date_of_birth, activeRooms, today) ??
+          '';
 
-        // Room: most recent checkin record wins; fall back to DOB calculation.
-        const roomId = sup?.room_id ?? calcRoomId(c.date_of_birth, activeRooms, today) ?? '';
+        // Allergies from visitor_children are stored as allergyArray() output,
+        // which expands "Other" → "Other: detail". Normalize back to form format.
+        const parsedVisitor = parseAllergies(c.allergies);
+        const { allergies: visitorAllergies, allergyOther: visitorAllergyOther } =
+          normalizeAllergiesForForm(parsedVisitor);
+
+        // First non-empty allergies array across all checkin records (most-recent first).
+        const checkinAllergies = firstNonEmptyArray(...recs.map((r) => r.allergies ?? []));
+        // First non-empty allergy_other across all records.
+        const checkinAllergyOther = firstNonEmpty(...recs.map((r) => r.allergy_other));
+
+        // Prefer visitor_children allergies (normalized); fall back to checkin records.
+        const allergies = visitorAllergies.length > 0 ? visitorAllergies : checkinAllergies;
+        // allergyOther: visitor_children expansion wins if found; then checkin supplement.
+        const allergyOther = visitorAllergyOther || checkinAllergyOther;
+
+        // medical_notes: visitor_children is authoritative; fall back to any checkin record.
+        const medicalNotes = firstNonEmpty(
+          c.medical_notes,
+          ...recs.map((r) => r.medical_notes),
+        );
+
+        // special_instructions: only in cm_visitor_children.
+        const specialInstructions = c.special_instructions?.trim() ?? '';
+
+        // authorized_pickups: only in cm_checkin_records; take first non-empty.
+        const authorizedPickups = firstNonEmpty(...recs.map((r) => r.authorized_pickups));
 
         return {
           id: c.id,
@@ -166,10 +232,10 @@ export async function GET(
           lastName: c.last_name,
           dateOfBirth: c.date_of_birth ?? null,
           allergies,
-          allergyOther: sup?.allergy_other ?? '',
-          medicalNotes: c.medical_notes ?? sup?.medical_notes ?? '',
-          specialInstructions: c.special_instructions ?? '',
-          authorizedPickups: sup?.authorized_pickups ?? '',
+          allergyOther,
+          medicalNotes,
+          specialInstructions,
+          authorizedPickups,
           roomId,
         };
       });
