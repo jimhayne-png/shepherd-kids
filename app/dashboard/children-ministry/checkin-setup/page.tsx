@@ -51,7 +51,7 @@ export default function CheckinSetupPage() {
     return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
   }
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation" | "general">("rooms");
+  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation" | "label-printing" | "general">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -413,18 +413,11 @@ export default function CheckinSetupPage() {
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Tabs */}
         <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
-          {(["general", "rooms", "templates", "sessions", "automation"] as const).map(t => (
+          {(["general", "rooms", "templates", "sessions", "automation", "label-printing"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
-              {t === "general" ? "General" : t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : "Automation Settings"}
+              {t === "general" ? "General" : t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : t === "automation" ? "Automation" : "Label Printing"}
             </button>
           ))}
-          <a
-            href="/dashboard/children-ministry/print-station"
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
-            style={{ backgroundColor: "transparent", color: "#A9A9B8", textDecoration: "none", display: "inline-flex", alignItems: "center" }}
-          >
-            Label Printing ↗
-          </a>
         </div>
 
         {/* ── GENERAL TAB ── */}
@@ -692,7 +685,7 @@ export default function CheckinSetupPage() {
                 <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.25)" }}>
                   <p style={{ color: "#6b7280", fontSize: "13px", margin: 0 }}>
                     👥 <strong style={{ color: "#9ca3af" }}>Volunteer Room View</strong> — Volunteer QR tools are turned off in{" "}
-                    <button onClick={() => setTab("automation")} style={{ color: "#D4AF37", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "13px", fontWeight: 600 }}>Label Printing settings</button>.
+                    <button onClick={() => setTab("label-printing")} style={{ color: "#D4AF37", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "13px", fontWeight: 600 }}>Label Printing settings</button>.
                   </p>
                 </div>
               )
@@ -778,6 +771,128 @@ export default function CheckinSetupPage() {
                 </div>
               ) : null
             )}
+
+            {/* Service Schedule */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "20px" }}>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>📅 Service Schedule</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0" }}>
+                    {autoOpen
+                      ? `Active services will open check-in ${autoOpenMinutes} min before start`
+                      : "Define recurring services — enable Automatic Session Opening in Automation to activate"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAddSchedule(true)}
+                  style={{ padding: "8px 16px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer", flexShrink: 0 }}
+                >
+                  + Add Service
+                </button>
+              </div>
+
+              {showAddSchedule && (
+                <div style={{ background: "#0D0A14", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "20px", marginBottom: "16px" }}>
+                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: "0 0 16px" }}>New Service Schedule</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Service Name *</label>
+                      <input
+                        value={scheduleForm.name}
+                        onChange={e => setScheduleForm(f => ({ ...f, name: e.target.value }))}
+                        placeholder="e.g. Sunday Morning Service"
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", boxSizing: "border-box" as const, outline: "none" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Day of Week *</label>
+                      <select
+                        value={scheduleForm.day}
+                        onChange={e => setScheduleForm(f => ({ ...f, day: e.target.value }))}
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", outline: "none" }}
+                      >
+                        {DAYS_OF_WEEK.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Service Start Time *</label>
+                      <input
+                        type="time"
+                        value={scheduleForm.time}
+                        onChange={e => setScheduleForm(f => ({ ...f, time: e.target.value }))}
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", outline: "none" }}
+                      />
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>
+                        Session Group{" "}
+                        <span style={{ color: "rgba(212,175,55,0.5)", fontWeight: 400, textTransform: "none" as const, letterSpacing: 0 }}>(optional)</span>
+                      </label>
+                      <input
+                        value={scheduleForm.sessionGroup}
+                        onChange={e => setScheduleForm(f => ({ ...f, sessionGroup: e.target.value }))}
+                        placeholder="e.g. Sunday Morning"
+                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "8px", fontSize: "13px", color: "rgba(255,255,255,0.45)", boxSizing: "border-box" as const, outline: "none" }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+                    <button
+                      onClick={saveSchedule}
+                      disabled={savingSchedule || !scheduleForm.name.trim() || !scheduleForm.time}
+                      style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: savingSchedule ? "not-allowed" : "pointer", opacity: (savingSchedule || !scheduleForm.name.trim() || !scheduleForm.time) ? 0.6 : 1 }}
+                    >
+                      {savingSchedule ? "Saving…" : "Save Service"}
+                    </button>
+                    <button
+                      onClick={() => { setShowAddSchedule(false); setScheduleForm({ name: "", day: "Sunday", time: "", sessionGroup: "" }); }}
+                      style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "10px", fontSize: "13px", color: "#A9A9B8", cursor: "pointer" }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {templates.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "12px" }}>📅</div>
+                  <p style={{ color: "#FFFFFF", fontWeight: 500, fontFamily: "Georgia, serif", margin: 0 }}>No services scheduled yet.</p>
+                  <p style={{ color: "#A9A9B8", fontSize: "13px", marginTop: "6px" }}>Add your first recurring service above.</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {templates.map(tpl => {
+                    const openAtTime = autoOpen && tpl.typical_time ? computeOpenTime(tpl.typical_time, autoOpenMinutes) : null;
+                    return (
+                      <div
+                        key={tpl.id}
+                        style={{ background: "#0D0A14", border: `1px solid ${tpl.is_active ? "rgba(123,44,191,0.3)" : "rgba(212,175,55,0.1)"}`, borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "16px", opacity: tpl.is_active ? 1 : 0.55 }}
+                      >
+                        <div style={{ flexShrink: 0, width: 58, textAlign: "center" as const, background: tpl.is_active ? "rgba(123,44,191,0.15)" : "rgba(212,175,55,0.06)", borderRadius: "8px", padding: "6px 4px" }}>
+                          <p style={{ fontSize: "10px", fontWeight: 700, color: tpl.is_active ? "#c084fc" : "#6b6b8a", margin: 0, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>{tpl.typical_day?.slice(0, 3) ?? "—"}</p>
+                          <p style={{ fontSize: "12px", fontWeight: 700, color: tpl.is_active ? "#FFFFFF" : "#6b6b8a", margin: "3px 0 0" }}>{tpl.typical_time ? fmtTime(tpl.typical_time) : "—"}</p>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 700, color: "#FFFFFF", fontSize: "14px", margin: 0 }}>{tpl.name}</p>
+                          {openAtTime ? (
+                            <p style={{ fontSize: "12px", color: "#D4AF37", margin: "3px 0 0" }}>⚡ Check-in opens at {openAtTime}</p>
+                          ) : (
+                            <p style={{ fontSize: "12px", color: "#6b6b8a", margin: "3px 0 0" }}>{tpl.typical_day && tpl.typical_time ? `${tpl.typical_day} · ${fmtTime(tpl.typical_time)}` : "No schedule set"}</p>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                          <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", fontWeight: 700, background: tpl.is_active ? "rgba(123,44,191,0.18)" : "rgba(212,175,55,0.07)", color: tpl.is_active ? "#c084fc" : "#6b6b8a" }}>{tpl.is_active ? "Active" : "Inactive"}</span>
+                          <button onClick={() => toggleTemplate(tpl)} style={{ padding: "5px 12px", borderRadius: "8px", border: "1px solid rgba(212,175,55,0.2)", background: "transparent", fontSize: "12px", fontWeight: 600, color: "#A9A9B8", cursor: "pointer" }}>
+                            {tpl.is_active ? "Deactivate" : "Activate"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center justify-between mb-5">
               <div>
@@ -923,8 +1038,8 @@ export default function CheckinSetupPage() {
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
                 <span style={{ fontSize: "22px" }}>⚡</span>
                 <div>
-                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Auto-Open Check-In</h2>
-                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Automatically open sessions before service starts</p>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Automatic Session Opening</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Automatically open check-in before class starts using the Check-In Window settings.</p>
                 </div>
               </div>
 
@@ -998,7 +1113,7 @@ export default function CheckinSetupPage() {
                 </div>
                 <div>
                   <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "8px" }}>
-                    Typical time in class
+                    Typical Class Length
                   </label>
                   <select
                     value={typicalClassDuration}
@@ -1023,14 +1138,32 @@ export default function CheckinSetupPage() {
               </div>
 
               {/* Live formula preview */}
-              <div style={{ marginBottom: "20px", padding: "12px 14px", background: "rgba(123,44,191,0.08)", border: "1px solid rgba(123,44,191,0.25)", borderRadius: "10px", fontSize: "12px", color: "#D8D8E8", lineHeight: 1.7 }}>
-                <p style={{ margin: "0 0 4px", fontWeight: 700, color: "#c084fc" }}>Example — 10:00 AM service</p>
-                <p style={{ margin: 0 }}>
-                  Check-in opens at <strong style={{ color: "#4ade80" }}>{(() => { const open = 600 - checkInOpensBefore; const h = Math.floor(open / 60) % 24; const m = open % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}</strong>
-                  {" · "}Class ends at <strong style={{ color: "#fbbf24" }}>{(() => { const end = 600 + typicalClassDuration; const h = Math.floor(end / 60) % 24; const m = end % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}</strong>
-                  {" · "}Check-in closes at <strong style={{ color: "#f87171" }}>{(() => { const close = 600 + typicalClassDuration + checkInClosesAfter; const h = Math.floor(close / 60) % 24; const m = close % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}</strong>
-                </p>
-              </div>
+              {(() => {
+                function fmtMin(total: number): string {
+                  const h = Math.floor(total / 60) % 24;
+                  const m = total % 60;
+                  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+                }
+                const rows: [string, string, string][] = [
+                  ["Check-in Opens", fmtMin(600 - checkInOpensBefore), "#4ade80"],
+                  ["Class Begins", "10:00 AM", "#D8D8E8"],
+                  ["Class Ends", fmtMin(600 + typicalClassDuration), "#fbbf24"],
+                  ["Check-in Closes", fmtMin(600 + typicalClassDuration + checkInClosesAfter), "#f87171"],
+                ];
+                return (
+                  <div style={{ marginBottom: "20px", padding: "14px 16px", background: "rgba(123,44,191,0.08)", border: "1px solid rgba(123,44,191,0.25)", borderRadius: "10px" }}>
+                    <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: "12px", color: "#c084fc" }}>Example — 10:00 AM service</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {rows.map(([label, time, color]) => (
+                        <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12px" }}>
+                          <span style={{ color: "#A9A9B8" }}>{label}</span>
+                          <strong style={{ color }}>{time}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <button
@@ -1047,296 +1180,6 @@ export default function CheckinSetupPage() {
                   💡 Sessions without a scheduled time are controlled manually via Open/Close. Sessions past their close window are hidden automatically.
                 </p>
               </div>
-            </div>
-
-            {/* Smart Labels */}
-            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                <div>
-                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Smart Labels</h2>
-                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>QR code on each child label — set how long the label stays active after a session closes</p>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "20px" }}>
-                <span style={{ color: "#D8D8E8", fontSize: "13px" }}>Labels expire</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={1440}
-                  value={labelExpiryMinutes}
-                  onChange={e => setLabelExpiryMinutes(Math.max(0, Math.min(1440, parseInt(e.target.value) || 0)))}
-                  style={{ width: "68px", padding: "6px 10px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "15px", fontWeight: 700, color: "#D4AF37", textAlign: "center", outline: "none" }}
-                />
-                <span style={{ color: "#D8D8E8", fontSize: "13px" }}>minutes after session closes</span>
-                <span style={{ color: "#A9A9B8", fontSize: "12px" }}>{labelExpiryMinutes === 0 ? "(Never expire)" : ""}</span>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <button
-                  onClick={saveSmartLabelSettings}
-                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer" }}
-                >
-                  {labelExpirySaved ? "✓ Saved" : "Save Settings"}
-                </button>
-              </div>
-
-              <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
-                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
-                  💡 This expiry applies to new sessions. Staff scanning a QR code after the window closes will see an expired status. Set to 0 to never expire.
-                </p>
-              </div>
-            </div>
-
-            {/* Label Printing */}
-            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                <span style={{ fontSize: "22px" }}>🏷️</span>
-                <div>
-                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Label Printing</h2>
-                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Choose how care information appears on child check-in labels</p>
-                </div>
-              </div>
-
-              {/* Label Mode */}
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>Label Mode</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
-                <label
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px",
-                    borderRadius: "12px", cursor: "pointer",
-                    border: `2px solid ${labelMode === "smart" ? ACCENT : "rgba(212,175,55,0.2)"}`,
-                    background: labelMode === "smart" ? "rgba(123,44,191,0.12)" : "transparent",
-                  }}
-                >
-                  <input type="radio" name="labelMode" value="smart" checked={labelMode === "smart"} onChange={() => setLabelMode("smart")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
-                  <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge. Full allergy and medical details are accessed by scanning the QR code — not printed in plain sight.
-                    </p>
-                  </div>
-                </label>
-                <label
-                  style={{
-                    display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px",
-                    borderRadius: "12px", cursor: "pointer",
-                    border: `2px solid ${labelMode === "classic" ? ACCENT : "rgba(212,175,55,0.2)"}`,
-                    background: labelMode === "classic" ? "rgba(123,44,191,0.12)" : "transparent",
-                  }}
-                >
-                  <input type="radio" name="labelMode" value="classic" checked={labelMode === "classic"} onChange={() => setLabelMode("classic")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
-                  <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints allergies, medical notes, and special instructions directly on child labels. QR code included if enabled below.
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* QR Toggles */}
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>QR Features</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
-                {/* Smart Label QR */}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(212,175,55,0.18)", background: "rgba(255,255,255,0.02)" }}>
-                  <div style={{ flexShrink: 0, marginTop: 1 }}>
-                    <div
-                      onClick={() => setSmartLabelQrEnabled(v => !v)}
-                      style={{ width: 44, height: 24, borderRadius: 12, background: smartLabelQrEnabled ? ACCENT : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", border: `1px solid ${smartLabelQrEnabled ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}
-                    >
-                      <div style={{ position: "absolute", top: 2, left: smartLabelQrEnabled ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label QR <span style={{ fontWeight: 400, fontSize: "12px", color: smartLabelQrEnabled ? "#4ade80" : "#6b7280" }}>{smartLabelQrEnabled ? "ON" : "OFF"}</span></p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Print a QR code on child labels so volunteers can scan Care Notes. Applies in both Smart and Classic modes.</p>
-                  </div>
-                </div>
-
-                {/* Volunteer Check-In QR */}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(212,175,55,0.18)", background: "rgba(255,255,255,0.02)" }}>
-                  <div style={{ flexShrink: 0, marginTop: 1 }}>
-                    <div
-                      onClick={() => setVolunteerCheckinQrEnabled(v => !v)}
-                      style={{ width: 44, height: 24, borderRadius: 12, background: volunteerCheckinQrEnabled ? ACCENT : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", border: `1px solid ${volunteerCheckinQrEnabled ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}
-                    >
-                      <div style={{ position: "absolute", top: 2, left: volunteerCheckinQrEnabled ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Volunteer Check-In QR <span style={{ fontWeight: 400, fontSize: "12px", color: volunteerCheckinQrEnabled ? "#4ade80" : "#6b7280" }}>{volunteerCheckinQrEnabled ? "ON" : "OFF"}</span></p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Enable classroom and volunteer QR check-in tools (Volunteer Room View, classroom tablet links).</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <button
-                  onClick={saveLabelSettings}
-                  disabled={labelSettingsSaving}
-                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: labelSettingsSaving ? "not-allowed" : "pointer", opacity: labelSettingsSaving ? 0.6 : 1 }}
-                >
-                  {labelSettingsSaved ? "✓ Saved" : labelSettingsSaving ? "Saving…" : "Save Settings"}
-                </button>
-              </div>
-            </div>
-
-            {/* Service Schedule */}
-            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", marginBottom: "20px" }}>
-                <div>
-                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>📅 Service Schedule</h2>
-                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0" }}>
-                    {autoOpen
-                      ? `Active services will open check-in ${autoOpenMinutes} min before start`
-                      : "Define recurring services — enable Auto-Open above to activate automation"}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowAddSchedule(true)}
-                  style={{ padding: "8px 16px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer", flexShrink: 0 }}
-                >
-                  + Add Service
-                </button>
-              </div>
-
-              {/* Add Schedule Form */}
-              {showAddSchedule && (
-                <div style={{ background: "#0D0A14", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "20px", marginBottom: "16px" }}>
-                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: "0 0 16px" }}>New Service Schedule</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Service Name *</label>
-                      <input
-                        value={scheduleForm.name}
-                        onChange={e => setScheduleForm(f => ({ ...f, name: e.target.value }))}
-                        placeholder="e.g. Sunday Morning Service"
-                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", boxSizing: "border-box", outline: "none" }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Day of Week *</label>
-                      <select
-                        value={scheduleForm.day}
-                        onChange={e => setScheduleForm(f => ({ ...f, day: e.target.value }))}
-                        className="select-dark"
-                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", outline: "none" }}
-                      >
-                        {DAYS_OF_WEEK.map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>Service Start Time *</label>
-                      <input
-                        type="time"
-                        value={scheduleForm.time}
-                        onChange={e => setScheduleForm(f => ({ ...f, time: e.target.value }))}
-                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", outline: "none" }}
-                      />
-                    </div>
-                    <div style={{ gridColumn: "1 / -1" }}>
-                      <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>
-                        Session Group{" "}
-                        <span style={{ color: "rgba(212,175,55,0.5)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
-                      </label>
-                      <input
-                        value={scheduleForm.sessionGroup}
-                        onChange={e => setScheduleForm(f => ({ ...f, sessionGroup: e.target.value }))}
-                        placeholder="e.g. Sunday Morning"
-                        style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "8px", fontSize: "13px", color: "rgba(255,255,255,0.45)", boxSizing: "border-box", outline: "none" }}
-                      />
-                      <p style={{ fontSize: "11px", color: "rgba(212,175,55,0.45)", marginTop: "5px" }}>
-                        🔒 Stored once the <code style={{ fontSize: "10px" }}>session_group</code> database field is confirmed.
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
-                    <button
-                      onClick={saveSchedule}
-                      disabled={savingSchedule || !scheduleForm.name.trim() || !scheduleForm.time}
-                      style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: savingSchedule ? "not-allowed" : "pointer", opacity: (savingSchedule || !scheduleForm.name.trim() || !scheduleForm.time) ? 0.6 : 1 }}
-                    >
-                      {savingSchedule ? "Saving…" : "Save Service"}
-                    </button>
-                    <button
-                      onClick={() => { setShowAddSchedule(false); setScheduleForm({ name: "", day: "Sunday", time: "", sessionGroup: "" }); }}
-                      style={{ padding: "8px 16px", background: "transparent", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "10px", fontSize: "13px", color: "#A9A9B8", cursor: "pointer" }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Template list */}
-              {templates.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                  <div style={{ fontSize: "40px", marginBottom: "12px" }}>📅</div>
-                  <p style={{ color: "#FFFFFF", fontWeight: 500, fontFamily: "Georgia, serif", margin: 0 }}>No services scheduled yet.</p>
-                  <p style={{ color: "#A9A9B8", fontSize: "13px", marginTop: "6px" }}>Add your first recurring service above.</p>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {templates.map(tpl => {
-                    const openAtTime = autoOpen && tpl.typical_time ? computeOpenTime(tpl.typical_time, autoOpenMinutes) : null;
-                    return (
-                      <div
-                        key={tpl.id}
-                        style={{
-                          background: "#0D0A14",
-                          border: `1px solid ${tpl.is_active ? "rgba(123,44,191,0.3)" : "rgba(212,175,55,0.1)"}`,
-                          borderRadius: "12px",
-                          padding: "16px 20px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "16px",
-                          opacity: tpl.is_active ? 1 : 0.55,
-                        }}
-                      >
-                        {/* Day + time badge */}
-                        <div style={{ flexShrink: 0, width: 58, textAlign: "center", background: tpl.is_active ? "rgba(123,44,191,0.15)" : "rgba(212,175,55,0.06)", borderRadius: "8px", padding: "6px 4px" }}>
-                          <p style={{ fontSize: "10px", fontWeight: 700, color: tpl.is_active ? "#c084fc" : "#6b6b8a", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                            {tpl.typical_day?.slice(0, 3) ?? "—"}
-                          </p>
-                          <p style={{ fontSize: "12px", fontWeight: 700, color: tpl.is_active ? "#FFFFFF" : "#6b6b8a", margin: "3px 0 0" }}>
-                            {tpl.typical_time ? fmtTime(tpl.typical_time) : "—"}
-                          </p>
-                        </div>
-
-                        {/* Name + open time */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 700, color: "#FFFFFF", fontSize: "14px", margin: 0 }}>{tpl.name}</p>
-                          {openAtTime ? (
-                            <p style={{ fontSize: "12px", color: "#D4AF37", margin: "3px 0 0" }}>
-                              ⚡ Check-in opens at {openAtTime}
-                            </p>
-                          ) : (
-                            <p style={{ fontSize: "12px", color: "#6b6b8a", margin: "3px 0 0" }}>
-                              {tpl.typical_day && tpl.typical_time
-                                ? `${tpl.typical_day} · ${fmtTime(tpl.typical_time)}`
-                                : "No schedule set"}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Status + toggle */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                          <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", fontWeight: 700, background: tpl.is_active ? "rgba(123,44,191,0.18)" : "rgba(212,175,55,0.07)", color: tpl.is_active ? "#c084fc" : "#6b6b8a" }}>
-                            {tpl.is_active ? "Active" : "Inactive"}
-                          </span>
-                          <button
-                            onClick={() => toggleTemplate(tpl)}
-                            style={{ padding: "5px 12px", borderRadius: "8px", border: "1px solid rgba(212,175,55,0.2)", background: "transparent", fontSize: "12px", fontWeight: 600, color: "#A9A9B8", cursor: "pointer" }}
-                          >
-                            {tpl.is_active ? "Deactivate" : "Activate"}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
             {/* Welcome Letter Template */}
@@ -1401,6 +1244,136 @@ export default function CheckinSetupPage() {
                   <li key={i} style={{ fontSize: "13px", color: "#D8D8E8", lineHeight: 1.6 }}>{note}</li>
                 ))}
               </ul>
+            </div>
+
+          </div>
+        )}
+
+        {/* ── LABEL PRINTING TAB ── */}
+        {tab === "label-printing" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* QR Label Security */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>🔐</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>QR Label Security</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Set how long the QR code on each child label stays active after a session closes</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "20px" }}>
+                <span style={{ color: "#D8D8E8", fontSize: "13px" }}>Labels expire</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={1440}
+                  value={labelExpiryMinutes}
+                  onChange={e => setLabelExpiryMinutes(Math.max(0, Math.min(1440, parseInt(e.target.value) || 0)))}
+                  style={{ width: "68px", padding: "6px 10px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "15px", fontWeight: 700, color: "#D4AF37", textAlign: "center" as const, outline: "none" }}
+                />
+                <span style={{ color: "#D8D8E8", fontSize: "13px" }}>minutes after session closes</span>
+                <span style={{ color: "#A9A9B8", fontSize: "12px" }}>{labelExpiryMinutes === 0 ? "(Never expire)" : ""}</span>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveSmartLabelSettings}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer" }}
+                >
+                  {labelExpirySaved ? "✓ Saved" : "Save Settings"}
+                </button>
+              </div>
+
+              <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "12px 0 0", lineHeight: 1.6 }}>
+                After expiration, scanned labels will display &ldquo;This label has expired.&rdquo; This helps prevent reuse of old check-in labels.
+              </p>
+
+              <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
+                  💡 This expiry applies to new sessions. Set to 0 to never expire.
+                </p>
+              </div>
+            </div>
+
+            {/* Label Mode + QR */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>🏷️</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Label Printing</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Choose how care information appears on child check-in labels</p>
+                </div>
+              </div>
+
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", margin: "0 0 10px" }}>Label Mode</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
+                <label
+                  style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderRadius: "12px", cursor: "pointer", border: `2px solid ${labelMode === "smart" ? ACCENT : "rgba(212,175,55,0.2)"}`, background: labelMode === "smart" ? "rgba(123,44,191,0.12)" : "transparent" }}
+                >
+                  <input type="radio" name="labelMode" value="smart" checked={labelMode === "smart"} onChange={() => setLabelMode("smart")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
+                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge. Full allergy and medical details are accessed by scanning the QR code — not printed in plain sight.
+                    </p>
+                  </div>
+                </label>
+                <label
+                  style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderRadius: "12px", cursor: "pointer", border: `2px solid ${labelMode === "classic" ? ACCENT : "rgba(212,175,55,0.2)"}`, background: labelMode === "classic" ? "rgba(123,44,191,0.12)" : "transparent" }}
+                >
+                  <input type="radio" name="labelMode" value="classic" checked={labelMode === "classic"} onChange={() => setLabelMode("classic")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
+                      Prints allergies, medical notes, and special instructions directly on child labels. QR code included if enabled below.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", margin: "0 0 12px" }}>QR Features</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(212,175,55,0.18)", background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}>
+                    <div onClick={() => setSmartLabelQrEnabled(v => !v)} style={{ width: 44, height: 24, borderRadius: 12, background: smartLabelQrEnabled ? ACCENT : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", border: `1px solid ${smartLabelQrEnabled ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}>
+                      <div style={{ position: "absolute", top: 2, left: smartLabelQrEnabled ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label QR <span style={{ fontWeight: 400, fontSize: "12px", color: smartLabelQrEnabled ? "#4ade80" : "#6b7280" }}>{smartLabelQrEnabled ? "ON" : "OFF"}</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Print a QR code on child labels so volunteers can scan Care Notes. Applies in both Smart and Classic modes.</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(212,175,55,0.18)", background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}>
+                    <div onClick={() => setVolunteerCheckinQrEnabled(v => !v)} style={{ width: 44, height: 24, borderRadius: 12, background: volunteerCheckinQrEnabled ? ACCENT : "#2d2340", position: "relative", cursor: "pointer", transition: "background 0.2s", border: `1px solid ${volunteerCheckinQrEnabled ? "#9D4EDD" : "rgba(212,175,55,0.2)"}` }}>
+                      <div style={{ position: "absolute", top: 2, left: volunteerCheckinQrEnabled ? 22 : 2, width: 18, height: 18, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }} />
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Volunteer Check-In QR <span style={{ fontWeight: 400, fontSize: "12px", color: volunteerCheckinQrEnabled ? "#4ade80" : "#6b7280" }}>{volunteerCheckinQrEnabled ? "ON" : "OFF"}</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Enable classroom and volunteer QR check-in tools (Volunteer Room View, classroom tablet links).</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveLabelSettings}
+                  disabled={labelSettingsSaving}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: labelSettingsSaving ? "not-allowed" : "pointer", opacity: labelSettingsSaving ? 0.6 : 1 }}
+                >
+                  {labelSettingsSaved ? "✓ Saved" : labelSettingsSaving ? "Saving…" : "Save Settings"}
+                </button>
+              </div>
+
+              <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
+                  💡 Label settings apply to new check-ins. Existing labels already printed are not affected.
+                </p>
+              </div>
             </div>
 
           </div>
