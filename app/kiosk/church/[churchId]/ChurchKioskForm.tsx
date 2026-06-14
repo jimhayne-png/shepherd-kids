@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import QRCodeImage from "@/components/ui/QRCodeImage";
 
 type Session = { id: string; service_name: string; date: string; session_group: string | null };
 type Group = { name: string; sessions: Session[] };
@@ -32,6 +33,7 @@ type ImmediateLabel = {
   medicalNotes: string | null;
   specialInstructions: string | null;
   visitNumber: number | null;
+  qrToken: string | null;
 };
 
 type Props = {
@@ -785,7 +787,15 @@ function KioskChildLabel({ label }: { label: ImmediateLabel }) {
           )}
         </div>
       )}
-      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", marginTop: "auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
+        {label.qrToken ? (
+          <QRCodeImage
+            value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${label.qrToken}`}
+            size={56}
+          />
+        ) : (
+          <div />
+        )}
         <div>
           <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
           <div

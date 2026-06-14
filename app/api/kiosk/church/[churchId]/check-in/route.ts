@@ -36,6 +36,7 @@ type ImmediateLabel = {
   medicalNotes: string | null;
   specialInstructions: string | null;
   visitNumber: number | null;
+  qrToken: string | null;
 };
 
 function clean(value: string | undefined | null): string {
@@ -271,13 +272,15 @@ export async function POST(
       authorized_pickups: clean(child.authorizedPickups) || null,
       date_of_birth: childBirthDate(child),
       special_instructions: clean(child.specialInstructions) || null,
+      medical_notes: clean(child.medicalNotes) || null,
+      qr_token: crypto.randomUUID(),
     })),
   );
 
   const { data: records, error: checkinError } = await admin
     .from('cm_checkin_records')
     .insert(checkinRows)
-    .select('id, child_name, room_id, security_code, session_id');
+    .select('id, child_name, room_id, security_code, session_id, qr_token');
 
   if (checkinError) {
     return Response.json({ error: checkinError.message }, { status: 400 });
@@ -300,6 +303,7 @@ export async function POST(
       medicalNotes: clean(child?.medicalNotes) || null,
       specialInstructions: clean(child?.specialInstructions) || null,
       visitNumber: null,
+      qrToken: (record as { qr_token?: string | null }).qr_token ?? null,
     };
   });
 
@@ -319,6 +323,7 @@ export async function POST(
     medicalNotes: null,
     specialInstructions: null,
     visitNumber: null,
+    qrToken: null,
   };
 
   const labels: ImmediateLabel[] = [...childLabels, parentLabel];
@@ -343,6 +348,7 @@ export async function POST(
         special_instructions: clean(child?.specialInstructions) || null,
         label_type: 'child',
         status: 'pending',
+        qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
       };
     });
 

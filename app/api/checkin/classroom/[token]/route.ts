@@ -5,14 +5,18 @@ function adminClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 }
 
-export async function GET(_req: NextRequest, ctx: RouteContext<'/api/checkin/classroom/[roomId]'>) {
-  const { roomId } = await ctx.params;
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  const { token } = await params;
   const admin = adminClient();
 
+  // Resolve the public token → room (never exposes room.id to the client)
   const { data: room } = await admin
     .from('cm_checkin_rooms')
     .select('id, name, church_id')
-    .eq('id', roomId)
+    .eq('classroom_qr_token', token)
     .maybeSingle();
 
   if (!room) return Response.json({ error: 'Room not found' }, { status: 404 });
@@ -29,7 +33,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/api/checkin/cla
   if (!session) {
     return Response.json({
       records: [],
-      room: { id: room.id, name: room.name },
+      room: { name: room.name },
       session: null,
       counts: { checkedIn: 0, checkedOut: 0 },
     });
@@ -39,7 +43,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/api/checkin/cla
     .from('cm_checkin_records')
     .select('*')
     .eq('session_id', session.id)
-    .eq('room_id', roomId)
+    .eq('room_id', room.id)
     .order('checked_in_at', { ascending: true });
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
@@ -50,7 +54,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/api/checkin/cla
 
   return Response.json({
     records: all,
-    room: { id: room.id, name: room.name },
+    room: { name: room.name },
     session: { id: session.id, service_name: session.service_name, date: session.date },
     counts: { checkedIn, checkedOut },
   });

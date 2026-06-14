@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const auth = await getAuthContext(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { serviceName, serviceTemplateId, date, scheduledTime, kioskPin, sessionGroup } = await request.json();
+  const { serviceName, serviceTemplateId, date, scheduledTime, kioskPin, sessionGroup, labelExpiryMinutes } = await request.json();
   if (!serviceName || !date || !kioskPin) {
     return Response.json({ error: 'serviceName, date, and kioskPin required' }, { status: 400 });
   }
@@ -43,18 +43,28 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'kioskPin must be exactly 4 digits' }, { status: 400 });
   }
 
+  const expiryMinutes = typeof labelExpiryMinutes === 'number' && labelExpiryMinutes >= 0
+    ? labelExpiryMinutes
+    : 15;
+
+  // Build insert conditionally: session_group and label_expiry_minutes live in additive
+  // migrations that may not yet be applied to the live database. Omitting a nullable column
+  // or a column with a matching DB default is safe — Postgres applies the default.
+  const insertPayload: Record<string, unknown> = {
+    church_id: auth.churchId,
+    service_name: serviceName,
+    service_template_id: serviceTemplateId ?? null,
+    date,
+    scheduled_time: scheduledTime ?? null,
+    kiosk_pin: kioskPin,
+    status: 'open',
+  };
+  if (sessionGroup) insertPayload.session_group = sessionGroup;
+  if (expiryMinutes !== 15) insertPayload.label_expiry_minutes = expiryMinutes;
+
   const { data, error } = await adminClient()
     .from('cm_checkin_sessions')
-    .insert({
-      church_id: auth.churchId,
-      service_name: serviceName,
-      service_template_id: serviceTemplateId ?? null,
-      date,
-      scheduled_time: scheduledTime ?? null,
-      kiosk_pin: kioskPin,
-      status: 'open',
-      session_group: sessionGroup ?? null,
-    })
+    .insert(insertPayload)
     .select('*')
     .single();
 
@@ -71,7 +81,11 @@ export async function PATCH(request: NextRequest) {
   if (status !== undefined && !['open', 'closed'].includes(status)) return Response.json({ error: 'status must be open or closed' }, { status: 400 });
 
   const updates: Record<string, unknown> = {};
-  if (status !== undefined) updates.status = status;
+  if (status !== undefined) {
+    updates.status = status;
+    if (status === 'closed') updates.closed_at = new Date().toISOString();
+    if (status === 'open') updates.closed_at = null;
+  }
   if (autoFollowup !== undefined) updates.auto_followup = autoFollowup;
   if (!Object.keys(updates).length) return Response.json({ error: 'nothing to update' }, { status: 400 });
 

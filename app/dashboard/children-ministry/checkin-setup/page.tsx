@@ -4,13 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import QRCodeImage from "@/components/ui/QRCodeImage";
 
 const supabase = createClient();
 
 const ACCENT = "#7B2CBF";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "");
 
-type Room = { id: string; name: string; min_age: number | null; max_age: number | null; capacity: number | null; is_active: boolean };
+type Room = { id: string; name: string; min_age: number | null; max_age: number | null; capacity: number | null; is_active: boolean; classroom_qr_token: string };
 type Template = { id: string; name: string; typical_day: string | null; typical_time: string | null; is_active: boolean };
 type Session = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string; kiosk_pin: string };
 
@@ -82,6 +83,13 @@ export default function CheckinSetupPage() {
   const [autoOpenMinutes, setAutoOpenMinutes] = useState(60);
   const [autoSettingsSaved, setAutoSettingsSaved] = useState(false);
 
+  // Classroom QR modal
+  const [qrRoom, setQrRoom] = useState<Room | null>(null);
+
+  // Smart Labels settings
+  const [labelExpiryMinutes, setLabelExpiryMinutes] = useState(15);
+  const [labelExpirySaved, setLabelExpirySaved] = useState(false);
+
   // Automation: add-service-schedule form (session_group UI-only — DB field pending)
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ name: "", day: "Sunday", time: "", sessionGroup: "" });
@@ -109,12 +117,22 @@ export default function CheckinSetupPage() {
         setAutoOpenMinutes(p.autoOpenMinutes ?? 60);
       }
     } catch { /* ignore */ }
+    try {
+      const rawExpiry = localStorage.getItem("sk_smart_label_expiry");
+      if (rawExpiry !== null) setLabelExpiryMinutes(parseInt(rawExpiry, 10) || 15);
+    } catch { /* ignore */ }
   }, []);
 
   function saveAutoSettings() {
     localStorage.setItem("sk_checkin_auto_open", JSON.stringify({ autoOpen, autoOpenMinutes }));
     setAutoSettingsSaved(true);
     setTimeout(() => setAutoSettingsSaved(false), 2000);
+  }
+
+  function saveSmartLabelSettings() {
+    localStorage.setItem("sk_smart_label_expiry", String(labelExpiryMinutes));
+    setLabelExpirySaved(true);
+    setTimeout(() => setLabelExpirySaved(false), 2000);
   }
 
   async function saveSchedule() {
@@ -252,7 +270,7 @@ export default function CheckinSetupPage() {
       method: "POST",
       headers: { "Content-Type": "application/json", ...ch() },
       credentials: "include",
-      body: JSON.stringify({ serviceName: sessionForm.serviceName, serviceTemplateId: sessionForm.templateId || null, date: sessionForm.date, scheduledTime: sessionForm.scheduledTime || null, kioskPin: sessionForm.kioskPin, sessionGroup: sessionForm.sessionGroup || null }),
+      body: JSON.stringify({ serviceName: sessionForm.serviceName, serviceTemplateId: sessionForm.templateId || null, date: sessionForm.date, scheduledTime: sessionForm.scheduledTime || null, kioskPin: sessionForm.kioskPin, sessionGroup: sessionForm.sessionGroup || null, labelExpiryMinutes }),
     });
     if (res.ok) { const d = await res.json(); setSessions(s => [d.session, ...s]); setSessionForm({ serviceName: "", templateId: "", date: "", scheduledTime: "", kioskPin: "", sessionGroup: "" }); setShowAddSession(false); }
     setSavingSession(false);
@@ -391,10 +409,15 @@ export default function CheckinSetupPage() {
                       <button onClick={() => toggleRoom(room)} className="flex-1 py-2 rounded-xl text-xs font-bold border" style={{ borderColor: ACCENT, color: room.is_active ? "#6b7280" : ACCENT, backgroundColor: room.is_active ? "transparent" : ACCENT + "11" }}>
                         {room.is_active ? "Deactivate" : "Activate"}
                       </button>
-                      {room.is_active && APP_URL && (
-                        <a href={`${APP_URL}/classroom/${room.id}`} target="_blank" rel="noopener noreferrer" className="flex-1 py-2 rounded-xl text-xs font-bold text-white text-center" style={{ backgroundColor: ACCENT }}>
-                          Open Classroom ↗
-                        </a>
+                      {room.is_active && APP_URL && room.classroom_qr_token && (
+                        <>
+                          <button onClick={() => setQrRoom(room)} className="py-2 px-3 rounded-xl text-xs font-bold" style={{ border: `1px solid ${ACCENT}`, color: ACCENT, backgroundColor: "transparent" }}>
+                            QR Code
+                          </button>
+                          <a href={`${APP_URL}/classroom/${room.classroom_qr_token}`} target="_blank" rel="noopener noreferrer" className="flex-1 py-2 rounded-xl text-xs font-bold text-white text-center" style={{ backgroundColor: ACCENT }}>
+                            Open ↗
+                          </a>
+                        </>
                       )}
                       {!room.is_active && (
                         <button onClick={() => deleteRoom(room)} className="py-2 px-3 rounded-xl text-xs font-bold border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
@@ -606,7 +629,7 @@ export default function CheckinSetupPage() {
                 <h3 className="font-bold mb-3 text-sm" style={{ color: "#ffffff" }}>🏫 Classroom Tablet Links</h3>
                 <div className="flex flex-wrap gap-2">
                   {activeRooms.map(room => {
-                    const url = `${APP_URL}/classroom/${room.id}`;
+                    const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
                     return (
                       <div key={room.id} className="flex items-center gap-1.5 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)" }}>
                         <span className="text-sm font-medium" style={{ color: "#D8D8E8" }}>{room.name}</span>
@@ -735,7 +758,7 @@ export default function CheckinSetupPage() {
                             <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#A9A9B8" }}>Classroom Links</p>
                             <div className="flex flex-wrap gap-2">
                               {activeRooms.map(room => {
-                                const url = `${APP_URL}/classroom/${room.id}`;
+                                const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
                                 return (
                                   <a key={room.id} href={url} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-xl font-semibold border" style={{ borderColor: ACCENT, color: ACCENT }}>
                                     {room.name} ↗
@@ -809,6 +832,45 @@ export default function CheckinSetupPage() {
               <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
                 <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
                   💡 Settings are saved locally. Backend automation activates in an upcoming update once service schedule fields are confirmed in the database.
+                </p>
+              </div>
+            </div>
+
+            {/* Smart Labels */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Smart Labels</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>QR code on each child label — set how long the label stays active after a session closes</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "20px" }}>
+                <span style={{ color: "#D8D8E8", fontSize: "13px" }}>Labels expire</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={1440}
+                  value={labelExpiryMinutes}
+                  onChange={e => setLabelExpiryMinutes(Math.max(0, Math.min(1440, parseInt(e.target.value) || 0)))}
+                  style={{ width: "68px", padding: "6px 10px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "15px", fontWeight: 700, color: "#D4AF37", textAlign: "center", outline: "none" }}
+                />
+                <span style={{ color: "#D8D8E8", fontSize: "13px" }}>minutes after session closes</span>
+                <span style={{ color: "#A9A9B8", fontSize: "12px" }}>{labelExpiryMinutes === 0 ? "(Never expire)" : ""}</span>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveSmartLabelSettings}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: "pointer" }}
+                >
+                  {labelExpirySaved ? "✓ Saved" : "Save Settings"}
+                </button>
+              </div>
+
+              <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
+                  💡 This expiry applies to new sessions. Staff scanning a QR code after the window closes will see an expired status. Set to 0 to never expire.
                 </p>
               </div>
             </div>
@@ -1038,6 +1100,35 @@ export default function CheckinSetupPage() {
         )}
 
       </div>
+      {/* Classroom QR modal */}
+      {qrRoom && APP_URL && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
+          <div style={{ backgroundColor: "#120A1F", border: "1px solid rgba(212,175,55,0.3)", borderRadius: 24, padding: 32, maxWidth: 360, width: "100%", textAlign: "center" }}>
+            <h2 style={{ color: "#FFFFFF", fontSize: 20, fontWeight: 800, margin: "0 0 4px", fontFamily: "Georgia, serif" }}>{qrRoom.name}</h2>
+            <p style={{ color: "#A9A9B8", fontSize: 13, margin: "0 0 20px" }}>Scan to open Classroom View</p>
+            <div style={{ display: "inline-block", backgroundColor: "#FFFFFF", padding: 12, borderRadius: 12, marginBottom: 20 }}>
+              <QRCodeImage value={`${APP_URL}/classroom/${qrRoom.classroom_qr_token}`} size={220} />
+            </div>
+            <div style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: 10, padding: "8px 12px", marginBottom: 16 }}>
+              <code style={{ color: "#D4AF37", fontSize: 11, wordBreak: "break-all" }}>{APP_URL}/classroom/{qrRoom.classroom_qr_token}</code>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => handleCopy(`${APP_URL}/classroom/${qrRoom.classroom_qr_token}`)}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: `1px solid ${ACCENT}`, backgroundColor: "transparent", color: ACCENT, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              >
+                {copiedUrl === `${APP_URL}/classroom/${qrRoom.classroom_qr_token}` ? "Copied!" : "Copy URL"}
+              </button>
+              <button
+                onClick={() => setQrRoom(null)}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "1px solid rgba(212,175,55,0.25)", backgroundColor: "transparent", color: "#A9A9B8", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

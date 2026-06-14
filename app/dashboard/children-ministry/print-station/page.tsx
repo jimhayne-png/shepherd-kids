@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import QRCodeImage from "@/components/ui/QRCodeImage";
 
 const supabase = createClient();
 const ACCENT = "#7B2CBF";
@@ -25,6 +26,7 @@ type PrintJob = {
   label_type: "child" | "parent";
   status: string;
   created_at: string;
+  qr_token: string | null;
 };
 
 type JobGroup = {
@@ -132,8 +134,16 @@ function ChildLabel({ job }: { job: PrintJob }) {
         </div>
       )}
 
-      {/* Security code — bottom right */}
-      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", marginTop: "auto" }}>
+      {/* Bottom: QR left, security code right */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
+        {job.qr_token ? (
+          <QRCodeImage
+            value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${job.qr_token}`}
+            size={56}
+          />
+        ) : (
+          <div />
+        )}
         <div>
           <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
           <div

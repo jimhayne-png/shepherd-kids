@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const ACCENT = "#F28C28";
+const supabase = createClient();
 
 type CheckinRecord = {
   id: string;
@@ -14,13 +16,15 @@ type CheckinRecord = {
   is_new_visitor: boolean;
   allergies: string[];
   allergy_other: string | null;
+  medical_notes: string | null;
+  special_instructions: string | null;
   checked_in_at: string;
   checked_out_at: string | null;
   checked_out_by: string | null;
   authorized_pickups: string | null;
 };
 
-type RoomInfo = { id: string; name: string };
+type RoomInfo = { name: string };
 type SessionInfo = { id: string; service_name: string; date: string } | null;
 type Counts = { checkedIn: number; checkedOut: number };
 
@@ -30,14 +34,17 @@ function fmtTime(iso: string) {
 
 export default function ClassroomPage() {
   const params = useParams();
-  const roomId = params.roomId as string;
+  const router = useRouter();
+  const token = params.token as string;
 
+  const [authed, setAuthed] = useState(false);
   const [records, setRecords] = useState<CheckinRecord[]>([]);
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [session, setSession] = useState<SessionInfo>(null);
   const [counts, setCounts] = useState<Counts>({ checkedIn: 0, checkedOut: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requestingParent, setRequestingParent] = useState<Record<string, "idle" | "sending" | "sent" | "error">>({});
 
   // Checkout modal
   const [checkoutRecord, setCheckoutRecord] = useState<CheckinRecord | null>(null);
@@ -49,7 +56,7 @@ export default function ClassroomPage() {
   const checkoutInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = useCallback(async () => {
-    const res = await fetch(`/api/checkin/classroom/${roomId}`);
+    const res = await fetch(`/api/checkin/classroom/${token}`);
     if (!res.ok) { setError("Could not load classroom data."); return; }
     const d = await res.json();
     setRecords(d.records ?? []);
@@ -57,19 +64,52 @@ export default function ClassroomPage() {
     setSession(d.session ?? null);
     setCounts(d.counts ?? { checkedIn: 0, checkedOut: 0 });
     setLoading(false);
-  }, [roomId]);
+  }, [token]);
 
   useEffect(() => {
+    async function checkAuth() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        router.push(`/?redirect=/classroom/${token}`);
+        return;
+      }
+      setAuthed(true);
+    }
+    checkAuth();
+  }, [token, router]);
+
+  useEffect(() => {
+    if (!authed) return;
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, authed]);
 
   useEffect(() => {
     if (checkoutRecord) {
       setTimeout(() => checkoutInputRef.current?.focus(), 80);
     }
   }, [checkoutRecord]);
+
+  async function handleRequestParent(record: CheckinRecord) {
+    if (requestingParent[record.id] === "sending" || requestingParent[record.id] === "sent") return;
+    setRequestingParent(prev => ({ ...prev, [record.id]: "sending" }));
+    try {
+      const res = await fetch("/api/checkin/parent-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ checkinRecordId: record.id, source: "classroom" }),
+      });
+      if (res.ok) {
+        setRequestingParent(prev => ({ ...prev, [record.id]: "sent" }));
+      } else {
+        setRequestingParent(prev => ({ ...prev, [record.id]: "error" }));
+      }
+    } catch {
+      setRequestingParent(prev => ({ ...prev, [record.id]: "error" }));
+    }
+  }
 
   function isAuthorizedPickup(name: string, authorizedPickups: string | null): boolean {
     if (!authorizedPickups?.trim()) return false;
@@ -178,7 +218,7 @@ export default function ClassroomPage() {
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
               {checkedInRecords.map(r => (
-                <ChildCard key={r.id} record={r} onCheckout={() => { setCheckoutRecord(r); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} />
+                <ChildCard key={r.id} record={r} onCheckout={() => { setCheckoutRecord(r); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} requestState={requestingParent[r.id] ?? "idle"} onRequestParent={() => handleRequestParent(r)} />
               ))}
             </div>
           </div>
@@ -291,9 +331,16 @@ export default function ClassroomPage() {
   );
 }
 
-function ChildCard({ record, onCheckout, checkedOut }: { record: CheckinRecord; onCheckout?: () => void; checkedOut?: boolean }) {
+function ChildCard({ record, onCheckout, checkedOut, requestState, onRequestParent }: {
+  record: CheckinRecord;
+  onCheckout?: () => void;
+  checkedOut?: boolean;
+  requestState?: "idle" | "sending" | "sent" | "error";
+  onRequestParent?: () => void;
+}) {
   const hasAllergy = record.allergies.length > 0 || record.allergy_other;
   const allergyText = [...(record.allergies ?? []), record.allergy_other].filter(Boolean).join(", ");
+  const hasCareNotes = hasAllergy || record.medical_notes || record.special_instructions;
 
   return (
     <div style={{
@@ -329,10 +376,32 @@ function ChildCard({ record, onCheckout, checkedOut }: { record: CheckinRecord; 
           </button>
         )}
       </div>
-      {hasAllergy && (
-        <div style={{ backgroundColor: "#dc2626", color: "white", fontWeight: 800, fontSize: 13, padding: "8px 12px", borderRadius: 10, marginTop: 8 }}>
-          ⚠️ ALLERGY: {allergyText}
+
+      {hasCareNotes && (
+        <div style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "10px 12px", marginTop: 10 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Care Notes</p>
+          {hasAllergy && (
+            <div style={{ backgroundColor: "#dc2626", color: "white", fontWeight: 800, fontSize: 13, padding: "6px 10px", borderRadius: 8, marginBottom: 4 }}>
+              ALLERGY: {allergyText}
+            </div>
+          )}
+          {record.medical_notes && (
+            <p style={{ fontSize: 13, color: "#92400e", margin: "4px 0 0" }}><strong>Medical:</strong> {record.medical_notes}</p>
+          )}
+          {record.special_instructions && (
+            <p style={{ fontSize: 13, color: "#92400e", margin: "4px 0 0" }}><strong>Instructions:</strong> {record.special_instructions}</p>
+          )}
         </div>
+      )}
+
+      {!checkedOut && onRequestParent && (
+        <button
+          onClick={onRequestParent}
+          disabled={requestState === "sending" || requestState === "sent"}
+          style={{ marginTop: 10, width: "100%", padding: "10px 14px", borderRadius: 12, border: "1px solid #4ade80", backgroundColor: requestState === "sent" ? "#f0fdf4" : "transparent", color: requestState === "error" ? "#dc2626" : "#16a34a", fontWeight: 700, fontSize: 13, cursor: requestState === "sending" || requestState === "sent" ? "default" : "pointer", opacity: requestState === "sending" ? 0.6 : 1 }}
+        >
+          {requestState === "sending" ? "Sending text…" : requestState === "sent" ? "Text sent to parent ✓" : requestState === "error" ? "Failed — tap to retry" : "Request Parent"}
+        </button>
       )}
     </div>
   );
