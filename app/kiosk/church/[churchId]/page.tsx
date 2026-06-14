@@ -1,5 +1,9 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { adminClient } from "@/lib/api-auth";
 import ChurchKioskForm from "./ChurchKioskForm";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type RawSession = {
   id: string;
@@ -31,6 +35,7 @@ function timeStringToMinutes(value: string | null | undefined): number | null {
 }
 
 export default async function ChurchKioskPage({ params, searchParams }: Props) {
+  noStore();
   const [{ churchId }, sp] = await Promise.all([params, searchParams]);
   const debug = sp.debug === "1";
   const admin = adminClient();
