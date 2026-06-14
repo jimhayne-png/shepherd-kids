@@ -270,7 +270,6 @@ export async function POST(
       allergies: child.allergies ?? [],
       allergy_other: clean(child.allergyOther) || null,
       authorized_pickups: clean(child.authorizedPickups) || null,
-      special_instructions: clean(child.specialInstructions) || null,
       medical_notes: clean(child.medicalNotes) || null,
       qr_token: crypto.randomUUID(),
     })),
