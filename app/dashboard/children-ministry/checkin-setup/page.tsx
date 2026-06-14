@@ -51,7 +51,7 @@ export default function CheckinSetupPage() {
     return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
   }
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation">("rooms");
+  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation" | "general">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -94,6 +94,17 @@ export default function CheckinSetupPage() {
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ name: "", day: "Sunday", time: "", sessionGroup: "" });
   const [savingSchedule, setSavingSchedule] = useState(false);
+
+  // General tab — church timezone
+  const [timezone, setTimezone] = useState("America/Los_Angeles");
+  const [timezoneSaving, setTimezoneSaving] = useState(false);
+  const [timezoneSaved, setTimezoneSaved] = useState(false);
+
+  // Automation — check-in time window
+  const [checkInOpensBefore, setCheckInOpensBefore] = useState(30);
+  const [checkInClosesAfter, setCheckInClosesAfter] = useState(30);
+  const [windowSaving, setWindowSaving] = useState(false);
+  const [windowSaved, setWindowSaved] = useState(false);
 
   // Letter template (Automation Settings tab)
   const [letterSubject, setLetterSubject] = useState("");
@@ -172,6 +183,36 @@ export default function CheckinSetupPage() {
     setTimeout(() => setLetterSaved(false), 2000);
   }
 
+  async function saveWindowSettings() {
+    setWindowSaving(true);
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...ch() },
+      credentials: "include",
+      body: JSON.stringify({ check_in_opens_minutes_before: checkInOpensBefore, check_in_closes_minutes_after: checkInClosesAfter }),
+    });
+    setWindowSaving(false);
+    if (res.ok) {
+      setWindowSaved(true);
+      setTimeout(() => setWindowSaved(false), 2500);
+    }
+  }
+
+  async function saveTimezone() {
+    setTimezoneSaving(true);
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...ch() },
+      credentials: "include",
+      body: JSON.stringify({ timezone }),
+    });
+    setTimezoneSaving(false);
+    if (res.ok) {
+      setTimezoneSaved(true);
+      setTimeout(() => setTimezoneSaved(false), 2500);
+    }
+  }
+
   async function load() {
     const [rRes, tRes, sRes] = await Promise.all([
       fetch("/api/checkin/rooms", { credentials: "include", headers: ch() }),
@@ -199,6 +240,13 @@ export default function CheckinSetupPage() {
         selectedChurchIdRef.current = churchData.churchId;
       }
       await load();
+      const settingsRes = await fetch("/api/settings", { credentials: "include", headers: ch() });
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        if (settingsData.church?.timezone) setTimezone(settingsData.church.timezone);
+        if (settingsData.church?.check_in_opens_minutes_before) setCheckInOpensBefore(settingsData.church.check_in_opens_minutes_before);
+        if (settingsData.church?.check_in_closes_minutes_after) setCheckInClosesAfter(settingsData.church.check_in_closes_minutes_after);
+      }
       setLoading(false);
     }
     init();
@@ -338,9 +386,9 @@ export default function CheckinSetupPage() {
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Tabs */}
         <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
-          {(["rooms", "templates", "sessions", "automation"] as const).map(t => (
+          {(["general", "rooms", "templates", "sessions", "automation"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
-              {t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : "Automation Settings"}
+              {t === "general" ? "General" : t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : "Automation Settings"}
             </button>
           ))}
           <a
@@ -351,6 +399,57 @@ export default function CheckinSetupPage() {
             Label Printing ↗
           </a>
         </div>
+
+        {/* ── GENERAL TAB ── */}
+        {tab === "general" && (
+          <div style={{ maxWidth: 560 }}>
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+                <span style={{ fontSize: "22px" }}>🌍</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Church Time Zone</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "3px 0 0" }}>
+                    Used to determine which sessions are open today and for all check-in date logic
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", display: "block", marginBottom: "8px" }}>
+                  Time Zone
+                </label>
+                <select
+                  value={timezone}
+                  onChange={e => setTimezone(e.target.value)}
+                  style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", color: "#FFFFFF", fontSize: "14px", outline: "none", appearance: "none", WebkitAppearance: "none", cursor: "pointer" }}
+                >
+                  <option value="America/Los_Angeles" style={{ background: "#120A1F" }}>Pacific Time — America/Los_Angeles</option>
+                  <option value="America/Denver" style={{ background: "#120A1F" }}>Mountain Time — America/Denver</option>
+                  <option value="America/Chicago" style={{ background: "#120A1F" }}>Central Time — America/Chicago</option>
+                  <option value="America/New_York" style={{ background: "#120A1F" }}>Eastern Time — America/New_York</option>
+                  <option value="America/Anchorage" style={{ background: "#120A1F" }}>Alaska Time — America/Anchorage</option>
+                  <option value="Pacific/Honolulu" style={{ background: "#120A1F" }}>Hawaii Time — Pacific/Honolulu</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveTimezone}
+                  disabled={timezoneSaving}
+                  style={{ padding: "9px 22px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: timezoneSaving ? "not-allowed" : "pointer", opacity: timezoneSaving ? 0.6 : 1 }}
+                >
+                  {timezoneSaved ? "✓ Saved" : timezoneSaving ? "Saving…" : "Save Time Zone"}
+                </button>
+              </div>
+
+              <div style={{ marginTop: "20px", padding: "12px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
+                  💡 The kiosk compares today&apos;s date in this timezone when deciding which sessions to show. If your sessions appear on the wrong day, check that this matches your church location.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── ROOMS TAB ── */}
         {tab === "rooms" && (
@@ -832,6 +931,56 @@ export default function CheckinSetupPage() {
               <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
                 <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
                   💡 Settings are saved locally. Backend automation activates in an upcoming update once service schedule fields are confirmed in the database.
+                </p>
+              </div>
+            </div>
+
+            {/* Check-In Time Window */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
+                <span style={{ fontSize: "22px" }}>🕐</span>
+                <div>
+                  <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>Check-In Time Window</h2>
+                  <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "2px 0 0" }}>Controls when the kiosk automatically shows or hides sessions based on scheduled time</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" as const }}>
+                  <span style={{ color: "#D8D8E8", fontSize: "13px", minWidth: "170px" }}>Check-in opens before service</span>
+                  <select
+                    value={checkInOpensBefore}
+                    onChange={e => setCheckInOpensBefore(Number(e.target.value))}
+                    style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
+                  >
+                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} min</option>)}
+                  </select>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" as const }}>
+                  <span style={{ color: "#D8D8E8", fontSize: "13px", minWidth: "170px" }}>Check-in closes after service starts</span>
+                  <select
+                    value={checkInClosesAfter}
+                    onChange={e => setCheckInClosesAfter(Number(e.target.value))}
+                    style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
+                  >
+                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} min</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <button
+                  onClick={saveWindowSettings}
+                  disabled={windowSaving}
+                  style={{ padding: "8px 20px", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", cursor: windowSaving ? "not-allowed" : "pointer", opacity: windowSaving ? 0.6 : 1 }}
+                >
+                  {windowSaved ? "✓ Saved" : windowSaving ? "Saving…" : "Save Settings"}
+                </button>
+              </div>
+
+              <div style={{ marginTop: "16px", padding: "10px 14px", background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0 }}>
+                  💡 Sessions without a scheduled time are controlled manually via Open/Close. Sessions past their close window are hidden automatically.
                 </p>
               </div>
             </div>

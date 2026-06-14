@@ -20,6 +20,7 @@ const CHURCH_FIELDS = [
   'senior_pastor', 'children_pastor', 'youth_pastor', 'choir_director',
   'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
   'subscription_status', 'subscription_tier', 'trial_ends_at', 'timezone',
+  'check_in_opens_minutes_before', 'check_in_closes_minutes_after',
 ].join(', ');
 
 export async function GET(req: NextRequest) {
@@ -51,9 +52,19 @@ export async function POST(req: NextRequest) {
     'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
     'timezone',
   ];
-  const updates: Record<string, string> = {};
+  const integerFields = ['check_in_opens_minutes_before', 'check_in_closes_minutes_after'];
+  const updates: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) updates[key] = body[key] ?? '';
+  }
+  for (const key of integerFields) {
+    if (key in body) {
+      const val = Number(body[key]);
+      if (!Number.isInteger(val) || val < 1) {
+        return Response.json({ error: `${key} must be a positive integer` }, { status: 400 });
+      }
+      updates[key] = val;
+    }
   }
 
   const { error } = await adminClient()
