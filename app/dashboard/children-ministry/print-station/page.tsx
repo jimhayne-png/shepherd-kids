@@ -102,35 +102,22 @@ function ChildLabel({ job }: { job: PrintJob }) {
         {job.parent_phone ? ` · ${job.parent_phone}` : ""}
       </div>
 
-      {/* Allergy / medical */}
+      {/* Care note indicator — full details available via QR scan */}
       {(job.allergies || job.medical_notes || job.special_instructions) && (
         <div style={{ marginTop: 4 }}>
-          {job.allergies && (
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "#fff",
-                backgroundColor: "#dc2626",
-                padding: "2px 6px",
-                borderRadius: 3,
-                display: "inline-block",
-                marginBottom: 2,
-              }}
-            >
-              ⚠ ALLERGY: {job.allergies}
-            </div>
-          )}
-          {job.medical_notes && (
-            <div style={{ fontSize: 10, color: "#333" }}>
-              <strong>Medical:</strong> {job.medical_notes}
-            </div>
-          )}
-          {job.special_instructions && (
-            <div style={{ fontSize: 10, color: "#333" }}>
-              <strong>Instr:</strong> {job.special_instructions}
-            </div>
-          )}
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 900,
+              color: "#fff",
+              backgroundColor: "#000",
+              padding: "2px 6px",
+              borderRadius: 3,
+              display: "inline-block",
+            }}
+          >
+            ⚠ SEE CARE NOTES
+          </div>
         </div>
       )}
 
@@ -631,7 +618,7 @@ export default function PrintStationPage() {
                                   >
                                     {isParent ? "👪 Parent Pickup" : "🏷️ Child"}
                                   </span>
-                                  <span style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>
+                                  <span style={{ fontSize: 18, fontWeight: 700, color: "#FFFFFF" }}>
                                     {job.child_name}
                                   </span>
                                   {job.room_name && !isParent && (
@@ -660,33 +647,22 @@ export default function PrintStationPage() {
                                   </p>
                                 )}
 
-                                {hasAlert && (
-                                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-                                    {job.allergies && (
-                                      <span
-                                        style={{
-                                          display: "inline-block",
-                                          fontSize: 12,
-                                          fontWeight: 700,
-                                          backgroundColor: "#dc2626",
-                                          color: "white",
-                                          padding: "2px 10px",
-                                          borderRadius: 6,
-                                        }}
-                                      >
-                                        ⚠️ {job.allergies}
-                                      </span>
-                                    )}
-                                    {job.medical_notes && (
-                                      <span style={{ fontSize: 12, color: "#6b7280" }}>
-                                        <strong>Medical:</strong> {job.medical_notes}
-                                      </span>
-                                    )}
-                                    {job.special_instructions && (
-                                      <span style={{ fontSize: 12, color: "#6b7280" }}>
-                                        <strong>Instructions:</strong> {job.special_instructions}
-                                      </span>
-                                    )}
+                                {hasAlert && !isParent && (
+                                  <div style={{ marginTop: 8 }}>
+                                    <span
+                                      style={{
+                                        display: "inline-block",
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        color: "#fbbf24",
+                                        padding: "2px 10px",
+                                        borderRadius: 6,
+                                        border: "1px solid rgba(251,191,36,0.35)",
+                                        backgroundColor: "rgba(251,191,36,0.1)",
+                                      }}
+                                    >
+                                      ⚠ CARE NOTES
+                                    </span>
                                   </div>
                                 )}
                               </div>
