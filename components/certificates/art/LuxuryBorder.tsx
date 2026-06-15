@@ -1,16 +1,103 @@
 "use client";
 
-import React from "react";
+import type { CSSProperties } from "react";
 import type { CertificateTemplate } from "@/lib/certificates/themes";
 
-const GOLD = "#D4AF37";
-const LIGHT = "#F8E6A0";
+type CornerPosition = "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 
-export default function LuxuryBorder({
-  template,
-}: {
+interface LuxuryBorderProps {
   template: CertificateTemplate;
+}
+
+const GOLD = "#D4AF37";
+const LIGHT_GOLD = "#F8E6A0";
+const DARK_GOLD = "#7B5B17";
+
+function getCornerStyle(position: CornerPosition): CSSProperties {
+  const base: CSSProperties = {
+    position: "absolute",
+    width: 118,
+    height: 118,
+    zIndex: 8,
+    pointerEvents: "none",
+  };
+
+  if (position === "topLeft") return { ...base, top: 18, left: 18 };
+  if (position === "topRight") return { ...base, top: 18, right: 18, transform: "scaleX(-1)" };
+  if (position === "bottomLeft") return { ...base, bottom: 18, left: 18, transform: "scaleY(-1)" };
+
+  return { ...base, bottom: 18, right: 18, transform: "scale(-1)" };
+}
+
+function CornerFiligree({
+  position,
+  ivory,
+}: {
+  position: CornerPosition;
+  ivory: boolean;
 }) {
+  const primary = ivory ? "#8B6914" : GOLD;
+  const highlight = ivory ? "#C89B2C" : LIGHT_GOLD;
+  const shadow = ivory ? "rgba(80,50,8,.22)" : "rgba(0,0,0,.55)";
+
+  return (
+    <svg viewBox="0 0 150 150" style={getCornerStyle(position)} aria-hidden="true">
+      <defs>
+        <linearGradient id={`cornerGold-${position}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFF6C5" />
+          <stop offset="35%" stopColor={highlight} />
+          <stop offset="68%" stopColor={primary} />
+          <stop offset="100%" stopColor={DARK_GOLD} />
+        </linearGradient>
+        <filter id={`cornerGlow-${position}`} x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.4" floodColor={shadow} floodOpacity="0.85" />
+          <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor={highlight} floodOpacity={ivory ? "0.20" : "0.28"} />
+        </filter>
+      </defs>
+
+      <path
+        d="M14 136V14h122"
+        fill="none"
+        stroke={`url(#cornerGold-${position})`}
+        strokeWidth="5"
+        strokeLinecap="square"
+        filter={`url(#cornerGlow-${position})`}
+      />
+      <path
+        d="M30 120V30h90"
+        fill="none"
+        stroke={highlight}
+        strokeWidth="1.5"
+        opacity="0.8"
+      />
+      <path
+        d="M38 38c28 4 38 26 18 44 31-4 48 17 40 50"
+        fill="none"
+        stroke={`url(#cornerGold-${position})`}
+        strokeWidth="3"
+        strokeLinecap="round"
+        filter={`url(#cornerGlow-${position})`}
+      />
+      <path
+        d="M47 29c-7 30 18 43 45 30M29 95c25-8 44 3 55 29"
+        fill="none"
+        stroke={highlight}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.88"
+      />
+      <path
+        d="M83 31l7 15 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"
+        fill={`url(#cornerGold-${position})`}
+        opacity="0.96"
+        filter={`url(#cornerGlow-${position})`}
+      />
+      <circle cx="60" cy="61" r="5.5" fill={highlight} opacity="0.92" />
+    </svg>
+  );
+}
+
+export default function LuxuryBorder({ template }: LuxuryBorderProps) {
   const ivory = template === "white";
 
   return (
@@ -19,12 +106,13 @@ export default function LuxuryBorder({
         style={{
           position: "absolute",
           inset: 0,
-          border: ivory ? "8px solid #8B6914" : "8px solid #D4AF37",
+          zIndex: 5,
+          pointerEvents: "none",
+          border: ivory ? "8px solid #8B6914" : `8px solid ${GOLD}`,
           boxSizing: "border-box",
           boxShadow: ivory
-            ? "inset 0 0 30px rgba(0,0,0,.08)"
-            : "inset 0 0 50px rgba(212,175,55,.10)",
-          zIndex: 5,
+            ? "inset 0 0 28px rgba(80,50,8,.10)"
+            : "inset 0 0 44px rgba(212,175,55,.12), inset 0 0 120px rgba(0,0,0,.34)",
         }}
       />
 
@@ -32,70 +120,46 @@ export default function LuxuryBorder({
         style={{
           position: "absolute",
           inset: 14,
-          border: ivory ? "3px solid #D4AF37" : "3px solid #F8E6A0",
-          boxSizing: "border-box",
           zIndex: 5,
+          pointerEvents: "none",
+          border: ivory ? `3px solid ${GOLD}` : `3px solid ${LIGHT_GOLD}`,
+          boxSizing: "border-box",
+          boxShadow: ivory
+            ? "0 0 10px rgba(212,175,55,.18)"
+            : "0 0 18px rgba(248,230,160,.22)",
         }}
       />
 
       <div
         style={{
           position: "absolute",
-          inset: 30,
-          border: ivory
-            ? "1px solid rgba(139,105,20,.45)"
-            : "1px solid rgba(212,175,55,.35)",
-          boxSizing: "border-box",
+          inset: 29,
           zIndex: 5,
+          pointerEvents: "none",
+          border: ivory
+            ? "1px solid rgba(139,105,20,.46)"
+            : "1px solid rgba(212,175,55,.38)",
+          boxSizing: "border-box",
         }}
       />
 
-      {["tl","tr","bl","br"].map((c)=>(
-        <div key={c}
-          style={{
-            position:"absolute",
-            width:96,
-            height:96,
-            zIndex:8,
-            ...(c=="tl" and {} )
-          }}
-        />
-      ))}
-
-      <svg
-        viewBox="0 0 1100 850"
-        preserveAspectRatio="none"
+      <div
         style={{
-          position:"absolute",
-          inset:0,
-          width:"100%",
-          height:"100%",
-          pointerEvents:"none",
-          zIndex:7
+          position: "absolute",
+          inset: 42,
+          zIndex: 5,
+          pointerEvents: "none",
+          border: ivory
+            ? "1px solid rgba(139,105,20,.20)"
+            : "1px solid rgba(248,230,160,.14)",
+          boxSizing: "border-box",
         }}
-      >
-        <defs>
-          <linearGradient id="goldBorder" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FFF6C5"/>
-            <stop offset="30%" stopColor={LIGHT}/>
-            <stop offset="55%" stopColor={GOLD}/>
-            <stop offset="100%" stopColor="#7B5B17"/>
-          </linearGradient>
-        </defs>
+      />
 
-        <rect x="9" y="9" width="1082" height="832"
-          fill="none"
-          stroke="url(#goldBorder)"
-          strokeWidth="2"/>
-
-        <path
-          d="M95 60 H1005 M95 790 H1005 M60 95 V755 M1040 95 V755"
-          stroke="url(#goldBorder)"
-          strokeOpacity=".45"
-          strokeWidth="1"
-          fill="none"
-        />
-      </svg>
+      <CornerFiligree position="topLeft" ivory={ivory} />
+      <CornerFiligree position="topRight" ivory={ivory} />
+      <CornerFiligree position="bottomLeft" ivory={ivory} />
+      <CornerFiligree position="bottomRight" ivory={ivory} />
     </>
   );
 }
