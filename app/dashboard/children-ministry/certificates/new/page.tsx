@@ -220,7 +220,7 @@ function ChurchLogoArea({ width, height, template }: { width: number; height: nu
 // ── Ministry seal placeholder (cross only — no initials) ──────────────────────
 function MinistrySeal({ size, template }: { size: number; template: "purple" | "white" }) {
   const isPurple = template === "purple";
-  const clr = isPurple ? "rgba(212,175,55,0.55)" : "rgba(139,105,20,0.58)";
+  const clr = isPurple ? "rgba(212,175,55,0.72)" : "rgba(139,105,20,0.68)";
   return (
     <div style={{
       width: `${size}px`,
@@ -230,11 +230,29 @@ function MinistrySeal({ size, template }: { size: number; template: "purple" | "
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: isPurple ? "rgba(5,2,18,0.90)" : "rgba(253,250,239,0.95)",
+      background: isPurple ? "radial-gradient(circle at 50% 35%, rgba(42,13,64,0.96), rgba(5,2,18,0.94))" : "radial-gradient(circle at 50% 35%, rgba(255,252,240,0.98), rgba(238,214,162,0.90))",
       flexShrink: 0,
     }}>
       <span style={{ fontSize: `${Math.round(size * 0.46)}px`, color: clr, lineHeight: 1, fontFamily: "Georgia, serif" }}>✝</span>
     </div>
+  );
+}
+
+
+function CornerFiligree({ position, color }: { position: "tl" | "tr" | "bl" | "br"; color: string }) {
+  const placement: React.CSSProperties =
+    position === "tl" ? { top: "20px", left: "20px" } :
+    position === "tr" ? { top: "20px", right: "20px", transform: "scaleX(-1)" } :
+    position === "bl" ? { bottom: "20px", left: "20px", transform: "scaleY(-1)" } :
+    { bottom: "20px", right: "20px", transform: "scale(-1)" };
+
+  return (
+    <svg viewBox="0 0 96 96" style={{ position: "absolute", width: "78px", height: "78px", color, opacity: 0.72, pointerEvents: "none", ...placement }}>
+      <path d="M10 86V10h76" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M22 74V22h52" fill="none" stroke="currentColor" strokeWidth="1" opacity=".68" />
+      <path d="M26 28c18 4 24 18 12 28 20-2 30 12 24 30M35 22c-4 18 10 26 28 18M20 62c16-5 28 2 34 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity=".82" />
+      <circle cx="42" cy="42" r="3.2" fill="currentColor" opacity=".86" />
+    </svg>
   );
 }
 
@@ -257,8 +275,8 @@ function CertPreview({
 
   // ── Theme tokens ──────────────────────────────────────────────────────────────
   const bg           = isPurple
-    ? "linear-gradient(160deg, #050212 0%, #130828 50%, #0A0320 100%)"
-    : "#FDFAEF";
+    ? `radial-gradient(circle at 50% 42%, rgba(255,235,170,0.10), transparent 34%), radial-gradient(circle at 18% 18%, rgba(123,44,191,0.18), transparent 26%), radial-gradient(circle at 84% 74%, rgba(212,175,55,0.08), transparent 30%), linear-gradient(160deg, #050212 0%, #130828 50%, #0A0320 100%)`
+    : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
   const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
   const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
   const innerBorder  = isPurple ? "1px solid rgba(212,175,55,0.18)"    : "1px solid rgba(175,135,40,0.28)";
@@ -282,7 +300,7 @@ function CertPreview({
     : {};
 
   return (
-    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "30px 44px 26px", width: "100%", boxSizing: "border-box", ...glow }}>
+    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "28px 46px 30px", width: "100%", boxSizing: "border-box", ...glow }}>
       {/* Second border line */}
       <div style={{ position: "absolute", inset: "6px", border: midBorder, borderRadius: "3px", pointerEvents: "none" }} />
       {/* Inner frame */}
@@ -300,15 +318,38 @@ function CertPreview({
       <div style={{ position: "absolute", bottom: "14px", left: "16px",  fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
       <div style={{ position: "absolute", bottom: "14px", right: "16px", fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
 
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: isPurple
+            ? "radial-gradient(circle at 50% 46%, rgba(255,235,170,0.08), transparent 28%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(0,0,0,0.28) 100%)"
+            : "radial-gradient(circle at 50% 46%, rgba(212,175,55,0.08), transparent 30%), radial-gradient(circle at 50% 50%, transparent 54%, rgba(139,105,20,0.08) 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: isPurple ? 0.32 : 0.18,
+          backgroundImage: isPurple
+            ? "radial-gradient(circle at 12% 22%, rgba(248,230,160,0.50) 0 1px, transparent 1.6px), radial-gradient(circle at 78% 18%, rgba(212,175,55,0.45) 0 1px, transparent 1.6px), radial-gradient(circle at 88% 78%, rgba(157,78,221,0.45) 0 1px, transparent 1.6px)"
+            : "radial-gradient(circle at 18% 20%, rgba(139,105,20,0.35) 0 1px, transparent 1.6px), radial-gradient(circle at 82% 72%, rgba(212,175,55,0.30) 0 1px, transparent 1.6px)",
+          backgroundSize: "190px 140px, 260px 210px, 220px 170px",
+        }}
+      />
+
+      <CornerFiligree position="tl" color={cornerClr} />
+      <CornerFiligree position="tr" color={cornerClr} />
+      <CornerFiligree position="bl" color={cornerClr} />
+      <CornerFiligree position="br" color={cornerClr} />
+
       <div style={{ position: "relative", textAlign: "center" }}>
 
-        {/* Glowing cross — Royal Purple */}
-        {isPurple && (
-          <div style={{ fontSize: "24px", lineHeight: 1, marginBottom: "5px", color: GOLD, ...crossGlow }}>✝</div>
-        )}
-
-        {/* Crown — Classic Ivory */}
-        {!isPurple && <div style={{ fontSize: "26px", lineHeight: 1, marginBottom: "4px" }}>👑</div>}
+        {/* Sacred cross accent */}
+        <div style={{ fontSize: isPurple ? "25px" : "22px", lineHeight: 1, marginBottom: "8px", color: isPurple ? GOLD : "#8B6914", ...crossGlow }}>✝</div>
 
         {/* Church logo area — rectangular, no initials */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "5px" }}>
@@ -316,7 +357,7 @@ function CertPreview({
         </div>
 
         {/* Church name */}
-        <p style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.15em", color: titleClr, textTransform: "uppercase", margin: "0 0 2px", fontFamily: "Georgia, serif" }}>
+        <p style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "0.16em", color: titleClr, textTransform: "uppercase", margin: "0 0 2px", fontFamily: "Georgia, serif" }}>
           {dispChurch}
         </p>
         {churchTagline && (
@@ -326,22 +367,20 @@ function CertPreview({
         )}
 
         {/* ❖ ❖ ❖ ornamental rule */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "9px 0 10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "10px 0 13px" }}>
           <div style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${divClr})` }} />
           <span style={{ color: ornClr, fontSize: "11px", letterSpacing: "0.28em" }}>❖ ❖ ❖</span>
           <div style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${divClr})` }} />
         </div>
 
-        {/* Certificate icon / motif */}
-        {certType === 'birthday' ? (
+        {/* Certificate motif: birthday keeps balloons; all other certificates remain ceremonial and text-first */}
+        {certType === 'birthday' && (
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "4px" }}>
             <BirthdayMotif template={template} />
           </div>
-        ) : (
-          <div style={{ fontSize: "34px", lineHeight: 1, marginBottom: "5px" }}>{meta.icon}</div>
         )}
         <h2 style={{
-          fontSize: "22px", fontWeight: 700, color: titleClr, margin: "0 0 2px",
+          fontSize: "25px", fontWeight: 700, color: titleClr, margin: "0 0 3px",
           fontFamily: "Georgia, serif", letterSpacing: "0.06em", textTransform: "uppercase" as const,
         }}>
           {meta.label}
@@ -361,9 +400,10 @@ function CertPreview({
 
         {/* Child Name — primary focal point */}
         <h1 style={{
-          fontSize: "54px", fontWeight: 900, color: nameClr, margin: "0 0 12px",
+          fontSize: "62px", fontWeight: 900, color: nameClr, margin: "0 0 12px",
           fontFamily: "Georgia, serif", lineHeight: 1.05, letterSpacing: "0.01em",
           fontStyle: "italic",
+          textShadow: isPurple ? "0 3px 0 rgba(0,0,0,0.58), 0 0 34px rgba(212,175,55,0.18)" : "0 1px 0 rgba(255,255,255,0.75)",
         }}>
           {dispChild}
         </h1>
@@ -371,19 +411,27 @@ function CertPreview({
         {/* Rule below name */}
         <div style={{ height: "1px", background: divClr, margin: "0 8% 14px" }} />
 
-        {/* Scripture medallion */}
+        {/* Scripture plaque */}
         <div style={{
-          border: `1px solid ${medallionBdr}`,
-          background: medallionBg,
-          borderRadius: "4px",
-          padding: "12px 20px",
-          maxWidth: "440px",
-          margin: "0 auto 14px",
+          position: "relative",
+          border: `2px solid ${isPurple ? "rgba(212,175,55,0.62)" : "rgba(139,105,20,0.50)"}`,
+          background: isPurple
+            ? "linear-gradient(180deg, rgba(42,13,64,0.78), rgba(12,4,24,0.92))"
+            : "linear-gradient(180deg, rgba(255,252,240,0.96), rgba(238,214,162,0.48))",
+          borderRadius: "2px",
+          padding: "15px 28px",
+          maxWidth: "500px",
+          margin: "0 auto 15px",
+          boxShadow: isPurple
+            ? "0 0 28px rgba(212,175,55,0.12), inset 0 0 22px rgba(255,255,255,0.035)"
+            : "0 6px 16px rgba(0,0,0,0.08), inset 0 0 20px rgba(139,105,20,0.06)",
         }}>
-          <p style={{ fontSize: "12px", color: scriptClr, margin: "0 0 5px", lineHeight: 1.5, fontStyle: "italic" }}>
+          <div style={{ position: "absolute", inset: "6px", border: `1px solid ${isPurple ? "rgba(248,230,160,0.22)" : "rgba(139,105,20,0.24)"}`, pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", color: ornClr, fontSize: "16px", lineHeight: 1 }}>✦</div>
+          <p style={{ position: "relative", zIndex: 1, fontSize: "13px", color: scriptClr, margin: "0 0 6px", lineHeight: 1.45, fontStyle: "italic" }}>
             {meta.scripture[translation]}
           </p>
-          <p style={{ fontSize: "11px", fontWeight: 600, color: scriptRef, margin: 0, letterSpacing: "0.08em" }}>
+          <p style={{ position: "relative", zIndex: 1, fontSize: "11px", fontWeight: 700, color: scriptRef, margin: 0, letterSpacing: "0.12em" }}>
             — {meta.scriptureRef} {translation.toUpperCase()}
           </p>
         </div>
@@ -418,7 +466,7 @@ function CertPreview({
 
           {/* Center: Ministry seal */}
           <div style={{ flexShrink: 0 }}>
-            <MinistrySeal size={40} template={template} />
+            <MinistrySeal size={58} template={template} />
           </div>
 
           {/* Right: Date */}
