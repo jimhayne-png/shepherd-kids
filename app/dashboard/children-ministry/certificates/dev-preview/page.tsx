@@ -4,6 +4,7 @@ import { useRef } from "react";
 import AppShell from "@/components/layout/AppShell";
 import CertificateRenderer from "@/components/certificates/CertificateRenderer";
 import CertificateExportButtons from "@/components/certificates/CertificateExportButtons";
+import { CertificateThemeProvider } from "@/components/certificates/context/CertificateThemeContext";
 
 const SAMPLE = {
   certType:      "birthday",
@@ -49,7 +50,9 @@ export default function CertDevPreviewPage() {
               Royal Purple Premium
             </p>
             <div ref={purpleRef} style={{ maxWidth: "860px" }}>
-              <CertificateRenderer {...SAMPLE} template="purple" />
+              <CertificateThemeProvider template="purple">
+                <CertificateRenderer {...SAMPLE} template="purple" />
+              </CertificateThemeProvider>
             </div>
             <div style={{ maxWidth: "860px" }}>
               <CertificateExportButtons
@@ -65,7 +68,9 @@ export default function CertDevPreviewPage() {
               Classic Ivory Premium
             </p>
             <div ref={ivoryRef} style={{ maxWidth: "860px" }}>
-              <CertificateRenderer {...SAMPLE} template="white" />
+              <CertificateThemeProvider template="white">
+                <CertificateRenderer {...SAMPLE} template="white" />
+              </CertificateThemeProvider>
             </div>
             <div style={{ maxWidth: "860px" }}>
               <CertificateExportButtons
