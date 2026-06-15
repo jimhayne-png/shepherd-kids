@@ -188,71 +188,78 @@ function BirthdayMotif({ template }: { template: "purple" | "white" }) {
   );
 }
 
-// ── Church logo area placeholder (rectangular — never circular) ───────────────
-function ChurchLogoArea({ width, height, template }: { width: number; height: number; template: "purple" | "white" }) {
-  const isPurple = template === "purple";
-  return (
-    <div style={{
-      width: `${width}px`,
-      height: `${height}px`,
-      border: `1.5px dashed ${isPurple ? "rgba(212,175,55,0.38)" : "rgba(139,105,20,0.42)"}`,
-      borderRadius: "3px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "3px",
-      background: isPurple ? "rgba(212,175,55,0.04)" : "rgba(139,105,20,0.04)",
-      flexShrink: 0,
-    }}>
-      <span style={{ fontSize: "16px", opacity: 0.40, lineHeight: 1 }}>✝</span>
-      <span style={{
-        fontSize: "7px",
-        color: isPurple ? "rgba(212,175,55,0.45)" : "rgba(139,105,20,0.52)",
-        letterSpacing: "0.08em",
-        fontWeight: 700,
-        textTransform: "uppercase" as const,
-      }}>Church Logo</span>
-    </div>
-  );
+// ── Church logo area placeholder removed ───────────────────────────────────────
+// No placeholder should appear on a frame-worthy certificate.
+// When logo upload is added later, render the real church logo here.
+function ChurchLogoArea(_: { width: number; height: number; template: "purple" | "white" }) {
+  return null;
 }
 
-// ── Ministry seal placeholder (cross only — no initials) ──────────────────────
+// ── Ministry seal placeholder (gold coin medallion) ───────────────────────────
 function MinistrySeal({ size, template }: { size: number; template: "purple" | "white" }) {
   const isPurple = template === "purple";
-  const clr = isPurple ? "rgba(212,175,55,0.72)" : "rgba(139,105,20,0.68)";
+  const shadow = isPurple
+    ? "0 10px 22px rgba(0,0,0,0.55), 0 0 28px rgba(212,175,55,0.18)"
+    : "0 8px 18px rgba(90,60,10,0.18), 0 0 18px rgba(212,175,55,0.14)";
+
   return (
-    <div style={{
-      width: `${size}px`,
-      height: `${size}px`,
-      borderRadius: "50%",
-      border: `1.5px solid ${clr}`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: isPurple ? "radial-gradient(circle at 50% 35%, rgba(42,13,64,0.96), rgba(5,2,18,0.94))" : "radial-gradient(circle at 50% 35%, rgba(255,252,240,0.98), rgba(238,214,162,0.90))",
-      flexShrink: 0,
-    }}>
-      <span style={{ fontSize: `${Math.round(size * 0.46)}px`, color: clr, lineHeight: 1, fontFamily: "Georgia, serif" }}>✝</span>
+    <div
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: "50%",
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background:
+          "radial-gradient(circle at 34% 26%, #FFF2B6 0%, #E9C75A 18%, #C99A22 42%, #8A5A0B 72%, #F3D46B 100%)",
+        border: "2px solid #F8E6A0",
+        boxShadow: shadow,
+        flexShrink: 0,
+      }}
+      aria-hidden="true"
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 5,
+          borderRadius: "50%",
+          border: "2px solid rgba(91,54,4,0.55)",
+          boxShadow: "inset 0 2px 5px rgba(255,255,255,0.35), inset 0 -4px 8px rgba(75,42,0,0.36)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 11,
+          borderRadius: "50%",
+          border: "1px solid rgba(255,246,197,0.75)",
+        }}
+      />
+      <svg viewBox="0 0 100 100" style={{ width: Math.round(size * 0.62), height: Math.round(size * 0.62), position: "relative", zIndex: 2 }}>
+        <defs>
+          <linearGradient id="coinCrossGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#FFF8C8" />
+            <stop offset="42%" stopColor="#D4AF37" />
+            <stop offset="100%" stopColor="#7A4A05" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M44 16h12v28h28v12H56v28H44V56H16V44h28z"
+          fill="url(#coinCrossGold)"
+          stroke="#5D3703"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M50 18v64M18 50h64"
+          stroke="rgba(255,248,200,0.45)"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+        />
+      </svg>
     </div>
-  );
-}
-
-
-function CornerFiligree({ position, color }: { position: "tl" | "tr" | "bl" | "br"; color: string }) {
-  const placement: React.CSSProperties =
-    position === "tl" ? { top: "20px", left: "20px" } :
-    position === "tr" ? { top: "20px", right: "20px", transform: "scaleX(-1)" } :
-    position === "bl" ? { bottom: "20px", left: "20px", transform: "scaleY(-1)" } :
-    { bottom: "20px", right: "20px", transform: "scale(-1)" };
-
-  return (
-    <svg viewBox="0 0 96 96" style={{ position: "absolute", width: "78px", height: "78px", color, opacity: 0.72, pointerEvents: "none", ...placement }}>
-      <path d="M10 86V10h76" fill="none" stroke="currentColor" strokeWidth="2.4" />
-      <path d="M22 74V22h52" fill="none" stroke="currentColor" strokeWidth="1" opacity=".68" />
-      <path d="M26 28c18 4 24 18 12 28 20-2 30 12 24 30M35 22c-4 18 10 26 28 18M20 62c16-5 28 2 34 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity=".82" />
-      <circle cx="42" cy="42" r="3.2" fill="currentColor" opacity=".86" />
-    </svg>
   );
 }
 
@@ -341,27 +348,66 @@ function CertPreview({
         }}
       />
 
-      <CornerFiligree position="tl" color={cornerClr} />
-      <CornerFiligree position="tr" color={cornerClr} />
-      <CornerFiligree position="bl" color={cornerClr} />
-      <CornerFiligree position="br" color={cornerClr} />
-
       <div style={{ position: "relative", textAlign: "center" }}>
 
-        {/* Sacred cross accent */}
-        <div style={{ fontSize: isPurple ? "25px" : "22px", lineHeight: 1, marginBottom: "8px", color: isPurple ? GOLD : "#8B6914", ...crossGlow }}>✝</div>
-
-        {/* Church logo area — rectangular, no initials */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "5px" }}>
-          <ChurchLogoArea width={isPurple ? 120 : 110} height={isPurple ? 48 : 44} template={template} />
+        {/* Sacred cross accent — flat brushed gold with soft glow */}
+        <div
+          style={{
+            width: "38px",
+            height: "46px",
+            margin: "0 auto 10px",
+            position: "relative",
+            filter: isPurple
+              ? "drop-shadow(0 0 10px rgba(248,230,160,0.60)) drop-shadow(0 0 26px rgba(157,78,221,0.34))"
+              : "drop-shadow(0 2px 4px rgba(139,105,20,0.18))",
+          }}
+          aria-hidden="true"
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: "-14px -20px",
+              background: isPurple
+                ? "radial-gradient(circle, rgba(255,235,170,0.22), rgba(157,78,221,0.16) 38%, transparent 68%)"
+                : "radial-gradient(circle, rgba(212,175,55,0.15), transparent 64%)",
+              pointerEvents: "none",
+            }}
+          />
+          <svg viewBox="0 0 80 96" style={{ position: "relative", width: "100%", height: "100%" }}>
+            <defs>
+              <linearGradient id="topFlatCrossGold" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#FFF4B8" />
+                <stop offset="38%" stopColor="#D4AF37" />
+                <stop offset="100%" stopColor="#7A4A05" />
+              </linearGradient>
+              <linearGradient id="topFlatCrossTexture" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
+                <stop offset="48%" stopColor="rgba(255,255,255,0.04)" />
+                <stop offset="100%" stopColor="rgba(0,0,0,0.18)" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M34 8h12v30h25v13H46v37H34V51H9V38h25z"
+              fill="url(#topFlatCrossGold)"
+              stroke={isPurple ? "#FFF0A8" : "#8B6914"}
+              strokeWidth="1.6"
+              strokeLinejoin="miter"
+            />
+            <path
+              d="M37 10h3v76M43 10h2v76M12 41h56M12 48h56"
+              stroke="url(#topFlatCrossTexture)"
+              strokeWidth="1"
+              opacity=".55"
+            />
+          </svg>
         </div>
 
         {/* Church name */}
-        <p style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "0.16em", color: titleClr, textTransform: "uppercase", margin: "0 0 2px", fontFamily: "Georgia, serif" }}>
+        <p style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "0.16em", color: titleClr, textTransform: "uppercase", margin: "0 0 4px", fontFamily: "Georgia, serif" }}>
           {dispChurch}
         </p>
         {churchTagline && (
-          <p style={{ fontSize: "10px", color: subClr, margin: 0, fontStyle: "italic", letterSpacing: "0.05em" }}>
+          <p style={{ fontSize: "10px", color: subClr, margin: "0 0 2px", fontStyle: "italic", letterSpacing: "0.05em" }}>
             {churchTagline}
           </p>
         )}
@@ -466,7 +512,7 @@ function CertPreview({
 
           {/* Center: Ministry seal */}
           <div style={{ flexShrink: 0 }}>
-            <MinistrySeal size={58} template={template} />
+            <MinistrySeal size={68} template={template} />
           </div>
 
           {/* Right: Date */}
