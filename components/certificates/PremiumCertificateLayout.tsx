@@ -136,7 +136,7 @@ function MinistrySeal({ ivory, sealImageUrl }: { ivory: boolean; sealImageUrl?: 
 export default function PremiumCertificateLayout(props: PremiumCertificateLayoutProps) {
   const ivory = props.template === "white";
   const displayDate = formatDate(props.date);
-  const nameSize = props.childName.length > 24 ? 76 : props.childName.length > 16 ? 86 : 96;
+  const nameSize = props.childName.length > 24 ? 88 : props.childName.length > 16 ? 102 : 112;
 
   const background = ivory
     ? `
@@ -191,12 +191,12 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: 28,
+          top: 12,
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 20,
           fontFamily: "Georgia, serif",
-          fontSize: ivory ? 36 : 62,
+          fontSize: ivory ? 64 : 110,
           color: ivory ? "#B8860B" : "#FFF2B8",
           lineHeight: 1,
           textShadow: ivory ? "none" : "0 0 18px rgba(255,240,170,.85), 0 0 60px rgba(170,70,255,.48)",
@@ -295,7 +295,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: 334,
+          top: 360,
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 22,
@@ -317,7 +317,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
         <div
           style={{
             position: "absolute",
-            top: 454,
+            top: 488,
             left: "50%",
             transform: "translateX(-50%)",
             width: 720,
@@ -337,17 +337,17 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: props.blessing ? 528 : 494,
+          top: props.blessing ? 570 : 536,
           left: "50%",
           transform: "translateX(-50%)",
-          width: 660,
-          minHeight: 104,
+          width: 700,
+          minHeight: 128,
           zIndex: 20,
           background: ivory
             ? "linear-gradient(180deg, rgba(255,255,255,.88), rgba(244,225,180,.78))"
             : "linear-gradient(180deg, rgba(10,3,18,.92), rgba(24,8,38,.98))",
           border: ivory ? "2px solid #B8860B" : `2px solid rgba(212,175,55,.62)`,
-          borderRadius: 16,
+          borderRadius: 0,
           boxShadow: ivory
             ? "0 8px 18px rgba(0,0,0,.12), inset 0 0 22px rgba(139,105,20,.05)"
             : "0 0 28px rgba(212,175,55,.14), inset 0 0 24px rgba(255,255,255,.035)",
