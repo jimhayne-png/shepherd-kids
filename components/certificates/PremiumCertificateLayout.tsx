@@ -113,23 +113,21 @@ function MinistrySeal({ ivory, sealImageUrl }: { ivory: boolean; sealImageUrl?: 
           height: "100%",
           borderRadius: "50%",
           border: "1.5px solid rgba(45,20,70,.72)",
-          background: ivory
-            ? "radial-gradient(circle at 50% 38%, #FFF9E8 0%, #F2DB9A 56%, #8B6914 100%)"
-            : "radial-gradient(circle at 50% 38%, #2A0D43 0%, #16051F 58%, #07020D 100%)",
-          color: ivory ? "#5E4210" : LIGHT_GOLD,
+          background: ivory ? "#FFF9E8" : "#16051F",
+          color: ivory ? "#5E4210" : GOLD,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          boxShadow: ivory ? "inset 0 0 18px rgba(139,105,20,.14)" : "inset 0 0 22px rgba(212,175,55,.10)",
+          fontFamily: "Georgia, serif",
+          fontSize: 9,
+          fontWeight: 900,
+          lineHeight: 1.08,
+          letterSpacing: ".06em",
+          textTransform: "uppercase",
         }}
       >
-        <svg viewBox="0 0 90 90" aria-hidden="true" style={{ width: 72, height: 72 }}>
-          <circle cx="45" cy="45" r="34" fill="none" stroke="currentColor" strokeWidth="1.4" opacity=".72" />
-          <path d="M45 20v39M32 35h26" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-          <path d="M25 62c10 8 30 8 40 0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity=".78" />
-          <path d="M28 68c8 5 26 5 34 0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".55" />
-        </svg>
+        ✝<br />Children's<br />Ministry
       </div>
     </div>
   );
@@ -138,7 +136,7 @@ function MinistrySeal({ ivory, sealImageUrl }: { ivory: boolean; sealImageUrl?: 
 export default function PremiumCertificateLayout(props: PremiumCertificateLayoutProps) {
   const ivory = props.template === "white";
   const displayDate = formatDate(props.date);
-  const nameSize = props.childName.length > 24 ? 92 : props.childName.length > 16 ? 106 : 116;
+  const nameSize = props.childName.length > 24 ? 88 : props.childName.length > 16 ? 102 : 112;
 
   const background = ivory
     ? `
@@ -170,53 +168,6 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
         color: ivory ? DEEP_PURPLE : "#FFFFFF",
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: "none",
-          background: ivory
-            ? `
-              radial-gradient(circle at 50% 36%, rgba(255,255,255,.52), transparent 34%),
-              radial-gradient(circle at 15% 12%, rgba(212,175,55,.14), transparent 22%),
-              radial-gradient(circle at 86% 16%, rgba(123,44,191,.08), transparent 25%),
-              radial-gradient(circle at 50% 104%, rgba(139,105,20,.10), transparent 36%)
-            `
-            : `
-              radial-gradient(circle at 50% 32%, rgba(255,235,170,.11), transparent 34%),
-              radial-gradient(circle at 50% 8%, rgba(255,240,170,.12), transparent 22%),
-              radial-gradient(circle at 16% 82%, rgba(123,44,191,.22), transparent 36%),
-              radial-gradient(circle at 88% 78%, rgba(212,175,55,.10), transparent 30%),
-              radial-gradient(circle at 50% 50%, transparent 44%, rgba(0,0,0,.30) 100%)
-            `,
-        }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 2,
-          pointerEvents: "none",
-          opacity: ivory ? 0.18 : 0.34,
-          backgroundImage: ivory
-            ? `
-              radial-gradient(circle at 16% 22%, rgba(139,105,20,.35) 0 1px, transparent 1.5px),
-              radial-gradient(circle at 72% 18%, rgba(212,175,55,.30) 0 1px, transparent 1.5px),
-              radial-gradient(circle at 88% 72%, rgba(139,105,20,.22) 0 1px, transparent 1.5px)
-            `
-            : `
-              radial-gradient(circle at 18% 24%, rgba(248,230,160,.55) 0 1px, transparent 1.7px),
-              radial-gradient(circle at 36% 18%, rgba(123,44,191,.55) 0 1px, transparent 1.8px),
-              radial-gradient(circle at 78% 22%, rgba(212,175,55,.50) 0 1px, transparent 1.7px),
-              radial-gradient(circle at 86% 72%, rgba(248,230,160,.35) 0 1px, transparent 1.8px),
-              radial-gradient(circle at 24% 82%, rgba(123,44,191,.45) 0 1px, transparent 1.8px)
-            `,
-          backgroundSize: "180px 140px, 260px 190px, 220px 170px, 300px 210px, 240px 180px",
-        }}
-      />
-
       <div style={{ position: "absolute", inset: 14, border: ivory ? `2px solid ${GOLD}` : "2px solid #F8E6A0", zIndex: 5 }} />
       <div style={{ position: "absolute", inset: 28, border: ivory ? "1px solid rgba(139,105,20,.48)" : "1px solid rgba(212,175,55,.42)", zIndex: 5 }} />
       <div style={{ position: "absolute", inset: 44, border: ivory ? "1px solid rgba(139,105,20,.22)" : "1px solid rgba(212,175,55,.16)", zIndex: 5 }} />
@@ -228,10 +179,10 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
 
       {props.renderMotif ? (
         <>
-          <div style={{ position: "absolute", left: -82, top: 80, zIndex: 4, pointerEvents: "none", opacity: ivory ? 0.70 : 0.82 }}>
+          <div style={{ position: "absolute", left: -82, top: 80, zIndex: 4, pointerEvents: "none", opacity: 0.95 }}>
             {props.renderMotif("left")}
           </div>
-          <div style={{ position: "absolute", right: -82, top: 80, zIndex: 4, pointerEvents: "none", opacity: ivory ? 0.70 : 0.82 }}>
+          <div style={{ position: "absolute", right: -82, top: 80, zIndex: 4, pointerEvents: "none", opacity: 0.95 }}>
             {props.renderMotif("right")}
           </div>
         </>
@@ -240,15 +191,15 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: 28,
+          top: 32,
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 20,
           fontFamily: "Georgia, serif",
-          fontSize: ivory ? 34 : 42,
+          fontSize: ivory ? 38 : 46,
           color: ivory ? "#B8860B" : "#FFF2B8",
           lineHeight: 1,
-          textShadow: ivory ? "0 0 10px rgba(184,134,11,.18)" : "0 0 10px rgba(255,240,170,.72), 0 0 32px rgba(212,175,55,.22)",
+          textShadow: ivory ? "0 0 10px rgba(184,134,11,.20)" : "0 0 14px rgba(255,240,170,.85), 0 0 42px rgba(212,175,55,.30)",
         }}
       >
         ✝
@@ -257,7 +208,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: 78,
+          top: 86,
           left: "50%",
           transform: "translateX(-50%)",
           width: 620,
@@ -269,9 +220,9 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
         <div
           style={{
             fontFamily: "Georgia, serif",
-            fontSize: 25,
+            fontSize: 24,
             fontWeight: 900,
-            letterSpacing: ".13em",
+            letterSpacing: ".145em",
             textTransform: "uppercase",
             color: ivory ? DEEP_PURPLE : LIGHT_GOLD,
             textShadow: ivory ? "0 1px 0 #FFF" : "0 2px 0 rgba(0,0,0,.45)",
@@ -310,7 +261,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: 206,
+          top: 210,
           left: "50%",
           transform: "translateX(-50%)",
           width: "82%",
@@ -321,10 +272,10 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
         <div
           style={{
             fontFamily: "Georgia, serif",
-            fontSize: 48,
+            fontSize: 46,
             fontWeight: 900,
             lineHeight: 0.95,
-            letterSpacing: ".055em",
+            letterSpacing: ".08em",
             color: ivory ? "#3D145F" : GOLD,
             textShadow: ivory ? "0 1px 0 #FFF" : "0 2px 0 rgba(0,0,0,.55), 0 0 22px rgba(212,175,55,.18)",
           }}
@@ -351,7 +302,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: 346,
+          top: 352,
           left: "50%",
           transform: "translateX(-50%)",
           zIndex: 22,
@@ -364,7 +315,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
           lineHeight: 0.95,
           letterSpacing: ".015em",
           color: ivory ? "#2A0D43" : "#FFF0B8",
-          textShadow: ivory ? "0 1px 0 #FFF" : "0 4px 0 rgba(0,0,0,.55), 0 0 42px rgba(212,175,55,.30), 0 0 80px rgba(255,240,170,.12)",
+          textShadow: ivory ? "0 1px 0 #FFF" : "0 4px 0 rgba(0,0,0,.58), 0 0 48px rgba(212,175,55,.34), 0 0 92px rgba(255,240,170,.14)",
         }}
       >
         {props.childName}
@@ -374,7 +325,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
         <div
           style={{
             position: "absolute",
-            top: 482,
+            top: 462,
             left: "50%",
             transform: "translateX(-50%)",
             width: 720,
@@ -394,21 +345,21 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       <div
         style={{
           position: "absolute",
-          top: props.blessing ? 552 : 520,
+          top: props.blessing ? 560 : 526,
           left: "50%",
           transform: "translateX(-50%)",
           width: 720,
-          minHeight: 118,
+          minHeight: 124,
           zIndex: 20,
           background: ivory
             ? "linear-gradient(180deg, rgba(255,252,240,.96), rgba(238,214,162,.88))"
             : "linear-gradient(180deg, rgba(42,13,64,.96), rgba(18,5,31,.98))",
-          border: ivory ? "3px solid #B8860B" : `3px solid rgba(212,175,55,.82)`,
+          border: ivory ? "3px solid #B8860B" : `3px solid rgba(212,175,55,.74)`,
           borderRadius: 0,
           boxShadow: ivory
             ? "0 10px 24px rgba(0,0,0,.14), inset 0 0 28px rgba(139,105,20,.08)"
-            : "0 0 34px rgba(212,175,55,.18), inset 0 0 34px rgba(255,255,255,.035), inset 0 0 70px rgba(0,0,0,.20)",
-          padding: "24px 64px",
+            : "0 0 42px rgba(212,175,55,.22), inset 0 0 38px rgba(255,255,255,.04), inset 0 0 80px rgba(0,0,0,.24)",
+          padding: "26px 62px",
           boxSizing: "border-box",
           textAlign: "center",
         }}
@@ -427,7 +378,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
             margin: "0 0 8px",
             color: ivory ? DEEP_PURPLE : "rgba(255,255,255,.90)",
             fontSize: 16,
-            lineHeight: 1.38,
+            lineHeight: 1.42,
             fontFamily: "Georgia, serif",
           }}
         >
@@ -455,7 +406,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
           position: "absolute",
           left: 130,
           right: 130,
-          bottom: 124,
+          bottom: 134,
           height: 1,
           zIndex: 15,
           background: ivory
@@ -469,7 +420,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
           position: "absolute",
           left: 120,
           right: 120,
-          bottom: 34,
+          bottom: 46,
           zIndex: 20,
           display: "grid",
           gridTemplateColumns: "1fr 140px 1fr",
@@ -497,7 +448,7 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
           <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: ".13em", textTransform: "uppercase", color: ivory ? "#8B6914" : GOLD, marginBottom: 7 }}>
             Date of Presentation
           </div>
-          <div style={{ fontFamily: "Georgia, serif", fontSize: 25, fontStyle: "italic", color: ivory ? "#3D145F" : "#FBE6A2", lineHeight: 1 }}>
+          <div style={{ fontFamily: "Georgia, serif", fontSize: 27, fontStyle: "italic", color: ivory ? "#3D145F" : "#FBE6A2", lineHeight: 1 }}>
             {displayDate}
           </div>
         </div>
