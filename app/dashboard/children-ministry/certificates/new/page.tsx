@@ -163,60 +163,66 @@ function FormSection({ title, children }: { title: string; children: React.React
 function BirthdayMotif({ template, side }: { template: "purple" | "white"; side: "left" | "right" }) {
   const isPurple = template === "purple";
   const mirror = side === "right";
-  const purpleA = isPurple ? "#7B2CBF" : "#5B1E8C";
-  const purpleB = isPurple ? "#B86BFF" : "#7B2CBF";
+  const purpleA = isPurple ? "#6D20B8" : "#5B1E8C";
+  const purpleB = isPurple ? "#B56BFF" : "#7B2CBF";
   const goldA = isPurple ? "#D4AF37" : "#B8860B";
-  const goldB = isPurple ? "#FFF0A8" : "#E2BC58";
-  const stringColor = isPurple ? "rgba(248,230,160,0.62)" : "rgba(139,105,20,0.46)";
-  const sparkle = isPurple ? "rgba(248,230,160,0.78)" : "rgba(184,134,11,0.46)";
+  const goldB = isPurple ? "#FFF2B8" : "#E2BC58";
+  const stringColor = isPurple ? "rgba(248,230,160,0.70)" : "rgba(139,105,20,0.46)";
+  const sparkle = isPurple ? "rgba(248,230,160,0.92)" : "rgba(184,134,11,0.48)";
 
   return (
-    <svg width="205" height="380" viewBox="0 0 230 420" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
+    <svg width="270" height="520" viewBox="0 0 270 520" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
       <defs>
-        <radialGradient id={`edgePurple-${side}`} cx="34%" cy="24%" r="78%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.62" />
-          <stop offset="19%" stopColor={purpleB} stopOpacity="0.96" />
-          <stop offset="66%" stopColor={purpleA} stopOpacity="0.94" />
-          <stop offset="100%" stopColor="#1B062B" stopOpacity="0.98" />
-        </radialGradient>
-        <radialGradient id={`edgeGold-${side}`} cx="35%" cy="20%" r="78%">
+        <radialGradient id={`edgePurpleA-${side}`} cx="35%" cy="23%" r="82%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.70" />
+          <stop offset="17%" stopColor={purpleB} stopOpacity="0.98" />
+          <stop offset="66%" stopColor={purpleA} stopOpacity="0.96" />
+          <stop offset="100%" stopColor="#170322" stopOpacity="1" />
+        </radialGradient>
+        <radialGradient id={`edgePurpleB-${side}`} cx="36%" cy="22%" r="82%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.58" />
+          <stop offset="22%" stopColor="#A64CFF" stopOpacity="0.96" />
+          <stop offset="70%" stopColor="#5E169B" stopOpacity="0.96" />
+          <stop offset="100%" stopColor="#140320" stopOpacity="1" />
+        </radialGradient>
+        <radialGradient id={`edgeGold-${side}`} cx="36%" cy="22%" r="78%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.76" />
           <stop offset="22%" stopColor={goldB} stopOpacity="1" />
-          <stop offset="64%" stopColor={goldA} stopOpacity="0.98" />
+          <stop offset="66%" stopColor={goldA} stopOpacity="0.98" />
           <stop offset="100%" stopColor="#704400" stopOpacity="0.98" />
         </radialGradient>
-        <filter id={`edgeBalloonShadow-${side}`} x="-40%" y="-40%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="7" stdDeviation="7" floodColor="#000000" floodOpacity={isPurple ? "0.48" : "0.18"} />
+        <filter id={`edgeBalloonShadow-${side}`} x="-45%" y="-45%" width="190%" height="190%">
+          <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#000000" floodOpacity={isPurple ? "0.52" : "0.18"} />
         </filter>
       </defs>
 
-      <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.88 : 0.72}>
-        <ellipse cx="24" cy="92" rx="55" ry="72" fill={`url(#edgePurple-${side})`} />
-        <ellipse cx="12" cy="68" rx="14" ry="10" fill="rgba(255,255,255,0.42)" transform="rotate(-18 12 68)" />
-        <path d="M24 165l-10 12h20z" fill={purpleA} opacity=".68" />
+      <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.96 : 0.78}>
+        <ellipse cx="18" cy="118" rx="58" ry="82" fill={`url(#edgePurpleA-${side})`} />
+        <ellipse cx="3" cy="90" rx="14" ry="10" fill="rgba(255,255,255,0.46)" transform="rotate(-18 3 90)" />
+        <path d="M18 202l-11 13h22z" fill={purpleA} opacity=".72" />
 
-        <ellipse cx="96" cy="166" rx="54" ry="72" fill={`url(#edgeGold-${side})`} />
-        <ellipse cx="82" cy="141" rx="15" ry="10" fill="rgba(255,255,255,0.54)" transform="rotate(-18 82 141)" />
-        <path d="M96 239l-10 12h20z" fill={goldA} opacity=".76" />
+        <ellipse cx="108" cy="216" rx="58" ry="80" fill={`url(#edgeGold-${side})`} />
+        <ellipse cx="92" cy="187" rx="16" ry="11" fill="rgba(255,255,255,0.58)" transform="rotate(-18 92 187)" />
+        <path d="M108 298l-11 14h22z" fill={goldA} opacity=".78" />
 
-        <ellipse cx="28" cy="226" rx="58" ry="77" fill={`url(#edgePurple-${side})`} opacity=".97" />
-        <ellipse cx="14" cy="199" rx="15" ry="10" fill="rgba(255,255,255,0.38)" transform="rotate(-18 14 199)" />
-        <path d="M28 304l-10 12h20z" fill={purpleA} opacity=".68" />
+        <ellipse cx="24" cy="296" rx="64" ry="88" fill={`url(#edgePurpleB-${side})`} />
+        <ellipse cx="7" cy="265" rx="16" ry="11" fill="rgba(255,255,255,0.40)" transform="rotate(-18 7 265)" />
+        <path d="M24 386l-11 14h22z" fill="#5E169B" opacity=".74" />
       </g>
 
-      <g fill="none" stroke={stringColor} strokeWidth="1.7" strokeLinecap="round" opacity=".78">
-        <path d="M24 178C7 220 36 254 18 348" />
-        <path d="M96 252C72 296 110 326 88 404" />
-        <path d="M28 316C9 350 46 370 28 420" />
+      <g fill="none" stroke={stringColor} strokeWidth="1.8" strokeLinecap="round" opacity=".82">
+        <path d="M18 216C-1 270 34 322 14 434" />
+        <path d="M108 312C82 362 122 404 100 512" />
+        <path d="M24 400C4 440 44 464 24 520" />
       </g>
 
-      <g opacity=".78">
-        <circle cx="151" cy="88" r="2.2" fill={sparkle} />
-        <circle cx="178" cy="174" r="1.7" fill={sparkle} />
-        <circle cx="139" cy="266" r="1.6" fill={sparkle} />
-        <circle cx="183" cy="324" r="2.1" fill={sparkle} />
-        <path d="M158 42l4 8 9 1.3-6.5 6.3 1.5 9-8-4.3-8 4.3 1.5-9-6.5-6.3 9-1.3z" fill={sparkle} opacity=".42" />
-        <path d="M196 226l3 6 6.8 1-4.9 4.8 1.2 6.8-6.1-3.2-6.1 3.2 1.2-6.8-4.9-4.8 6.8-1z" fill={sparkle} opacity=".35" />
+      <g opacity=".82">
+        <circle cx="162" cy="90" r="2.3" fill={sparkle} />
+        <circle cx="192" cy="192" r="1.8" fill={sparkle} />
+        <circle cx="152" cy="322" r="1.7" fill={sparkle} />
+        <circle cx="210" cy="388" r="2.1" fill={sparkle} />
+        <path d="M174 132l5 5-5 5-5-5z" fill={sparkle} opacity=".54" />
+        <path d="M206 272l4 4-4 4-4-4z" fill={sparkle} opacity=".44" />
       </g>
     </svg>
   );
@@ -280,14 +286,14 @@ function MinistrySeal({ size, template }: { size: number; template: "purple" | "
           </linearGradient>
         </defs>
         <path
-          d="M44 16h12v28h28v12H56v28H44V56H16V44h28z"
+          d="M44 12h12v31h24v11H56v38H44V54H20V43h24z"
           fill="url(#coinCrossGold)"
           stroke="#5D3703"
           strokeWidth="3"
           strokeLinejoin="round"
         />
         <path
-          d="M50 18v64M18 50h64"
+          d="M50 16v72M24 48h52"
           stroke="rgba(255,248,200,0.45)"
           strokeWidth="1.2"
           strokeLinecap="round"
@@ -316,7 +322,7 @@ function CertPreview({
 
   // ── Theme tokens ──────────────────────────────────────────────────────────────
   const bg           = isPurple
-    ? `radial-gradient(circle at 50% 42%, rgba(255,235,170,0.10), transparent 34%), radial-gradient(circle at 18% 18%, rgba(123,44,191,0.18), transparent 26%), radial-gradient(circle at 84% 74%, rgba(212,175,55,0.08), transparent 30%), linear-gradient(160deg, #050212 0%, #130828 50%, #0A0320 100%)`
+    ? `radial-gradient(circle at 50% 10%, rgba(180,80,255,0.24), transparent 18%), radial-gradient(circle at 22% 30%, rgba(123,44,191,0.28), transparent 30%), radial-gradient(circle at 78% 32%, rgba(123,44,191,0.22), transparent 30%), radial-gradient(circle at 18% 76%, rgba(212,175,55,0.10), transparent 34%), radial-gradient(circle at 86% 78%, rgba(180,80,255,0.20), transparent 34%), linear-gradient(160deg, #03010B 0%, #120523 48%, #050212 100%)`
     : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
   const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
   const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
@@ -365,8 +371,8 @@ function CertPreview({
           inset: 0,
           pointerEvents: "none",
           background: isPurple
-            ? "radial-gradient(circle at 50% 46%, rgba(255,235,170,0.08), transparent 28%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(0,0,0,0.28) 100%)"
-            : "radial-gradient(circle at 50% 46%, rgba(212,175,55,0.08), transparent 30%), radial-gradient(circle at 50% 50%, transparent 54%, rgba(139,105,20,0.08) 100%)",
+            ? "radial-gradient(circle at 50% 9%, rgba(255,255,255,0.18), transparent 12%), radial-gradient(circle at 50% 50%, transparent 46%, rgba(0,0,0,0.34) 100%), radial-gradient(circle at 18% 72%, rgba(157,78,221,0.22), transparent 31%), radial-gradient(circle at 86% 70%, rgba(157,78,221,0.20), transparent 31%)"
+            : "radial-gradient(circle at 50% 42%, rgba(212,175,55,0.07), transparent 31%), radial-gradient(circle at 50% 50%, transparent 55%, rgba(139,105,20,0.08) 100%)",
         }}
       />
       <div
@@ -374,20 +380,20 @@ function CertPreview({
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          opacity: isPurple ? 0.32 : 0.18,
+          opacity: isPurple ? 0.62 : 0.18,
           backgroundImage: isPurple
-            ? "radial-gradient(circle at 12% 22%, rgba(248,230,160,0.50) 0 1px, transparent 1.6px), radial-gradient(circle at 78% 18%, rgba(212,175,55,0.45) 0 1px, transparent 1.6px), radial-gradient(circle at 88% 78%, rgba(157,78,221,0.45) 0 1px, transparent 1.6px)"
-            : "radial-gradient(circle at 18% 20%, rgba(139,105,20,0.35) 0 1px, transparent 1.6px), radial-gradient(circle at 82% 72%, rgba(212,175,55,0.30) 0 1px, transparent 1.6px)",
-          backgroundSize: "190px 140px, 260px 210px, 220px 170px",
+            ? "radial-gradient(circle at 8% 18%, rgba(180,80,255,0.75) 0 1.1px, transparent 2px), radial-gradient(circle at 18% 70%, rgba(248,230,160,0.72) 0 1px, transparent 1.8px), radial-gradient(circle at 84% 24%, rgba(180,80,255,0.65) 0 1.2px, transparent 2px), radial-gradient(circle at 92% 78%, rgba(248,230,160,0.62) 0 1px, transparent 1.8px), radial-gradient(circle at 50% 82%, rgba(157,78,221,0.48) 0 1px, transparent 1.8px)"
+            : "radial-gradient(circle at 18% 20%, rgba(139,105,20,0.28) 0 1px, transparent 1.8px), radial-gradient(circle at 82% 72%, rgba(212,175,55,0.24) 0 1px, transparent 1.8px)",
+          backgroundSize: "180px 132px, 230px 180px, 270px 210px, 210px 165px, 300px 220px",
         }}
       />
 
       {certType === 'birthday' && (
         <>
-          <div style={{ position: "absolute", left: "-112px", top: "74px", zIndex: 1, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", left: "-36px", top: "36px", zIndex: 1, pointerEvents: "none" }}>
             <BirthdayMotif template={template} side="left" />
           </div>
-          <div style={{ position: "absolute", right: "-112px", top: "112px", zIndex: 1, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", right: "-36px", top: "72px", zIndex: 1, pointerEvents: "none" }}>
             <BirthdayMotif template={template} side="right" />
           </div>
         </>
@@ -398,9 +404,9 @@ function CertPreview({
         {/* Sacred cross accent — flat brushed gold with soft glow */}
         <div
           style={{
-            width: "38px",
-            height: "50px",
-            margin: "-4px auto 9px",
+            width: "48px",
+            height: "62px",
+            margin: "-8px auto 8px",
             position: "relative",
             filter: isPurple
               ? "drop-shadow(0 0 8px rgba(255,255,255,0.84)) drop-shadow(0 0 26px rgba(157,78,221,0.56))"
@@ -432,14 +438,14 @@ function CertPreview({
               </linearGradient>
             </defs>
             <path
-              d="M34 4h12v32h20v12H46v44H34V48H14V36h20z"
+              d="M34 2h12v34h17v12H46v46H34V48H17V36h17z"
               fill="url(#topFlatCrossGold)"
-              stroke={isPurple ? "#FFF0A8" : "#8B6914"}
+              stroke={isPurple ? "#F9E8FF" : "#8B6914"}
               strokeWidth="1.6"
               strokeLinejoin="miter"
             />
             <path
-              d="M37 6h3v84M43 6h2v84M17 39h46M17 45h46"
+              d="M37 5h3v86M43 5h2v86M20 39h40M20 45h40"
               stroke="url(#topFlatCrossTexture)"
               strokeWidth="1"
               opacity=".55"
