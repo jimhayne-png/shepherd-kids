@@ -177,8 +177,8 @@ function BirthdayEdgeArtwork({ template, side }: { template: "purple" | "white";
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.90" />
           <stop offset="12%" stopColor="#E6B8FF" stopOpacity="0.70" />
           <stop offset="34%" stopColor={purpleB} stopOpacity="0.98" />
-          <stop offset="72%" stopColor={purpleA} stopOpacity="0.97" />
-          <stop offset="100%" stopColor="#100018" stopOpacity="1" />
+          <stop offset="66%" stopColor={purpleA} stopOpacity="0.96" />
+          <stop offset="100%" stopColor="#170322" stopOpacity="1" />
         </radialGradient>
         <radialGradient id={`edgePurpleB-${side}`} cx="36%" cy="22%" r="82%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.58" />
@@ -190,8 +190,8 @@ function BirthdayEdgeArtwork({ template, side }: { template: "purple" | "white";
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.92" />
           <stop offset="14%" stopColor="#FFF8D2" stopOpacity="0.78" />
           <stop offset="34%" stopColor={goldB} stopOpacity="1" />
-          <stop offset="72%" stopColor={goldA} stopOpacity="0.98" />
-          <stop offset="100%" stopColor="#5C3300" stopOpacity="0.98" />
+          <stop offset="66%" stopColor={goldA} stopOpacity="0.98" />
+          <stop offset="100%" stopColor="#704400" stopOpacity="0.98" />
         </radialGradient>
         <filter id={`edgeBalloonShadow-${side}`} x="-45%" y="-45%" width="190%" height="190%">
           <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#000000" floodOpacity={isPurple ? "0.52" : "0.18"} />
@@ -200,15 +200,15 @@ function BirthdayEdgeArtwork({ template, side }: { template: "purple" | "white";
 
       <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.96 : 0.78}>
         <ellipse cx="8" cy="110" rx="60" ry="84" fill={`url(#edgePurpleA-${side})`} />
-        <ellipse cx="3" cy="90" rx="18" ry="11" fill="rgba(255,255,255,0.54)" transform="rotate(-18 3 90)" />
+        <ellipse cx="3" cy="90" rx="14" ry="10" fill="rgba(255,255,255,0.46)" transform="rotate(-18 3 90)" />
         <path d="M18 202l-11 13h22z" fill={purpleA} opacity=".72" />
 
         <ellipse cx="88" cy="210" rx="60" ry="82" fill={`url(#edgeGold-${side})`} />
-        <ellipse cx="92" cy="187" rx="20" ry="12" fill="rgba(255,255,255,0.62)" transform="rotate(-18 92 187)" />
+        <ellipse cx="92" cy="187" rx="16" ry="11" fill="rgba(255,255,255,0.58)" transform="rotate(-18 92 187)" />
         <path d="M108 298l-11 14h22z" fill={goldA} opacity=".78" />
 
         <ellipse cx="12" cy="300" rx="66" ry="90" fill={`url(#edgePurpleB-${side})`} />
-        <ellipse cx="7" cy="265" rx="19" ry="12" fill="rgba(255,255,255,0.48)" transform="rotate(-18 7 265)" />
+        <ellipse cx="7" cy="265" rx="16" ry="11" fill="rgba(255,255,255,0.40)" transform="rotate(-18 7 265)" />
         <path d="M24 386l-11 14h22z" fill="#5E169B" opacity=".74" />
       </g>
 
@@ -308,44 +308,12 @@ function MinistrySeal({ size, template }: { size: number; template: "purple" | "
 }
 
 
-// ── Reusable certificate art layers ───────────────────────────────────────────
+// ── Reusable certificate artwork layers ───────────────────────────────────────
 function CertificateAtmosphere({ template }: { template: "purple" | "white" }) {
   const isPurple = template === "purple";
 
-  if (!isPurple) {
-    return (
-      <>
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            background: `
-              radial-gradient(circle at 50% 42%, rgba(212,175,55,0.08), transparent 32%),
-              radial-gradient(circle at 50% 50%, transparent 56%, rgba(139,105,20,0.08) 100%)
-            `,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            opacity: 0.12,
-            backgroundImage: `
-              radial-gradient(circle at 18% 20%, rgba(139,105,20,0.24) 0 1px, transparent 1.8px),
-              radial-gradient(circle at 82% 72%, rgba(212,175,55,0.20) 0 1px, transparent 1.8px)
-            `,
-            backgroundSize: "180px 130px, 250px 185px",
-          }}
-        />
-      </>
-    );
-  }
-
   return (
     <>
-      {/* Deep space / nebula base — reusable across every certificate */}
       <CertificateAtmosphere template={template} />
 
       <CertificateMotifLayer certType={certType} template={template} />
