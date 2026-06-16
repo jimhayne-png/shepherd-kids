@@ -171,7 +171,7 @@ function BirthdayMotif({ template, side }: { template: "purple" | "white"; side:
   const sparkle = isPurple ? "rgba(248,230,160,0.92)" : "rgba(184,134,11,0.48)";
 
   return (
-    <svg width="238" height="470" viewBox="0 0 270 520" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
+    <svg width="260" height="500" viewBox="0 0 270 520" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
       <defs>
         <radialGradient id={`edgePurpleA-${side}`} cx="35%" cy="23%" r="82%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.70" />
@@ -197,15 +197,15 @@ function BirthdayMotif({ template, side }: { template: "purple" | "white"; side:
       </defs>
 
       <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.96 : 0.78}>
-        <ellipse cx="18" cy="118" rx="58" ry="82" fill={`url(#edgePurpleA-${side})`} />
+        <ellipse cx="8" cy="110" rx="60" ry="84" fill={`url(#edgePurpleA-${side})`} />
         <ellipse cx="3" cy="90" rx="14" ry="10" fill="rgba(255,255,255,0.46)" transform="rotate(-18 3 90)" />
         <path d="M18 202l-11 13h22z" fill={purpleA} opacity=".72" />
 
-        <ellipse cx="108" cy="216" rx="58" ry="80" fill={`url(#edgeGold-${side})`} />
+        <ellipse cx="88" cy="210" rx="60" ry="82" fill={`url(#edgeGold-${side})`} />
         <ellipse cx="92" cy="187" rx="16" ry="11" fill="rgba(255,255,255,0.58)" transform="rotate(-18 92 187)" />
         <path d="M108 298l-11 14h22z" fill={goldA} opacity=".78" />
 
-        <ellipse cx="24" cy="296" rx="64" ry="88" fill={`url(#edgePurpleB-${side})`} />
+        <ellipse cx="12" cy="300" rx="66" ry="90" fill={`url(#edgePurpleB-${side})`} />
         <ellipse cx="7" cy="265" rx="16" ry="11" fill="rgba(255,255,255,0.40)" transform="rotate(-18 7 265)" />
         <path d="M24 386l-11 14h22z" fill="#5E169B" opacity=".74" />
       </g>
@@ -217,7 +217,7 @@ function BirthdayMotif({ template, side }: { template: "purple" | "white"; side:
       </g>
 
       <g opacity=".82">
-        <circle cx="162" cy="90" r="2.3" fill={sparkle} />
+        <circle cx="150" cy="90" r="2.3" fill={sparkle} />
         <circle cx="192" cy="192" r="1.8" fill={sparkle} />
         <circle cx="152" cy="322" r="1.7" fill={sparkle} />
         <circle cx="210" cy="388" r="2.1" fill={sparkle} />
@@ -253,7 +253,9 @@ function MinistrySeal({ size, template }: { size: number; template: "purple" | "
         alignItems: "center",
         justifyContent: "center",
         background:
-          "radial-gradient(circle at 34% 26%, #FFF2B6 0%, #E9C75A 18%, #C99A22 42%, #8A5A0B 72%, #F3D46B 100%)",
+          isPurple
+            ? "radial-gradient(circle at 50% 42%, #151018 0%, #060407 58%, #D4AF37 61%, #8A5A0B 75%, #F3D46B 100%)"
+            : "radial-gradient(circle at 34% 26%, #FFF2B6 0%, #E9C75A 18%, #C99A22 42%, #8A5A0B 72%, #F3D46B 100%)",
         border: "2px solid #F8E6A0",
         boxShadow: shadow,
         flexShrink: 0,
@@ -286,7 +288,7 @@ function MinistrySeal({ size, template }: { size: number; template: "purple" | "
           </linearGradient>
         </defs>
         <path
-          d="M44 10h12v30h20v10H56v42H44V50H24V40h20z"
+          d="M44 8h12v31h19v10H56v43H44V49H25V39h19z"
           fill="url(#coinCrossGold)"
           stroke="#5D3703"
           strokeWidth="3"
@@ -322,7 +324,7 @@ function CertPreview({
 
   // ── Theme tokens ──────────────────────────────────────────────────────────────
   const bg           = isPurple
-    ? `radial-gradient(circle at 50% 10%, rgba(180,80,255,0.24), transparent 18%), radial-gradient(circle at 22% 30%, rgba(123,44,191,0.28), transparent 30%), radial-gradient(circle at 78% 32%, rgba(123,44,191,0.22), transparent 30%), radial-gradient(circle at 18% 76%, rgba(212,175,55,0.10), transparent 34%), radial-gradient(circle at 86% 78%, rgba(180,80,255,0.20), transparent 34%), linear-gradient(160deg, #03010B 0%, #120523 48%, #050212 100%)`
+    ? `radial-gradient(circle at 50% 8%, rgba(185,75,255,0.18), transparent 16%), radial-gradient(ellipse at 18% 28%, rgba(150,45,255,0.34), transparent 32%), radial-gradient(ellipse at 82% 30%, rgba(150,45,255,0.30), transparent 34%), radial-gradient(ellipse at 18% 78%, rgba(150,45,255,0.22), transparent 34%), radial-gradient(ellipse at 86% 76%, rgba(150,45,255,0.22), transparent 34%), linear-gradient(160deg, #010006 0%, #090018 45%, #010006 100%)`
     : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
   const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
   const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
@@ -360,17 +362,14 @@ function CertPreview({
           pointerEvents: "none",
           background: isPurple
             ? `
-              radial-gradient(circle at 50% 7%, rgba(255,255,255,0.20), transparent 12%),
-              radial-gradient(circle at 18% 24%, rgba(146,36,255,0.34), transparent 29%),
-              radial-gradient(circle at 83% 25%, rgba(157,78,221,0.32), transparent 30%),
-              radial-gradient(circle at 18% 77%, rgba(157,78,221,0.26), transparent 32%),
-              radial-gradient(circle at 84% 76%, rgba(157,78,221,0.24), transparent 30%),
-              radial-gradient(circle at 50% 50%, transparent 42%, rgba(0,0,0,0.42) 100%)
+              radial-gradient(circle at 50% 8%, rgba(255,255,255,0.22), transparent 11%),
+              radial-gradient(ellipse at 14% 44%, rgba(160,45,255,0.34), transparent 35%),
+              radial-gradient(ellipse at 86% 44%, rgba(160,45,255,0.32), transparent 35%),
+              radial-gradient(ellipse at 50% 88%, rgba(165,55,255,0.24), transparent 38%),
+              radial-gradient(circle at 50% 50%, transparent 42%, rgba(0,0,0,0.56) 100%)
             `
             : `
               radial-gradient(circle at 50% 42%, rgba(212,175,55,0.08), transparent 32%),
-              radial-gradient(circle at 18% 72%, rgba(212,175,55,0.06), transparent 30%),
-              radial-gradient(circle at 84% 70%, rgba(212,175,55,0.06), transparent 30%),
               radial-gradient(circle at 50% 50%, transparent 56%, rgba(139,105,20,0.08) 100%)
             `,
         }}
@@ -380,22 +379,22 @@ function CertPreview({
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          opacity: isPurple ? 0.95 : 0.18,
+          opacity: isPurple ? 0.72 : 0.12,
           backgroundImage: isPurple
             ? `
-              radial-gradient(circle at 9% 15%, rgba(255,180,80,0.95) 0 1.2px, transparent 2.2px),
-              radial-gradient(circle at 18% 62%, rgba(190,85,255,0.95) 0 1.3px, transparent 2.5px),
-              radial-gradient(circle at 31% 22%, rgba(255,240,170,0.85) 0 1px, transparent 2px),
-              radial-gradient(circle at 68% 18%, rgba(190,85,255,0.90) 0 1.2px, transparent 2.4px),
-              radial-gradient(circle at 86% 34%, rgba(255,220,120,0.90) 0 1px, transparent 2px),
-              radial-gradient(circle at 92% 76%, rgba(190,85,255,0.90) 0 1.4px, transparent 2.7px),
-              radial-gradient(circle at 54% 82%, rgba(255,220,120,0.75) 0 1px, transparent 2px)
+              radial-gradient(circle at 10% 18%, rgba(255,210,105,0.95) 0 1.3px, transparent 2.4px),
+              radial-gradient(circle at 20% 64%, rgba(190,75,255,0.95) 0 1.4px, transparent 2.5px),
+              radial-gradient(circle at 34% 26%, rgba(255,245,185,0.85) 0 1px, transparent 2px),
+              radial-gradient(circle at 66% 18%, rgba(185,70,255,0.85) 0 1.3px, transparent 2.4px),
+              radial-gradient(circle at 86% 31%, rgba(255,210,105,0.90) 0 1.1px, transparent 2.1px),
+              radial-gradient(circle at 90% 76%, rgba(190,75,255,0.92) 0 1.4px, transparent 2.6px),
+              radial-gradient(circle at 54% 82%, rgba(255,220,120,0.72) 0 1px, transparent 2px)
             `
             : `
-              radial-gradient(circle at 18% 20%, rgba(139,105,20,0.26) 0 1px, transparent 1.8px),
-              radial-gradient(circle at 82% 72%, rgba(212,175,55,0.22) 0 1px, transparent 1.8px)
+              radial-gradient(circle at 18% 20%, rgba(139,105,20,0.24) 0 1px, transparent 1.8px),
+              radial-gradient(circle at 82% 72%, rgba(212,175,55,0.20) 0 1px, transparent 1.8px)
             `,
-          backgroundSize: "190px 140px, 260px 190px, 230px 170px, 310px 220px, 250px 180px, 330px 250px, 280px 210px",
+          backgroundSize: "180px 130px, 250px 185px, 225px 165px, 300px 220px, 240px 175px, 330px 250px, 280px 210px",
         }}
       />
       <div
@@ -403,22 +402,26 @@ function CertPreview({
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          opacity: isPurple ? 0.58 : 0,
-          background: `
-            radial-gradient(ellipse at 14% 48%, rgba(170,60,255,0.26), transparent 30%),
-            radial-gradient(ellipse at 86% 52%, rgba(170,60,255,0.26), transparent 30%),
-            radial-gradient(ellipse at 50% 100%, rgba(170,60,255,0.18), transparent 34%)
+          opacity: isPurple ? 0.88 : 0,
+          backgroundImage: `
+            linear-gradient(90deg, transparent 0 49.5%, rgba(255,245,190,0.75) 50%, transparent 50.5%),
+            linear-gradient(0deg, transparent 0 49.5%, rgba(255,245,190,0.75) 50%, transparent 50.5%),
+            linear-gradient(90deg, transparent 0 49.5%, rgba(185,75,255,0.72) 50%, transparent 50.5%),
+            linear-gradient(0deg, transparent 0 49.5%, rgba(185,75,255,0.72) 50%, transparent 50.5%)
           `,
-          mixBlendMode: "screen",
+          backgroundSize: "120px 120px, 120px 120px, 170px 170px, 170px 170px",
+          backgroundPosition: "64px 42px, 64px 42px, 18px 96px, 18px 96px",
+          maskImage: "radial-gradient(circle at 11% 18%, black 0 1.8%, transparent 4%), radial-gradient(circle at 88% 28%, black 0 1.8%, transparent 4%), radial-gradient(circle at 83% 72%, black 0 1.6%, transparent 4%), radial-gradient(circle at 24% 70%, black 0 1.5%, transparent 4%)",
+          WebkitMaskImage: "radial-gradient(circle at 11% 18%, black 0 1.8%, transparent 4%), radial-gradient(circle at 88% 28%, black 0 1.8%, transparent 4%), radial-gradient(circle at 83% 72%, black 0 1.6%, transparent 4%), radial-gradient(circle at 24% 70%, black 0 1.5%, transparent 4%)",
         }}
       />
 
       {certType === 'birthday' && (
         <>
-          <div style={{ position: "absolute", left: "-64px", top: "54px", zIndex: 1, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", left: "-18px", top: "46px", zIndex: 1, pointerEvents: "none" }}>
             <BirthdayMotif template={template} side="left" />
           </div>
-          <div style={{ position: "absolute", right: "-64px", top: "72px", zIndex: 1, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", right: "-18px", top: "62px", zIndex: 1, pointerEvents: "none" }}>
             <BirthdayMotif template={template} side="right" />
           </div>
         </>
@@ -429,9 +432,9 @@ function CertPreview({
         {/* Sacred cross accent — flat brushed gold with soft glow */}
         <div
           style={{
-            width: "52px",
-            height: "66px",
-            margin: "-10px auto 8px",
+            width: "58px",
+            height: "72px",
+            margin: "-12px auto 8px",
             position: "relative",
             filter: isPurple
               ? "drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 30px rgba(180,80,255,0.72))"
