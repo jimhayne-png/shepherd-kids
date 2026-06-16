@@ -162,28 +162,71 @@ function FormSection({ title, children }: { title: string; children: React.React
 // ── Birthday balloon motif ────────────────────────────────────────────────────
 function BirthdayMotif({ template }: { template: "purple" | "white" }) {
   const isPurple = template === "purple";
-  const b1  = isPurple ? "#9D4EDD" : "#5B1E8C";   // left:   purple / deep violet
-  const b2  = isPurple ? "#D4AF37" : "#B8860B";   // center: gold  / dark goldenrod
-  const b3  = isPurple ? "#7B2CBF" : "#8B4513";   // right:  purple / warm bronze
-  const str = isPurple ? "rgba(212,175,55,0.55)" : "rgba(100,50,10,0.50)";
-  const sh  = isPurple ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.40)";
+
+  const purpleA = isPurple ? "#7B2CBF" : "#5B1E8C";
+  const purpleB = isPurple ? "#9D4EDD" : "#6F2AA0";
+  const goldA = isPurple ? "#D4AF37" : "#B8860B";
+  const goldB = isPurple ? "#F8E6A0" : "#D6A83A";
+  const stringColor = isPurple ? "rgba(248,230,160,0.58)" : "rgba(139,105,20,0.50)";
+  const sparkle = isPurple ? "rgba(248,230,160,0.72)" : "rgba(184,134,11,0.52)";
+
   return (
-    <svg width="95" height="85" viewBox="0 0 76 68" style={{ overflow: "visible" as const }}>
-      {/* Left balloon */}
-      <ellipse cx="18" cy="24" rx="13" ry="16" fill={b1} opacity={0.88} />
-      <ellipse cx="14" cy="18" rx="4" ry="3" fill={sh} transform="rotate(-20, 14, 18)" />
-      <circle cx="18" cy="40" r="2" fill={b1} opacity={0.70} />
-      <path d="M18 42 Q14 52 18 62" stroke={str} strokeWidth="1.2" fill="none" />
-      {/* Center balloon — gold, tallest */}
-      <ellipse cx="38" cy="19" rx="14" ry="17" fill={b2} opacity={0.92} />
-      <ellipse cx="33" cy="13" rx="4" ry="3" fill={sh} transform="rotate(-20, 33, 13)" />
-      <circle cx="38" cy="36" r="2.2" fill={b2} opacity={0.70} />
-      <path d="M38 38 Q34 50 38 62" stroke={str} strokeWidth="1.2" fill="none" />
-      {/* Right balloon */}
-      <ellipse cx="58" cy="24" rx="13" ry="16" fill={b3} opacity={0.82} />
-      <ellipse cx="54" cy="18" rx="4" ry="3" fill={sh} transform="rotate(-20, 54, 18)" />
-      <circle cx="58" cy="40" r="2" fill={b3} opacity={0.70} />
-      <path d="M58 42 Q54 52 58 62" stroke={str} strokeWidth="1.2" fill="none" />
+    <svg width="124" height="96" viewBox="0 0 124 96" style={{ overflow: "visible" as const }} aria-hidden="true">
+      <defs>
+        <radialGradient id="balloonPurpleLeft" cx="34%" cy="22%" r="76%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.48" />
+          <stop offset="20%" stopColor={purpleB} stopOpacity="0.96" />
+          <stop offset="68%" stopColor={purpleA} stopOpacity="0.94" />
+          <stop offset="100%" stopColor="#2A0D43" stopOpacity="0.98" />
+        </radialGradient>
+
+        <radialGradient id="balloonGoldCenter" cx="35%" cy="20%" r="76%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.62" />
+          <stop offset="22%" stopColor={goldB} stopOpacity="1" />
+          <stop offset="66%" stopColor={goldA} stopOpacity="0.98" />
+          <stop offset="100%" stopColor="#7A4A05" stopOpacity="0.96" />
+        </radialGradient>
+
+        <radialGradient id="balloonPurpleRight" cx="34%" cy="22%" r="76%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.42" />
+          <stop offset="24%" stopColor="#9D4EDD" stopOpacity="0.95" />
+          <stop offset="70%" stopColor="#6A1FB0" stopOpacity="0.92" />
+          <stop offset="100%" stopColor="#24073A" stopOpacity="0.98" />
+        </radialGradient>
+
+        <filter id="softBalloonShadow" x="-35%" y="-35%" width="170%" height="170%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity={isPurple ? "0.36" : "0.16"} />
+        </filter>
+      </defs>
+
+      <g opacity={isPurple ? 0.92 : 0.82} filter="url(#softBalloonShadow)">
+        <ellipse cx="41" cy="35" rx="18" ry="23" fill="url(#balloonPurpleLeft)" />
+        <ellipse cx="35" cy="26" rx="5.2" ry="3.8" fill="rgba(255,255,255,0.45)" transform="rotate(-18 35 26)" />
+        <path d="M41 58l-4 5h8z" fill={purpleA} opacity=".75" />
+
+        <ellipse cx="62" cy="28" rx="19" ry="25" fill="url(#balloonGoldCenter)" />
+        <ellipse cx="56" cy="18" rx="5.8" ry="4.2" fill="rgba(255,255,255,0.55)" transform="rotate(-18 56 18)" />
+        <path d="M62 53l-4 6h8z" fill={goldA} opacity=".80" />
+
+        <ellipse cx="83" cy="35" rx="18" ry="23" fill="url(#balloonPurpleRight)" />
+        <ellipse cx="77" cy="26" rx="5.2" ry="3.8" fill="rgba(255,255,255,0.40)" transform="rotate(-18 77 26)" />
+        <path d="M83 58l-4 5h8z" fill="#6A1FB0" opacity=".72" />
+      </g>
+
+      <g fill="none" stroke={stringColor} strokeWidth="1.15" strokeLinecap="round" opacity=".80">
+        <path d="M41 63C35 72 44 78 38 91" />
+        <path d="M62 59C56 70 67 78 61 93" />
+        <path d="M83 63C77 74 88 79 82 91" />
+      </g>
+
+      <g opacity=".80">
+        <circle cx="20" cy="34" r="1.5" fill={sparkle} />
+        <circle cx="101" cy="31" r="1.3" fill={sparkle} />
+        <circle cx="28" cy="66" r="1.1" fill={sparkle} />
+        <circle cx="96" cy="68" r="1.1" fill={sparkle} />
+        <path d="M22 18l2.4 4.8 5.2.8-3.8 3.7.9 5.2-4.7-2.5-4.7 2.5.9-5.2-3.8-3.7 5.2-.8z" fill={sparkle} opacity=".42" transform="scale(.42)" />
+        <path d="M226 62l2.4 4.8 5.2.8-3.8 3.7.9 5.2-4.7-2.5-4.7 2.5.9-5.2-3.8-3.7 5.2-.8z" fill={sparkle} opacity=".42" transform="scale(.42)" />
+      </g>
     </svg>
   );
 }
@@ -354,8 +397,8 @@ function CertPreview({
         <div
           style={{
             width: "38px",
-            height: "46px",
-            margin: "0 auto 10px",
+            height: "50px",
+            margin: "-4px auto 9px",
             position: "relative",
             filter: isPurple
               ? "drop-shadow(0 0 10px rgba(248,230,160,0.60)) drop-shadow(0 0 26px rgba(157,78,221,0.34))"
@@ -387,14 +430,14 @@ function CertPreview({
               </linearGradient>
             </defs>
             <path
-              d="M34 8h12v30h25v13H46v37H34V51H9V38h25z"
+              d="M34 4h12v32h20v12H46v44H34V48H14V36h20z"
               fill="url(#topFlatCrossGold)"
               stroke={isPurple ? "#FFF0A8" : "#8B6914"}
               strokeWidth="1.6"
               strokeLinejoin="miter"
             />
             <path
-              d="M37 10h3v76M43 10h2v76M12 41h56M12 48h56"
+              d="M37 6h3v84M43 6h2v84M17 39h46M17 45h46"
               stroke="url(#topFlatCrossTexture)"
               strokeWidth="1"
               opacity=".55"
@@ -421,7 +464,7 @@ function CertPreview({
 
         {/* Certificate motif: birthday keeps balloons; all other certificates remain ceremonial and text-first */}
         {certType === 'birthday' && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "4px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "2px" }}>
             <BirthdayMotif template={template} />
           </div>
         )}
