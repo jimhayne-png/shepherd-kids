@@ -465,11 +465,6 @@ function CertPreview({
         </div>
 
         {/* Certificate motif: birthday keeps balloons; all other certificates remain ceremonial and text-first */}
-        {certType === 'birthday' && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "2px" }}>
-            <BirthdayMotif template={template} />
-          </div>
-        )}
         <h2 style={{
           fontSize: "25px", fontWeight: 700, color: titleClr, margin: "0 0 3px",
           fontFamily: "Georgia, serif", letterSpacing: "0.06em", textTransform: "uppercase" as const,
