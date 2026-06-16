@@ -1,7 +1,6 @@
 "use client";
 
-import PremiumCertificateLayout from "@/components/certificates/PremiumCertificateLayout";
-import BirthdayMotif from "@/components/certificates/motifs/BirthdayMotif";
+import CertificateCanvas from "@/components/certificates/CertificateCanvas";
 import type { CertificateTemplate } from "@/lib/certificates/themes";
 
 export interface BirthdayCertificateProps {
@@ -22,11 +21,11 @@ export interface BirthdayCertificateProps {
 
 export default function BirthdayCertificate(props: BirthdayCertificateProps) {
   return (
-    <PremiumCertificateLayout
+    <CertificateCanvas
       template={props.template}
+      certType="birthday"
       churchName={props.churchName}
       churchTagline={props.churchTagline}
-      logoUrl={props.logoUrl}
       certificateTitle="Birthday Celebration"
       certificateSubtitle="Celebrating God’s Wonderful Gift of Life"
       childName={props.childName}
@@ -38,7 +37,6 @@ export default function BirthdayCertificate(props: BirthdayCertificateProps) {
       ministerTitle={props.ministerTitle}
       date={props.date}
       sealImageUrl={props.sealImageUrl}
-      renderMotif={(side) => <BirthdayMotif side={side} size={220} />}
     />
   );
 }

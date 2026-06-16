@@ -8,7 +8,5 @@ export interface CertificateRendererProps extends Omit<BirthdayCertificateProps,
 }
 
 export default function CertificateRenderer({ certType: _certType, ...props }: CertificateRendererProps) {
-  // Only birthday is built. All other certTypes temporarily fall through here
-  // until their dedicated components are created in future milestones.
   return <BirthdayCertificate {...props} />;
 }
