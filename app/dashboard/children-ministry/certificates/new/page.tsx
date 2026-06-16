@@ -171,7 +171,7 @@ function BirthdayMotif({ template, side }: { template: "purple" | "white"; side:
   const sparkle = isPurple ? "rgba(248,230,160,0.78)" : "rgba(184,134,11,0.46)";
 
   return (
-    <svg width="230" height="420" viewBox="0 0 230 420" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
+    <svg width="205" height="380" viewBox="0 0 230 420" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
       <defs>
         <radialGradient id={`edgePurple-${side}`} cx="34%" cy="24%" r="78%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.62" />
@@ -190,7 +190,7 @@ function BirthdayMotif({ template, side }: { template: "purple" | "white"; side:
         </filter>
       </defs>
 
-      <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.94 : 0.78}>
+      <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.88 : 0.72}>
         <ellipse cx="24" cy="92" rx="55" ry="72" fill={`url(#edgePurple-${side})`} />
         <ellipse cx="12" cy="68" rx="14" ry="10" fill="rgba(255,255,255,0.42)" transform="rotate(-18 12 68)" />
         <path d="M24 165l-10 12h20z" fill={purpleA} opacity=".68" />
@@ -341,7 +341,7 @@ function CertPreview({
     : {};
 
   return (
-    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "28px 46px 30px", width: "100%", boxSizing: "border-box", ...glow }}>
+    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "28px 46px 30px", width: "100%", boxSizing: "border-box", overflow: "hidden", ...glow }}>
       {/* Second border line */}
       <div style={{ position: "absolute", inset: "6px", border: midBorder, borderRadius: "3px", pointerEvents: "none" }} />
       {/* Inner frame */}
@@ -384,10 +384,10 @@ function CertPreview({
 
       {certType === 'birthday' && (
         <>
-          <div style={{ position: "absolute", left: "-58px", top: "72px", zIndex: 1, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", left: "-112px", top: "74px", zIndex: 1, pointerEvents: "none" }}>
             <BirthdayMotif template={template} side="left" />
           </div>
-          <div style={{ position: "absolute", right: "-58px", top: "108px", zIndex: 1, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", right: "-112px", top: "112px", zIndex: 1, pointerEvents: "none" }}>
             <BirthdayMotif template={template} side="right" />
           </div>
         </>
