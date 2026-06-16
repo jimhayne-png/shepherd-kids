@@ -312,123 +312,104 @@ function MinistrySeal({ size, template }: { size: number; template: "purple" | "
 function CertificateAtmosphere({ template }: { template: "purple" | "white" }) {
   const isPurple = template === "purple";
 
+  if (!isPurple) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background:
+            "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF",
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      {/* COSMOS LAYER 1: black space and purple nebula clouds */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "#000002" }} />
+
       <div
         style={{
           position: "absolute",
-          inset: 0,
+          inset: "-10%",
           pointerEvents: "none",
-          background: isPurple
-            ? `
-              radial-gradient(ellipse at 10% 48%, rgba(189,76,255,0.38), transparent 18%),
-              radial-gradient(ellipse at 19% 36%, rgba(80,12,140,0.52), transparent 27%),
-              radial-gradient(ellipse at 90% 48%, rgba(189,76,255,0.36), transparent 18%),
-              radial-gradient(ellipse at 80% 36%, rgba(80,12,140,0.50), transparent 27%),
-              radial-gradient(ellipse at 50% 94%, rgba(189,76,255,0.18), transparent 30%),
-              radial-gradient(circle at 50% 50%, transparent 32%, rgba(0,0,0,0.52) 74%, rgba(0,0,0,0.84) 100%)
-            `
-            : `
-              radial-gradient(circle at 50% 42%, rgba(212,175,55,0.08), transparent 32%),
-              radial-gradient(circle at 50% 50%, transparent 56%, rgba(139,105,20,0.08) 100%)
-            `,
-          mixBlendMode: isPurple ? "screen" : undefined,
+          opacity: 0.95,
+          background: `
+            radial-gradient(ellipse at 8% 44%, rgba(174,57,255,0.55), transparent 17%),
+            radial-gradient(ellipse at 18% 58%, rgba(105,24,190,0.45), transparent 22%),
+            radial-gradient(ellipse at 92% 43%, rgba(174,57,255,0.52), transparent 17%),
+            radial-gradient(ellipse at 82% 58%, rgba(105,24,190,0.42), transparent 22%),
+            radial-gradient(ellipse at 50% 95%, rgba(174,57,255,0.24), transparent 26%)
+          `,
+          filter: "blur(16px)",
+          mixBlendMode: "screen",
         }}
       />
 
-      {/* COSMOS LAYER 2: blurred nebula wisps */}
-      {isPurple && (
-        <>
-          <div
-            style={{
-              position: "absolute",
-              inset: "-8%",
-              pointerEvents: "none",
-              opacity: 0.64,
-              background: `
-                radial-gradient(ellipse at 12% 40%, rgba(238,140,255,0.42), transparent 7%),
-                radial-gradient(ellipse at 18% 56%, rgba(145,35,255,0.35), transparent 11%),
-                radial-gradient(ellipse at 88% 40%, rgba(238,140,255,0.40), transparent 7%),
-                radial-gradient(ellipse at 82% 56%, rgba(145,35,255,0.34), transparent 11%),
-                radial-gradient(ellipse at 50% 88%, rgba(145,35,255,0.24), transparent 15%)
-              `,
-              filter: "blur(18px)",
-              mixBlendMode: "screen",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-              opacity: 0.42,
-              background: `
-                linear-gradient(118deg, transparent 0%, rgba(151,53,255,0.18) 18%, transparent 34%),
-                linear-gradient(242deg, transparent 0%, rgba(151,53,255,0.16) 20%, transparent 38%)
-              `,
-              filter: "blur(4px)",
-              mixBlendMode: "screen",
-            }}
-          />
-        </>
-      )}
-
-      {/* COSMOS LAYER 3: dense tiny star field */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          opacity: isPurple ? 0.82 : 0.12,
-          backgroundImage: isPurple
-            ? `
-              radial-gradient(circle at 7% 14%, rgba(255,236,170,0.95) 0 0.65px, transparent 1.4px),
-              radial-gradient(circle at 17% 62%, rgba(192,92,255,0.95) 0 0.75px, transparent 1.5px),
-              radial-gradient(circle at 30% 24%, rgba(255,255,220,0.90) 0 0.6px, transparent 1.3px),
-              radial-gradient(circle at 58% 18%, rgba(192,92,255,0.88) 0 0.7px, transparent 1.4px),
-              radial-gradient(circle at 84% 26%, rgba(255,236,170,0.92) 0 0.65px, transparent 1.4px),
-              radial-gradient(circle at 92% 78%, rgba(192,92,255,0.90) 0 0.75px, transparent 1.5px),
-              radial-gradient(circle at 53% 82%, rgba(255,236,170,0.72) 0 0.6px, transparent 1.3px)
-            `
-            : `
-              radial-gradient(circle at 18% 20%, rgba(139,105,20,0.20) 0 .8px, transparent 1.7px),
-              radial-gradient(circle at 82% 72%, rgba(212,175,55,0.18) 0 .8px, transparent 1.7px)
-            `,
-          backgroundSize: "72px 54px, 104px 78px, 94px 70px, 132px 98px, 118px 88px, 154px 116px, 142px 106px",
+          opacity: 0.58,
+          background: `
+            linear-gradient(118deg, transparent 0%, transparent 11%, rgba(150,42,255,0.22) 19%, transparent 32%, transparent 100%),
+            linear-gradient(242deg, transparent 0%, transparent 13%, rgba(150,42,255,0.20) 23%, transparent 39%, transparent 100%),
+            radial-gradient(ellipse at 13% 78%, rgba(245,90,255,0.24), transparent 19%),
+            radial-gradient(ellipse at 87% 78%, rgba(245,90,255,0.22), transparent 18%)
+          `,
+          filter: "blur(2px)",
+          mixBlendMode: "screen",
         }}
       />
 
-      {/* COSMOS LAYER 4: real star flares */}
-      {isPurple && (
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.96 }}>
-          <div style={{ position: "absolute", left: "12%", top: "21%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 15px 4px rgba(255,210,100,.76)" }} />
-          <div style={{ position: "absolute", left: "12%", top: "21%", width: 54, height: 1, transform: "translate(-26px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.96), transparent)" }} />
-          <div style={{ position: "absolute", left: "12%", top: "21%", width: 1, height: 54, transform: "translate(1px, -26px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.96), transparent)" }} />
-
-          <div style={{ position: "absolute", left: "25%", bottom: "22%", width: 2, height: 2, background: "#D081FF", boxShadow: "0 0 15px 5px rgba(185,75,255,.84)" }} />
-          <div style={{ position: "absolute", left: "25%", bottom: "22%", width: 46, height: 1, transform: "translate(-22px, 1px)", background: "linear-gradient(90deg, transparent, rgba(210,125,255,.92), transparent)" }} />
-          <div style={{ position: "absolute", left: "25%", bottom: "22%", width: 1, height: 46, transform: "translate(1px, 22px)", background: "linear-gradient(180deg, transparent, rgba(210,125,255,.92), transparent)" }} />
-
-          <div style={{ position: "absolute", right: "13%", top: "28%", width: 2, height: 2, background: "#D081FF", boxShadow: "0 0 17px 5px rgba(185,75,255,.86)" }} />
-          <div style={{ position: "absolute", right: "13%", top: "28%", width: 58, height: 1, transform: "translate(28px, 1px)", background: "linear-gradient(90deg, transparent, rgba(210,125,255,.98), transparent)" }} />
-          <div style={{ position: "absolute", right: "13%", top: "28%", width: 1, height: 58, transform: "translate(1px, -28px)", background: "linear-gradient(180deg, transparent, rgba(210,125,255,.98), transparent)" }} />
-
-          <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 15px 4px rgba(255,210,100,.76)" }} />
-          <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 46, height: 1, transform: "translate(22px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.92), transparent)" }} />
-          <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 1, height: 46, transform: "translate(1px, 22px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.92), transparent)" }} />
-        </div>
-      )}
-
-      {/* COSMOS LAYER 5: dark cinematic vignette */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          background: isPurple
-            ? "radial-gradient(circle at 50% 45%, transparent 22%, rgba(0,0,0,0.38) 66%, rgba(0,0,0,0.82) 100%)"
-            : "transparent",
+          opacity: 0.95,
+          backgroundImage: `
+            radial-gradient(circle at 7% 14%, rgba(255,236,170,0.95) 0 0.65px, transparent 1.5px),
+            radial-gradient(circle at 17% 62%, rgba(192,92,255,0.95) 0 0.75px, transparent 1.5px),
+            radial-gradient(circle at 30% 24%, rgba(255,255,220,0.90) 0 0.60px, transparent 1.4px),
+            radial-gradient(circle at 58% 18%, rgba(192,92,255,0.88) 0 0.70px, transparent 1.4px),
+            radial-gradient(circle at 84% 26%, rgba(255,236,170,0.92) 0 0.65px, transparent 1.4px),
+            radial-gradient(circle at 92% 78%, rgba(192,92,255,0.90) 0 0.75px, transparent 1.5px),
+            radial-gradient(circle at 53% 82%, rgba(255,236,170,0.72) 0 0.60px, transparent 1.4px),
+            radial-gradient(circle at 44% 46%, rgba(255,255,255,0.42) 0 0.50px, transparent 1.2px)
+          `,
+          backgroundSize: "64px 48px, 92px 70px, 82px 62px, 124px 94px, 108px 82px, 142px 106px, 132px 98px, 76px 57px",
+        }}
+      />
+
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.98 }}>
+        <div style={{ position: "absolute", left: "12%", top: "21%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 16px 5px rgba(255,210,100,.82)" }} />
+        <div style={{ position: "absolute", left: "12%", top: "21%", width: 58, height: 1, transform: "translate(-28px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.98), transparent)" }} />
+        <div style={{ position: "absolute", left: "12%", top: "21%", width: 1, height: 58, transform: "translate(1px, -28px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.98), transparent)" }} />
+
+        <div style={{ position: "absolute", left: "25%", bottom: "22%", width: 2, height: 2, background: "#D081FF", boxShadow: "0 0 16px 6px rgba(185,75,255,.88)" }} />
+        <div style={{ position: "absolute", left: "25%", bottom: "22%", width: 50, height: 1, transform: "translate(-24px, 1px)", background: "linear-gradient(90deg, transparent, rgba(210,125,255,.96), transparent)" }} />
+        <div style={{ position: "absolute", left: "25%", bottom: "22%", width: 1, height: 50, transform: "translate(1px, 24px)", background: "linear-gradient(180deg, transparent, rgba(210,125,255,.96), transparent)" }} />
+
+        <div style={{ position: "absolute", right: "13%", top: "28%", width: 2, height: 2, background: "#D081FF", boxShadow: "0 0 18px 6px rgba(185,75,255,.90)" }} />
+        <div style={{ position: "absolute", right: "13%", top: "28%", width: 64, height: 1, transform: "translate(31px, 1px)", background: "linear-gradient(90deg, transparent, rgba(210,125,255,1), transparent)" }} />
+        <div style={{ position: "absolute", right: "13%", top: "28%", width: 1, height: 64, transform: "translate(1px, -31px)", background: "linear-gradient(180deg, transparent, rgba(210,125,255,1), transparent)" }} />
+
+        <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 16px 5px rgba(255,210,100,.82)" }} />
+        <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 50, height: 1, transform: "translate(24px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.96), transparent)" }} />
+        <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 1, height: 50, transform: "translate(1px, 24px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.96), transparent)" }} />
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background:
+            "radial-gradient(circle at 50% 46%, transparent 26%, rgba(0,0,0,0.26) 62%, rgba(0,0,0,0.78) 100%)",
         }}
       />
     </>
@@ -468,18 +449,7 @@ function CertPreview({
   const isPurple  = template === "purple";
 
   // ── Theme tokens ──────────────────────────────────────────────────────────────
-  const bg           = isPurple
-    ? `
-      radial-gradient(circle at 50% 8%, rgba(255,255,255,0.10), transparent 10%),
-      radial-gradient(ellipse at 12% 44%, rgba(160,45,255,0.34), transparent 22%),
-      radial-gradient(ellipse at 22% 32%, rgba(70,12,120,0.62), transparent 34%),
-      radial-gradient(ellipse at 88% 42%, rgba(160,45,255,0.32), transparent 22%),
-      radial-gradient(ellipse at 78% 32%, rgba(70,12,120,0.58), transparent 34%),
-      radial-gradient(ellipse at 50% 92%, rgba(165,55,255,0.22), transparent 34%),
-      radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.60) 78%, rgba(0,0,0,0.86) 100%),
-      linear-gradient(160deg, #000002 0%, #030008 48%, #000002 100%)
-    `
-    : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
+  const bg           = isPurple ? "#000002" : "#FDFAEF";
   const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
   const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
   const innerBorder  = isPurple ? "1px solid rgba(212,175,55,0.18)"    : "1px solid rgba(175,135,40,0.28)";
