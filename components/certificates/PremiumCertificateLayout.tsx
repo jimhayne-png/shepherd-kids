@@ -145,14 +145,95 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
       radial-gradient(circle at 92% 10%, rgba(123,44,191,.08), transparent 24%),
       repeating-linear-gradient(45deg, rgba(139,105,20,.035) 0px, rgba(139,105,20,.035) 1px, transparent 1px, transparent 10px)
     `
-    : `
-      radial-gradient(circle at 50% 6%, rgba(255,235,150,.20) 0%, transparent 18%),
-      radial-gradient(circle at 50% 18%, rgba(123,44,191,.36) 0%, rgba(28,10,48,.68) 35%, rgba(5,2,18,.98) 100%),
-      radial-gradient(circle at 12% 78%, rgba(123,44,191,.18), transparent 34%),
-      radial-gradient(circle at 88% 78%, rgba(212,175,55,.07), transparent 28%),
-      repeating-radial-gradient(circle at 50% 35%, transparent 0, transparent 13px, rgba(212,175,55,.022) 14px, transparent 16px),
-      linear-gradient(160deg, #050212 0%, #16051F 55%, #090214 100%)
-    `;
+    : "#000002";
+
+  const cosmosLayers = !ivory ? (
+    <>
+      <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", background: "#000002" }} />
+
+      <div
+        style={{
+          position: "absolute",
+          inset: "-10%",
+          zIndex: 1,
+          pointerEvents: "none",
+          opacity: 0.96,
+          background: `
+            radial-gradient(ellipse at 7% 40%, rgba(177,66,255,.58), transparent 16%),
+            radial-gradient(ellipse at 17% 58%, rgba(86,16,150,.52), transparent 24%),
+            radial-gradient(ellipse at 93% 38%, rgba(177,66,255,.55), transparent 16%),
+            radial-gradient(ellipse at 82% 58%, rgba(86,16,150,.50), transparent 24%),
+            radial-gradient(ellipse at 50% 96%, rgba(177,66,255,.28), transparent 30%)
+          `,
+          filter: "blur(18px)",
+          mixBlendMode: "screen",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: "none",
+          opacity: 0.66,
+          background: `
+            linear-gradient(118deg, transparent 0%, transparent 10%, rgba(172,54,255,.26) 18%, transparent 34%, transparent 100%),
+            linear-gradient(242deg, transparent 0%, transparent 12%, rgba(172,54,255,.24) 23%, transparent 40%, transparent 100%),
+            radial-gradient(ellipse at 12% 82%, rgba(244,97,255,.26), transparent 18%),
+            radial-gradient(ellipse at 88% 82%, rgba(244,97,255,.24), transparent 18%)
+          `,
+          filter: "blur(3px)",
+          mixBlendMode: "screen",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: "none",
+          opacity: 0.90,
+          backgroundImage: `
+            radial-gradient(circle at 7% 14%, rgba(255,236,170,.98) 0 .65px, transparent 1.45px),
+            radial-gradient(circle at 17% 62%, rgba(198,92,255,.96) 0 .75px, transparent 1.55px),
+            radial-gradient(circle at 30% 24%, rgba(255,255,220,.92) 0 .60px, transparent 1.35px),
+            radial-gradient(circle at 58% 18%, rgba(198,92,255,.90) 0 .70px, transparent 1.45px),
+            radial-gradient(circle at 84% 26%, rgba(255,236,170,.94) 0 .65px, transparent 1.45px),
+            radial-gradient(circle at 92% 78%, rgba(198,92,255,.92) 0 .75px, transparent 1.55px),
+            radial-gradient(circle at 53% 82%, rgba(255,236,170,.76) 0 .60px, transparent 1.35px),
+            radial-gradient(circle at 44% 46%, rgba(255,255,255,.50) 0 .50px, transparent 1.2px)
+          `,
+          backgroundSize: "64px 48px, 92px 70px, 82px 62px, 124px 94px, 108px 82px, 142px 106px, 132px 98px, 76px 57px",
+        }}
+      />
+
+      <div style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: 0.98 }}>
+        <div style={{ position: "absolute", left: "12%", top: "21%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 17px 5px rgba(255,210,100,.86)" }} />
+        <div style={{ position: "absolute", left: "12%", top: "21%", width: 62, height: 1, transform: "translate(-30px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,1), transparent)" }} />
+        <div style={{ position: "absolute", left: "12%", top: "21%", width: 1, height: 62, transform: "translate(1px, -30px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,1), transparent)" }} />
+
+        <div style={{ position: "absolute", right: "13%", top: "28%", width: 2, height: 2, background: "#D081FF", boxShadow: "0 0 19px 6px rgba(185,75,255,.92)" }} />
+        <div style={{ position: "absolute", right: "13%", top: "28%", width: 68, height: 1, transform: "translate(33px, 1px)", background: "linear-gradient(90deg, transparent, rgba(210,125,255,1), transparent)" }} />
+        <div style={{ position: "absolute", right: "13%", top: "28%", width: 1, height: 68, transform: "translate(1px, -33px)", background: "linear-gradient(180deg, transparent, rgba(210,125,255,1), transparent)" }} />
+
+        <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 17px 5px rgba(255,210,100,.86)" }} />
+        <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 54, height: 1, transform: "translate(26px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.98), transparent)" }} />
+        <div style={{ position: "absolute", right: "10%", bottom: "21%", width: 1, height: 54, transform: "translate(1px, 26px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.98), transparent)" }} />
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: "none",
+          background: "radial-gradient(circle at 50% 45%, transparent 24%, rgba(0,0,0,.36) 66%, rgba(0,0,0,.82) 100%)",
+        }}
+      />
+    </>
+  ) : null;
 
   return (
     <div
@@ -168,14 +249,11 @@ export default function PremiumCertificateLayout(props: PremiumCertificateLayout
         color: ivory ? DEEP_PURPLE : "#FFFFFF",
       }}
     >
+      {cosmosLayers}
+
       <div style={{ position: "absolute", inset: 14, border: ivory ? `2px solid ${GOLD}` : "2px solid #F8E6A0", zIndex: 5 }} />
       <div style={{ position: "absolute", inset: 28, border: ivory ? "1px solid rgba(139,105,20,.48)" : "1px solid rgba(212,175,55,.42)", zIndex: 5 }} />
       <div style={{ position: "absolute", inset: 44, border: ivory ? "1px solid rgba(139,105,20,.22)" : "1px solid rgba(212,175,55,.16)", zIndex: 5 }} />
-
-      <Corner position="tl" ivory={ivory} />
-      <Corner position="tr" ivory={ivory} />
-      <Corner position="bl" ivory={ivory} />
-      <Corner position="br" ivory={ivory} />
 
       {props.renderMotif ? (
         <>
