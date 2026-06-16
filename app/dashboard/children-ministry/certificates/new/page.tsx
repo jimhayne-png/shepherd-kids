@@ -314,6 +314,142 @@ function CertificateAtmosphere({ template }: { template: "purple" | "white" }) {
 
   return (
     <>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: isPurple
+            ? `
+              radial-gradient(circle at 50% 8%, rgba(255,255,255,0.18), transparent 10%),
+              radial-gradient(ellipse at 17% 36%, rgba(145,35,255,0.42), transparent 34%),
+              radial-gradient(ellipse at 83% 36%, rgba(145,35,255,0.40), transparent 34%),
+              radial-gradient(ellipse at 50% 86%, rgba(165,55,255,0.28), transparent 40%),
+              radial-gradient(circle at 50% 50%, transparent 38%, rgba(0,0,0,0.60) 100%)
+            `
+            : `
+              radial-gradient(circle at 50% 42%, rgba(212,175,55,0.08), transparent 32%),
+              radial-gradient(circle at 50% 50%, transparent 56%, rgba(139,105,20,0.08) 100%)
+            `,
+          mixBlendMode: isPurple ? "screen" : undefined,
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: isPurple ? 0.92 : 0.12,
+          backgroundImage: isPurple
+            ? `
+              radial-gradient(circle at 8% 18%, rgba(255,216,115,0.98) 0 1.2px, transparent 2.3px),
+              radial-gradient(circle at 16% 66%, rgba(191,85,255,0.98) 0 1.4px, transparent 2.6px),
+              radial-gradient(circle at 31% 22%, rgba(255,245,190,0.90) 0 1px, transparent 2px),
+              radial-gradient(circle at 62% 18%, rgba(190,80,255,0.92) 0 1.3px, transparent 2.4px),
+              radial-gradient(circle at 84% 28%, rgba(255,216,115,0.96) 0 1.1px, transparent 2.2px),
+              radial-gradient(circle at 92% 76%, rgba(191,85,255,0.95) 0 1.4px, transparent 2.7px),
+              radial-gradient(circle at 54% 82%, rgba(255,216,115,0.78) 0 1px, transparent 2px)
+            `
+            : `
+              radial-gradient(circle at 18% 20%, rgba(139,105,20,0.24) 0 1px, transparent 1.8px),
+              radial-gradient(circle at 82% 72%, rgba(212,175,55,0.20) 0 1px, transparent 1.8px)
+            `,
+          backgroundSize: "155px 115px, 225px 170px, 205px 150px, 270px 205px, 215px 160px, 300px 230px, 250px 190px",
+        }}
+      />
+
+      {isPurple && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            opacity: 0.90,
+          }}
+        >
+          <div style={{ position: "absolute", left: "11%", top: "20%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 12px 3px rgba(255,210,100,.72)" }} />
+          <div style={{ position: "absolute", left: "11%", top: "20%", width: 34, height: 1, transform: "translate(-16px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.85), transparent)" }} />
+          <div style={{ position: "absolute", left: "11%", top: "20%", width: 1, height: 34, transform: "translate(1px, -16px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.85), transparent)" }} />
+
+          <div style={{ position: "absolute", right: "13%", top: "28%", width: 2, height: 2, background: "#C56BFF", boxShadow: "0 0 13px 4px rgba(185,75,255,.76)" }} />
+          <div style={{ position: "absolute", right: "13%", top: "28%", width: 38, height: 1, transform: "translate(18px, 1px)", background: "linear-gradient(90deg, transparent, rgba(200,100,255,.90), transparent)" }} />
+          <div style={{ position: "absolute", right: "13%", top: "28%", width: 1, height: 38, transform: "translate(1px, -18px)", background: "linear-gradient(180deg, transparent, rgba(200,100,255,.90), transparent)" }} />
+
+          <div style={{ position: "absolute", right: "9%", bottom: "20%", width: 2, height: 2, background: "#FFF2B8", boxShadow: "0 0 13px 4px rgba(255,210,100,.68)" }} />
+          <div style={{ position: "absolute", right: "9%", bottom: "20%", width: 32, height: 1, transform: "translate(15px, 1px)", background: "linear-gradient(90deg, transparent, rgba(255,235,160,.80), transparent)" }} />
+          <div style={{ position: "absolute", right: "9%", bottom: "20%", width: 1, height: 32, transform: "translate(1px, 15px)", background: "linear-gradient(180deg, transparent, rgba(255,235,160,.80), transparent)" }} />
+        </div>
+      )}
+    </>
+  );
+}
+
+function CertificateMotifLayer({ certType, template }: { certType: string; template: "purple" | "white" }) {
+  if (certType !== "birthday") return null;
+
+  return (
+    <>
+      <div style={{ position: "absolute", left: "-4px", top: "44px", zIndex: 1, pointerEvents: "none" }}>
+        <BirthdayEdgeArtwork template={template} side="left" />
+      </div>
+      <div style={{ position: "absolute", right: "-4px", top: "60px", zIndex: 1, pointerEvents: "none" }}>
+        <BirthdayEdgeArtwork template={template} side="right" />
+      </div>
+    </>
+  );
+}
+
+// ── Premium certificate templates ─────────────────────────────────────────────
+function CertPreview({
+  childName, certType, churchName, churchTagline,
+  ministerName, ministerTitle, date, blessing, template, translation,
+}: {
+  childName: string; certType: string; churchName: string; churchTagline: string;
+  ministerName: string; ministerTitle: string; date: string; blessing: string;
+  template: "purple" | "white"; translation: Translation;
+}) {
+  const meta      = CERT_TYPES[certType] ?? CERT_TYPES["spiritual_birthday"];
+  const dispChild = childName     || "Child's Name";
+  const dispChurch= churchName    || "Your Church Name";
+  const dispMin   = ministerName  || "Minister's Name";
+  const dispTitle = ministerTitle || "Children's Ministry Director";
+  const dispDate  = date ? fmtCertDate(date) : "—";
+  const isPurple  = template === "purple";
+
+  // ── Theme tokens ──────────────────────────────────────────────────────────────
+  const bg           = isPurple
+    ? `radial-gradient(circle at 50% 8%, rgba(185,75,255,0.18), transparent 16%), radial-gradient(ellipse at 18% 28%, rgba(150,45,255,0.34), transparent 32%), radial-gradient(ellipse at 82% 30%, rgba(150,45,255,0.30), transparent 34%), radial-gradient(ellipse at 18% 78%, rgba(150,45,255,0.22), transparent 34%), radial-gradient(ellipse at 86% 76%, rgba(150,45,255,0.22), transparent 34%), linear-gradient(160deg, #010006 0%, #090018 45%, #010006 100%)`
+    : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
+  const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
+  const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
+  const innerBorder  = isPurple ? "1px solid rgba(212,175,55,0.18)"    : "1px solid rgba(175,135,40,0.28)";
+  const cornerClr    = isPurple ? GOLD                                  : "#8B6914";
+  const titleClr     = isPurple ? GOLD                                  : "#1C0A2E";
+  const nameClr      = isPurple ? "#FFFFFF"                             : "#1C0A2E";
+  const subClr       = isPurple ? "rgba(212,175,55,0.72)"               : "#8B6914";
+  const dimClr       = isPurple ? "rgba(255,255,255,0.40)"              : "#8B7355";
+  const divClr       = isPurple ? "rgba(212,175,55,0.28)"               : "rgba(175,135,40,0.38)";
+  const ornClr       = isPurple ? "rgba(212,175,55,0.58)"               : "#B8860B";
+  const scriptClr    = isPurple ? "rgba(255,255,255,0.72)"              : "#4A3728";
+  const scriptRef    = isPurple ? GOLD                                  : "#8B6914";
+  const blessClr     = isPurple ? "rgba(255,255,255,0.55)"              : "#5C4A3A";
+  const medallionBg  = isPurple ? "rgba(212,175,55,0.05)"               : "rgba(139,105,20,0.05)";
+  const medallionBdr = isPurple ? "rgba(212,175,55,0.24)"               : "rgba(139,105,20,0.32)";
+  const glow: React.CSSProperties = isPurple
+    ? { boxShadow: "0 8px 56px rgba(5,2,18,0.80), 0 0 120px rgba(212,175,55,0.04)" }
+    : { boxShadow: "0 4px 28px rgba(0,0,0,0.09)" };
+  const crossGlow: React.CSSProperties = isPurple
+    ? { textShadow: "0 0 18px rgba(212,175,55,0.70), 0 0 40px rgba(212,175,55,0.30)" }
+    : {};
+
+  return (
+    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "28px 46px 30px", width: "100%", boxSizing: "border-box", overflow: "hidden", ...glow }}>
+      {/* Second border line */}
+      <div style={{ position: "absolute", inset: "6px", border: midBorder, borderRadius: "3px", pointerEvents: "none" }} />
+      {/* Inner frame */}
+      <div style={{ position: "absolute", inset: "13px", border: innerBorder, borderRadius: "2px", pointerEvents: "none" }} />
+
       <CertificateAtmosphere template={template} />
 
       <CertificateMotifLayer certType={certType} template={template} />
