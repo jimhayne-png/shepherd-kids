@@ -160,72 +160,63 @@ function FormSection({ title, children }: { title: string; children: React.React
 }
 
 // ── Birthday balloon motif ────────────────────────────────────────────────────
-function BirthdayMotif({ template }: { template: "purple" | "white" }) {
+function BirthdayMotif({ template, side }: { template: "purple" | "white"; side: "left" | "right" }) {
   const isPurple = template === "purple";
-
+  const mirror = side === "right";
   const purpleA = isPurple ? "#7B2CBF" : "#5B1E8C";
-  const purpleB = isPurple ? "#9D4EDD" : "#6F2AA0";
+  const purpleB = isPurple ? "#B86BFF" : "#7B2CBF";
   const goldA = isPurple ? "#D4AF37" : "#B8860B";
-  const goldB = isPurple ? "#F8E6A0" : "#D6A83A";
-  const stringColor = isPurple ? "rgba(248,230,160,0.58)" : "rgba(139,105,20,0.50)";
-  const sparkle = isPurple ? "rgba(248,230,160,0.72)" : "rgba(184,134,11,0.52)";
+  const goldB = isPurple ? "#FFF0A8" : "#E2BC58";
+  const stringColor = isPurple ? "rgba(248,230,160,0.62)" : "rgba(139,105,20,0.46)";
+  const sparkle = isPurple ? "rgba(248,230,160,0.78)" : "rgba(184,134,11,0.46)";
 
   return (
-    <svg width="124" height="96" viewBox="0 0 124 96" style={{ overflow: "visible" as const }} aria-hidden="true">
+    <svg width="230" height="420" viewBox="0 0 230 420" style={{ overflow: "visible" as const, transform: mirror ? "scaleX(-1)" : undefined }} aria-hidden="true">
       <defs>
-        <radialGradient id="balloonPurpleLeft" cx="34%" cy="22%" r="76%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.48" />
-          <stop offset="20%" stopColor={purpleB} stopOpacity="0.96" />
-          <stop offset="68%" stopColor={purpleA} stopOpacity="0.94" />
-          <stop offset="100%" stopColor="#2A0D43" stopOpacity="0.98" />
-        </radialGradient>
-
-        <radialGradient id="balloonGoldCenter" cx="35%" cy="20%" r="76%">
+        <radialGradient id={`edgePurple-${side}`} cx="34%" cy="24%" r="78%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.62" />
+          <stop offset="19%" stopColor={purpleB} stopOpacity="0.96" />
+          <stop offset="66%" stopColor={purpleA} stopOpacity="0.94" />
+          <stop offset="100%" stopColor="#1B062B" stopOpacity="0.98" />
+        </radialGradient>
+        <radialGradient id={`edgeGold-${side}`} cx="35%" cy="20%" r="78%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.70" />
           <stop offset="22%" stopColor={goldB} stopOpacity="1" />
-          <stop offset="66%" stopColor={goldA} stopOpacity="0.98" />
-          <stop offset="100%" stopColor="#7A4A05" stopOpacity="0.96" />
+          <stop offset="64%" stopColor={goldA} stopOpacity="0.98" />
+          <stop offset="100%" stopColor="#704400" stopOpacity="0.98" />
         </radialGradient>
-
-        <radialGradient id="balloonPurpleRight" cx="34%" cy="22%" r="76%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.42" />
-          <stop offset="24%" stopColor="#9D4EDD" stopOpacity="0.95" />
-          <stop offset="70%" stopColor="#6A1FB0" stopOpacity="0.92" />
-          <stop offset="100%" stopColor="#24073A" stopOpacity="0.98" />
-        </radialGradient>
-
-        <filter id="softBalloonShadow" x="-35%" y="-35%" width="170%" height="170%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity={isPurple ? "0.36" : "0.16"} />
+        <filter id={`edgeBalloonShadow-${side}`} x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="7" stdDeviation="7" floodColor="#000000" floodOpacity={isPurple ? "0.48" : "0.18"} />
         </filter>
       </defs>
 
-      <g opacity={isPurple ? 0.92 : 0.82} filter="url(#softBalloonShadow)">
-        <ellipse cx="41" cy="35" rx="18" ry="23" fill="url(#balloonPurpleLeft)" />
-        <ellipse cx="35" cy="26" rx="5.2" ry="3.8" fill="rgba(255,255,255,0.45)" transform="rotate(-18 35 26)" />
-        <path d="M41 58l-4 5h8z" fill={purpleA} opacity=".75" />
+      <g filter={`url(#edgeBalloonShadow-${side})`} opacity={isPurple ? 0.94 : 0.78}>
+        <ellipse cx="24" cy="92" rx="55" ry="72" fill={`url(#edgePurple-${side})`} />
+        <ellipse cx="12" cy="68" rx="14" ry="10" fill="rgba(255,255,255,0.42)" transform="rotate(-18 12 68)" />
+        <path d="M24 165l-10 12h20z" fill={purpleA} opacity=".68" />
 
-        <ellipse cx="62" cy="28" rx="19" ry="25" fill="url(#balloonGoldCenter)" />
-        <ellipse cx="56" cy="18" rx="5.8" ry="4.2" fill="rgba(255,255,255,0.55)" transform="rotate(-18 56 18)" />
-        <path d="M62 53l-4 6h8z" fill={goldA} opacity=".80" />
+        <ellipse cx="96" cy="166" rx="54" ry="72" fill={`url(#edgeGold-${side})`} />
+        <ellipse cx="82" cy="141" rx="15" ry="10" fill="rgba(255,255,255,0.54)" transform="rotate(-18 82 141)" />
+        <path d="M96 239l-10 12h20z" fill={goldA} opacity=".76" />
 
-        <ellipse cx="83" cy="35" rx="18" ry="23" fill="url(#balloonPurpleRight)" />
-        <ellipse cx="77" cy="26" rx="5.2" ry="3.8" fill="rgba(255,255,255,0.40)" transform="rotate(-18 77 26)" />
-        <path d="M83 58l-4 5h8z" fill="#6A1FB0" opacity=".72" />
+        <ellipse cx="28" cy="226" rx="58" ry="77" fill={`url(#edgePurple-${side})`} opacity=".97" />
+        <ellipse cx="14" cy="199" rx="15" ry="10" fill="rgba(255,255,255,0.38)" transform="rotate(-18 14 199)" />
+        <path d="M28 304l-10 12h20z" fill={purpleA} opacity=".68" />
       </g>
 
-      <g fill="none" stroke={stringColor} strokeWidth="1.15" strokeLinecap="round" opacity=".80">
-        <path d="M41 63C35 72 44 78 38 91" />
-        <path d="M62 59C56 70 67 78 61 93" />
-        <path d="M83 63C77 74 88 79 82 91" />
+      <g fill="none" stroke={stringColor} strokeWidth="1.7" strokeLinecap="round" opacity=".78">
+        <path d="M24 178C7 220 36 254 18 348" />
+        <path d="M96 252C72 296 110 326 88 404" />
+        <path d="M28 316C9 350 46 370 28 420" />
       </g>
 
-      <g opacity=".80">
-        <circle cx="20" cy="34" r="1.5" fill={sparkle} />
-        <circle cx="101" cy="31" r="1.3" fill={sparkle} />
-        <circle cx="28" cy="66" r="1.1" fill={sparkle} />
-        <circle cx="96" cy="68" r="1.1" fill={sparkle} />
-        <path d="M22 18l2.4 4.8 5.2.8-3.8 3.7.9 5.2-4.7-2.5-4.7 2.5.9-5.2-3.8-3.7 5.2-.8z" fill={sparkle} opacity=".42" transform="scale(.42)" />
-        <path d="M226 62l2.4 4.8 5.2.8-3.8 3.7.9 5.2-4.7-2.5-4.7 2.5.9-5.2-3.8-3.7 5.2-.8z" fill={sparkle} opacity=".42" transform="scale(.42)" />
+      <g opacity=".78">
+        <circle cx="151" cy="88" r="2.2" fill={sparkle} />
+        <circle cx="178" cy="174" r="1.7" fill={sparkle} />
+        <circle cx="139" cy="266" r="1.6" fill={sparkle} />
+        <circle cx="183" cy="324" r="2.1" fill={sparkle} />
+        <path d="M158 42l4 8 9 1.3-6.5 6.3 1.5 9-8-4.3-8 4.3 1.5-9-6.5-6.3 9-1.3z" fill={sparkle} opacity=".42" />
+        <path d="M196 226l3 6 6.8 1-4.9 4.8 1.2 6.8-6.1-3.2-6.1 3.2 1.2-6.8-4.9-4.8 6.8-1z" fill={sparkle} opacity=".35" />
       </g>
     </svg>
   );
@@ -391,7 +382,18 @@ function CertPreview({
         }}
       />
 
-      <div style={{ position: "relative", textAlign: "center" }}>
+      {certType === 'birthday' && (
+        <>
+          <div style={{ position: "absolute", left: "-58px", top: "72px", zIndex: 1, pointerEvents: "none" }}>
+            <BirthdayMotif template={template} side="left" />
+          </div>
+          <div style={{ position: "absolute", right: "-58px", top: "108px", zIndex: 1, pointerEvents: "none" }}>
+            <BirthdayMotif template={template} side="right" />
+          </div>
+        </>
+      )}
+
+      <div style={{ position: "relative", textAlign: "center", zIndex: 2 }}>
 
         {/* Sacred cross accent — flat brushed gold with soft glow */}
         <div
@@ -401,7 +403,7 @@ function CertPreview({
             margin: "-4px auto 9px",
             position: "relative",
             filter: isPurple
-              ? "drop-shadow(0 0 10px rgba(248,230,160,0.60)) drop-shadow(0 0 26px rgba(157,78,221,0.34))"
+              ? "drop-shadow(0 0 8px rgba(255,255,255,0.84)) drop-shadow(0 0 26px rgba(157,78,221,0.56))"
               : "drop-shadow(0 2px 4px rgba(139,105,20,0.18))",
           }}
           aria-hidden="true"
@@ -411,7 +413,7 @@ function CertPreview({
               position: "absolute",
               inset: "-14px -20px",
               background: isPurple
-                ? "radial-gradient(circle, rgba(255,235,170,0.22), rgba(157,78,221,0.16) 38%, transparent 68%)"
+                ? "radial-gradient(circle, rgba(255,255,255,0.20), rgba(157,78,221,0.30) 38%, transparent 68%)"
                 : "radial-gradient(circle, rgba(212,175,55,0.15), transparent 64%)",
               pointerEvents: "none",
             }}
@@ -419,9 +421,9 @@ function CertPreview({
           <svg viewBox="0 0 80 96" style={{ position: "relative", width: "100%", height: "100%" }}>
             <defs>
               <linearGradient id="topFlatCrossGold" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#FFF4B8" />
-                <stop offset="38%" stopColor="#D4AF37" />
-                <stop offset="100%" stopColor="#7A4A05" />
+                <stop offset="0%" stopColor={isPurple ? "#FFFFFF" : "#FFF4B8"} />
+                <stop offset="46%" stopColor={isPurple ? "#F5EEFF" : "#D4AF37"} />
+                <stop offset="100%" stopColor={isPurple ? "#B883FF" : "#7A4A05"} />
               </linearGradient>
               <linearGradient id="topFlatCrossTexture" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
