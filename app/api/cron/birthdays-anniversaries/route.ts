@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const resend = new Resend(process.env.RESEND_API_KEY!);
   const today = new Date();
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://shepherd-well.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://shepherd-kids.vercel.app';
 
   // Cron mode: secret matches → process all churches
   if (cronSecret && bearerToken === cronSecret) {

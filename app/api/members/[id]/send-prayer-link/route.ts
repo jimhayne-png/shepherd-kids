@@ -54,7 +54,7 @@ export async function POST(
     .maybeSingle();
 
   const churchName = church?.name ?? 'Your Church';
-  const prayerUrl = `https://shepherd-well.vercel.app/pray/${member.portal_token}`;
+  const prayerUrl = `https://shepherd-kids.vercel.app/pray/${member.portal_token}`;
   const firstName = member.first_name;
 
   const resendKey = process.env.RESEND_API_KEY;

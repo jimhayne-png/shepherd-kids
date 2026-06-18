@@ -28,6 +28,18 @@ export async function PATCH(
   const { pipeline_stage, note } = await req.json();
   if (!pipeline_stage) return Response.json({ error: 'pipeline_stage required' }, { status: 400 });
 
+  if (type === 'childrens') {
+    const { data, error } = await adminClient()
+      .from('cm_visitor_children')
+      .update({ pipeline_stage: pipeline_stage.toLowerCase() })
+      .eq('id', memberId)
+      .select('*')
+      .single();
+
+    if (error) return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ record: data });
+  }
+
   const { data, error } = await adminClient()
     .from('ministry_rosters')
     .update({ pipeline_stage: pipeline_stage.toLowerCase(), notes: note ? `Stage → ${pipeline_stage}: ${note.trim()}` : undefined })
@@ -37,6 +49,6 @@ export async function PATCH(
     .select('*')
     .single();
 
-  if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ record: data });
 }

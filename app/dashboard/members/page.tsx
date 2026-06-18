@@ -155,7 +155,7 @@ export default function MembersPage() {
   }), [members]);
 
   const joinUrl = churchSlug
-    ? `https://shepherd-well.vercel.app/join/${churchSlug}`
+    ? `https://shepherd-kids.vercel.app/join/${churchSlug}`
     : null;
 
   useEffect(() => {

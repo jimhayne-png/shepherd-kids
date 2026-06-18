@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bul
   const emails = (members ?? []).map((m: any) => m.email).filter(Boolean) as string[];
   if (!emails.length) return Response.json({ sent: 0 });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://shepherd-well.vercel.app';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://shepherd-kids.vercel.app';
   const bulletinUrl = `${appUrl}/bulletin/${bulletin.access_token}`;
   const serviceDate = new Date(bulletin.service_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 

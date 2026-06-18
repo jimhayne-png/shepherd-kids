@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const supabase = createClient();
-
-type Status = "idle" | "loading" | "done" | "error";
+type Status = "checking" | "idle" | "loading" | "done" | "error" | "no-session";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
+  const router   = useRouter();
+  const supabase = createClient();
+
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
+  const [confirm,  setConfirm]  = useState("");
+  const [status,   setStatus]   = useState<Status>("checking");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Guard: verify an active session exists before letting the user type anything.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setStatus(session ? "idle" : "no-session");
+    });
+  }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +47,35 @@ export default function ResetPasswordPage() {
 
     setStatus("done");
     setTimeout(() => router.push("/dashboard"), 1500);
+  }
+
+  if (status === "checking") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-sm text-gray-400">Verifying session…</p>
+      </div>
+    );
+  }
+
+  if (status === "no-session") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-full max-w-md px-8 py-12 bg-white rounded-2xl shadow-lg text-center">
+          <div className="text-4xl mb-4">🔒</div>
+          <h1 className="text-xl font-semibold text-gray-800 mb-2">Link expired or invalid</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            This password reset link has expired or already been used. Please request a new one.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="text-sm font-medium underline underline-offset-2"
+            style={{ color: "#1A4A2E" }}
+          >
+            ← Back to sign in
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

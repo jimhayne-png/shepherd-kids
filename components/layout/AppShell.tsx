@@ -183,8 +183,14 @@ export default function AppShell(props: AppShellProps) {
           )}
         </nav>
 
-        {/* Sign Out */}
+        {/* Settings + Sign Out */}
         <div style={{ padding: "8px", borderTop: "1px solid rgba(212,175,55,0.15)", flexShrink: 0 }}>
+          <Link
+            href="/dashboard/settings"
+            style={itemStyle(pathActive(pathname, "/dashboard/settings"))}
+          >
+            ⚙️ Settings
+          </Link>
           <button
             type="button"
             onClick={handleSignOut}

@@ -241,7 +241,7 @@ export default function EditMemberPage({
   }
 
   const prayerUrl = portalToken
-    ? `https://shepherd-well.vercel.app/pray/${portalToken}`
+    ? `https://shepherd-kids.vercel.app/pray/${portalToken}`
     : null;
 
   async function handleCopyPrayerLink() {

@@ -56,7 +56,7 @@ export async function POST(
   const dept = deptRes.data;
   const churchName = churchRes.data?.name ?? 'Your Church';
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shepherd-well.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://shepherd-kids.vercel.app';
   const acceptUrl = `${siteUrl}/accept-invite?department_id=${departmentId}`;
   const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(acceptUrl)}`;
 

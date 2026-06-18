@@ -10,7 +10,7 @@ import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 const supabase = createClient();
 
 const ACCENT = "#F28C28";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shepherd-well.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shepherd-kids.vercel.app";
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },

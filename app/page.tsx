@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://shepherd-well.vercel.app";
-
 type Mode = "password" | "magic" | "reset";
 type Status = "idle" | "loading" | "sent" | "error";
 
@@ -70,9 +68,11 @@ export default function Home() {
     setStatus("loading");
     setErrorMsg("");
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${APP_URL}/auth/callback?next=/auth/reset-password`,
-    });
+    // Use the actual origin so the email link goes to the correct environment:
+    // localhost in dev, the production domain in prod.  A hardcoded env-var
+    // URL would always send local testers to production.
+    const redirectTo = `${window.location.origin}/auth/callback?next=/auth/reset-password`
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
     if (error) {
       setErrorMsg(error.message);
