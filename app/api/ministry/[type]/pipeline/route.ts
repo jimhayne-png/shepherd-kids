@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
   if (type === 'childrens') {
     const { data: children, error } = await admin
       .from('cm_visitor_children')
-      .select('id, first_name, last_name, family_id, created_at')
+      .select('id, first_name, last_name, family_id, pipeline_stage, created_at')
       .eq('church_id', churchId)
       .order('created_at', { ascending: false });
 
@@ -60,14 +60,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
         first_name: c.first_name,
         last_name: c.last_name,
         email: fam.parent1_email ?? null,
-        pipeline_stage: 'visitor',
+        pipeline_stage: c.pipeline_stage ?? null,
         joined_date: joinedDate,
         weeks_attending: weeksAttending(joinedDate),
         last_contact_date: null,
       };
     }).sort((a: any, b: any) => a.last_name.localeCompare(b.last_name));
 
-    const stageCounts: Record<string, number> = { visitor: enriched.length };
+    const stageCounts: Record<string, number> = {};
+    for (const m of enriched) {
+      const stage = m.pipeline_stage ?? 'Unassigned';
+      stageCounts[stage] = (stageCounts[stage] ?? 0) + 1;
+    }
     return Response.json({ members: enriched, stage_counts: stageCounts, total: enriched.length });
   }
 

@@ -82,6 +82,7 @@ export default function FaithJourneyPage() {
   const [selectedStage, setSelectedStage] = useState("");
   const [moveNote, setMoveNote] = useState("");
   const [moving, setMoving] = useState(false);
+  const [moveError, setMoveError] = useState("");
   const [customizing, setCustomizing] = useState(false);
   const [editStages, setEditStages] = useState<StageData[]>([]);
   const [saving, setSaving] = useState(false);
@@ -130,17 +131,28 @@ export default function FaithJourneyPage() {
     setMoveModal({ member });
     setSelectedStage(member.pipeline_stage ?? activeStages[0]?.name ?? "");
     setMoveNote("");
+    setMoveError("");
   }
 
   async function moveStage() {
     if (!moveModal || !token || !selectedStage) return;
     setMoving(true);
-    await fetch(`/api/ministry/${TYPE}/pipeline/${moveModal.member.id}`, {
+    setMoveError("");
+    const res = await fetch(`/api/ministry/${TYPE}/pipeline/${moveModal.member.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ pipeline_stage: selectedStage, note: moveNote }),
     });
     setMoving(false);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setMoveError(d.error ?? "Failed to update stage. Please try again.");
+      return;
+    }
+    // Optimistic update so the board reflects the change immediately
+    setMembers(prev => prev.map(m =>
+      m.id === moveModal.member.id ? { ...m, pipeline_stage: selectedStage } : m
+    ));
     setMoveModal(null);
     if (token) await loadMembers(token);
   }
@@ -429,6 +441,11 @@ export default function FaithJourneyPage() {
                   style={{ width: "100%", padding: "8px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "8px", fontSize: "13px", color: "#FFFFFF", boxSizing: "border-box", outline: "none" }}
                 />
               </div>
+              {moveError && (
+                <p style={{ fontSize: "12px", color: "#f87171", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "8px", padding: "8px 12px", margin: 0 }}>
+                  ⚠ {moveError}
+                </p>
+              )}
               <div style={{ display: "flex", gap: "10px" }}>
                 <button type="button" onClick={() => setMoveModal(null)} style={{ flex: 1, padding: "10px", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "10px", fontSize: "13px", fontWeight: 500, color: "#A9A9B8", background: "transparent", cursor: "pointer" }}>Cancel</button>
                 <button type="button" onClick={moveStage} disabled={moving || !selectedStage} style={{ flex: 1, padding: "10px", borderRadius: "10px", fontSize: "13px", fontWeight: 700, color: "#FFFFFF", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: moving ? "not-allowed" : "pointer", opacity: moving ? 0.7 : 1 }}>
