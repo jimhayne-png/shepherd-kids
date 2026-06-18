@@ -25,18 +25,17 @@ interface AppShellProps {
 type SkItem = { label: string; href: string; emoji: string; exact?: boolean };
 
 const SK_ITEMS: SkItem[] = [
-  { label: "Ministry Care",          href: "/dashboard/children-ministry",                       emoji: "", exact: true },
-  { label: "Live Check-In",          href: "/dashboard/children-ministry/live-checkin",           emoji: "" },
-  { label: "Label Printing",         href: "/dashboard/children-ministry/print-station",          emoji: "" },
-  { label: "Attendance Report",      href: "/dashboard/children-ministry/attendance-report",      emoji: "" },
-  { label: "ShepherdKids",           href: "/dashboard/children-ministry/children",               emoji: "" },
-  { label: "Parents",                href: "/dashboard/children-ministry/parents",                emoji: "" },
-  { label: "Parent Communication",   href: "/dashboard/children-ministry/parent-update",          emoji: "" },
-  { label: "Faith Journey",          href: "/dashboard/children-ministry/faith-journey",          emoji: "" },
-  { label: "Celebrations",           href: "/dashboard/birthdays",                                emoji: "" },
-  { label: "Certificates",           href: "/dashboard/children-ministry/certificates/new",       emoji: "", exact: true },
-  { label: "Check-In Setup",         href: "/dashboard/children-ministry/checkin-setup",          emoji: "" },
-  { label: "Subscription & Billing", href: "/dashboard/billing",                                  emoji: "" },
+  { label: "Ministry Care",        href: "/dashboard/ministry-care",                          emoji: "" },
+  { label: "Check-In Overview",    href: "/dashboard/children-ministry/check-in",             emoji: "" },
+  { label: "Label Printing",       href: "/dashboard/children-ministry/print-station",        emoji: "" },
+  { label: "Attendance Reports",   href: "/dashboard/children-ministry/attendance-report",    emoji: "" },
+  { label: "Follow-Up",            href: "/dashboard/children-ministry/follow-up",            emoji: "" },
+  { label: "Shepherd Kids",        href: "/dashboard/children-ministry/children",             emoji: "" },
+  { label: "Faith Journey",        href: "/dashboard/children-ministry/faith-journey",        emoji: "" },
+  { label: "Parents",              href: "/dashboard/children-ministry/parents",              emoji: "" },
+  { label: "Parent Communication", href: "/dashboard/children-ministry/parent-update",        emoji: "" },
+  { label: "Celebrations",         href: "/dashboard/birthdays",                              emoji: "" },
+  { label: "Certificates",         href: "/dashboard/children-ministry/certificates/new",     emoji: "", exact: true },
 ];
 
 function pathActive(pathname: string, href: string) {
@@ -186,13 +185,13 @@ export default function AppShell(props: AppShellProps) {
           )}
         </nav>
 
-        {/* Settings + Sign Out */}
+        {/* Settings · Subscription & Billing · Sign Out */}
         <div style={{ padding: "8px", borderTop: "1px solid rgba(212,175,55,0.15)", flexShrink: 0 }}>
-          <Link
-            href="/dashboard/settings"
-            style={itemStyle(pathActive(pathname, "/dashboard/settings"))}
-          >
+          <Link href="/dashboard/settings" style={itemStyle(pathActive(pathname, "/dashboard/settings"))}>
             ⚙️ Settings
+          </Link>
+          <Link href="/dashboard/billing" style={itemStyle(pathActive(pathname, "/dashboard/billing"))}>
+            💳 Subscription &amp; Billing
           </Link>
           <button
             type="button"
