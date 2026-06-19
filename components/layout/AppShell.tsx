@@ -28,14 +28,14 @@ type NavGroup = { label: string; children: NavChild[] };
 
 const TOP_ITEMS: NavChild[] = [
   { label: "Dashboard",     href: "/dashboard",            exact: true },
-  { label: "Ministry Care", href: "/dashboard/ministry-care" },
+  { label: "Ministry Care", href: "/dashboard/children-ministry" },
 ];
 
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Check-In Center",
     children: [
-      { label: "Check-In Setup",     href: "/dashboard/children-ministry/check-in/setup" },
+      { label: "Check-In Setup",     href: "/dashboard/children-ministry/checkin-setup" },
       { label: "Live Check-In",      href: "/dashboard/children-ministry/live-checkin" },
       { label: "Label Printing",     href: "/dashboard/children-ministry/print-station" },
     ],
@@ -43,7 +43,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Follow-Up",
     children: [
-      { label: "Follow-Up",          href: "/dashboard/children-ministry/follow-up" },
+      { label: "Follow-Up",          href: "/dashboard/children-ministry/followup" },
       { label: "Attendance Records", href: "/dashboard/children-ministry/attendance-report" },
     ],
   },
