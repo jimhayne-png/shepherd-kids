@@ -32,13 +32,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
 
   // Children's Ministry: query cm_visitor_children joined with cm_visitor_families
   if (type === 'childrens') {
-    const { data: children, error } = await admin
+    const { data: children, error: childrenError } = await admin
       .from('cm_visitor_children')
       .select('id, first_name, last_name, family_id, pipeline_stage, created_at')
       .eq('church_id', churchId)
       .order('created_at', { ascending: false });
 
-    if (error) return Response.json({ error: error.message }, { status: 400 });
+    if (childrenError) {
+      console.error('[pipeline GET childrens]', childrenError.message);
+      return Response.json({ error: childrenError.message }, { status: 500 });
+    }
 
     const familyIds = [...new Set((children ?? []).map((c: any) => c.family_id as string).filter(Boolean))];
 

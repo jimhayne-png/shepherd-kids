@@ -107,7 +107,11 @@ export default function FaithJourneyPage() {
     const res = await fetch(`/api/ministry/${TYPE}/pipeline`, {
       headers: { Authorization: `Bearer ${t}` },
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      console.error('[Faith Journey] loadMembers failed:', d.error ?? res.status);
+      return;
+    }
     const data = await res.json();
     setMembers(data.members ?? []);
     setTotal(data.total ?? 0);
