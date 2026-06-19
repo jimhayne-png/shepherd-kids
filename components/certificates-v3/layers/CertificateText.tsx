@@ -76,6 +76,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
   const churchName = data.churchName || "LIGHTHOUSE BAPTIST CHURCH";
   const cfg = TYPE_CONFIG[data.certType] ?? DEFAULT_CONFIG;
   const blessing = data.blessing || cfg.blessing;
+  const isPurple = data.template === "purple";
 
   return (
     <div
@@ -88,7 +89,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           "82px 34px 48px 106px 48px 72px 88px 46px 94px 88px",
         justifyItems: "center",
         alignItems: "center",
-        color: "#fff",
+        color: isPurple ? "#fff" : "#2B1A09",
       }}
     >
       <div
@@ -98,10 +99,10 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           fontFamily: "Georgia, serif",
           fontSize: "15px",
           letterSpacing: ".24em",
-          color: "rgba(255,255,255,.96)",
+          color: isPurple ? "rgba(255,255,255,.96)" : "rgba(43,26,9,.88)",
           textTransform: "uppercase",
           textAlign: "center",
-          textShadow: "0 2px 8px rgba(0,0,0,.55)",
+          textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.55)" : "none",
         }}
       >
         {churchName}
@@ -172,7 +173,10 @@ export default function CertificateText({ data }: { data: CertificateData }) {
         }}
       >
         {cfg.body.split("\n").map((line, i) => (
-          <span key={i}>{line}{i < cfg.body.split("\n").length - 1 && <br />}</span>
+          <span key={i}>
+            {line}
+            {i < cfg.body.split("\n").length - 1 && <br />}
+          </span>
         ))}
       </div>
 
@@ -227,7 +231,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
             style={{
               fontFamily: "Georgia, serif",
               fontSize: "18px",
-              color: "#ffffff",
+              color: isPurple ? "#ffffff" : "#2B1A09",
               letterSpacing: ".02em",
               paddingBottom: 6,
               borderBottom: "1px solid rgba(212,175,55,.82)",
@@ -242,7 +246,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
               fontFamily: "Georgia, serif",
               fontSize: "12px",
               letterSpacing: ".18em",
-              color: "rgba(255,255,255,.92)",
+              color: isPurple ? "rgba(255,255,255,.92)" : "rgba(43,26,9,.74)",
               textTransform: "uppercase",
             }}
           >
@@ -264,10 +268,10 @@ export default function CertificateText({ data }: { data: CertificateData }) {
               fontFamily: "Brush Script MT, Segoe Script, cursive",
               fontSize: "28px",
               lineHeight: 1,
-              color: "#F7F0DD",
+              color: isPurple ? "#F7F0DD" : "#2B1A09",
               paddingBottom: 5,
               borderBottom: "1px solid rgba(212,175,55,.82)",
-              textShadow: "0 2px 8px rgba(0,0,0,.6)",
+              textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.6)" : "none",
             }}
           >
             Children&apos;s Ministry
@@ -279,12 +283,56 @@ export default function CertificateText({ data }: { data: CertificateData }) {
               fontFamily: "Georgia, serif",
               fontSize: "12px",
               letterSpacing: ".18em",
-              color: "rgba(255,255,255,.92)",
+              color: isPurple ? "rgba(255,255,255,.92)" : "rgba(43,26,9,.74)",
               textTransform: "uppercase",
             }}
           >
             Director
           </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: "7.2%",
+          top: "39%",
+          width: "210px",
+          padding: "14px 16px 12px",
+          borderRadius: "12px",
+          border: "1px solid rgba(212,175,55,.72)",
+          background: isPurple
+            ? "linear-gradient(180deg, rgba(8,6,13,.88), rgba(18,10,31,.78))"
+            : "linear-gradient(180deg, rgba(255,253,246,.94), rgba(242,229,200,.88))",
+          boxShadow:
+            "0 10px 28px rgba(0,0,0,.28), inset 0 0 18px rgba(212,175,55,.10)",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "Georgia, serif",
+            fontSize: "13px",
+            lineHeight: 1.45,
+            color: isPurple ? "#FFFFFF" : "#2B1A09",
+            fontStyle: "italic",
+          }}
+        >
+          “{data.verse || "You are fearfully and wonderfully made."}”
+        </div>
+
+        <div
+          style={{
+            marginTop: 8,
+            fontFamily: "Georgia, serif",
+            fontSize: "11px",
+            letterSpacing: ".11em",
+            textTransform: "uppercase",
+            color: "#D4AF37",
+            fontWeight: 700,
+          }}
+        >
+          {data.reference || "Psalm 139:14"}
         </div>
       </div>
     </div>

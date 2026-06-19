@@ -1,17 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
-import { type NextRequest } from 'next/server';
+import { createClient } from "@supabase/supabase-js";
+import { type NextRequest } from "next/server";
 
 function adminClient() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 }
+
 async function getAuthUser(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return null;
-  const { data: { user } } = await adminClient().auth.getUser(token);
+
+  const {
+    data: { user },
+    error,
+  } = await adminClient().auth.getUser(token);
+
+  if (error) {
+    console.error("[pipeline PATCH] getUser error:", error.message);
+    return null;
+  }
+
   return user ?? null;
 }
+
 async function getChurchId(userId: string) {
-  const { data } = await adminClient().from('church_users').select('church_id').eq('user_id', userId).maybeSingle();
+  const { data, error } = await adminClient()
+    .from("church_users")
+    .select("church_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[pipeline PATCH] getChurchId error:", error.message);
+    return null;
+  }
+
   return data?.church_id ?? null;
 }
 
@@ -20,35 +45,81 @@ export async function PATCH(
   { params }: { params: Promise<{ type: string; memberId: string }> }
 ) {
   const { type, memberId } = await params;
+
   const user = await getAuthUser(req);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const churchId = await getChurchId(user.id);
-  if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
+  if (!churchId) {
+    return Response.json({ error: "No church found" }, { status: 403 });
+  }
 
-  const { pipeline_stage, note } = await req.json();
-  if (!pipeline_stage) return Response.json({ error: 'pipeline_stage required' }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const pipelineStage =
+    typeof body?.pipeline_stage === "string" ? body.pipeline_stage.trim() : "";
+  const note = typeof body?.note === "string" ? body.note.trim() : "";
 
-  if (type === 'childrens') {
+  if (!pipelineStage) {
+    return Response.json({ error: "pipeline_stage required" }, { status: 400 });
+  }
+
+  if (type === "childrens") {
     const { data, error } = await adminClient()
-      .from('cm_visitor_children')
-      .update({ pipeline_stage: pipeline_stage.toLowerCase() })
-      .eq('id', memberId)
-      .select('*')
+      .from("cm_visitor_children")
+      .update({ pipeline_stage: pipelineStage })
+      .eq("church_id", churchId)
+      .eq("id", memberId)
+      .select("id, first_name, last_name, pipeline_stage")
       .single();
 
-    if (error) return Response.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[pipeline PATCH childrens]", error.message);
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data) {
+      return Response.json(
+        { error: "Child not found or does not belong to this church." },
+        { status: 404 }
+      );
+    }
+
     return Response.json({ record: data });
   }
 
+  const updatePayload: {
+    pipeline_stage: string;
+    notes?: string;
+  } = {
+    pipeline_stage: pipelineStage,
+  };
+
+  if (note) {
+    updatePayload.notes = `Stage → ${pipelineStage}: ${note}`;
+  }
+
   const { data, error } = await adminClient()
-    .from('ministry_rosters')
-    .update({ pipeline_stage: pipeline_stage.toLowerCase(), notes: note ? `Stage → ${pipeline_stage}: ${note.trim()}` : undefined })
-    .eq('church_id', churchId)
-    .eq('ministry_type', type)
-    .eq('member_id', memberId)
-    .select('*')
+    .from("ministry_rosters")
+    .update(updatePayload)
+    .eq("church_id", churchId)
+    .eq("ministry_type", type)
+    .eq("member_id", memberId)
+    .select("*")
     .single();
 
-  if (error) return Response.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[pipeline PATCH roster]", error.message);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data) {
+    return Response.json(
+      { error: "Roster member not found or does not belong to this church." },
+      { status: 404 }
+    );
+  }
+
   return Response.json({ record: data });
 }
