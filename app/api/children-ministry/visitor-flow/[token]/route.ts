@@ -99,6 +99,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     allergies: c.allergies?.trim() || null,
     medical_notes: c.medical_notes?.trim() || null,
     special_instructions: c.special_instructions?.trim() || null,
+    pipeline_stage: 'visitor',
   })).filter((c: any) => c.first_name);
 
   if (childRows.length) {

@@ -236,10 +236,10 @@ export default function FaithJourneyPage() {
     );
   }
 
-  // Build board columns — match on both "Discipleship" and "Discipleship Step" for legacy data
+  // Build board columns — null stage treated as first active stage (Visitor)
+  const firstStageName = activeStages[0]?.name ?? "Visitor";
   const stageGroups: Record<string, PipelineMember[]> = {};
   for (const s of activeStages) stageGroups[s.name] = [];
-  stageGroups.Unassigned = [];
   for (const member of members) {
     const matched = member.pipeline_stage
       ? activeStages.find((s) =>
@@ -247,7 +247,7 @@ export default function FaithJourneyPage() {
           (s.name === "Discipleship" && member.pipeline_stage === "Discipleship Step")
         )
       : undefined;
-    stageGroups[matched?.name ?? "Unassigned"].push(member);
+    stageGroups[matched?.name ?? firstStageName].push(member);
   }
 
   const columns = activeStages.map((stage, idx) => ({
@@ -256,7 +256,6 @@ export default function FaithJourneyPage() {
     color: stageColorAt(stage, idx),
     icon: stageIcon(stage.name),
   }));
-  const unassigned = stageGroups.Unassigned ?? [];
 
   function countStage(name: string) {
     return members.filter((m) => m.pipeline_stage?.toLowerCase() === name.toLowerCase()).length;
@@ -264,7 +263,7 @@ export default function FaithJourneyPage() {
   const faithDecisionCount = countStage("Faith Decision");
   const baptismCount = countStage("Baptism");
   const discipleshipCount = countStage("Discipleship") + countStage("Discipleship Step");
-  const activeCount = members.filter((m) => m.pipeline_stage).length;
+  const activeCount = members.length;
 
   const METRICS = [
     { label: "Total Children", value: total, icon: "👥" },
@@ -326,7 +325,7 @@ export default function FaithJourneyPage() {
 
         {/* Pipeline Board */}
         <div style={{ overflowX: "auto", paddingBottom: "8px" }}>
-          <div style={{ display: "flex", gap: "14px", minWidth: `${(columns.length + (unassigned.length > 0 ? 1 : 0)) * 230}px` }}>
+          <div style={{ display: "flex", gap: "14px", minWidth: `${columns.length * 230}px` }}>
             {columns.map((col, idx) => (
               <div
                 key={col.stage.stage_key}
@@ -357,21 +356,6 @@ export default function FaithJourneyPage() {
               </div>
             ))}
 
-            {unassigned.length > 0 && (
-              <div style={{ flexShrink: 0, width: "218px", borderRadius: "16px", overflow: "hidden", background: "#120A1F", border: "1px solid rgba(212,175,55,0.15)" }}>
-                <div style={{ padding: "16px", textAlign: "center", borderBottom: "1px solid rgba(212,175,55,0.1)" }}>
-                  <div style={{ fontSize: "28px", marginBottom: "8px" }}>❔</div>
-                  <h3 style={{ fontSize: "14px", fontWeight: 900, color: "#A9A9B8", margin: 0 }}>Unassigned</h3>
-                  <p style={{ fontSize: "11px", color: "#6b6b8a", margin: "6px 0 0" }}>Children who need a stage.</p>
-                  <p style={{ fontSize: "12px", fontWeight: 700, color: "#A9A9B8", margin: "8px 0 0" }}>{unassigned.length} children</p>
-                </div>
-                <div style={{ padding: "10px", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "calc(100vh - 440px)", overflowY: "auto" }}>
-                  {unassigned.map((member) => (
-                    <ChildCard key={member.id} member={member} color="#6b7280" onMove={() => openMove(member)} />
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -408,7 +392,7 @@ export default function FaithJourneyPage() {
                 Move {moveModal.member.first_name} {moveModal.member.last_name}
               </h2>
               <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "4px 0 0" }}>
-                Current: <strong style={{ color: "#D8D8E8" }}>{moveModal.member.pipeline_stage ?? "Unassigned"}</strong>
+                Current: <strong style={{ color: "#D8D8E8" }}>{moveModal.member.pipeline_stage ?? firstStageName}</strong>
               </p>
             </div>
             <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
