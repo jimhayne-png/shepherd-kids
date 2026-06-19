@@ -1393,10 +1393,10 @@ export default function CheckinSetupPage() {
                   <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: 0, fontFamily: "Georgia, serif" }}>Brother QL-810W <span style={{ fontSize: "12px", fontWeight: 400, color: "#c084fc" }}>(Recommended)</span></h3>
                 </div>
                 <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 12px", lineHeight: 1.6 }}>
-                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-810W</strong> is the recommended label printer for most Shepherd Kids churches. For approximately <strong style={{ color: "#D4AF37" }}>90% of churches</strong>, this printer provides everything needed for child check-in labels.
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-810W</strong> is the recommended label printer for most Shepherd Kids churches. For approximately <strong style={{ color: "#D4AF37" }}>90% of churches</strong>, this printer provides everything needed for child check-in labels, including Wi-Fi, Wi-Fi Direct, and USB printing.
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-                  {["Wi-Fi connectivity", "USB connectivity", "Fast 4\" × 2\" label printing", "Simple setup", "Lower cost"].map(f => (
+                  {["Wi-Fi connectivity", "Wi-Fi Direct for tablet-to-printer connection", "USB cable printing with tablet adapter", "Fast 4\" × 2\" label printing", "Simple setup", "Lower cost"].map(f => (
                     <div key={f} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8" }}>
                       <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span> {f}
                     </div>
@@ -1408,7 +1408,7 @@ export default function CheckinSetupPage() {
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "18px 20px", marginBottom: "20px" }}>
                 <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: "0 0 10px", fontFamily: "Georgia, serif" }}>Brother QL-820NWB <span style={{ fontSize: "12px", fontWeight: 400, color: "#A9A9B8" }}>(Advanced Installations)</span></h3>
                 <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 10px", lineHeight: 1.6 }}>
-                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> supports all the same printing capabilities as the QL-810W, but adds <strong style={{ color: "#D4AF37" }}>two additional connectivity options</strong> — these are the <strong style={{ color: "#FFFFFF" }}>primary differences</strong> between the two printers:
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> supports all the same printing capabilities as the QL-810W, including Wi-Fi, Wi-Fi Direct, and USB printing with a tablet adapter. It adds <strong style={{ color: "#D4AF37" }}>two additional connectivity options</strong> — these are the <strong style={{ color: "#FFFFFF" }}>primary differences</strong> between the two printers:
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
@@ -1417,6 +1417,11 @@ export default function CheckinSetupPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
                     <span style={{ color: "#4ade80" }}>✅</span> Bluetooth connectivity
                   </div>
+                </div>
+                <div style={{ background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.18)", borderRadius: "10px", padding: "10px 12px", marginBottom: "12px" }}>
+                  <p style={{ fontSize: "12px", color: "#D4AF37", margin: 0, lineHeight: 1.6 }}>
+                    💡 <strong>Wi-Fi Direct:</strong> Both printers can connect directly to a nearby tablet without a normal church Wi-Fi router, as long as the tablet has Wi-Fi. Both can also print by USB cable when the tablet has the proper USB adapter for its port.
+                  </p>
                 </div>
                 <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "0 0 8px" }}>Recommended for churches that:</p>
                 <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -1438,7 +1443,7 @@ export default function CheckinSetupPage() {
                   <strong style={{ color: "#FFFFFF" }}>Most churches should purchase the Brother QL-810W.</strong>
                 </p>
                 <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "0 0 8px", lineHeight: 1.6 }}>
-                  Upgrade to the <strong style={{ color: "#FFFFFF" }}>QL-820NWB only if your installation specifically requires Ethernet or Bluetooth.</strong> Aside from those two options, both printers provide the same excellent label printing experience.
+                  Upgrade to the <strong style={{ color: "#FFFFFF" }}>QL-820NWB only if your installation specifically requires Ethernet or Bluetooth.</strong> Both printers already support Wi-Fi Direct for direct tablet-to-printer printing nearby and USB printing with the proper tablet adapter.
                 </p>
               </div>
 
@@ -1456,7 +1461,9 @@ export default function CheckinSetupPage() {
                   <tbody>
                     {[
                       { feature: "Wi-Fi", w810: "✅", w820: "✅", highlight: false },
+                      { feature: "Wi-Fi Direct", w810: "✅", w820: "✅", highlight: false },
                       { feature: "USB", w810: "✅", w820: "✅", highlight: false },
+                      { feature: "USB to tablet with adapter", w810: "✅", w820: "✅", highlight: false },
                       { feature: "Ethernet", w810: "❌", w820: "✅", highlight: true },
                       { feature: "Bluetooth", w810: "❌", w820: "✅", highlight: true },
                       { feature: "Recommended for Most Churches", w810: "⭐ Yes", w820: "Optional Upgrade", highlight: false },
