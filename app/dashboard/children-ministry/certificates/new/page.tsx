@@ -1,228 +1,863 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
-import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
-import CertificateExportButtons from "@/components/certificates-v3/CertificateExportButtons";
-import type { CertificateData, CertTemplate, CertTranslation } from "@/components/certificates-v3/types";
 
-const CERT_TYPES = [
-  { value: "birthday",         label: "Birthday" },
-  { value: "spiritual_birthday", label: "Spiritual Birthday" },
-  { value: "baptism",          label: "Baptism" },
-  { value: "faith_milestone",  label: "Faith Milestone" },
-  { value: "scripture_memory", label: "Scripture Memory" },
-  { value: "attendance",       label: "Attendance" },
-  { value: "promotion",        label: "Promotion Sunday" },
-  { value: "servant_heart",    label: "Servant Heart Award" },
-  { value: "kindness",         label: "Kindness Award" },
-  { value: "helper",           label: "Helper Award" },
-];
+// ── Palette ───────────────────────────────────────────────────────────────────
+const ACCENT  = "#7B2CBF";
+const ACCENT2 = "#9D4EDD";
+const GOLD    = "#D4AF37";
+const MUTED   = "#A9A9B8";
+const BODY    = "#D8D8E8";
+const CARD    = "#120A1F";
 
-const today = new Date().toLocaleDateString("en-US", {
-  month: "long", day: "numeric", year: "numeric",
-});
+// ── Certificate type definitions ──────────────────────────────────────────────
+type Translation    = 'kjv' | 'niv';
+type BlessingPreset = 'traditional' | 'encouragement' | 'future_calling';
+type CertMeta = { label: string; icon: string; scripture: Record<Translation, string>; scriptureRef: string; subtitle?: string };
 
-const DEFAULTS: CertificateData = {
-  certType: "birthday",
-  template: "purple",
-  childName: "Child's Name",
-  churchName: "",
-  date: today,
-  verse: "",
-  reference: "",
-  translation: "kjv",
-  blessing: "",
+const CERT_TYPES: Record<string, CertMeta> = {
+  birthday: {
+    label: 'Birthday Celebration', icon: '🎈', scriptureRef: 'Psalm 139:13–14',
+    subtitle: 'Celebrating the Wonderful Gift God Has Given',
+    scripture: {
+      kjv: `“For thou hast possessed my reins: thou hast covered me in my mother's womb. I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well.”`,
+      niv: `“For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.”`,
+    },
+  },
+  spiritual_birthday: {
+    label: 'Spiritual Birthday', icon: '✝️', scriptureRef: 'Romans 8:31',
+    scripture: {
+      kjv: '“If God be for us, who can be against us?”',
+      niv: '“If God is for us, who can be against us?”',
+    },
+  },
+  baptism: {
+    label: 'Baptism Celebration', icon: '💧', scriptureRef: '2 Corinthians 5:17',
+    scripture: {
+      kjv: '“Therefore if any man be in Christ, he is a new creature: old things are passed away; all things are become new.”',
+      niv: '“Therefore, if anyone is in Christ, the new creation has come: the old has gone, the new is here!”',
+    },
+  },
+  faith_milestone: {
+    label: 'Faith Milestone', icon: '👑', scriptureRef: 'Philippians 4:13',
+    scripture: {
+      kjv: '“I can do all things through Christ which strengtheneth me.”',
+      niv: '“I can do all this through him who gives me strength.”',
+    },
+  },
+  scripture_memory: {
+    label: 'Scripture Memory Award', icon: '📖', scriptureRef: 'Psalm 119:105',
+    scripture: {
+      kjv: '“Thy word is a lamp unto my feet, and a light unto my path.”',
+      niv: '“Your word is a lamp for my feet, a light on my path.”',
+    },
+  },
+  promotion: {
+    label: 'Promotion Sunday', icon: '🎓', scriptureRef: 'Jeremiah 29:11',
+    scripture: {
+      kjv: '“For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil.”',
+      niv: '“For I know the plans I have for you,” declares the Lord, “plans to prosper you and not to harm you.”',
+    },
+  },
+  servant_heart: {
+    label: 'Servant Heart Award', icon: '❤️', scriptureRef: 'Galatians 5:13',
+    scripture: {
+      kjv: '“By love serve one another.”',
+      niv: '“Serve one another humbly in love.”',
+    },
+  },
+  kindness: {
+    label: 'Kindness Award', icon: '💛', scriptureRef: 'Ephesians 4:32',
+    scripture: {
+      kjv: '“And be ye kind one to another, tenderhearted, forgiving one another.”',
+      niv: '“Be kind and compassionate to one another, forgiving each other.”',
+    },
+  },
+  helper: {
+    label: 'Helper Award', icon: '⭐', scriptureRef: 'Colossians 3:23',
+    scripture: {
+      kjv: '“Whatsoever ye do, do it heartily, as to the Lord, and not unto men.”',
+      niv: '“Whatever you do, work at it with all your heart, as working for the Lord.”',
+    },
+  },
+  attendance: {
+    label: 'Attendance Award', icon: '📅', scriptureRef: 'Hebrews 10:25',
+    scripture: {
+      kjv: '“Not forsaking the assembling of ourselves together, as the manner of some is.”',
+      niv: '“Not giving up meeting together, as some are in the habit of doing.”',
+    },
+  },
 };
 
-const GOLD   = "#D4AF37";
-const MUTED  = "#A9A9B8";
-const BORDER = "rgba(212,175,55,0.18)";
+// ── Blessing presets ──────────────────────────────────────────────────────────
+const CERT_BLESSINGS: Partial<Record<string, Record<BlessingPreset, string>>> = {
+  birthday: {
+    traditional:    'May God continue to bless your life with joy, wisdom, courage, and faith as you grow in His love. May His plans for your life be greater than you can imagine, and may you always know how deeply you are loved by Him and by your church family.',
+    encouragement:  'As you celebrate another year of life, may you grow in grace, kindness, and understanding. May the Lord guide your steps, strengthen your faith, and fill your heart with His everlasting peace and joy.',
+    future_calling: 'God has created you with a wonderful purpose and a bright future. May you walk confidently in His plans, use your gifts to serve others, and always trust that He is with you every step of your journey.',
+  },
+};
 
-function Label({ children }: { children: React.ReactNode }) {
+// ── Print styles ──────────────────────────────────────────────────────────────
+const PRINT_STYLES = `
+@media print {
+  @page { size: landscape; margin: 0.4in; }
+  body * { visibility: hidden; }
+  #certificate-print-area, #certificate-print-area * { visibility: visible; }
+  #certificate-print-area {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #certificate-print-area > div {
+    width: 100%;
+    max-width: 9.5in;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+`;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtCertDate(d: string): string {
+  try {
+    return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  } catch {
+    return d;
+  }
+}
+
+// ── Shared UI atoms ───────────────────────────────────────────────────────────
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: "10px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 5px" }}>
+    <label style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: "6px" }}>
       {children}
-    </p>
+    </label>
   );
 }
 
-function TextInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="input-dark"
-      style={{ width: "100%", padding: "8px 10px", background: "#0A0814", border: `1px solid ${BORDER}`, borderRadius: "8px", fontSize: "13px", color: "#fff", outline: "none", boxSizing: "border-box" }}
-    />
-  );
-}
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "9px 12px",
+  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)",
+  borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", boxSizing: "border-box",
+};
 
-function TextArea({ value, onChange, placeholder, rows = 3 }: { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }) {
+function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <textarea
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      rows={rows}
-      className="input-dark"
-      style={{ width: "100%", padding: "8px 10px", background: "#0A0814", border: `1px solid ${BORDER}`, borderRadius: "8px", fontSize: "13px", color: "#fff", outline: "none", boxSizing: "border-box", resize: "vertical", fontFamily: "inherit" }}
-    />
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-      <Label>{label}</Label>
-      {children}
+    <div style={{ background: CARD, border: "1px solid rgba(212,175,55,0.22)", borderRadius: "14px", overflow: "hidden" }}>
+      <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(212,175,55,0.1)" }}>
+        <p style={{ fontSize: "10px", fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{title}</p>
+      </div>
+      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+        {children}
+      </div>
     </div>
   );
 }
 
-export default function CertificateCreatorPage() {
-  const certRef = useRef<HTMLDivElement>(null);
-  const [data, setData] = useState<CertificateData>(DEFAULTS);
+// ── Birthday balloon motif ────────────────────────────────────────────────────
+function BirthdayMotif({ template }: { template: "purple" | "white" }) {
+  const isPurple = template === "purple";
+  const b1  = isPurple ? "#9D4EDD" : "#5B1E8C";   // left:   purple / deep violet
+  const b2  = isPurple ? "#D4AF37" : "#B8860B";   // center: gold  / dark goldenrod
+  const b3  = isPurple ? "#7B2CBF" : "#8B4513";   // right:  purple / warm bronze
+  const str = isPurple ? "rgba(212,175,55,0.55)" : "rgba(100,50,10,0.50)";
+  const sh  = isPurple ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.40)";
+  return (
+    <svg width="95" height="85" viewBox="0 0 76 68" style={{ overflow: "visible" as const }}>
+      {/* Left balloon */}
+      <ellipse cx="18" cy="24" rx="13" ry="16" fill={b1} opacity={0.88} />
+      <ellipse cx="14" cy="18" rx="4" ry="3" fill={sh} transform="rotate(-20, 14, 18)" />
+      <circle cx="18" cy="40" r="2" fill={b1} opacity={0.70} />
+      <path d="M18 42 Q14 52 18 62" stroke={str} strokeWidth="1.2" fill="none" />
+      {/* Center balloon — gold, tallest */}
+      <ellipse cx="38" cy="19" rx="14" ry="17" fill={b2} opacity={0.92} />
+      <ellipse cx="33" cy="13" rx="4" ry="3" fill={sh} transform="rotate(-20, 33, 13)" />
+      <circle cx="38" cy="36" r="2.2" fill={b2} opacity={0.70} />
+      <path d="M38 38 Q34 50 38 62" stroke={str} strokeWidth="1.2" fill="none" />
+      {/* Right balloon */}
+      <ellipse cx="58" cy="24" rx="13" ry="16" fill={b3} opacity={0.82} />
+      <ellipse cx="54" cy="18" rx="4" ry="3" fill={sh} transform="rotate(-20, 54, 18)" />
+      <circle cx="58" cy="40" r="2" fill={b3} opacity={0.70} />
+      <path d="M58 42 Q54 52 58 62" stroke={str} strokeWidth="1.2" fill="none" />
+    </svg>
+  );
+}
 
-  function set<K extends keyof CertificateData>(key: K, value: CertificateData[K]) {
-    setData(prev => ({ ...prev, [key]: value }));
+// ── Church logo area placeholder (rectangular — never circular) ───────────────
+function ChurchLogoArea({ width, height, template }: { width: number; height: number; template: "purple" | "white" }) {
+  const isPurple = template === "purple";
+  return (
+    <div style={{
+      width: `${width}px`,
+      height: `${height}px`,
+      border: `1.5px dashed ${isPurple ? "rgba(212,175,55,0.38)" : "rgba(139,105,20,0.42)"}`,
+      borderRadius: "3px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "3px",
+      background: isPurple ? "rgba(212,175,55,0.04)" : "rgba(139,105,20,0.04)",
+      flexShrink: 0,
+    }}>
+      <span style={{ fontSize: "16px", opacity: 0.40, lineHeight: 1 }}>✝</span>
+      <span style={{
+        fontSize: "7px",
+        color: isPurple ? "rgba(212,175,55,0.45)" : "rgba(139,105,20,0.52)",
+        letterSpacing: "0.08em",
+        fontWeight: 700,
+        textTransform: "uppercase" as const,
+      }}>Church Logo</span>
+    </div>
+  );
+}
+
+// ── Ministry seal placeholder (cross only — no initials) ──────────────────────
+function MinistrySeal({ size, template }: { size: number; template: "purple" | "white" }) {
+  const isPurple = template === "purple";
+  const clr = isPurple ? "rgba(212,175,55,0.72)" : "rgba(139,105,20,0.68)";
+  return (
+    <div style={{
+      width: `${size}px`,
+      height: `${size}px`,
+      borderRadius: "50%",
+      border: `1.5px solid ${clr}`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: isPurple ? "radial-gradient(circle at 50% 35%, rgba(42,13,64,0.96), rgba(5,2,18,0.94))" : "radial-gradient(circle at 50% 35%, rgba(255,252,240,0.98), rgba(238,214,162,0.90))",
+      flexShrink: 0,
+    }}>
+      <span style={{ fontSize: `${Math.round(size * 0.46)}px`, color: clr, lineHeight: 1, fontFamily: "Georgia, serif" }}>✝</span>
+    </div>
+  );
+}
+
+
+function CornerFiligree({ position, color }: { position: "tl" | "tr" | "bl" | "br"; color: string }) {
+  const placement: React.CSSProperties =
+    position === "tl" ? { top: "20px", left: "20px" } :
+    position === "tr" ? { top: "20px", right: "20px", transform: "scaleX(-1)" } :
+    position === "bl" ? { bottom: "20px", left: "20px", transform: "scaleY(-1)" } :
+    { bottom: "20px", right: "20px", transform: "scale(-1)" };
+
+  return (
+    <svg viewBox="0 0 96 96" style={{ position: "absolute", width: "78px", height: "78px", color, opacity: 0.72, pointerEvents: "none", ...placement }}>
+      <path d="M10 86V10h76" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <path d="M22 74V22h52" fill="none" stroke="currentColor" strokeWidth="1" opacity=".68" />
+      <path d="M26 28c18 4 24 18 12 28 20-2 30 12 24 30M35 22c-4 18 10 26 28 18M20 62c16-5 28 2 34 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity=".82" />
+      <circle cx="42" cy="42" r="3.2" fill="currentColor" opacity=".86" />
+    </svg>
+  );
+}
+
+// ── Premium certificate templates ─────────────────────────────────────────────
+function CertPreview({
+  childName, certType, churchName, churchTagline,
+  ministerName, ministerTitle, date, blessing, template, translation,
+}: {
+  childName: string; certType: string; churchName: string; churchTagline: string;
+  ministerName: string; ministerTitle: string; date: string; blessing: string;
+  template: "purple" | "white"; translation: Translation;
+}) {
+  const meta      = CERT_TYPES[certType] ?? CERT_TYPES["spiritual_birthday"];
+  const dispChild = childName     || "Child's Name";
+  const dispChurch= churchName    || "Your Church Name";
+  const dispMin   = ministerName  || "Minister's Name";
+  const dispTitle = ministerTitle || "Children's Ministry Director";
+  const dispDate  = date ? fmtCertDate(date) : "—";
+  const isPurple  = template === "purple";
+
+  // ── Theme tokens ──────────────────────────────────────────────────────────────
+  const bg           = isPurple
+    ? `radial-gradient(circle at 50% 42%, rgba(255,235,170,0.10), transparent 34%), radial-gradient(circle at 18% 18%, rgba(123,44,191,0.18), transparent 26%), radial-gradient(circle at 84% 74%, rgba(212,175,55,0.08), transparent 30%), linear-gradient(160deg, #050212 0%, #130828 50%, #0A0320 100%)`
+    : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
+  const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
+  const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
+  const innerBorder  = isPurple ? "1px solid rgba(212,175,55,0.18)"    : "1px solid rgba(175,135,40,0.28)";
+  const cornerClr    = isPurple ? GOLD                                  : "#8B6914";
+  const titleClr     = isPurple ? GOLD                                  : "#1C0A2E";
+  const nameClr      = isPurple ? "#FFFFFF"                             : "#1C0A2E";
+  const subClr       = isPurple ? "rgba(212,175,55,0.72)"               : "#8B6914";
+  const dimClr       = isPurple ? "rgba(255,255,255,0.40)"              : "#8B7355";
+  const divClr       = isPurple ? "rgba(212,175,55,0.28)"               : "rgba(175,135,40,0.38)";
+  const ornClr       = isPurple ? "rgba(212,175,55,0.58)"               : "#B8860B";
+  const scriptClr    = isPurple ? "rgba(255,255,255,0.72)"              : "#4A3728";
+  const scriptRef    = isPurple ? GOLD                                  : "#8B6914";
+  const blessClr     = isPurple ? "rgba(255,255,255,0.55)"              : "#5C4A3A";
+  const medallionBg  = isPurple ? "rgba(212,175,55,0.05)"               : "rgba(139,105,20,0.05)";
+  const medallionBdr = isPurple ? "rgba(212,175,55,0.24)"               : "rgba(139,105,20,0.32)";
+  const glow: React.CSSProperties = isPurple
+    ? { boxShadow: "0 8px 56px rgba(5,2,18,0.80), 0 0 120px rgba(212,175,55,0.04)" }
+    : { boxShadow: "0 4px 28px rgba(0,0,0,0.09)" };
+  const crossGlow: React.CSSProperties = isPurple
+    ? { textShadow: "0 0 18px rgba(212,175,55,0.70), 0 0 40px rgba(212,175,55,0.30)" }
+    : {};
+
+  return (
+    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "28px 46px 30px", width: "100%", boxSizing: "border-box", ...glow }}>
+      {/* Second border line */}
+      <div style={{ position: "absolute", inset: "6px", border: midBorder, borderRadius: "3px", pointerEvents: "none" }} />
+      {/* Inner frame */}
+      <div style={{ position: "absolute", inset: "13px", border: innerBorder, borderRadius: "2px", pointerEvents: "none" }} />
+
+      {/* Corner L-brackets */}
+      <div style={{ position: "absolute", top: "18px",    left: "18px",  width: "24px", height: "24px", borderTop:    `2px solid ${cornerClr}`, borderLeft:   `2px solid ${cornerClr}` }} />
+      <div style={{ position: "absolute", top: "18px",    right: "18px", width: "24px", height: "24px", borderTop:    `2px solid ${cornerClr}`, borderRight:  `2px solid ${cornerClr}` }} />
+      <div style={{ position: "absolute", bottom: "18px", left: "18px",  width: "24px", height: "24px", borderBottom: `2px solid ${cornerClr}`, borderLeft:   `2px solid ${cornerClr}` }} />
+      <div style={{ position: "absolute", bottom: "18px", right: "18px", width: "24px", height: "24px", borderBottom: `2px solid ${cornerClr}`, borderRight:  `2px solid ${cornerClr}` }} />
+
+      {/* Corner diamond accents */}
+      <div style={{ position: "absolute", top: "14px",    left: "16px",  fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
+      <div style={{ position: "absolute", top: "14px",    right: "16px", fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
+      <div style={{ position: "absolute", bottom: "14px", left: "16px",  fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
+      <div style={{ position: "absolute", bottom: "14px", right: "16px", fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: isPurple
+            ? "radial-gradient(circle at 50% 46%, rgba(255,235,170,0.08), transparent 28%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(0,0,0,0.28) 100%)"
+            : "radial-gradient(circle at 50% 46%, rgba(212,175,55,0.08), transparent 30%), radial-gradient(circle at 50% 50%, transparent 54%, rgba(139,105,20,0.08) 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: isPurple ? 0.32 : 0.18,
+          backgroundImage: isPurple
+            ? "radial-gradient(circle at 12% 22%, rgba(248,230,160,0.50) 0 1px, transparent 1.6px), radial-gradient(circle at 78% 18%, rgba(212,175,55,0.45) 0 1px, transparent 1.6px), radial-gradient(circle at 88% 78%, rgba(157,78,221,0.45) 0 1px, transparent 1.6px)"
+            : "radial-gradient(circle at 18% 20%, rgba(139,105,20,0.35) 0 1px, transparent 1.6px), radial-gradient(circle at 82% 72%, rgba(212,175,55,0.30) 0 1px, transparent 1.6px)",
+          backgroundSize: "190px 140px, 260px 210px, 220px 170px",
+        }}
+      />
+
+      <CornerFiligree position="tl" color={cornerClr} />
+      <CornerFiligree position="tr" color={cornerClr} />
+      <CornerFiligree position="bl" color={cornerClr} />
+      <CornerFiligree position="br" color={cornerClr} />
+
+      <div style={{ position: "relative", textAlign: "center" }}>
+
+        {/* Sacred cross accent */}
+        <div style={{ fontSize: isPurple ? "25px" : "22px", lineHeight: 1, marginBottom: "8px", color: isPurple ? GOLD : "#8B6914", ...crossGlow }}>✝</div>
+
+        {/* Church logo area — rectangular, no initials */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "5px" }}>
+          <ChurchLogoArea width={isPurple ? 120 : 110} height={isPurple ? 48 : 44} template={template} />
+        </div>
+
+        {/* Church name */}
+        <p style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "0.16em", color: titleClr, textTransform: "uppercase", margin: "0 0 2px", fontFamily: "Georgia, serif" }}>
+          {dispChurch}
+        </p>
+        {churchTagline && (
+          <p style={{ fontSize: "10px", color: subClr, margin: 0, fontStyle: "italic", letterSpacing: "0.05em" }}>
+            {churchTagline}
+          </p>
+        )}
+
+        {/* ❖ ❖ ❖ ornamental rule */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "10px 0 13px" }}>
+          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${divClr})` }} />
+          <span style={{ color: ornClr, fontSize: "11px", letterSpacing: "0.28em" }}>❖ ❖ ❖</span>
+          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${divClr})` }} />
+        </div>
+
+        {/* Certificate motif: birthday keeps balloons; all other certificates remain ceremonial and text-first */}
+        {certType === 'birthday' && (
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "4px" }}>
+            <BirthdayMotif template={template} />
+          </div>
+        )}
+        <h2 style={{
+          fontSize: "25px", fontWeight: 700, color: titleClr, margin: "0 0 3px",
+          fontFamily: "Georgia, serif", letterSpacing: "0.06em", textTransform: "uppercase" as const,
+        }}>
+          {meta.label}
+        </h2>
+        {meta.subtitle && (
+          <p style={{ fontSize: "13px", color: subClr, margin: "0 0 2px", fontStyle: "italic", letterSpacing: "0.04em" }}>
+            {meta.subtitle}
+          </p>
+        )}
+
+        {/* Title ribbon divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "4px auto 10px", maxWidth: "280px" }}>
+          <div style={{ flex: 1, height: "1px", background: divClr }} />
+          <div style={{ width: "5px", height: "5px", background: ornClr, transform: "rotate(45deg)", opacity: 0.75, flexShrink: 0 }} />
+          <div style={{ flex: 1, height: "1px", background: divClr }} />
+        </div>
+
+        {/* Child Name — primary focal point */}
+        <h1 style={{
+          fontSize: "62px", fontWeight: 900, color: nameClr, margin: "0 0 12px",
+          fontFamily: "Georgia, serif", lineHeight: 1.05, letterSpacing: "0.01em",
+          fontStyle: "italic",
+          textShadow: isPurple ? "0 3px 0 rgba(0,0,0,0.58), 0 0 34px rgba(212,175,55,0.18)" : "0 1px 0 rgba(255,255,255,0.75)",
+        }}>
+          {dispChild}
+        </h1>
+
+        {/* Rule below name */}
+        <div style={{ height: "1px", background: divClr, margin: "0 8% 14px" }} />
+
+        {/* Scripture plaque */}
+        <div style={{
+          position: "relative",
+          border: `2px solid ${isPurple ? "rgba(212,175,55,0.62)" : "rgba(139,105,20,0.50)"}`,
+          background: isPurple
+            ? "linear-gradient(180deg, rgba(42,13,64,0.78), rgba(12,4,24,0.92))"
+            : "linear-gradient(180deg, rgba(255,252,240,0.96), rgba(238,214,162,0.48))",
+          borderRadius: "2px",
+          padding: "15px 28px",
+          maxWidth: "500px",
+          margin: "0 auto 15px",
+          boxShadow: isPurple
+            ? "0 0 28px rgba(212,175,55,0.12), inset 0 0 22px rgba(255,255,255,0.035)"
+            : "0 6px 16px rgba(0,0,0,0.08), inset 0 0 20px rgba(139,105,20,0.06)",
+        }}>
+          <div style={{ position: "absolute", inset: "6px", border: `1px solid ${isPurple ? "rgba(248,230,160,0.22)" : "rgba(139,105,20,0.24)"}`, pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", color: ornClr, fontSize: "16px", lineHeight: 1 }}>✦</div>
+          <p style={{ position: "relative", zIndex: 1, fontSize: "13px", color: scriptClr, margin: "0 0 6px", lineHeight: 1.45, fontStyle: "italic" }}>
+            {meta.scripture[translation]}
+          </p>
+          <p style={{ position: "relative", zIndex: 1, fontSize: "11px", fontWeight: 700, color: scriptRef, margin: 0, letterSpacing: "0.12em" }}>
+            — {meta.scriptureRef} {translation.toUpperCase()}
+          </p>
+        </div>
+
+        {/* Personalized blessing (optional) */}
+        {blessing && (
+          <>
+            <div style={{ height: "1px", background: divClr, margin: "0 4% 13px" }} />
+            <p style={{ fontSize: "11px", color: blessClr, lineHeight: 1.85, fontStyle: "italic", maxWidth: "430px", margin: "0 auto 12px" }}>
+              {blessing}
+            </p>
+          </>
+        )}
+
+        {/* Bottom ❖ ornamental rule */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0 13px" }}>
+          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${divClr})` }} />
+          <span style={{ color: ornClr, fontSize: "9px" }}>❖</span>
+          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${divClr})` }} />
+        </div>
+
+        {/* Bottom row: Presented By | Seal | Date */}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "12px" }}>
+
+          {/* Left: Presented By */}
+          <div style={{ textAlign: "left", flex: 1 }}>
+            <p style={{ fontSize: "8px", fontWeight: 700, color: dimClr, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 4px" }}>Presented By</p>
+            <p style={{ fontSize: "17px", color: titleClr, margin: "0 0 2px", fontFamily: "Georgia, serif", fontStyle: "italic", lineHeight: 1.15 }}>{dispMin}</p>
+            <p style={{ fontSize: "9px", color: dimClr, margin: "0 0 1px", letterSpacing: "0.05em" }}>{dispTitle}</p>
+            <p style={{ fontSize: "9px", fontWeight: 600, color: subClr, margin: 0, letterSpacing: "0.04em" }}>{dispChurch}</p>
+          </div>
+
+          {/* Center: Ministry seal */}
+          <div style={{ flexShrink: 0 }}>
+            <MinistrySeal size={58} template={template} />
+          </div>
+
+          {/* Right: Date */}
+          <div style={{ textAlign: "right", flex: 1 }}>
+            <p style={{ fontSize: "8px", fontWeight: 700, color: dimClr, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 4px" }}>Date of Presentation</p>
+            <p style={{ fontSize: "15px", fontWeight: 700, color: titleClr, margin: 0, fontFamily: "Georgia, serif" }}>{dispDate}</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main creator ──────────────────────────────────────────────────────────────
+function CertificateCreatorInner() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+
+  const childIdParam   = searchParams.get("childId")   ?? "";
+  const childNameParam = searchParams.get("childName") ?? "";
+  const typeParam      = searchParams.get("type")      ?? "spiritual_birthday";
+
+  const [childName,     setChildName]     = useState(childNameParam);
+  const [certType,      setCertType]      = useState(Object.hasOwn(CERT_TYPES, typeParam) ? typeParam : "spiritual_birthday");
+  const [churchName,    setChurchName]    = useState("");
+  const [churchTagline, setChurchTagline] = useState("");
+  const [ministerName,  setMinisterName]  = useState("");
+  const [ministerTitle, setMinisterTitle] = useState("Children's Ministry Director");
+  const [parentEmail,   setParentEmail]   = useState("");
+  const [date,          setDate]          = useState(new Date().toISOString().slice(0, 10));
+  const [blessing,       setBlessing]       = useState("");
+  const [blessingPreset, setBlessingPreset] = useState<BlessingPreset | 'custom' | 'none'>('none');
+  const [template,       setTemplate]       = useState<"purple" | "white">("purple");
+  const [translation,   setTranslation]   = useState<Translation>("kjv");
+  const [saving,        setSaving]        = useState(false);
+  const [saveError,     setSaveError]     = useState<string | null>(null);
+
+  const backHref = childIdParam
+    ? `/dashboard/children-ministry/children/${childIdParam}#celebration-timeline`
+    : "/dashboard/children-ministry/children";
+
+  async function saveDraft() {
+    if (!childName.trim()) { setSaveError("Child name is required."); return; }
+    setSaving(true); setSaveError(null);
+    try {
+      const meta = CERT_TYPES[certType];
+      const r = await fetch("/api/children-ministry/certificates", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          child_id:        childIdParam || null,
+          cert_type:       certType,
+          template,
+          child_name:      childName.trim(),
+          church_name:     churchName.trim() || null,
+          church_tagline:  churchTagline.trim() || null,
+          minister_name:   ministerName.trim() || null,
+          minister_title:  ministerTitle.trim() || null,
+          verse:           meta?.scripture[translation] ?? null,
+          reference:       meta?.scriptureRef ?? null,
+          translation,
+          blessing:        blessing.trim() || null,
+          presentation_date: date || null,
+          parent_email:    parentEmail.trim() || null,
+          status:          "draft",
+        }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setSaveError(d.error ?? "Failed to save."); return; }
+      router.push(`/dashboard/children-ministry/certificates/${d.certificate.id}`);
+    } catch {
+      setSaveError("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
-
-  const filename = (data.childName || "certificate")
-    .replace(/[^a-z0-9]/gi, "-")
-    .replace(/-+/g, "-")
-    .toLowerCase() + "-certificate";
 
   return (
     <AppShell navItems={[]}>
-      <div style={{ display: "flex", height: "100vh", overflow: "hidden", backgroundColor: "#08060D" }}>
+      {/* eslint-disable-next-line react/no-danger */}
+      <style dangerouslySetInnerHTML={{ __html: PRINT_STYLES }} />
 
-        {/* ── Left: Form ─────────────────────────────────────────────────── */}
-        <div style={{ width: "360px", flexShrink: 0, overflowY: "auto", borderRight: `1px solid ${BORDER}`, background: "#0A0814" }}>
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div style={{ padding: "32px 32px 24px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)", borderBottom: "1px solid rgba(212,175,55,0.15)" }}>
+        <button
+          onClick={() => router.push(backHref)}
+          style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, fontSize: "13px", padding: 0, marginBottom: "14px", display: "flex", alignItems: "center", gap: "5px" }}
+        >
+          ← Back
+        </button>
+        <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", color: GOLD, textTransform: "uppercase", margin: "0 0 6px" }}>
+          Certificates
+        </p>
+        <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
+          Certificate Creator
+        </h1>
+        <p style={{ fontSize: "13px", color: MUTED, margin: "6px 0 0" }}>
+          Design a premium keepsake certificate your families will treasure.
+        </p>
+      </div>
 
-          {/* Header */}
-          <div style={{ padding: "24px 20px 16px", borderBottom: `1px solid ${BORDER}` }}>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 2px" }}>ShepherdKids</p>
-            <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#fff", fontFamily: "Georgia, serif", margin: 0 }}>Certificate Creator</h1>
-          </div>
+      {/* ── Two-column layout ─────────────────────────────────────────────── */}
+      <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px", display: "grid", gridTemplateColumns: "420px 1fr", gap: "32px", alignItems: "start" }}>
 
-          {/* Form fields */}
-          <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "18px" }}>
+        {/* ── Form panel ──────────────────────────────────────────────────── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px", position: "sticky", top: "24px" }}>
 
-            {/* Certificate type */}
-            <Field label="Certificate Type">
-              <select
-                value={data.certType}
-                onChange={e => set("certType", e.target.value)}
-                className="select-dark"
-                style={{ width: "100%", padding: "8px 10px", background: "#0A0814", border: `1px solid ${BORDER}`, borderRadius: "8px", fontSize: "13px", color: "#fff", outline: "none", cursor: "pointer" }}
-              >
-                {CERT_TYPES.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
+          {/* Child & Certificate */}
+          <FormSection title="Child & Certificate">
+            <div>
+              <FieldLabel>Child Name</FieldLabel>
+              <input type="text" value={childName} onChange={e => setChildName(e.target.value)}
+                placeholder="Enter child's full name" style={inputStyle} />
+            </div>
+            <div>
+              <FieldLabel>Certificate Type</FieldLabel>
+              <select value={certType} onChange={e => { setCertType(e.target.value); setBlessingPreset('none'); }}
+                style={{ ...inputStyle, cursor: "pointer" }}>
+                {Object.entries(CERT_TYPES).map(([key, ct]) => (
+                  <option key={key} value={key} style={{ background: "#120A1F" }}>
+                    {ct.icon} {ct.label}
+                  </option>
                 ))}
               </select>
-            </Field>
+            </div>
+            <div>
+              <FieldLabel>Parent Email <span style={{ color: "#4a4a65", fontWeight: 400, textTransform: "none" }}>(optional — for sending PDF later)</span></FieldLabel>
+              <input type="email" value={parentEmail} onChange={e => setParentEmail(e.target.value)}
+                placeholder="parent@example.com" style={inputStyle} />
+            </div>
+          </FormSection>
 
-            {/* Template */}
-            <Field label="Template">
+          {/* Church Identity */}
+          <FormSection title="Church Identity">
+            <div>
+              <FieldLabel>Church Name</FieldLabel>
+              <input type="text" value={churchName} onChange={e => setChurchName(e.target.value)}
+                placeholder="Your church name" style={inputStyle} />
+            </div>
+            <div>
+              <FieldLabel>Church Tagline <span style={{ color: "#4a4a65", fontWeight: 400, textTransform: "none" }}>(optional)</span></FieldLabel>
+              <input type="text" value={churchTagline} onChange={e => setChurchTagline(e.target.value)}
+                placeholder="e.g., Where Faith Grows" style={inputStyle} />
+            </div>
+          </FormSection>
+
+          {/* Presenter */}
+          <FormSection title="Presenter">
+            <div>
+              <FieldLabel>Minister Name</FieldLabel>
+              <input type="text" value={ministerName} onChange={e => setMinisterName(e.target.value)}
+                placeholder="Name of presenting minister" style={inputStyle} />
+            </div>
+            <div>
+              <FieldLabel>Minister Title</FieldLabel>
+              <input type="text" value={ministerTitle} onChange={e => setMinisterTitle(e.target.value)}
+                style={inputStyle} />
+            </div>
+          </FormSection>
+
+          {/* Certificate Content */}
+          <FormSection title="Certificate Content">
+            <div>
+              <FieldLabel>Date of Presentation</FieldLabel>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                style={{ ...inputStyle, colorScheme: "dark" as never }} />
+            </div>
+            <div>
+              <FieldLabel>Bible Translation</FieldLabel>
               <div style={{ display: "flex", gap: "8px" }}>
-                {(["purple", "white"] as CertTemplate[]).map(t => (
+                {(["kjv", "niv"] as const).map(t => (
                   <button
                     key={t}
-                    type="button"
-                    onClick={() => set("template", t)}
+                    onClick={() => setTranslation(t)}
                     style={{
-                      flex: 1, padding: "8px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer",
-                      border: `1.5px solid ${data.template === t ? GOLD : BORDER}`,
-                      background: data.template === t ? "rgba(212,175,55,0.1)" : "transparent",
-                      color: data.template === t ? GOLD : MUTED,
-                    }}
-                  >
-                    {t === "purple" ? "Royal Purple" : "Classic Ivory"}
-                  </button>
-                ))}
-              </div>
-            </Field>
-
-            {/* Child name */}
-            <Field label="Child's Name">
-              <TextInput value={data.childName} onChange={v => set("childName", v)} placeholder="e.g. Emma Johnson" />
-            </Field>
-
-            {/* Church name */}
-            <Field label="Church Name">
-              <TextInput value={data.churchName ?? ""} onChange={v => set("churchName", v)} placeholder="e.g. Grace Community Church" />
-            </Field>
-
-            {/* Date */}
-            <Field label="Date">
-              <TextInput value={data.date ?? ""} onChange={v => set("date", v)} placeholder="e.g. June 18, 2026" />
-            </Field>
-
-            <div style={{ height: 1, background: BORDER }} />
-
-            {/* Verse */}
-            <Field label="Scripture Verse">
-              <TextArea
-                value={data.verse ?? ""}
-                onChange={v => set("verse", v)}
-                placeholder="Optional — not shown on current layout"
-                rows={3}
-              />
-            </Field>
-
-            {/* Reference */}
-            <Field label="Reference">
-              <TextInput value={data.reference ?? ""} onChange={v => set("reference", v)} placeholder="e.g. Psalm 139:13–14" />
-            </Field>
-
-            {/* Translation */}
-            <Field label="Translation">
-              <div style={{ display: "flex", gap: "8px" }}>
-                {(["kjv", "niv"] as CertTranslation[]).map(t => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => set("translation", t)}
-                    style={{
-                      flex: 1, padding: "8px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer",
-                      border: `1.5px solid ${data.translation === t ? GOLD : BORDER}`,
-                      background: data.translation === t ? "rgba(212,175,55,0.1)" : "transparent",
-                      color: data.translation === t ? GOLD : MUTED,
+                      flex: 1, padding: "9px 8px", borderRadius: "8px", cursor: "pointer",
+                      border: `2px solid ${translation === t ? ACCENT2 : "rgba(212,175,55,0.2)"}`,
+                      background: translation === t ? "rgba(123,44,191,0.2)" : "transparent",
+                      color: translation === t ? "#ffffff" : MUTED,
+                      fontSize: "13px", fontWeight: 700, letterSpacing: "0.04em",
                     }}
                   >
                     {t.toUpperCase()}
                   </button>
                 ))}
               </div>
-            </Field>
-
-            <div style={{ height: 1, background: BORDER }} />
-
-            {/* Blessing */}
-            <Field label="Custom Blessing (optional)">
-              <TextArea
-                value={data.blessing ?? ""}
-                onChange={v => set("blessing", v)}
-                placeholder="Leave blank to use the default blessing for this certificate type"
-                rows={3}
+            </div>
+            <div>
+              <FieldLabel>Personalized Blessing <span style={{ color: "#4a4a65", fontWeight: 400, textTransform: "none" }}>(optional)</span></FieldLabel>
+              {/* Blessing preset selector */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "8px" }}>
+                {(["none", "traditional", "encouragement", "future_calling", "custom"] as const).map(p => {
+                  const active  = blessingPreset === p;
+                  const hasData = p !== 'custom' && p !== 'none' && !!CERT_BLESSINGS[certType]?.[p as BlessingPreset];
+                  const labels: Record<typeof p, string> = {
+                    none:           'None',
+                    traditional:    'Traditional',
+                    encouragement:  'Encouragement',
+                    future_calling: 'Future Calling',
+                    custom:         'Custom',
+                  };
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => {
+                        if (p === 'none') {
+                          setBlessingPreset('none');
+                          setBlessing('');
+                        } else if (p === 'custom') {
+                          setBlessingPreset('custom');
+                        } else {
+                          const presets = CERT_BLESSINGS[certType];
+                          if (presets) {
+                            setBlessingPreset(p);
+                            setBlessing(presets[p as BlessingPreset]);
+                          }
+                        }
+                      }}
+                      style={{
+                        padding: "7px 6px", borderRadius: "7px", cursor: "pointer", fontSize: "11px",
+                        fontWeight: active ? 700 : 400,
+                        border: `1.5px solid ${active ? ACCENT2 : "rgba(212,175,55,0.18)"}`,
+                        background: active ? "rgba(123,44,191,0.22)" : "transparent",
+                        color: active ? "#ffffff" : hasData || p === 'custom' || p === 'none' ? MUTED : "#4a4a65",
+                        letterSpacing: "0.02em",
+                        gridColumn: p === 'custom' ? "1 / -1" : undefined,
+                      }}
+                    >
+                      {labels[p]}
+                    </button>
+                  );
+                })}
+              </div>
+              <textarea
+                value={blessing}
+                onChange={e => { setBlessing(e.target.value); setBlessingPreset('custom'); }}
+                placeholder="Select a preset above, or type a custom blessing…"
+                rows={4}
+                style={{ ...inputStyle, resize: "vertical" as const, lineHeight: "1.5" }}
               />
-            </Field>
+            </div>
+          </FormSection>
 
+          {/* Template */}
+          <FormSection title="Template">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              {(["purple", "white"] as const).map(t => {
+                const active = template === t;
+                return (
+                  <button key={t} onClick={() => setTemplate(t)} style={{
+                    padding: 0, borderRadius: "12px", overflow: "hidden", cursor: "pointer",
+                    border: `2px solid ${active ? (t === "purple" ? ACCENT2 : "#8B6914") : "rgba(212,175,55,0.15)"}`,
+                    background: active ? (t === "purple" ? "rgba(123,44,191,0.2)" : "rgba(253,250,239,0.06)") : "transparent",
+                  }}>
+                    {/* Color swatch */}
+                    <div style={{ height: "28px", background: t === "purple" ? "linear-gradient(135deg, #1A083E, #32177A)" : "#FDFAEF", borderBottom: `1px solid ${t === "purple" ? "rgba(212,175,55,0.25)" : "#C9A84C"}` }} />
+                    <div style={{ padding: "7px 8px" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 700, margin: 0, color: active ? (t === "purple" ? ACCENT2 : "#B8860B") : MUTED }}>
+                        {t === "purple" ? "👑 Royal Purple" : "📄 Classic Ivory"}
+                      </p>
+                      <p style={{ fontSize: "9px", color: "#4a4a65", margin: "2px 0 0" }}>Premium</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </FormSection>
+
+          {/* Certificate Settings — Coming Soon */}
+          <div style={{ background: "rgba(255,255,255,0.015)", border: "1px dashed rgba(212,175,55,0.12)", borderRadius: "12px", padding: "14px 16px" }}>
+            <p style={{ fontSize: "10px", fontWeight: 700, color: "#4a4a65", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>
+              ⚙️ Certificate Settings — Coming Soon
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {[
+                "Church logo upload",
+                "Signature image upload",
+                "Church seal design",
+                "Custom scripture per type",
+                "Multi-language support",
+                "Photo integration",
+              ].map(item => (
+                <div key={item} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#4a4a65", flexShrink: 0 }} />
+                  <span style={{ fontSize: "11px", color: "#4a4a65", flex: 1 }}>{item}</span>
+                  <span style={{ fontSize: "9px", color: "#3a3a52" }}>soon</span>
+                </div>
+              ))}
+            </div>
           </div>
+
         </div>
 
-        {/* ── Right: Live preview ────────────────────────────────────────── */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "32px", background: "#08060D" }}>
-          <div ref={certRef}>
-            <CertificateCanvas data={data} />
+        {/* ── Preview panel ────────────────────────────────────────────────── */}
+        <div>
+          <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>
+            Live Preview — {template === "purple" ? "Royal Purple Premium" : "Classic Ivory Premium"}
+          </p>
+
+          <div id="certificate-print-area">
+            <CertPreview
+              childName={childName}
+              certType={certType}
+              churchName={churchName}
+              churchTagline={churchTagline}
+              ministerName={ministerName}
+              ministerTitle={ministerTitle}
+              date={date}
+              blessing={blessing}
+              template={template}
+              translation={translation}
+            />
           </div>
-          <CertificateExportButtons certRef={certRef} filename={filename} />
+
+          {/* Action buttons */}
+          <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+            <button
+              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, color: "#ffffff", fontSize: "13px", fontWeight: 700 }}
+            >
+              👁️ Preview
+            </button>
+            <button
+              onClick={saveDraft}
+              disabled={saving}
+              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(212,175,55,0.25)", cursor: saving ? "not-allowed" : "pointer", background: "transparent", color: BODY, fontSize: "13px", fontWeight: 700, opacity: saving ? 0.6 : 1 }}
+            >
+              {saving ? "Saving…" : "💾 Save Draft"}
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(212,175,55,0.35)", cursor: "pointer", background: "rgba(212,175,55,0.1)", color: GOLD, fontSize: "13px", fontWeight: 700 }}
+            >
+              🖨️ Print Certificate
+            </button>
+          </div>
+
+          {saveError && (
+            <p style={{ fontSize: "11px", color: "#FF6B6B", margin: "8px 0 0" }}>{saveError}</p>
+          )}
+
+          {/* Print tip */}
+          <p style={{ fontSize: "11px", color: MUTED, margin: "10px 0 0", padding: "8px 12px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(212,175,55,0.1)", borderRadius: "8px", lineHeight: 1.5 }}>
+            💡 <strong style={{ color: BODY }}>Print tip:</strong> Use landscape orientation and disable headers/footers for best results.
+          </p>
+
+          {/* Certificate type quick-select */}
+          <div style={{ marginTop: "28px", background: CARD, border: "1px solid rgba(212,175,55,0.18)", borderRadius: "14px", overflow: "hidden" }}>
+            <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(212,175,55,0.1)" }}>
+              <h3 style={{ fontSize: "11px", fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
+                Certificate Types
+              </h3>
+            </div>
+            <div style={{ padding: "12px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              {Object.entries(CERT_TYPES).map(([key, ct]) => (
+                <button
+                  key={key}
+                  onClick={() => setCertType(key)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "8px 10px", borderRadius: "8px", cursor: "pointer", textAlign: "left",
+                    border: `1px solid ${certType === key ? "rgba(123,44,191,0.5)" : "rgba(255,255,255,0.06)"}`,
+                    background: certType === key ? "rgba(123,44,191,0.15)" : "transparent",
+                  }}
+                >
+                  <span style={{ fontSize: "16px" }}>{ct.icon}</span>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: certType === key ? "#ffffff" : MUTED, lineHeight: 1.3 }}>{ct.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
       </div>
     </AppShell>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#08060D" }}>
+      <div style={{ color: BODY }}>Loading…</div>
+    </div>
+  );
+}
+
+export default function CertificateNewPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <CertificateCreatorInner />
+    </Suspense>
   );
 }
