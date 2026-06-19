@@ -36,13 +36,6 @@ export default function CertificateCanvas({ data }: { data: CertificateData }) {
       <div style={{ position: "absolute", inset: 0, zIndex: 9 }}><CertificateText data={data} /></div>
       <div style={{ position: "absolute", inset: 0, zIndex: 10 }}><GoldMedallion /></div>
 
-      <div style={{
-        position: "absolute", top: 6, left: 6, zIndex: 20, pointerEvents: "none",
-        padding: "2px 8px", background: "rgba(123,44,191,0.7)", borderRadius: "4px",
-        fontSize: "9px", fontWeight: 700, color: "#fff", fontFamily: "monospace", letterSpacing: "0.08em",
-      }}>
-        certificates-v3 · {data.template}
-      </div>
     </div>
   );
 }

@@ -3,8 +3,8 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
-import CertificateRenderer from "@/components/certificates/CertificateRenderer";
-import CertificateExportButtons from "@/components/certificates/CertificateExportButtons";
+import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
+import CertificateExportButtons from "@/components/certificates-v3/CertificateExportButtons";
 import {
   type CertificateRecord,
   STATUS_LABEL,
@@ -508,20 +508,20 @@ export default function CertificateDetailPage() {
           {/* ── Certificate preview ──────────────────────────────────────── */}
           <div>
             <div ref={certRef}>
-              <CertificateRenderer
-                certType={cert.cert_type}
-                template={cert.template}
-                churchName={cert.church_name ?? ""}
-                churchTagline={cert.church_tagline ?? undefined}
-                childName={cert.child_name}
-                verse={cert.verse ?? ""}
-                reference={cert.reference ?? ""}
-                translation={cert.translation}
-                blessing={cert.blessing ?? ""}
-                ministerName={cert.minister_name ?? ""}
-                ministerTitle={cert.minister_title ?? ""}
-                date={cert.presentation_date ?? ""}
-              />
+              <CertificateCanvas data={{
+                certType: cert.cert_type,
+                template: cert.template,
+                childName: cert.child_name,
+                churchName: cert.church_name ?? undefined,
+                churchTagline: cert.church_tagline ?? undefined,
+                verse: cert.verse ?? undefined,
+                reference: cert.reference ?? undefined,
+                translation: cert.translation,
+                blessing: cert.blessing ?? undefined,
+                ministerName: cert.minister_name ?? undefined,
+                ministerTitle: cert.minister_title ?? undefined,
+                date: cert.presentation_date ?? undefined,
+              }} />
             </div>
             <CertificateExportButtons
               certRef={certRef}

@@ -2,11 +2,80 @@
 
 import type { CertificateData } from "../types";
 
+const TYPE_CONFIG: Record<string, { title: string; subtitle: string; body: string; blessing: string }> = {
+  birthday: {
+    title: "Happy Birthday!",
+    subtitle: "CELEBRATING GOD'S AMAZING GIFT OF YOU",
+    body: "This certificate celebrates the wonderful gift of you\nand the joy you bring to our church family.",
+    blessing: "May God bless you today and always as you grow in His love!",
+  },
+  spiritual_birthday: {
+    title: "Spiritual Birthday!",
+    subtitle: "THE DAY YOU GAVE YOUR HEART TO JESUS",
+    body: "This certificate honors the most important decision of your life —\nchoosing to follow Jesus Christ as Lord.",
+    blessing: "May you grow in faith, love, and wisdom as you walk with the Lord.",
+  },
+  baptism: {
+    title: "Baptized!",
+    subtitle: "FOLLOWING JESUS IN BELIEVER'S BAPTISM",
+    body: "This certificate celebrates your public declaration of faith\nthrough the waters of baptism.",
+    blessing: "May your baptism be a reminder of the new life you have in Christ.",
+  },
+  faith_milestone: {
+    title: "Faith Milestone!",
+    subtitle: "GROWING IN FAITH AND KNOWLEDGE",
+    body: "This certificate recognizes a meaningful step forward\nin your faith journey with Jesus.",
+    blessing: "May God continue to guide your steps as you grow in His grace.",
+  },
+  scripture_memory: {
+    title: "Scripture Memory!",
+    subtitle: "HIDING GOD'S WORD IN YOUR HEART",
+    body: "This certificate honors your commitment to memorizing\nand treasuring the Word of God.",
+    blessing: "May God's Word be a lamp unto your feet and a light unto your path.",
+  },
+  attendance: {
+    title: "Faithful Attendance!",
+    subtitle: "FAITHFUL AND PRESENT",
+    body: "This certificate celebrates your faithful presence\nand commitment to our church family.",
+    blessing: "May your faithfulness be a blessing to all who know you.",
+  },
+  promotion: {
+    title: "Promotion Sunday!",
+    subtitle: "MOVING FORWARD IN FAITH",
+    body: "This certificate recognizes your growth and readiness\nto take your next step in ministry.",
+    blessing: "May God lead you forward with courage, joy, and faith.",
+  },
+  servant_heart: {
+    title: "Servant Heart!",
+    subtitle: "FOLLOWING JESUS BY SERVING OTHERS",
+    body: "This certificate honors the servant heart you have shown\nto our church family and beyond.",
+    blessing: "May you always find joy in serving others as Jesus served us.",
+  },
+  kindness: {
+    title: "Kindness Award!",
+    subtitle: "LOVING OTHERS AS JESUS LOVES US",
+    body: "This certificate celebrates the kindness and love\nyou have shown to those around you.",
+    blessing: "May your kindness be a light that leads others to Christ.",
+  },
+  helper: {
+    title: "Helper Award!",
+    subtitle: "A HELPING HAND FOR GOD'S GLORY",
+    body: "This certificate honors your willingness to help\nand serve with a joyful heart.",
+    blessing: "May God bless every act of help and service you offer in His name.",
+  },
+};
+
+const DEFAULT_CONFIG = {
+  title: "Well Done!",
+  subtitle: "A SPECIAL RECOGNITION",
+  body: "This certificate celebrates a meaningful achievement\nin your faith journey.",
+  blessing: "May God's blessings follow you all the days of your life.",
+};
+
 export default function CertificateText({ data }: { data: CertificateData }) {
-  const churchName =
-    "churchName" in data && data.churchName
-      ? String(data.churchName)
-      : "LIGHTHOUSE BAPTIST CHURCH";
+  const churchName = data.churchName || "LIGHTHOUSE BAPTIST CHURCH";
+  const cfg = TYPE_CONFIG[data.certType] ?? DEFAULT_CONFIG;
+  const blessing = data.blessing || cfg.blessing;
 
   return (
     <div
@@ -50,7 +119,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           transform: "rotate(-1deg)",
         }}
       >
-        Happy Birthday!
+        {cfg.title}
       </div>
 
       <div
@@ -79,7 +148,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
             letterSpacing: ".11em",
           }}
         >
-          CELEBRATING GOD&apos;S AMAZING GIFT OF YOU
+          {cfg.subtitle}
         </div>
 
         <div
@@ -102,9 +171,9 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           lineHeight: 1.48,
         }}
       >
-        This certificate celebrates the wonderful gift of you
-        <br />
-        and the joy you bring to our church family.
+        {cfg.body.split("\n").map((line, i) => (
+          <span key={i}>{line}{i < cfg.body.split("\n").length - 1 && <br />}</span>
+        ))}
       </div>
 
       <div
@@ -132,7 +201,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           marginTop: "-10px",
         }}
       >
-        May God bless you today and always as you grow in His love!
+        {blessing}
       </div>
 
       <div
