@@ -29,6 +29,7 @@ type PrintJob = {
   status: string;
   created_at: string;
   qr_token: string | null;
+  is_first_time: boolean | null;
 };
 
 type JobGroup = {
@@ -93,8 +94,22 @@ function ChildLabel({ job }: { job: PrintJob }) {
         )}
       </div>
 
+      {job.is_first_time && (
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 900,
+            color: "#000",
+            marginTop: 2,
+            letterSpacing: "0.04em",
+          }}
+        >
+          ⭐ FIRST VISIT
+        </div>
+      )}
+
       {/* Child name — large */}
-      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: "4px 0 0" }}>
+      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: job.is_first_time ? "1px 0 0" : "4px 0 0" }}>
         {job.child_name}
       </div>
 
@@ -144,7 +159,7 @@ function ChildLabel({ job }: { job: PrintJob }) {
 
       {/* Bottom: QR left, security code right */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
-        {job.qr_token && job.smart_label_qr_enabled !== false ? (
+        {job.label_mode === "smart" && job.qr_token && job.smart_label_qr_enabled !== false ? (
           <QRCodeImage
             value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${job.qr_token}`}
             size={56}
@@ -191,8 +206,22 @@ function ParentLabel({ job }: { job: PrintJob }) {
         👪 Parent Pickup
       </div>
 
+      {job.is_first_time && (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 900,
+            marginTop: 5,
+            color: "#000",
+            letterSpacing: "0.04em",
+          }}
+        >
+          ⭐ FIRST TIME FAMILY
+        </div>
+      )}
+
       {/* Parent name */}
-      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 6 }}>
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: job.is_first_time ? 2 : 6 }}>
         {job.parent_name}
       </div>
 

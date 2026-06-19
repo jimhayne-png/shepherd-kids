@@ -37,6 +37,7 @@ type ImmediateLabel = {
   specialInstructions: string | null;
   visitNumber: number | null;
   qrToken: string | null;
+  isFirstTime: boolean;
 };
 
 function clean(value: string | undefined | null): string {
@@ -258,6 +259,19 @@ export async function POST(
   const parentName = `${clean(parentFirstName)} ${clean(parentLastName)}`.trim();
   const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
+  const { data: existingFamily, error: existingFamilyError } = await admin
+    .from('cm_visitor_families')
+    .select('id')
+    .eq('church_id', churchId)
+    .eq('parent1_phone', normalizedPhone)
+    .maybeSingle();
+
+  if (existingFamilyError) {
+    return Response.json({ error: existingFamilyError.message }, { status: 500 });
+  }
+
+  const isFirstTimeFamily = !existingFamily;
+
   const checkinRows = sessionIds.flatMap((sessionId) =>
     children.map((child) => ({
       session_id: sessionId,
@@ -267,7 +281,7 @@ export async function POST(
       parent_phone: normalizedPhone,
       room_id: findRoomForChild(child, activeRooms, today),
       security_code: securityCode,
-      is_new_visitor: false,
+      is_new_visitor: isFirstTimeFamily,
       allergies: child.allergies ?? [],
       allergy_other: clean(child.allergyOther) || null,
       authorized_pickups: clean(child.authorizedPickups) || null,
@@ -303,6 +317,7 @@ export async function POST(
       specialInstructions: clean(child?.specialInstructions) || null,
       visitNumber: null,
       qrToken: (record as { qr_token?: string | null }).qr_token ?? null,
+      isFirstTime: isFirstTimeFamily,
     };
   });
 
@@ -323,6 +338,7 @@ export async function POST(
     specialInstructions: null,
     visitNumber: null,
     qrToken: null,
+    isFirstTime: isFirstTimeFamily,
   };
 
   const labels: ImmediateLabel[] = [...childLabels, parentLabel];
@@ -350,6 +366,7 @@ export async function POST(
         smart_label_qr_enabled: smartLabelQrEnabled,
         status: 'pending',
         qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
+        is_first_time: isFirstTimeFamily,
       };
     });
 
@@ -374,6 +391,7 @@ export async function POST(
           label_type: 'parent',
           label_mode: labelMode,
           smart_label_qr_enabled: smartLabelQrEnabled,
+          is_first_time: isFirstTimeFamily,
           status: 'pending',
         }
       : null;
@@ -386,15 +404,6 @@ export async function POST(
   }
 
   try {
-    const { data: existingFamily, error: existingFamilyError } = await admin
-      .from('cm_visitor_families')
-      .select('id')
-      .eq('church_id', churchId)
-      .eq('parent1_phone', normalizedPhone)
-      .maybeSingle();
-
-    if (existingFamilyError) throw existingFamilyError;
-
     let familyId: string;
 
     if (!existingFamily) {

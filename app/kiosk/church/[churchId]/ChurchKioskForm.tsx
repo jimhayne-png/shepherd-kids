@@ -36,6 +36,7 @@ type ImmediateLabel = {
   specialInstructions: string | null;
   visitNumber: number | null;
   qrToken: string | null;
+  isFirstTime: boolean;
 };
 
 type Props = {
@@ -876,7 +877,21 @@ function KioskChildLabel({ label, churchName, labelMode, smartLabelQrEnabled }: 
           </span>
         )}
       </div>
-      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: "4px 0 0", color: "#000" }}>
+      {label.isFirstTime && (
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 900,
+            color: "#000",
+            marginTop: 2,
+            letterSpacing: "0.04em",
+          }}
+        >
+          ⭐ FIRST VISIT
+        </div>
+      )}
+
+      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: label.isFirstTime ? "1px 0 0" : "4px 0 0", color: "#000" }}>
         {label.childName}
       </div>
       <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
@@ -921,7 +936,7 @@ function KioskChildLabel({ label, churchName, labelMode, smartLabelQrEnabled }: 
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
-        {label.qrToken && smartLabelQrEnabled ? (
+        {labelMode === "smart" && label.qrToken && smartLabelQrEnabled ? (
           <QRCodeImage
             value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${label.qrToken}`}
             size={56}
@@ -971,7 +986,21 @@ function KioskParentLabel({ label, churchName }: { label: ImmediateLabel; church
           <span style={{ fontSize: 9, color: "#555" }}>{churchName}</span>
         )}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 6, color: "#000" }}>
+      {label.isFirstTime && (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 900,
+            marginTop: 5,
+            color: "#000",
+            letterSpacing: "0.04em",
+          }}
+        >
+          ⭐ FIRST TIME FAMILY
+        </div>
+      )}
+
+      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: label.isFirstTime ? 2 : 6, color: "#000" }}>
         {label.parentName}
       </div>
       <div style={{ fontSize: 12, color: "#333", marginTop: 4 }}>
