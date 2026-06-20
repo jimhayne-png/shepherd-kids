@@ -5,20 +5,17 @@
   --foreground: #ffffff;
   --brand-purple: #7B2CBF;
   --brand-gold: #D4AF37;
-}
 
-@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand-purple: var(--brand-purple);
   --color-brand-gold: var(--brand-gold);
-  --font-sans: var(--font-geist-sans);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 .input-dark::placeholder {
@@ -31,15 +28,16 @@ body {
   color: #ffffff;
 }
 
-/* Make native date/time picker icons visible on dark backgrounds */
+/* Make native date/time picker text and icons visible on dark backgrounds */
 input[type="date"],
 input[type="time"] {
+  color: #ffffff;
   color-scheme: dark;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
-  opacity: 0.85;
+  opacity: 1;
   cursor: pointer;
 }
