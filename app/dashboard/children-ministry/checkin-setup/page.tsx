@@ -956,27 +956,151 @@ export default function CheckinSetupPage() {
                       ))}
                     </div>
                   </div>
+
                   <div className="col-span-2">
-                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Session Group (optional)</label>
-                    <input value={sessionForm.sessionGroup} onChange={e => setSessionForm(f => ({ ...f, sessionGroup: e.target.value }))} placeholder="e.g. Sunday Morning" className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
-                    <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>Sessions with the same group name on the same date will share a security code at check-in.</p>
+                    <label
+                      className="text-xs font-semibold uppercase tracking-widest block mb-1"
+                      style={{ color: "#A9A9B8" }}
+                    >
+                      Session Group (optional)
+                    </label>
+                    <input
+                      value={sessionForm.sessionGroup}
+                      onChange={e =>
+                        setSessionForm(f => ({
+                          ...f,
+                          sessionGroup: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. Sunday Morning"
+                      className="w-full px-3 py-2.5 rounded-lg text-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(212,175,55,0.3)",
+                        color: "#ffffff",
+                        WebkitTextFillColor: "#ffffff",
+                        outline: "none",
+                      }}
+                    />
+                    <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>
+                      Sessions with the same group name on the same date will share a security code at check-in.
+                    </p>
                   </div>
+
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Date *</label>
-                    <input type="date" value={sessionForm.date} onChange={e => setSessionForm(f => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
+                    <label
+                      className="text-xs font-semibold uppercase tracking-widest block mb-1"
+                      style={{ color: "#A9A9B8" }}
+                    >
+                      Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={sessionForm.date}
+                      onChange={e =>
+                        setSessionForm(f => ({
+                          ...f,
+                          date: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2.5 rounded-lg text-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(212,175,55,0.3)",
+                        color: "#ffffff",
+                        WebkitTextFillColor: "#ffffff",
+                        colorScheme: "dark",
+                        outline: "none",
+                      }}
+                    />
                   </div>
+
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Time</label>
-                    <input type="time" value={sessionForm.scheduledTime} onChange={e => setSessionForm(f => ({ ...f, scheduledTime: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
+                    <label
+                      className="text-xs font-semibold uppercase tracking-widest block mb-1"
+                      style={{ color: "#A9A9B8" }}
+                    >
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      value={sessionForm.scheduledTime}
+                      onChange={e =>
+                        setSessionForm(f => ({
+                          ...f,
+                          scheduledTime: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2.5 rounded-lg text-sm"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(212,175,55,0.3)",
+                        color: "#ffffff",
+                        WebkitTextFillColor: "#ffffff",
+                        colorScheme: "dark",
+                        outline: "none",
+                      }}
+                    />
                   </div>
+
                   <div>
-                    <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Kiosk PIN (4 digits) *</label>
-                    <input value={sessionForm.kioskPin} onChange={e => setSessionForm(f => ({ ...f, kioskPin: e.target.value.replace(/\D/g, "").slice(0, 4) }))} placeholder="e.g. 1234" maxLength={4} className="w-full px-3 py-2.5 rounded-lg text-sm font-mono" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
+                    <label
+                      className="text-xs font-semibold uppercase tracking-widest block mb-1"
+                      style={{ color: "#A9A9B8" }}
+                    >
+                      Kiosk PIN (4 digits) *
+                    </label>
+                    <input
+                      value={sessionForm.kioskPin}
+                      onChange={e =>
+                        setSessionForm(f => ({
+                          ...f,
+                          kioskPin: e.target.value.replace(/\D/g, "").slice(0, 4),
+                        }))
+                      }
+                      placeholder="e.g. 1234"
+                      maxLength={4}
+                      className="w-full px-3 py-2.5 rounded-lg text-sm font-mono"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(212,175,55,0.3)",
+                        color: "#ffffff",
+                        WebkitTextFillColor: "#ffffff",
+                        outline: "none",
+                      }}
+                    />
                   </div>
                 </div>
+
                 <div className="flex gap-2">
-                  <button onClick={saveSession} disabled={savingSession || !sessionForm.serviceName.trim() || !sessionForm.date || sessionForm.kioskPin.length !== 4} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: savingSession ? 0.6 : 1 }}>{savingSession ? "Creating…" : "Create Session"}</button>
-                  <button onClick={() => setShowAddSession(false)} className="px-4 py-2.5 rounded-xl text-sm" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
+                  <button
+                    onClick={saveSession}
+                    disabled={
+                      savingSession ||
+                      !sessionForm.serviceName.trim() ||
+                      !sessionForm.date ||
+                      sessionForm.kioskPin.length !== 4
+                    }
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                    style={{
+                      backgroundColor: ACCENT,
+                      opacity: savingSession ? 0.6 : 1,
+                    }}
+                  >
+                    {savingSession ? "Creating…" : "Create Session"}
+                  </button>
+
+                  <button
+                    onClick={() => setShowAddSession(false)}
+                    className="px-4 py-2.5 rounded-xl text-sm"
+                    style={{
+                      border: "1px solid rgba(212,175,55,0.3)",
+                      color: "#A9A9B8",
+                      background: "transparent",
+                    }}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             )}
