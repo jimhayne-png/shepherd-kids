@@ -25,7 +25,26 @@ async function getAuthUser(req: NextRequest) {
   return user ?? null;
 }
 
-async function getChurchId(userId: string) {
+async function getChurchId(req: NextRequest, userId: string) {
+  const selectedChurchId = req.headers.get("x-selected-church-id");
+
+  if (selectedChurchId) {
+    const { data, error } = await adminClient()
+      .from("church_users")
+      .select("church_id")
+      .eq("user_id", userId)
+      .eq("church_id", selectedChurchId)
+      .maybeSingle();
+
+    if (!error && data?.church_id) {
+      return data.church_id;
+    }
+
+    if (error) {
+      console.error("[pipeline PATCH] selected church check error:", error.message);
+    }
+  }
+
   const { data, error } = await adminClient()
     .from("church_users")
     .select("church_id")
@@ -51,14 +70,16 @@ export async function PATCH(
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const churchId = await getChurchId(user.id);
+  const churchId = await getChurchId(req, user.id);
   if (!churchId) {
     return Response.json({ error: "No church found" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);
+
   const pipelineStage =
     typeof body?.pipeline_stage === "string" ? body.pipeline_stage.trim() : "";
+
   const note = typeof body?.note === "string" ? body.note.trim() : "";
 
   if (!pipelineStage) {
