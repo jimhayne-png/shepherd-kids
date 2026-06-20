@@ -1,20 +1,64 @@
-import { type NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { MINISTRY_CONFIG, STAGE_COLORS } from '@/lib/ministry-config';
+import { type NextRequest } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { MINISTRY_CONFIG, STAGE_COLORS } from "@/lib/ministry-config";
+
+export const dynamic = "force-dynamic";
 
 function adminClient() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 }
 
 async function getAuthUser(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return null;
-  const { data: { user } } = await adminClient().auth.getUser(token);
+
+  const {
+    data: { user },
+    error,
+  } = await adminClient().auth.getUser(token);
+
+  if (error) {
+    console.error("[pipeline stages] getUser error:", error.message);
+    return null;
+  }
+
   return user ?? null;
 }
 
-async function getChurchId(userId: string) {
-  const { data } = await adminClient().from('church_users').select('church_id').eq('user_id', userId).maybeSingle();
+async function getChurchId(req: NextRequest, userId: string) {
+  const selectedChurchId = req.headers.get("x-selected-church-id");
+
+  if (selectedChurchId) {
+    const { data, error } = await adminClient()
+      .from("church_users")
+      .select("church_id")
+      .eq("user_id", userId)
+      .eq("church_id", selectedChurchId)
+      .maybeSingle();
+
+    if (!error && data?.church_id) {
+      return data.church_id;
+    }
+
+    if (error) {
+      console.error("[pipeline stages] selected church check error:", error.message);
+    }
+  }
+
+  const { data, error } = await adminClient()
+    .from("church_users")
+    .select("church_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[pipeline stages] getChurchId error:", error.message);
+    return null;
+  }
+
   return data?.church_id ?? null;
 }
 
@@ -37,20 +81,34 @@ type StageInput = {
   is_active: boolean;
 };
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ type: string }> }
+) {
   const { type } = await params;
+
   const user = await getAuthUser(req);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const churchId = await getChurchId(user.id);
-  if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const churchId = await getChurchId(req, user.id);
+  if (!churchId) {
+    return Response.json({ error: "No church found" }, { status: 403 });
+  }
 
   const admin = adminClient();
-  const { data: rows } = await admin
-    .from('ministry_pipeline_stages')
-    .select('id, stage_key, name, description, color, display_order, is_active')
-    .eq('church_id', churchId)
-    .eq('ministry_type', type)
-    .order('display_order', { ascending: true });
+
+  const { data: rows, error } = await admin
+    .from("ministry_pipeline_stages")
+    .select("id, stage_key, name, description, color, display_order, is_active")
+    .eq("church_id", churchId)
+    .eq("ministry_type", type)
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    console.error("[pipeline stages GET]", error.message);
+  }
 
   if (rows?.length) {
     return Response.json({
@@ -64,42 +122,65 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
         is_active: r.is_active,
         is_default: false,
       })),
+      church_id: churchId,
     });
   }
 
-  // No custom rows — return config defaults
   const cfg = MINISTRY_CONFIG[type];
-  if (!cfg) return Response.json({ stages: [] });
 
-  const defaultStages = (cfg.pipelineStages ?? cfg.stages ?? []).map((name, idx) => ({
-    id: null,
-    stage_key: name,
-    name,
-    description: cfg.stageDescriptions?.[name] ?? null,
-    color: STAGE_COLORS[Math.min(idx, STAGE_COLORS.length - 1)],
-    display_order: idx,
-    is_active: true,
-    is_default: true,
-  }));
+  if (!cfg) {
+    return Response.json({
+      stages: [],
+      church_id: churchId,
+    });
+  }
 
-  return Response.json({ stages: defaultStages });
+  const defaultStages = (cfg.pipelineStages ?? cfg.stages ?? []).map(
+    (name, idx) => ({
+      id: null,
+      stage_key: name,
+      name,
+      description: cfg.stageDescriptions?.[name] ?? null,
+      color: STAGE_COLORS[Math.min(idx, STAGE_COLORS.length - 1)],
+      display_order: idx,
+      is_active: true,
+      is_default: true,
+    })
+  );
+
+  return Response.json({
+    stages: defaultStages,
+    church_id: churchId,
+  });
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ type: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ type: string }> }
+) {
   const { type } = await params;
+
   const user = await getAuthUser(req);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const churchId = await getChurchId(user.id);
-  if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const churchId = await getChurchId(req, user.id);
+  if (!churchId) {
+    return Response.json({ error: "No church found" }, { status: 403 });
+  }
 
   const body = await req.json();
+
   const stages: StageInput[] = body.stages;
+
   if (!Array.isArray(stages) || stages.length === 0) {
-    return Response.json({ error: 'stages array required' }, { status: 400 });
+    return Response.json({ error: "stages array required" }, { status: 400 });
   }
 
   const admin = adminClient();
   const now = new Date().toISOString();
+
   const upserts = stages.map((s, idx) => ({
     church_id: churchId,
     ministry_type: type,
@@ -113,11 +194,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
   }));
 
   const { data, error } = await admin
-    .from('ministry_pipeline_stages')
-    .upsert(upserts, { onConflict: 'church_id,ministry_type,stage_key' })
-    .select('id, stage_key, name, description, color, display_order, is_active');
+    .from("ministry_pipeline_stages")
+    .upsert(upserts, {
+      onConflict: "church_id,ministry_type,stage_key",
+    })
+    .select("id, stage_key, name, description, color, display_order, is_active");
 
-  if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (error) {
+    return Response.json({ error: error.message }, { status: 400 });
+  }
 
   return Response.json({
     stages: ((data ?? []) as StageRow[]).map((r) => ({
@@ -130,5 +215,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ typ
       is_active: r.is_active,
       is_default: false,
     })),
+    church_id: churchId,
   });
 }
