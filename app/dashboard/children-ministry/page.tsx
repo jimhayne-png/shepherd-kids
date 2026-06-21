@@ -70,14 +70,14 @@ const ACTION_CARDS = [
     title: "Birthdays This Week",
     desc: "Celebrate children and families.",
     action: "View",
-    href: "/dashboard/birthdays",
+    href: "/dashboard/children-ministry/birthdays",
   },
   {
     emoji: "✝️",
     title: "Upcoming Spiritual Birthdays",
     desc: "Celebrate faith milestones.",
     action: "View",
-    href: "/dashboard/birthdays",
+    href: "/dashboard/children-ministry/birthdays",
   },
   {
     emoji: "🏫",

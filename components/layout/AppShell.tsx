@@ -64,7 +64,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Celebrations",
     children: [
-      { label: "Birthdays",          href: "/dashboard/birthdays" },
+      { label: "Birthdays",          href: "/dashboard/children-ministry/birthdays" },
       { label: "Certificates",       href: "/dashboard/children-ministry/certificates/new", exact: true },
     ],
   },

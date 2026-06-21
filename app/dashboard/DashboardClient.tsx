@@ -18,7 +18,7 @@ const navItems: NavItem[] = [
   { label: "👪 Parents", href: "/dashboard/children-ministry/parents" },
   { label: "📧 Parent Communication", href: "/dashboard/children-ministry/parent-update" },
   { label: "✝️ Faith Journey", href: "/dashboard/children-ministry/faith-journey" },
-  { label: "🎉 Celebrations", href: "/dashboard/birthdays" },
+  { label: "🎉 Celebrations", href: "/dashboard/children-ministry/birthdays" },
   { label: "🎓 Certificates", href: "/dashboard/children-ministry/certificates/new" },
   { label: "⚙️ Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
   { label: "Settings", href: "#", isSection: true },
@@ -47,7 +47,7 @@ const CARE_CARDS = [
   {
     title: "Birthdays This Week",
     desc: "Celebrate children and families",
-    href: "/dashboard/birthdays",
+    href: "/dashboard/children-ministry/birthdays",
     action: "View",
     emoji: "🎂",
     countLabel: "upcoming",
@@ -55,7 +55,7 @@ const CARE_CARDS = [
   {
     title: "Upcoming Spiritual Birthdays",
     desc: "Celebrate faith milestones",
-    href: "/dashboard/birthdays",
+    href: "/dashboard/children-ministry/birthdays",
     action: "View",
     emoji: "✝️",
     countLabel: "upcoming",
@@ -86,7 +86,7 @@ const MODULE_CARDS = [
   { label: "Shepherd Families", href: "/dashboard/children-ministry/parents", desc: "Households, parents & pickups", emoji: "👪", gradient: "linear-gradient(135deg, #16a34a, #15803d)" },
   { label: "Parent Communication", href: "/dashboard/children-ministry/parent-update", desc: "Email updates & family messages", emoji: "📧", gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
   { label: "Faith Journey", href: "/dashboard/children-ministry/faith-journey", desc: "Spiritual milestones", emoji: "✝️", gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
-  { label: "Celebrations", href: "/dashboard/birthdays", desc: "Birthdays, spiritual birthdays & certificates", emoji: "🎉", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
+  { label: "Celebrations", href: "/dashboard/children-ministry/birthdays", desc: "Birthdays, spiritual birthdays & certificates", emoji: "🎉", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
   { label: "Certificates", href: "/dashboard/children-ministry/certificates/new", desc: "Print & send faith certificates", emoji: "🎓", gradient: "linear-gradient(135deg, #a855f7, #6d28d9)" },
 ];
 
