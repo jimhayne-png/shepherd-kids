@@ -2,168 +2,24 @@ import { type NextRequest } from "next/server";
 import { getAuthContext, adminClient } from "@/lib/api-auth";
 import { Resend } from "resend";
 
-export async function GET(request: NextRequest) {
-  const auth = await getAuthContext(request);
-  if (!auth) return Response.json({ error: "Unauthorized" }, { status: 401 });
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-  const admin = adminClient();
+function resolveChurchId(request: NextRequest, auth: Awaited<ReturnType<typeof getAuthContext>>) {
+  return (
+    request.headers.get("x-selected-church-id") ??
+    request.headers.get("X-Selected-Church-Id") ??
+    auth?.churchId ??
+    null
+  );
+}
 
-  const { data: church } = await admin
-    .from("churches")
-    .select("id, name")
-    .eq("id", auth.churchId)
-    .maybeSingle();
+function normalizePhone(phone: string | null | undefined) {
+  return String(phone ?? "").replace(/\D/g, "");
+}
 
-  const { data: records, error } = await admin
-    .from("cm_checkin_records")
-    .select("*")
-    .eq("church_id", auth.churchId)
-    .order("checked_in_at", { ascending: false })
-    .limit(500);
-
-  if (error) return Response.json({ error: error.message }, { status: 400 });
-  if (!records?.length) return Response.json({ church, sessions: [] });
-
-  const phones = [
-    ...new Set(
-      records
-        .map((r: any) => r.parent_phone as string | null)
-        .filter(Boolean) as string[],
-    ),
-  ];
-
-  const familyMap: Record<string, any> = {};
-  if (phones.length) {
-    const phoneList = phones.join(",");
-    const { data: visitorFamilies } = await admin
-      .from("cm_visitor_families")
-      .select(
-        "id, parent1_phone, parent1_email, parent2_phone, parent2_email, follow_up_sent, next_day_sent, status, visit_date",
-      )
-      .eq("church_id", auth.churchId)
-      .or(`parent1_phone.in.(${phoneList}),parent2_phone.in.(${phoneList})`);
-
-    for (const vf of visitorFamilies ?? []) {
-      if (vf.parent1_phone) familyMap[vf.parent1_phone] = vf;
-      if (vf.parent2_phone) familyMap[vf.parent2_phone] = vf;
-    }
-  }
-
-  const followupRecords = records.filter((r: any) => {
-    const fam = familyMap[r.parent_phone];
-    if (!fam) return r.is_new_visitor === true;
-    return fam.status === "new" || fam.follow_up_sent === false || fam.follow_up_sent === null;
-  });
-
-  if (!followupRecords.length) return Response.json({ church, sessions: [] });
-
-  const sessionIds = [...new Set(followupRecords.map((r: any) => r.session_id as string))];
-
-  const { data: sessions } = await admin
-    .from("cm_checkin_sessions")
-    .select("id, service_name, date, auto_followup")
-    .in("id", sessionIds)
-    .order("date", { ascending: false });
-
-  const sessionMap: Record<string, any> = {};
-  for (const s of sessions ?? []) sessionMap[s.id] = s;
-
-  const roomIds = [
-    ...new Set(followupRecords.map((r: any) => r.room_id).filter(Boolean) as string[]),
-  ];
-
-  const roomNameMap: Record<string, string> = {};
-  if (roomIds.length) {
-    const { data: rooms } = await admin
-      .from("cm_checkin_rooms")
-      .select("id, name")
-      .in("id", roomIds);
-
-    for (const room of rooms ?? []) roomNameMap[room.id] = room.name;
-  }
-
-  const recordIds = followupRecords.map((r: any) => r.id as string);
-
-  const { data: logs } = await admin
-    .from("cm_followup_log")
-    .select("id, record_id, status, follow_up_type, sent_at, parent_email")
-    .in("record_id", recordIds)
-    .order("created_at", { ascending: false });
-
-  const logMap: Record<string, any> = {};
-  for (const log of logs ?? []) {
-    if (!logMap[log.record_id]) logMap[log.record_id] = log;
-  }
-
-  const { data: touches } = await admin
-    .from("cm_child_shepherd_touches")
-    .select("*")
-    .eq("church_id", auth.churchId)
-    .in("record_id", recordIds);
-
-  const touchMap: Record<string, any> = {};
-  for (const t of touches ?? []) touchMap[t.record_id] = t;
-
-  const visitCounts: Record<string, number> = {};
-  if (phones.length) {
-    const { data: allVisits } = await admin
-      .from("cm_checkin_records")
-      .select("parent_phone, session_id")
-      .eq("church_id", auth.churchId)
-      .in("parent_phone", phones);
-
-    const visitMap = new Map<string, Set<string>>();
-
-    for (const v of allVisits ?? []) {
-      if (!visitMap.has(v.parent_phone)) visitMap.set(v.parent_phone, new Set());
-      visitMap.get(v.parent_phone)!.add(v.session_id);
-    }
-
-    for (const [phone, sSet] of visitMap) visitCounts[phone] = sSet.size;
-  }
-
-  const emailMap: Record<string, string> = {};
-  for (const [phone, fam] of Object.entries(familyMap)) {
-    if (fam.parent1_phone === phone && fam.parent1_email) emailMap[phone] = fam.parent1_email;
-    if (fam.parent2_phone === phone && fam.parent2_email) emailMap[phone] = fam.parent2_email;
-  }
-
-  const grouped: Record<string, Record<string, any[]>> = {};
-
-  for (const r of followupRecords) {
-    if (!grouped[r.session_id]) grouped[r.session_id] = {};
-    if (!grouped[r.session_id][r.parent_phone]) grouped[r.session_id][r.parent_phone] = [];
-    grouped[r.session_id][r.parent_phone].push(r);
-  }
-
-  const result = sessionIds
-    .filter((sid) => sessionMap[sid])
-    .map((sid) => {
-      const families = Object.entries(grouped[sid] ?? {}).map(([phone, recs]) => {
-        const first = (recs as any[])[0];
-        const familyLog = (recs as any[]).map((r) => logMap[r.id]).find(Boolean) ?? null;
-
-        return {
-          parentName: first.parent_name as string,
-          parentPhone: phone,
-          parentEmail: emailMap[phone] ?? null,
-          primaryRecordId: first.id as string,
-          children: (recs as any[]).map((r) => ({
-            id: r.id,
-            child_name: r.child_name,
-            room_name: r.room_id ? roomNameMap[r.room_id] ?? null : null,
-            checked_in_at: r.checked_in_at,
-            touches: touchMap[r.id] ?? null,
-          })),
-          followupLog: familyLog,
-          visitCount: visitCounts[phone] ?? 1,
-        };
-      });
-
-      return { session: sessionMap[sid], families };
-    });
-
-  return Response.json({ church, sessions: result });
+function childFullName(child: any) {
+  return `${child.first_name ?? ""} ${child.last_name ?? ""}`.trim();
 }
 
 function plainToHtml(text: string): string {
@@ -176,9 +32,231 @@ function plainToHtml(text: string): string {
     .join("");
 }
 
+export async function GET(request: NextRequest) {
+  const auth = await getAuthContext(request);
+  const churchId = resolveChurchId(request, auth);
+
+  if (!churchId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const admin = adminClient();
+
+  const { data: church } = await admin
+    .from("churches")
+    .select("id, name")
+    .eq("id", churchId)
+    .maybeSingle();
+
+  const { data: families, error: familiesError } = await admin
+    .from("cm_visitor_families")
+    .select(
+      "id, church_id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, parent2_phone, parent2_email, status, follow_up_sent, next_day_sent, visit_date, created_at",
+    )
+    .eq("church_id", churchId)
+    .order("visit_date", { ascending: false });
+
+  if (familiesError) {
+    return Response.json({ error: familiesError.message }, { status: 400 });
+  }
+
+  if (!families?.length) {
+    return Response.json({ church, sessions: [] });
+  }
+
+  const familyIds = families.map((f: any) => f.id);
+
+  const { data: children, error: childrenError } = await admin
+    .from("cm_visitor_children")
+    .select("id, church_id, family_id, first_name, last_name, pipeline_stage, created_at")
+    .eq("church_id", churchId)
+    .in("family_id", familyIds)
+    .order("last_name", { ascending: true });
+
+  if (childrenError) {
+    return Response.json({ error: childrenError.message }, { status: 400 });
+  }
+
+  const phones = [
+    ...new Set(
+      families
+        .flatMap((f: any) => [f.parent1_phone, f.parent2_phone])
+        .map(normalizePhone)
+        .filter(Boolean),
+    ),
+  ];
+
+  const { data: records } = phones.length
+    ? await admin
+        .from("cm_checkin_records")
+        .select("*")
+        .eq("church_id", churchId)
+        .in("parent_phone", phones)
+        .order("checked_in_at", { ascending: false })
+        .limit(1000)
+    : { data: [] };
+
+  const recordIds = (records ?? []).map((r: any) => r.id as string);
+
+  const sessionIds = [
+    ...new Set((records ?? []).map((r: any) => r.session_id as string).filter(Boolean)),
+  ];
+
+  const { data: checkinSessions } = sessionIds.length
+    ? await admin
+        .from("cm_checkin_sessions")
+        .select("id, service_name, date, auto_followup")
+        .in("id", sessionIds)
+    : { data: [] };
+
+  const sessionMap: Record<string, any> = {};
+  for (const s of checkinSessions ?? []) sessionMap[s.id] = s;
+
+  const roomIds = [
+    ...new Set((records ?? []).map((r: any) => r.room_id).filter(Boolean) as string[]),
+  ];
+
+  const roomNameMap: Record<string, string> = {};
+  if (roomIds.length) {
+    const { data: rooms } = await admin
+      .from("cm_checkin_rooms")
+      .select("id, name")
+      .in("id", roomIds);
+
+    for (const room of rooms ?? []) roomNameMap[room.id] = room.name;
+  }
+
+  const { data: logs } = recordIds.length
+    ? await admin
+        .from("cm_followup_log")
+        .select("id, record_id, status, follow_up_type, sent_at, parent_email, created_at")
+        .in("record_id", recordIds)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+
+  const logMap: Record<string, any> = {};
+  for (const log of logs ?? []) {
+    if (!logMap[log.record_id]) logMap[log.record_id] = log;
+  }
+
+  const { data: touches } = recordIds.length
+    ? await admin
+        .from("cm_child_shepherd_touches")
+        .select("*")
+        .eq("church_id", churchId)
+        .in("record_id", recordIds)
+    : { data: [] };
+
+  const touchMap: Record<string, any> = {};
+  for (const t of touches ?? []) touchMap[t.record_id] = t;
+
+  const recordsByPhoneAndChild = new Map<string, any>();
+
+  for (const r of records ?? []) {
+    const phone = normalizePhone(r.parent_phone);
+    const name = String(r.child_name ?? "").trim().toLowerCase();
+    const key = `${phone}|${name}`;
+
+    if (!recordsByPhoneAndChild.has(key)) {
+      recordsByPhoneAndChild.set(key, r);
+    }
+  }
+
+  const visitCounts: Record<string, number> = {};
+  const visitMap = new Map<string, Set<string>>();
+
+  for (const r of records ?? []) {
+    const phone = normalizePhone(r.parent_phone);
+    if (!phone) continue;
+    if (!visitMap.has(phone)) visitMap.set(phone, new Set());
+    visitMap.get(phone)!.add(r.session_id);
+  }
+
+  for (const [phone, sessions] of visitMap) {
+    visitCounts[phone] = sessions.size;
+  }
+
+  const childrenByFamily = new Map<string, any[]>();
+
+  for (const child of children ?? []) {
+    if (!childrenByFamily.has(child.family_id)) childrenByFamily.set(child.family_id, []);
+    childrenByFamily.get(child.family_id)!.push(child);
+  }
+
+  const grouped: Record<string, any> = {};
+
+  for (const family of families) {
+    const phone = normalizePhone(family.parent1_phone);
+    const familyChildren = childrenByFamily.get(family.id) ?? [];
+
+    if (!familyChildren.length) continue;
+
+    const parentName = `${family.parent1_first_name ?? ""} ${family.parent1_last_name ?? ""}`.trim();
+    const parentEmail = family.parent1_email ?? family.parent2_email ?? null;
+
+    const childRows = familyChildren.map((child: any) => {
+      const fullName = childFullName(child);
+      const key = `${phone}|${fullName.toLowerCase()}`;
+      const checkinRecord = recordsByPhoneAndChild.get(key) ?? null;
+
+      return {
+        id: checkinRecord?.id ?? child.id,
+        child_name: fullName,
+        room_name: checkinRecord?.room_id ? roomNameMap[checkinRecord.room_id] ?? null : null,
+        checked_in_at: checkinRecord?.checked_in_at ?? child.created_at,
+        touches: checkinRecord?.id ? touchMap[checkinRecord.id] ?? null : null,
+        _session_id: checkinRecord?.session_id ?? null,
+        _record_id: checkinRecord?.id ?? null,
+      };
+    });
+
+    const latestRecord = childRows.find((c: any) => c._session_id);
+    const sessionId = latestRecord?._session_id ?? `family-${family.id}`;
+    const visitDate = family.visit_date ?? family.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
+
+    if (!grouped[sessionId]) {
+      grouped[sessionId] = {
+        session:
+          sessionMap[sessionId] ?? {
+            id: sessionId,
+            service_name: "Family Follow Up",
+            date: visitDate,
+            auto_followup: true,
+          },
+        families: [],
+      };
+    }
+
+    const realRecordIds = childRows.map((c: any) => c._record_id).filter(Boolean);
+    const familyLog = realRecordIds.map((rid: string) => logMap[rid]).find(Boolean) ?? null;
+
+    grouped[sessionId].families.push({
+      parentName,
+      parentPhone: phone,
+      parentEmail,
+      primaryRecordId: realRecordIds[0] ?? family.id,
+      children: childRows.map(({ _session_id, _record_id, ...c }: any) => c),
+      followupLog: familyLog,
+      visitCount: visitCounts[phone] ?? 1,
+    });
+  }
+
+  const sessions = Object.values(grouped).sort((a: any, b: any) => {
+    const da = new Date(a.session.date ?? "1970-01-01").getTime();
+    const db = new Date(b.session.date ?? "1970-01-01").getTime();
+    return db - da;
+  });
+
+  return Response.json({ church, sessions });
+}
+
 export async function POST(request: NextRequest) {
   const auth = await getAuthContext(request);
-  if (!auth) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const churchId = resolveChurchId(request, auth);
+
+  if (!churchId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const {
     sessionId,
@@ -212,7 +290,7 @@ export async function POST(request: NextRequest) {
     const { data: church } = await admin
       .from("churches")
       .select("name")
-      .eq("id", auth.churchId)
+      .eq("id", churchId)
       .maybeSingle();
 
     const churchName = church?.name ?? "Our Church";
@@ -246,7 +324,7 @@ export async function POST(request: NextRequest) {
 
   for (const rid of recordIds) {
     await admin.from("cm_followup_log").insert({
-      church_id: auth.churchId,
+      church_id: churchId,
       session_id: sessionId,
       record_id: rid,
       parent_email: parentEmail ?? null,
