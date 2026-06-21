@@ -67,15 +67,8 @@ const ACTION_CARDS = [
   },
   {
     emoji: "🎂",
-    title: "Birthdays This Week",
-    desc: "Celebrate children and families.",
-    action: "View",
-    href: "/dashboard/children-ministry/birthdays",
-  },
-  {
-    emoji: "✝️",
-    title: "Upcoming Spiritual Birthdays",
-    desc: "Celebrate faith milestones.",
+    title: "Upcoming Birthdays",
+    desc: "Children's birthdays and spiritual birthdays",
     action: "View",
     href: "/dashboard/children-ministry/birthdays",
   },
@@ -180,11 +173,10 @@ export default function ChildrenMinistryPage() {
       <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px" }}>
 
         {/* Stat row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" style={{ marginBottom: "36px" }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" style={{ marginBottom: "36px" }}>
           {[
             { label: "Total Children",       value: children.length,          emoji: "🧒", color: "#7B2CBF" },
-            { label: "Birthdays This Week",   value: birthdaysThisWeek.length, emoji: "🎂", color: "#D4AF37" },
-            { label: "Spiritual Birthdays",   value: upcomingSpiritual.length, emoji: "✝️", color: "#9D4EDD" },
+            { label: "Upcoming Birthdays",     value: birthdaysThisWeek.length + upcomingSpiritual.length, emoji: "🎂", color: "#D4AF37" },
             { label: "Recent Sessions",       value: recentSessions.length,    emoji: "📋", color: "#6366f1" },
           ].map(stat => (
             <div
