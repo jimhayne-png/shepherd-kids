@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  console.log("Faith Journey GET churchId:", churchId);
+
   const admin = adminClient();
 
   const { data: children, error } = await admin
@@ -41,6 +43,9 @@ export async function GET(request: NextRequest) {
     .eq("church_id", churchId)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
+
+  console.log("Faith Journey error:", error);
+  console.log("Faith Journey raw results:", JSON.stringify(children));
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
 

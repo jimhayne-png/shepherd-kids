@@ -187,6 +187,7 @@ export default function FaithJourneyPage() {
     }
 
     const data = await res.json();
+    console.log("Faith Journey API response:", JSON.stringify(data));
     setMembers(data.members ?? []);
     setTotal(data.total ?? 0);
   }
