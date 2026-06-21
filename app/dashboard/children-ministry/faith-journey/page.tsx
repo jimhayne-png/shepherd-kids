@@ -388,10 +388,14 @@ export default function FaithJourneyPage() {
       ? activeStages.find((s) => {
           const activeName = normalizeStage(s.name);
           const activeKey = normalizeStage(s.stage_key);
-
+          const rawName = s.name.toLowerCase().trim();
+          const rawKey = s.stage_key.toLowerCase().trim();
+          const rawMember = (member.pipeline_stage ?? "").toLowerCase().trim();
           return (
             activeName === memberStage ||
             activeKey === memberStage ||
+            rawName === rawMember ||
+            rawKey === rawMember ||
             (activeName === "discipleship" && memberStage === "discipleship step")
           );
         })
