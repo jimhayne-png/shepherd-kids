@@ -14,6 +14,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined
 type Room = { id: string; name: string; min_age: number | null; max_age: number | null; capacity: number | null; is_active: boolean; classroom_qr_token: string };
 type Template = { id: string; name: string; typical_day: string | null; typical_time: string | null; is_active: boolean };
 type Session = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string; kiosk_pin: string };
+type Token = { id: string; token: string; label: string; is_active: boolean };
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -51,11 +52,15 @@ export default function CheckinSetupPage() {
     return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
   }
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation" | "label-printing" | "general">("rooms");
+  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation" | "label-printing" | "general" | "locations">("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [qrDataUrls, setQrDataUrls] = useState<Record<string, string>>({});
+  const [newTokenLabel, setNewTokenLabel] = useState("");
+  const [showAddToken, setShowAddToken] = useState(false);
 
   // Room form
   const [showAddRoom, setShowAddRoom] = useState(false);
@@ -237,14 +242,16 @@ export default function CheckinSetupPage() {
   }
 
   async function load() {
-    const [rRes, tRes, sRes] = await Promise.all([
+    const [rRes, tRes, sRes, tokRes] = await Promise.all([
       fetch("/api/checkin/rooms", { credentials: "include", headers: ch() }),
       fetch("/api/checkin/templates", { credentials: "include", headers: ch() }),
       fetch("/api/checkin/sessions", { credentials: "include", headers: ch() }),
+      fetch("/api/children-ministry/visitor-tokens", { credentials: "include", headers: ch() }),
     ]);
     if (rRes.ok) { const d = await rRes.json(); setRooms(d.rooms ?? []); }
     if (tRes.ok) { const d = await tRes.json(); setTemplates(d.templates ?? []); }
     if (sRes.ok) { const d = await sRes.json(); setSessions(d.sessions ?? []); if (!selectedChurchIdRef.current && d.sessions?.length > 0) { selectedChurchIdRef.current = d.sessions[0].church_id; } }
+    if (tokRes.ok) { const d = await tokRes.json(); setTokens(d.tokens ?? []); }
   }
 
   useEffect(() => {
@@ -368,6 +375,26 @@ export default function CheckinSetupPage() {
     setTimeout(() => setCopiedUrl(null), 2000);
   }
 
+  async function generateQr(tok: Token) {
+    if (qrDataUrls[tok.id]) return;
+    const url = `${APP_URL}/kids-checkin/${tok.token}`;
+    const { default: QRCode } = await import("qrcode");
+    const dataUrl = await QRCode.toDataURL(url, { width: 280, margin: 2, color: { dark: "#1A4A2E", light: "#ffffff" } });
+    setQrDataUrls(m => ({ ...m, [tok.id]: dataUrl }));
+  }
+
+  async function addToken() {
+    if (!newTokenLabel.trim()) return;
+    await fetch("/api/children-ministry/visitor-tokens", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...ch() },
+      body: JSON.stringify({ label: newTokenLabel }),
+    });
+    setNewTokenLabel(""); setShowAddToken(false);
+    await load();
+  }
+
   async function saveDailyPin() {
     if (!/^\d{4}$/.test(newPINInput)) return;
     setSavingPIN(true);
@@ -413,9 +440,9 @@ export default function CheckinSetupPage() {
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         {/* Tabs */}
         <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
-          {(["general", "rooms", "templates", "sessions", "automation", "label-printing"] as const).map(t => (
+          {(["general", "rooms", "templates", "sessions", "automation", "label-printing", "locations"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
-              {t === "general" ? "General" : t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : t === "automation" ? "Automation" : "Label Printing"}
+              {t === "general" ? "General" : t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : t === "automation" ? "Automation" : t === "label-printing" ? "Label Printing" : "Check-In Locations"}
             </button>
           ))}
         </div>
@@ -1472,6 +1499,64 @@ export default function CheckinSetupPage() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* ── CHECK-IN LOCATIONS TAB ── */}
+        {tab === "locations" && (
+          <div>
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "24px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                <div>
+                  <h2 style={{ fontWeight: 700, color: "#ffffff", fontSize: "17px", margin: 0, fontFamily: "Georgia, serif" }}>Check-In Locations</h2>
+                  <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "3px 0 0" }}>QR codes for your welcome desk, entrance, or tablets</p>
+                </div>
+                <button onClick={() => setShowAddToken(true)} style={{ padding: "7px 14px", borderRadius: "10px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer" }}>
+                  + Add Location
+                </button>
+              </div>
+
+              {tokens.length === 0 ? (
+                <p style={{ color: "#A9A9B8", fontSize: "13px" }}>No check-in locations yet. Create one to get your QR code.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {tokens.map(tok => (
+                    <div key={tok.id} style={{ border: "1px solid rgba(212,175,55,0.2)", borderRadius: "14px", padding: "16px", background: "rgba(255,255,255,0.03)" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <p style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", margin: 0 }}>{tok.label}</p>
+                          <p style={{ fontSize: "11px", color: "#A9A9B8", fontFamily: "monospace", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tok.token.slice(0, 12)}…</p>
+                        </div>
+                        <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", fontWeight: 700, flexShrink: 0, marginLeft: "8px", background: tok.is_active ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)", color: tok.is_active ? "#4ade80" : "#A9A9B8" }}>
+                          {tok.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                      {qrDataUrls[tok.id] ? (
+                        <div style={{ textAlign: "center" }}>
+                          <img src={qrDataUrls[tok.id]} alt="QR" style={{ width: 140, height: 140, margin: "0 auto 8px", borderRadius: "10px", display: "block" }} />
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <a href={qrDataUrls[tok.id]} download={`${tok.label}.png`} style={{ flex: 1, padding: "6px 0", borderRadius: "8px", fontSize: "12px", fontWeight: 700, color: "#ffffff", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}>⬇ Download</a>
+                            {APP_URL && <a href={`${APP_URL}/kids-checkin/${tok.token}`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "6px 0", borderRadius: "8px", fontSize: "12px", fontWeight: 700, border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", textAlign: "center", textDecoration: "none" }}>Open ↗</a>}
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => generateQr(tok)} style={{ width: "100%", padding: "8px 0", borderRadius: "10px", fontSize: "12px", fontWeight: 700, border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", background: "transparent", cursor: "pointer" }}>
+                          Show QR Code
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showAddToken && (
+                <div style={{ marginTop: "16px", display: "flex", gap: "8px", maxWidth: "360px" }}>
+                  <input value={newTokenLabel} onChange={e => setNewTokenLabel(e.target.value)} placeholder="e.g. Main Entrance" style={{ flex: 1, padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none" }} />
+                  <button onClick={addToken} style={{ padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer" }}>Add</button>
+                  <button onClick={() => setShowAddToken(false)} style={{ padding: "8px 12px", borderRadius: "8px", fontSize: "12px", border: "1px solid rgba(255,255,255,0.15)", color: "#A9A9B8", background: "transparent", cursor: "pointer" }}>Cancel</button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

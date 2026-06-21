@@ -8,7 +8,6 @@ import AppShell from "@/components/layout/AppShell";
 const supabase = createClient();
 
 const CM_ACCENT = "#7B2CBF";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
 
 type Family = {
@@ -21,8 +20,6 @@ type Family = {
   notes: string | null; status: string;
   children: any[];
 };
-
-type Token = { id: string; token: string; label: string; is_active: boolean };
 
 const STATUS_COLORS: Record<string, string> = {
   new: "#3b82f6", contacted: "#f59e0b", returning: "#8b5cf6", converted: "#22c55e",
@@ -47,10 +44,6 @@ export default function VisitorsPage() {
   const [stats, setStats] = useState({ today: 0, this_week: 0, this_month: 0, converted: 0 });
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [tokens, setTokens] = useState<Token[]>([]);
-  const [qrDataUrls, setQrDataUrls] = useState<Record<string, string>>({});
-  const [newTokenLabel, setNewTokenLabel] = useState("");
-  const [showAddToken, setShowAddToken] = useState(false);
   const [converting, setConverting] = useState<string | null>(null);
   const [convertMsg, setConvertMsg] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -61,12 +54,8 @@ export default function VisitorsPage() {
   }
 
   async function load() {
-    const [famRes, tokRes] = await Promise.all([
-      fetch("/api/children-ministry/visitors", { credentials: "include", headers: ch() }),
-      fetch("/api/children-ministry/visitor-tokens", { credentials: "include", headers: ch() }),
-    ]);
+    const famRes = await fetch("/api/children-ministry/visitors", { credentials: "include", headers: ch() });
     if (famRes.ok) { const d = await famRes.json(); setFamilies(d.families ?? []); setStats(d.stats ?? stats); }
-    if (tokRes.ok) { const d = await tokRes.json(); setTokens(d.tokens ?? []); }
   }
 
   useEffect(() => {
@@ -83,26 +72,6 @@ export default function VisitorsPage() {
     }
     init();
   }, [router]);
-
-  async function generateQr(tok: Token) {
-    if (qrDataUrls[tok.id]) return;
-    const url = `${APP_URL}/kids-checkin/${tok.token}`;
-    const { default: QRCode } = await import("qrcode");
-    const dataUrl = await QRCode.toDataURL(url, { width: 280, margin: 2, color: { dark: "#1A4A2E", light: "#ffffff" } });
-    setQrDataUrls(m => ({ ...m, [tok.id]: dataUrl }));
-  }
-
-  async function addToken() {
-    if (!newTokenLabel.trim()) return;
-    await fetch("/api/children-ministry/visitor-tokens", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json", ...ch() },
-      body: JSON.stringify({ label: newTokenLabel }),
-    });
-    setNewTokenLabel(""); setShowAddToken(false);
-    await load();
-  }
 
   async function updateStatus(familyId: string, status: string) {
     await fetch(`/api/children-ministry/visitors/${familyId}`, {
@@ -284,59 +253,6 @@ export default function VisitorsPage() {
           </div>
         )}
 
-        {/* QR Token Management */}
-        <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-            <div>
-              <h2 style={{ fontWeight: 700, color: "#ffffff", fontSize: "17px", margin: 0, fontFamily: "Georgia, serif" }}>Check-In Points</h2>
-              <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "3px 0 0" }}>QR codes for your welcome desk, entrance, or tablets</p>
-            </div>
-            <button onClick={() => setShowAddToken(true)} style={{ padding: "7px 14px", borderRadius: "10px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer" }}>
-              + Add Point
-            </button>
-          </div>
-
-          {tokens.length === 0 ? (
-            <p style={{ color: "#A9A9B8", fontSize: "13px" }}>No check-in points yet. Create one to get your QR code.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tokens.map(tok => (
-                <div key={tok.id} style={{ border: "1px solid rgba(212,175,55,0.2)", borderRadius: "14px", padding: "16px", background: "rgba(255,255,255,0.03)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff", margin: 0 }}>{tok.label}</p>
-                      <p style={{ fontSize: "11px", color: "#A9A9B8", fontFamily: "monospace", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tok.token.slice(0, 12)}…</p>
-                    </div>
-                    <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "20px", fontWeight: 700, flexShrink: 0, marginLeft: "8px", background: tok.is_active ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.08)", color: tok.is_active ? "#4ade80" : "#A9A9B8" }}>
-                      {tok.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  {qrDataUrls[tok.id] ? (
-                    <div style={{ textAlign: "center" }}>
-                      <img src={qrDataUrls[tok.id]} alt="QR" style={{ width: 140, height: 140, margin: "0 auto 8px", borderRadius: "10px", display: "block" }} />
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <a href={qrDataUrls[tok.id]} download={`${tok.label}.png`} style={{ flex: 1, padding: "6px 0", borderRadius: "8px", fontSize: "12px", fontWeight: 700, color: "#ffffff", textAlign: "center", textDecoration: "none", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)" }}>⬇ Download</a>
-                        {APP_URL && <a href={`${APP_URL}/kids-checkin/${tok.token}`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "6px 0", borderRadius: "8px", fontSize: "12px", fontWeight: 700, border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", textAlign: "center", textDecoration: "none" }}>Open ↗</a>}
-                      </div>
-                    </div>
-                  ) : (
-                    <button onClick={() => generateQr(tok)} style={{ width: "100%", padding: "8px 0", borderRadius: "10px", fontSize: "12px", fontWeight: 700, border: "1px solid rgba(212,175,55,0.3)", color: "#D4AF37", background: "transparent", cursor: "pointer" }}>
-                      Show QR Code
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {showAddToken && (
-            <div style={{ marginTop: "16px", display: "flex", gap: "8px", maxWidth: "360px" }}>
-              <input value={newTokenLabel} onChange={e => setNewTokenLabel(e.target.value)} placeholder="e.g. Main Entrance QR" style={{ flex: 1, padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none" }} />
-              <button onClick={addToken} style={{ padding: "8px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", border: "none", cursor: "pointer" }}>Add</button>
-              <button onClick={() => setShowAddToken(false)} style={{ padding: "8px 12px", borderRadius: "8px", fontSize: "12px", border: "1px solid rgba(255,255,255,0.15)", color: "#A9A9B8", background: "transparent", cursor: "pointer" }}>Cancel</button>
-            </div>
-          )}
-        </div>
       </div>
     </AppShell>
   );
