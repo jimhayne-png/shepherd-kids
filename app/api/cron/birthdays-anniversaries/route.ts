@@ -3,7 +3,6 @@ import { type NextRequest } from 'next/server';
 import { Resend } from 'resend';
 
 const BIRTHDAY_MILESTONES           = new Set([1, 5, 10, 16, 18, 21, 25, 30, 40, 50, 60, 70, 75, 80, 85, 90]);
-const ANNIVERSARY_MILESTONES        = new Set([1, 5, 10, 15, 20, 25, 30, 40, 50]);
 const SPIRITUAL_BIRTHDAY_MILESTONES = new Set([1, 5, 10, 15, 20, 25, 30, 40, 50]);
 
 function adminClient() {
@@ -31,7 +30,6 @@ async function getChurchId(userId: string) {
 
 function getMilestoneYears(eventType: string, years: number): number | null {
   if (eventType === 'birthday') return BIRTHDAY_MILESTONES.has(years) ? years : null;
-  if (eventType === 'anniversary') return ANNIVERSARY_MILESTONES.has(years) ? years : null;
   return SPIRITUAL_BIRTHDAY_MILESTONES.has(years) ? years : null;
 }
 
@@ -54,7 +52,7 @@ type EventEntry = {
   memberId: string;
   firstName: string;
   lastName: string;
-  eventType: 'birthday' | 'anniversary' | 'spiritual_birthday';
+  eventType: 'birthday' | 'spiritual_birthday';
   years: number | null;
   isMilestone: boolean;
   milestoneYears: number | null;
@@ -77,12 +75,11 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
   if (!members?.length) return 0;
 
   // Find today's birthday/anniversary/spiritual_birthday members
-  const todayEvents: { memberId: string; firstName: string; lastName: string; eventType: 'birthday' | 'anniversary' | 'spiritual_birthday'; originalDate: string }[] = [];
+  const todayEvents: { memberId: string; firstName: string; lastName: string; eventType: 'birthday' | 'spiritual_birthday'; originalDate: string }[] = [];
 
   for (const m of members) {
-    const checks: Array<{ date: string | null; type: 'birthday' | 'anniversary' | 'spiritual_birthday' }> = [
-      { date: m.birthdate,         type: 'birthday' },
-      { date: m.anniversary,       type: 'anniversary' },
+    const checks: Array<{ date: string | null; type: 'birthday' | 'spiritual_birthday' }> = [
+      { date: m.birthdate,          type: 'birthday' },
       { date: m.spiritual_birthday, type: 'spiritual_birthday' },
     ];
     for (const { date, type } of checks) {
@@ -159,8 +156,7 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
 
   if (adminEmails.length > 0) {
     const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const birthdays         = newEntries.filter(e => e.eventType === 'birthday');
-    const anniversaries     = newEntries.filter(e => e.eventType === 'anniversary');
+    const birthdays          = newEntries.filter(e => e.eventType === 'birthday');
     const spiritualBirthdays = newEntries.filter(e => e.eventType === 'spiritual_birthday');
 
     const renderRow = (e: EventEntry) => {
@@ -180,18 +176,13 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
       <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1f2937;">
         <div style="background:#1A4A2E;padding:28px 32px;border-radius:12px 12px 0 0;">
           <h1 style="color:white;margin:0;font-size:22px;font-weight:normal;">${churchName}</h1>
-          <p style="color:#86efac;margin:6px 0 0;font-size:14px;">Birthday & Anniversary Digest — ${dateStr}</p>
+          <p style="color:#86efac;margin:6px 0 0;font-size:14px;">Birthday & Spiritual Birthday Digest — ${dateStr}</p>
         </div>
         <div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
           ${birthdays.length > 0 ? `
             <h2 style="color:#1A4A2E;font-size:18px;margin:0 0 12px;">🎂 Birthdays Today</h2>
             <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
               ${birthdays.map(renderRow).join('')}
-            </table>` : ''}
-          ${anniversaries.length > 0 ? `
-            <h2 style="color:#1A4A2E;font-size:18px;margin:0 0 12px;">💍 Anniversaries Today</h2>
-            <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
-              ${anniversaries.map(renderRow).join('')}
             </table>` : ''}
           ${spiritualBirthdays.length > 0 ? `
             <h2 style="color:#1A4A2E;font-size:18px;margin:0 0 12px;">✝️ Spiritual Birthdays Today</h2>
@@ -208,7 +199,7 @@ async function processChurch(churchId: string, today: Date, resend: Resend, base
       await resend.emails.send({
         from: 'ShepherdKids <onboarding@resend.dev>',
         to: adminEmails,
-        subject: `${churchName} — ${newEntries.length} Birthday${newEntries.length !== 1 ? '/Anniversary' : ''} Today`,
+        subject: `${churchName} — ${newEntries.length} Birthday${newEntries.length !== 1 ? '/Spiritual Birthday' : ''} Today`,
         html,
       });
     } catch (_) {
