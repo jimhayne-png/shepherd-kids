@@ -17,9 +17,6 @@ export async function PATCH(
 ) {
   const { childId } = await params;
 
-  const ctx = await getAuthContext(request);
-  if (!ctx) return Response.json({ error: "Unauthorized" }, { status: 401 });
-
   const body = await request.json();
   const pipelineStage = String(body.pipeline_stage ?? "").trim();
 
@@ -31,11 +28,28 @@ export async function PATCH(
     return Response.json({ error: `Invalid stage: ${pipelineStage}` }, { status: 400 });
   }
 
+  const ctx = await getAuthContext(request);
+
+  const selectedChurchId =
+    ctx?.churchId ??
+    request.headers.get("x-selected-church-id") ??
+    request.headers.get("X-Selected-Church-Id");
+
+  if (!selectedChurchId) {
+    return Response.json(
+      {
+        error: "Unauthorized",
+        detail: "Missing auth context or x-selected-church-id header.",
+      },
+      { status: 401 }
+    );
+  }
+
   const { data, error } = await adminClient()
     .from("cm_visitor_children")
     .update({ pipeline_stage: pipelineStage })
     .eq("id", childId)
-    .eq("church_id", ctx.churchId)
+    .eq("church_id", selectedChurchId)
     .select("id, first_name, last_name, pipeline_stage")
     .maybeSingle();
 

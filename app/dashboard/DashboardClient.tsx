@@ -4,34 +4,23 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_NAV_ITEMS } from "@/lib/ministry-config";
 
 const supabase = createClient();
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Church Family", href: "#", isSection: true },
-  { label: "👥 Members", href: "/dashboard/members" },
-  { label: "🏛️ Departments", href: "/dashboard/departments" },
-  { label: "🆕 Visitors", href: "/dashboard/visitors" },
-  { label: "Engagement", href: "#", isSection: true },
-  { label: "📅 Calendar", href: "/dashboard/calendar" },
-  { label: "✅ Attendance", href: "/dashboard/attendance" },
-  { label: "📋 Bulletin", href: "/dashboard/bulletin" },
-  { label: "📢 Communication Hub", href: "/dashboard/communication" },
-  { label: "Pastoral Care", href: "#", isSection: true },
-  { label: "🙏 Annual Pastor Touch", href: "/dashboard/pastor-touch" },
-  { label: "🏥 Visitation", href: "/dashboard/visitation" },
+  { label: "ShepherdKids", href: "#", isSection: true },
+  { label: "💛 Ministry Care", href: "/dashboard/children-ministry" },
+  { label: "✅ Live Check-In", href: "/dashboard/children-ministry/checkin" },
+  { label: "🏷️ Label Printing", href: "/dashboard/children-ministry/labels" },
+  { label: "📊 Attendance Report", href: "/dashboard/children-ministry/attendance" },
+  { label: "🧒 Children", href: "/dashboard/children-ministry/children" },
+  { label: "👪 Parents", href: "/dashboard/children-ministry/parents" },
+  { label: "📧 Parent Communication", href: "/dashboard/children-ministry/parent-update" },
+  { label: "✝️ Faith Journey", href: "/dashboard/children-ministry/faith-journey" },
   { label: "🎉 Celebrations", href: "/dashboard/birthdays" },
-  { label: "🔄 Shepherd Pipeline", href: "/dashboard/shepherd" },
-  { label: "🙋 Prayer", href: "/dashboard/prayer" },
-  { label: "Ministry", href: "#", isSection: true },
-  ...MINISTRY_NAV_ITEMS,
-  { label: "Outreach", href: "#", isSection: true },
-  { label: "✝️ Evangelism", href: "/dashboard/evangelism" },
-  { label: "📧 Visitor Onboarding", href: "/dashboard/visitors/sequences" },
-  { label: "Marketing", href: "#", isSection: true },
-  { label: "⭐ Review Campaign", href: "/dashboard/reviews" },
+  { label: "🎓 Certificates", href: "/dashboard/children-ministry/certificates/new" },
+  { label: "⚙️ Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
   { label: "Settings", href: "#", isSection: true },
   { label: "⚙️ Settings", href: "/dashboard/settings" },
   { label: "💳 Billing", href: "/dashboard/billing" },
@@ -90,15 +79,15 @@ const CARE_CARDS = [
 ];
 
 const MODULE_CARDS = [
-  { label: "Ministry Care",         href: "/dashboard/children-ministry",                desc: "Families needing encouragement",          emoji: "👨‍👩‍👧", gradient: "linear-gradient(135deg, #7B2CBF, #5b21b6)" },
-  { label: "Check-In Settings",     href: "/dashboard/children-ministry/checkin-setup",  desc: "Rooms, sessions & live dashboard",        emoji: "✅",   gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
-  { label: "Follow Up",             href: "/dashboard/children-ministry/followup",       desc: "First visit letters & shepherd touches",  emoji: "📞",   gradient: "linear-gradient(135deg, #10b981, #047857)" },
-  { label: "ShepherdKids",          href: "/dashboard/children-ministry/children",       desc: "Child directory & profiles",              emoji: "🧒",   gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
-  { label: "Shepherd Families",     href: "/dashboard/children-ministry/parents",        desc: "Households, parents & pickups",           emoji: "👪",   gradient: "linear-gradient(135deg, #16a34a, #15803d)" },
-  { label: "Parent Communication",  href: "/dashboard/children-ministry/parent-update",  desc: "Email updates & family messages",         emoji: "📧",   gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
-  { label: "Faith Journey",         href: "/dashboard/children-ministry/faith-journey",  desc: "Spiritual milestones",                    emoji: "✝️",  gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
-  { label: "Celebrations",          href: "/dashboard/birthdays",                        desc: "Birthdays, spiritual birthdays & certificates", emoji: "🎉", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
-  { label: "Certificates",          href: "/dashboard/children-ministry/certificates/new", desc: "Print & send faith certificates",       emoji: "🎓",   gradient: "linear-gradient(135deg, #a855f7, #6d28d9)" },
+  { label: "Ministry Care", href: "/dashboard/children-ministry", desc: "Families needing encouragement", emoji: "👨‍👩‍👧", gradient: "linear-gradient(135deg, #7B2CBF, #5b21b6)" },
+  { label: "Check-In Settings", href: "/dashboard/children-ministry/checkin-setup", desc: "Rooms, sessions & live dashboard", emoji: "✅", gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
+  { label: "Follow Up", href: "/dashboard/children-ministry/followup", desc: "First visit letters & shepherd touches", emoji: "📞", gradient: "linear-gradient(135deg, #10b981, #047857)" },
+  { label: "ShepherdKids", href: "/dashboard/children-ministry/children", desc: "Child directory & profiles", emoji: "🧒", gradient: "linear-gradient(135deg, #6366f1, #4338ca)" },
+  { label: "Shepherd Families", href: "/dashboard/children-ministry/parents", desc: "Households, parents & pickups", emoji: "👪", gradient: "linear-gradient(135deg, #16a34a, #15803d)" },
+  { label: "Parent Communication", href: "/dashboard/children-ministry/parent-update", desc: "Email updates & family messages", emoji: "📧", gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
+  { label: "Faith Journey", href: "/dashboard/children-ministry/faith-journey", desc: "Spiritual milestones", emoji: "✝️", gradient: "linear-gradient(135deg, #a855f7, #7c3aed)" },
+  { label: "Celebrations", href: "/dashboard/birthdays", desc: "Birthdays, spiritual birthdays & certificates", emoji: "🎉", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
+  { label: "Certificates", href: "/dashboard/children-ministry/certificates/new", desc: "Print & send faith certificates", emoji: "🎓", gradient: "linear-gradient(135deg, #a855f7, #6d28d9)" },
 ];
 
 function getGreeting() {
@@ -150,7 +139,9 @@ export default function DashboardClient({
     if (isPlatformAdmin || !churchId) return;
     fetch("/api/trial-status", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : { expired: false }))
-      .then((d) => { if (d.expired) setTrialExpired(true); })
+      .then((d) => {
+        if (d.expired) setTrialExpired(true);
+      })
       .catch(() => {});
   }, [isPlatformAdmin, churchId]);
 
@@ -158,16 +149,15 @@ export default function DashboardClient({
     if (!churchId) return;
 
     async function fetchStats() {
-      const [membersRes, eventsRes, prayersRes] = await Promise.all([
+      const [familiesRes, childrenRes, prayersRes] = await Promise.all([
         supabase
-          .from("members")
+          .from("cm_visitor_families")
           .select("id", { count: "exact", head: true })
           .eq("church_id", churchId),
         supabase
-          .from("events")
+          .from("cm_visitor_children")
           .select("id", { count: "exact", head: true })
-          .eq("church_id", churchId)
-          .gt("starts_at", new Date().toISOString()),
+          .eq("church_id", churchId),
         supabase
           .from("prayer_requests")
           .select("id", { count: "exact", head: true })
@@ -176,8 +166,8 @@ export default function DashboardClient({
       ]);
 
       setStats({
-        members: membersRes.count ?? 0,
-        events: eventsRes.count ?? 0,
+        members: familiesRes.count ?? 0,
+        events: childrenRes.count ?? 0,
         prayers: prayersRes.count ?? 0,
       });
     }
@@ -190,7 +180,6 @@ export default function DashboardClient({
     router.push(`/dashboard?churchId=${church.id}`);
   }
 
-  // Platform admin all-churches view
   if (isPlatformAdmin && !churchId) {
     return (
       <AppShell navItems={navItems}>
@@ -270,7 +259,8 @@ export default function DashboardClient({
               localStorage.removeItem("selected_church_id");
               router.push("/dashboard");
             }}
-            className="text-sm mb-2 block transition-colors" style={{ color: "#D4AF37" }}
+            className="text-sm mb-2 block transition-colors"
+            style={{ color: "#D4AF37" }}
           >
             ← All Churches
           </button>
@@ -287,9 +277,9 @@ export default function DashboardClient({
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 -mt-6">
           {[
-            { label: "Active Families",   value: stats.members, emoji: "👨‍👩‍👧‍👦", color: "#7B2CBF" },
-            { label: "Total Children",    value: stats.events,  emoji: "🧒",        color: "#9D4EDD" },
-            { label: "Family Care Needs", value: stats.prayers, emoji: "💛",        color: "#D4AF37" },
+            { label: "Active Families", value: stats.members, emoji: "👨‍👩‍👧‍👦", color: "#7B2CBF" },
+            { label: "Total Children", value: stats.events, emoji: "🧒", color: "#9D4EDD" },
+            { label: "Family Care Needs", value: stats.prayers, emoji: "💛", color: "#D4AF37" },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -312,7 +302,6 @@ export default function DashboardClient({
           ))}
         </div>
 
-        {/* Ministry Care Today */}
         <div className="mb-10">
           <div className="mb-5">
             <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>
@@ -336,7 +325,6 @@ export default function DashboardClient({
                   gap: "14px",
                 }}
               >
-                {/* Title row with count */}
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px" }}>
@@ -359,7 +347,6 @@ export default function DashboardClient({
                   </div>
                 </div>
 
-                {/* Action button */}
                 <a
                   href={card.href}
                   style={{
