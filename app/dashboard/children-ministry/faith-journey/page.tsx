@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
@@ -129,6 +130,7 @@ function defaultStages(): StageData[] {
 }
 
 export default function FaithJourneyPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [members, setMembers] = useState<PipelineMember[]>([]);
@@ -199,13 +201,15 @@ export default function FaithJourneyPage() {
         error,
       } = await supabase.auth.getUser();
 
-      if (!user || error) return;
+      console.log("getUser result:", { hasUser: !!user, error: error?.message });
+      if (!user || error) { router.replace("/"); return; }
 
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session) return;
+      console.log("getSession result:", { hasSession: !!session });
+      if (!session) { router.replace("/"); return; }
 
       const t = session.access_token;
       setToken(t);
