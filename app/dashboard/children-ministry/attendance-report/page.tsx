@@ -9,6 +9,11 @@ const supabase = createClient();
 
 const ACCENT = "#7B2CBF";
 
+const OPTION_STYLE = {
+  backgroundColor: "#120A1F",
+  color: "#ffffff",
+};
+
 type SessionOption = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string };
 type ReportChild = { id: string; room_id: string | null; child_name: string; parent_name: string; parent_phone: string; checked_in_at: string; checked_out_at: string | null; is_new_visitor: boolean; allergies: string[]; allergy_other: string | null; date_of_birth: string | null; visit_count: number };
 type ReportRoom = { room_id: string; room_name: string; children: ReportChild[] };
@@ -160,11 +165,11 @@ export default function AttendanceReportPage() {
             <select
               value={selectedId}
               onChange={e => { setSelectedId(e.target.value); loadReport(e.target.value); }}
-              style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", fontSize: "13px", color: "#ffffff", outline: "none" }}
+              style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", fontSize: "13px", color: "#ffffff", outline: "none", colorScheme: "dark" }}
             >
-              <option value="">— Choose a session —</option>
+              <option value="" style={OPTION_STYLE}>— Choose a session —</option>
               {sessions.map(s => (
-                <option key={s.id} value={s.id}>
+                <option key={s.id} value={s.id} style={OPTION_STYLE}>
                   {s.service_name} · {fmtDate(s.date)}{s.status === "open" ? " (Open)" : ""}
                 </option>
               ))}
@@ -273,10 +278,10 @@ export default function AttendanceReportPage() {
                           <select
                             value={editRoomId}
                             onChange={e => setEditRoomId(e.target.value)}
-                            style={{ flex: 1, fontSize: "12px", padding: "5px 8px", borderRadius: "7px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}
+                            style={{ flex: 1, fontSize: "12px", padding: "5px 8px", borderRadius: "7px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none", colorScheme: "dark" }}
                           >
-                            <option value="">— No Room —</option>
-                            {allRooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                            <option value="" style={OPTION_STYLE}>— No Room —</option>
+                            {allRooms.map(r => <option key={r.id} value={r.id} style={OPTION_STYLE}>{r.name}</option>)}
                           </select>
                           <button
                             onClick={() => handleSaveRoom(child.id)}
