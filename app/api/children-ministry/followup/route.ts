@@ -262,6 +262,7 @@ export async function POST(request: NextRequest) {
     sessionId,
     recordIds,
     parentName,
+    parentPhone,
     parentEmail,
     childNames,
     followUpType,
@@ -271,6 +272,7 @@ export async function POST(request: NextRequest) {
     sessionId: string;
     recordIds: string[];
     parentName: string;
+    parentPhone?: string;
     parentEmail?: string;
     childNames: string[];
     followUpType: "email" | "marked";
@@ -338,55 +340,28 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Resolve which cm_visitor_families to update
-  const familyIdsToUpdate = new Set<string>();
-
-  // Path 1: recordIds are cm_checkin_records.id — get parent phone then match families
-  const { data: cRecords } = await admin
-    .from("cm_checkin_records")
-    .select("parent_phone")
-    .in("id", recordIds)
-    .eq("church_id", churchId);
-
-  const phones = [
-    ...new Set(
-      (cRecords ?? []).map((r: any) => normalizePhone(r.parent_phone)).filter(Boolean),
-    ),
-  ];
-
-  if (phones.length) {
+  // Update cm_visitor_families using direct phone match from POST body
+  const normalizedParentPhone = normalizePhone(parentPhone);
+  if (normalizedParentPhone) {
     const { data: allFamilies } = await admin
       .from("cm_visitor_families")
       .select("id, parent1_phone, parent2_phone")
       .eq("church_id", churchId);
 
-    for (const f of allFamilies ?? []) {
-      if (
-        phones.includes(normalizePhone(f.parent1_phone)) ||
-        phones.includes(normalizePhone(f.parent2_phone))
-      ) {
-        familyIdsToUpdate.add(f.id);
-      }
+    const matchedIds = (allFamilies ?? [])
+      .filter(
+        (f: any) =>
+          normalizePhone(f.parent1_phone) === normalizedParentPhone ||
+          normalizePhone(f.parent2_phone) === normalizedParentPhone,
+      )
+      .map((f: any) => f.id);
+
+    if (matchedIds.length > 0) {
+      await admin
+        .from("cm_visitor_families")
+        .update({ status: "contacted", follow_up_sent: true, contacted_at: now })
+        .in("id", matchedIds);
     }
-  }
-
-  // Path 2: recordIds are cm_visitor_children.id — get family_id directly
-  const { data: visitorChildren } = await admin
-    .from("cm_visitor_children")
-    .select("family_id")
-    .in("id", recordIds)
-    .eq("church_id", churchId);
-
-  for (const c of visitorChildren ?? []) {
-    if (c.family_id) familyIdsToUpdate.add(c.family_id);
-  }
-
-  if (familyIdsToUpdate.size > 0) {
-    await admin
-      .from("cm_visitor_families")
-      .update({ status: "contacted", follow_up_sent: true, contacted_at: now })
-      .in("id", [...familyIdsToUpdate])
-      .eq("church_id", churchId);
   }
 
   return Response.json({ ok: true, sent: sendEmail });

@@ -212,6 +212,7 @@ export default function FollowUpPage() {
         sessionId: modalSession.id,
         recordIds: modalFamily.children.map((c) => c.id),
         parentName: modalFamily.parentName,
+        parentPhone: modalFamily.parentPhone,
         parentEmail: modalFamily.parentEmail ?? null,
         childNames: modalFamily.children.map((c) => c.child_name),
         followUpType: type,
