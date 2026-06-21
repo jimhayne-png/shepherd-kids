@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
-import { MINISTRY_CONFIG, STAGE_COLORS } from "@/lib/ministry-config";
 
 const supabase = createClient();
-const TYPE = "childrens";
 const navItems: NavItem[] = [];
+
+const STAGE_COLORS = ["#7B2CBF", "#D4AF37", "#22C55E", "#38BDF8", "#F97316"];
 
 type PipelineMember = {
   id: string;
@@ -33,14 +33,64 @@ type StageData = {
 
 type MoveModal = { member: PipelineMember } | null;
 
+const DEFAULT_STAGES: StageData[] = [
+  {
+    id: null,
+    stage_key: "Visitor",
+    name: "Visitor",
+    description: "New or recently checked-in child.",
+    color: "#7B2CBF",
+    display_order: 0,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
+    stage_key: "Engaged",
+    name: "Engaged",
+    description: "Attending and beginning to connect.",
+    color: "#D4AF37",
+    display_order: 1,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
+    stage_key: "Faith Decision",
+    name: "Faith Decision",
+    description: "Has made or discussed a faith decision.",
+    color: "#22C55E",
+    display_order: 2,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
+    stage_key: "Baptism",
+    name: "Baptism",
+    description: "Ready for or completed baptism.",
+    color: "#38BDF8",
+    display_order: 3,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
+    stage_key: "Discipleship",
+    name: "Discipleship",
+    description: "Growing in next steps with care.",
+    color: "#F97316",
+    display_order: 4,
+    is_active: true,
+    is_default: true,
+  },
+];
+
 const STAGE_ICONS: Record<string, string> = {
   Visitor: "🚪",
   visitor: "🚪",
-  Regular: "🎒",
-  regular: "🎒",
   Engaged: "💚",
   engaged: "💚",
-  "Growing in God's Word": "📖",
   "Faith Decision": "✝️",
   Baptism: "💧",
   baptism: "💧",
@@ -74,20 +124,8 @@ function normalizeStage(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
 }
 
-function defaultsFromConfig(): StageData[] {
-  const cfg = MINISTRY_CONFIG[TYPE];
-  if (!cfg) return [];
-
-  return (cfg.pipelineStages ?? cfg.stages ?? []).map((name, idx) => ({
-    id: null,
-    stage_key: name,
-    name,
-    description: cfg.stageDescriptions?.[name] ?? null,
-    color: STAGE_COLORS[Math.min(idx, STAGE_COLORS.length - 1)],
-    display_order: idx,
-    is_active: true,
-    is_default: true,
-  }));
+function defaultStages(): StageData[] {
+  return DEFAULT_STAGES.map((s) => ({ ...s }));
 }
 
 export default function FaithJourneyPage() {
@@ -95,7 +133,7 @@ export default function FaithJourneyPage() {
   const [token, setToken] = useState<string | null>(null);
   const [members, setMembers] = useState<PipelineMember[]>([]);
   const [total, setTotal] = useState(0);
-  const [stages, setStages] = useState<StageData[]>(() => defaultsFromConfig());
+  const [stages, setStages] = useState<StageData[]>(() => defaultStages());
   const [moveModal, setMoveModal] = useState<MoveModal>(null);
   const [selectedStage, setSelectedStage] = useState("");
   const [moveNote, setMoveNote] = useState("");
@@ -110,7 +148,7 @@ export default function FaithJourneyPage() {
 
   async function loadStages(t: string) {
     try {
-      const res = await fetch(`/api/ministry/${TYPE}/pipeline/stages`, {
+      const res = await fetch("/api/children-ministry/faith-journey/stages", {
         headers: {
           Authorization: `Bearer ${t}`,
           ...selectedChurchHeaders(),
@@ -130,11 +168,11 @@ export default function FaithJourneyPage() {
       // fall through
     }
 
-    setStages(defaultsFromConfig());
+    setStages(defaultStages());
   }
 
   async function loadMembers(t: string) {
-    const res = await fetch(`/api/ministry/${TYPE}/pipeline`, {
+    const res = await fetch("/api/children-ministry/faith-journey", {
       headers: {
         Authorization: `Bearer ${t}`,
         ...selectedChurchHeaders(),
@@ -192,7 +230,7 @@ export default function FaithJourneyPage() {
     setMoving(true);
     setMoveError("");
 
-    const res = await fetch(`/api/ministry/${TYPE}/pipeline/${moveModal.member.id}`, {
+    const res = await fetch(`/api/children-ministry/faith-journey/${moveModal.member.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -229,7 +267,7 @@ export default function FaithJourneyPage() {
   }
 
   function openCustomize() {
-    const allDefaults = defaultsFromConfig();
+    const allDefaults = defaultStages();
     const current = [...stages];
 
     for (const def of allDefaults) {
@@ -244,7 +282,7 @@ export default function FaithJourneyPage() {
   }
 
   function restoreDefaults() {
-    setEditStages(defaultsFromConfig());
+    setEditStages(defaultStages());
   }
 
   function addStep() {
@@ -283,7 +321,7 @@ export default function FaithJourneyPage() {
     setSaveError("");
 
     try {
-      const res = await fetch(`/api/ministry/${TYPE}/pipeline/stages`, {
+      const res = await fetch("/api/children-ministry/faith-journey/stages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1187,7 +1225,7 @@ function ChildCard({
         }}
       >
         <Link
-          href={`/dashboard/members/${member.id}/edit`}
+          href={`/dashboard/children-ministry/children/${member.id}`}
           onClick={(e) => e.stopPropagation()}
           style={{ fontSize: "11px", color: "#A9A9B8", textDecoration: "none" }}
         >
