@@ -144,7 +144,7 @@ export default function VisitorsPage() {
 
         {/* Filter tabs */}
         <div style={{ display: "flex", gap: "6px", marginBottom: "20px", flexWrap: "wrap" }}>
-          {["all", "new", "contacted", "returning", "converted"].map(f => (
+          {["all", "new", "contacted", "returning"].map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{ padding: "6px 14px", borderRadius: "10px", fontSize: "12px", fontWeight: 700, textTransform: "capitalize", cursor: "pointer", border: "none", backgroundColor: filter === f ? CM_ACCENT : "rgba(255,255,255,0.07)", color: filter === f ? "#ffffff" : "#A9A9B8" }}>
               {f === "all" ? `All (${families.length})` : f}
             </button>
