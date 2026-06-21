@@ -107,7 +107,14 @@ export async function POST(request: NextRequest) {
   const duplicates: string[] = [];
 
   const inserts: object[] = [];
-  const resultMeta: { childName: string; dateOfBirth: string | null; roomId: string | null; roomName: string | null; allergies: string[]; allergyOther: string | null }[] = [];
+  const resultMeta: {
+    childName: string;
+    dateOfBirth: string | null;
+    roomId: string | null;
+    roomName: string | null;
+    allergies: string[];
+    allergyOther: string | null;
+  }[] = [];
 
   for (const child of children) {
     let childName: string;
@@ -335,42 +342,6 @@ export async function POST(request: NextRequest) {
           active: true,
         });
       console.log('[checkin] child inserted');
-    }
-  }
-
-  // Add each child to ministry_rosters (every check-in)
-  for (const r of resultMeta) {
-    const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
-
-    const { data: childRecord } = await admin
-      .from('children_ministry_children')
-      .select('id')
-      .eq('church_id', session.church_id)
-      .eq('first_name', cFirst)
-      .eq('last_name', cLast)
-      .maybeSingle();
-
-    if (childRecord) {
-      const { data: existingRoster } = await admin
-        .from('ministry_rosters')
-        .select('id')
-        .eq('church_id', session.church_id)
-        .eq('ministry_type', 'childrens')
-        .eq('member_id', childRecord.id)
-        .maybeSingle();
-
-      if (!existingRoster) {
-        await admin
-          .from('ministry_rosters')
-          .insert({
-            church_id: session.church_id,
-            ministry_type: 'childrens',
-            member_id: childRecord.id,
-            joined_date: today,
-            status: 'active',
-            pipeline_stage: 'visitor',
-          });
-      }
     }
   }
 
