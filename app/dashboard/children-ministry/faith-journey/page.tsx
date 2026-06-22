@@ -9,7 +9,7 @@ import AppShell, { type NavItem } from "@/components/layout/AppShell";
 const supabase = createClient();
 const navItems: NavItem[] = [];
 
-const STAGE_COLORS = ["#7B2CBF", "#D4AF37", "#22C55E", "#38BDF8", "#F97316"];
+const STAGE_COLORS = ["#7B2CBF", "#6366f1", "#D4AF37", "#10b981", "#22C55E", "#38BDF8", "#F97316", "#ec4899"];
 
 type PipelineMember = {
   id: string;
@@ -39,7 +39,7 @@ const DEFAULT_STAGES: StageData[] = [
     id: null,
     stage_key: "Visitor",
     name: "Visitor",
-    description: "New or recently checked-in child.",
+    description: "First-time guest",
     color: "#7B2CBF",
     display_order: 0,
     is_active: true,
@@ -47,11 +47,31 @@ const DEFAULT_STAGES: StageData[] = [
   },
   {
     id: null,
+    stage_key: "Regular",
+    name: "Regular",
+    description: "Attended 4+ times",
+    color: "#6366f1",
+    display_order: 1,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
     stage_key: "Engaged",
     name: "Engaged",
-    description: "Attending and beginning to connect.",
+    description: "Participates and builds relationships",
     color: "#D4AF37",
-    display_order: 1,
+    display_order: 2,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
+    stage_key: "Growing in Faith",
+    name: "Growing in Faith",
+    description: "Learning God's Word, prayer, and Biblical truth",
+    color: "#10b981",
+    display_order: 3,
     is_active: true,
     is_default: true,
   },
@@ -59,9 +79,9 @@ const DEFAULT_STAGES: StageData[] = [
     id: null,
     stage_key: "Faith Decision",
     name: "Faith Decision",
-    description: "Has made or discussed a faith decision.",
+    description: "Made a personal decision to follow Jesus Christ",
     color: "#22C55E",
-    display_order: 2,
+    display_order: 4,
     is_active: true,
     is_default: true,
   },
@@ -69,19 +89,29 @@ const DEFAULT_STAGES: StageData[] = [
     id: null,
     stage_key: "Baptism",
     name: "Baptism",
-    description: "Ready for or completed baptism.",
+    description: "Publicly declared faith through baptism",
     color: "#38BDF8",
-    display_order: 3,
+    display_order: 5,
     is_active: true,
     is_default: true,
   },
   {
     id: null,
-    stage_key: "Discipleship",
-    name: "Discipleship",
-    description: "Growing in next steps with care.",
+    stage_key: "Discipleship Step",
+    name: "Discipleship Step",
+    description: "Becoming part of a team and helping others grow",
     color: "#F97316",
-    display_order: 4,
+    display_order: 6,
+    is_active: true,
+    is_default: true,
+  },
+  {
+    id: null,
+    stage_key: "Leadership",
+    name: "Leadership",
+    description: "Leading a team and helping others grow",
+    color: "#ec4899",
+    display_order: 7,
     is_active: true,
     is_default: true,
   },
@@ -90,13 +120,20 @@ const DEFAULT_STAGES: StageData[] = [
 const STAGE_ICONS: Record<string, string> = {
   Visitor: "🚪",
   visitor: "🚪",
-  Engaged: "💚",
-  engaged: "💚",
+  Regular: "📅",
+  regular: "📅",
+  Engaged: "⭐",
+  engaged: "⭐",
+  "Growing in Faith": "📖",
+  "Growing In God's Word": "📖",
   "Faith Decision": "✝️",
   Baptism: "💧",
   baptism: "💧",
-  Discipleship: "👣",
   "Discipleship Step": "👣",
+  Discipleship: "👣",
+  discipleship: "👣",
+  Leadership: "🌟",
+  leadership: "🌟",
 };
 
 function selectedChurchHeaders(): Record<string, string> {
@@ -401,7 +438,10 @@ export default function FaithJourneyPage() {
             activeKey === memberStage ||
             rawName === rawMember ||
             rawKey === rawMember ||
-            (activeName === "discipleship" && memberStage === "discipleship step")
+            (activeName === "discipleship" && memberStage === "discipleship step") ||
+            (activeName === "discipleship step" && memberStage === "discipleship") ||
+            (activeName === "growing in faith" && memberStage === "growing in god's word") ||
+            (activeName === "growing in god's word" && memberStage === "growing in faith")
           );
         })
       : undefined;
@@ -424,15 +464,17 @@ export default function FaithJourneyPage() {
 
   const faithDecisionCount = countStage("Faith Decision");
   const baptismCount = countStage("Baptism");
-  const discipleshipCount = countStage("Discipleship") + countStage("Discipleship Step");
+  const discipleshipCount = countStage("Discipleship Step") + countStage("Discipleship");
+  const leadershipCount = countStage("Leadership");
   const activeCount = members.length;
 
   const METRICS = [
     { label: "Total Children", value: total, icon: "👥" },
     { label: "Active in Journey", value: activeCount, icon: "🌱" },
     { label: "Faith Decisions", value: faithDecisionCount, icon: "✝️" },
-    { label: "Baptism", value: baptismCount, icon: "💧" },
+    { label: "Baptisms", value: baptismCount, icon: "💧" },
     { label: "Discipleship", value: discipleshipCount, icon: "👣" },
+    { label: "Leadership", value: leadershipCount, icon: "🌟" },
   ];
 
   return (
@@ -478,7 +520,7 @@ export default function FaithJourneyPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
+            gridTemplateColumns: "repeat(6, 1fr)",
             gap: "12px",
             marginBottom: "24px",
             marginTop: "-24px",

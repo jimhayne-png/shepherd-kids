@@ -100,19 +100,20 @@ function nextBirthday(dob: string): { daysUntil: number; label: string } {
 function deriveFaithStage(milestones: MilestoneRecord[]): number {
   const hasBaptism = milestones.some(m => m.milestone_type === "water_baptism" && m.is_completed && m.completed_at);
   const hasSalvation = milestones.some(m => m.milestone_type === "salvation" && m.is_completed && m.completed_at);
-  if (hasBaptism) return 5;
-  if (hasSalvation) return 4;
+  if (hasBaptism) return 6;
+  if (hasSalvation) return 5;
   return 1;
 }
 
 const FAITH_STAGES = [
-  { id: 1, label: "Visitor",               icon: "👋", short: "Visitor" },
+  { id: 1, label: "Visitor",               icon: "🚪", short: "Visitor" },
   { id: 2, label: "Regular",               icon: "📅", short: "Regular" },
   { id: 3, label: "Engaged",               icon: "⭐", short: "Engaged" },
-  { id: 4, label: "Faith Decision",        icon: "✝️", short: "Faith Decision" },
-  { id: 5, label: "Baptism",               icon: "🌊", short: "Baptism" },
-  { id: 6, label: "Growing in God's Word", icon: "📖", short: "Growing" },
-  { id: 7, label: "Discipleship",          icon: "🙏", short: "Discipleship" },
+  { id: 4, label: "Growing in Faith",      icon: "📖", short: "Growing" },
+  { id: 5, label: "Faith Decision",        icon: "✝️", short: "Faith Decision" },
+  { id: 6, label: "Baptism",               icon: "🌊", short: "Baptism" },
+  { id: 7, label: "Discipleship Step",     icon: "👣", short: "Discipleship" },
+  { id: 8, label: "Leadership",            icon: "🌟", short: "Leadership" },
 ];
 
 // ── Celebration Timeline ──────────────────────────────────────────────────────

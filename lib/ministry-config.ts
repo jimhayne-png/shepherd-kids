@@ -24,10 +24,11 @@ export const CHILDREN_PIPELINE_STAGES = [
   "Visitor",
   "Regular",
   "Engaged",
-  "Growing in God's Word",
+  "Growing in Faith",
   "Faith Decision",
   "Baptism",
-  "Discipleship",
+  "Discipleship Step",
+  "Leadership",
 ];
 
 export const YOUNG_ADULTS_PIPELINE_STAGES = [
@@ -69,12 +70,13 @@ export const MINISTRY_CONFIG: Record<string, MinistryConfig> = {
     volunteerGrades: [],
     stageDescriptions: {
       "Visitor": "First-time guest",
-      "Regular": "Attends 4+ times",
+      "Regular": "Attended 4+ times",
       "Engaged": "Participates and builds relationships",
-      "Growing in God's Word": "Learning God's Word, prayer, and Bible truth",
-      "Faith Decision": "Made a personal decision to follow Christ",
+      "Growing in Faith": "Learning God's Word, prayer, and Biblical truth",
+      "Faith Decision": "Made a personal decision to follow Jesus Christ",
       "Baptism": "Publicly declared faith through baptism",
-      "Discipleship": "Taking next steps in discipleship and helping others grow",
+      "Discipleship Step": "Becoming part of a team and helping others grow",
+      "Leadership": "Leading a team and helping others grow",
     },
   },
   "young-adults": {

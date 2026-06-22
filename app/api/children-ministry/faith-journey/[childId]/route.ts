@@ -5,10 +5,15 @@ export const dynamic = "force-dynamic";
 
 const VALID_STAGES = new Set([
   "Visitor",
+  "Regular",
   "Engaged",
+  "Growing in Faith",
+  "Growing In God's Word", // backward compat for existing records
   "Faith Decision",
   "Baptism",
-  "Discipleship",
+  "Discipleship Step",
+  "Leadership",
+  "Discipleship", // backward compat for existing records
 ]);
 
 export async function PATCH(

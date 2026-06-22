@@ -345,5 +345,59 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Automatic Visitor → Regular promotion: promote when a child reaches 4 distinct check-in sessions
+  if (inserts.length > 0) {
+    for (const r of resultMeta) {
+      const { firstName, lastName } = splitName(r.childName);
+
+      // Count distinct sessions for this child by name + phone + church
+      const { data: sessionRows } = await admin
+        .from('cm_checkin_records')
+        .select('session_id')
+        .eq('church_id', session.church_id)
+        .eq('child_name', r.childName)
+        .eq('parent_phone', normalizedPhone);
+
+      const distinctSessionCount = new Set(
+        (sessionRows ?? []).map((row: { session_id: string }) => row.session_id)
+      ).size;
+
+      if (distinctSessionCount >= 4) {
+        // Find the family record by phone
+        const { data: families } = await admin
+          .from('cm_visitor_families')
+          .select('id')
+          .eq('church_id', session.church_id)
+          .eq('parent1_phone', normalizedPhone)
+          .limit(1);
+
+        if (families && families.length > 0) {
+          const familyId = families[0].id;
+
+          // Find the child — only promote if currently Visitor, null, or empty
+          const { data: visitorChild } = await admin
+            .from('cm_visitor_children')
+            .select('id, pipeline_stage')
+            .eq('family_id', familyId)
+            .eq('first_name', firstName)
+            .eq('last_name', lastName)
+            .maybeSingle();
+
+          if (
+            visitorChild &&
+            (!visitorChild.pipeline_stage ||
+              visitorChild.pipeline_stage === '' ||
+              visitorChild.pipeline_stage === 'Visitor')
+          ) {
+            await admin
+              .from('cm_visitor_children')
+              .update({ pipeline_stage: 'Regular' })
+              .eq('id', visitorChild.id);
+          }
+        }
+      }
+    }
+  }
+
   return Response.json({ records, securityCode, isNewVisitor, duplicates });
 }
