@@ -43,6 +43,71 @@ const COL: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
+function PrintStyles() {
+  return (
+    <style>{`
+      @media print {
+        @page { size: 4in 2in landscape; margin: 0; }
+        body { margin: 0; padding: 0; }
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+      }
+      .label-wrap {
+        width: 4in !important;
+        height: 2in !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        border: 2px solid #000 !important;
+        border-radius: 6px !important;
+        background: #fff !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        page-break-after: always !important;
+      }
+      .label-grid {
+        display: grid !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+      }
+      .label-col {
+        display: flex !important;
+        flex-direction: column !important;
+        padding: 0.06in 0.07in !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+      }
+      .label-footer {
+        background-color: #000 !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .care-box {
+        border: 1px solid #000 !important;
+        border-radius: 2px !important;
+        padding: 2px 4px !important;
+        margin-bottom: 4px !important;
+      }
+      .authorized-box {
+        background-color: #e0e0e0 !important;
+        border-radius: 4px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .first-visit-badge {
+        background-color: #000 !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    `}</style>
+  );
+}
+
 function ChildLeftCol({
   churchName,
   isFirstTime,
@@ -52,6 +117,7 @@ function ChildLeftCol({
 }) {
   return (
     <div
+      className="label-col"
       style={{
         ...COL,
         borderRight: "1.5px solid #000",
@@ -77,6 +143,7 @@ function ChildLeftCol({
       )}
       {isFirstTime && (
         <div
+          className="first-visit-badge"
           style={{
             fontSize: 6.5,
             fontWeight: 900,
@@ -98,6 +165,7 @@ function ChildLeftCol({
 function CareBox({ label, text }: { label: string; text: string }) {
   return (
     <div
+      className="care-box"
       style={{
         border: "1px solid #000",
         borderRadius: 2,
@@ -172,8 +240,10 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
   );
 
   return (
-    <div style={LABEL_WRAP}>
+    <div className="label-wrap" style={LABEL_WRAP}>
+      <PrintStyles />
       <div
+        className="label-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "22% 28% 30% 20%",
@@ -189,6 +259,7 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
 
         {/* CENTER: Child name + Room */}
         <div
+          className="label-col"
           style={{
             ...COL,
             borderRight: "1.5px solid #000",
@@ -222,6 +293,7 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
 
         {/* CARE: Bordered allergy + medical boxes */}
         <div
+          className="label-col"
           style={{
             ...COL,
             borderRight: "1.5px solid #000",
@@ -245,6 +317,7 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
 
         {/* RIGHT: Lock icon + Pickup Code (no instruction text) */}
         <div
+          className="label-col"
           style={{
             ...COL,
             alignItems: "center",
@@ -272,8 +345,10 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
   );
 
   return (
-    <div style={LABEL_WRAP}>
+    <div className="label-wrap" style={LABEL_WRAP}>
+      <PrintStyles />
       <div
+        className="label-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "22% 28% 30% 20%",
@@ -289,6 +364,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
 
         {/* CENTER: Child name + Room */}
         <div
+          className="label-col"
           style={{
             ...COL,
             borderRight: "1.5px solid #000",
@@ -322,6 +398,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
 
         {/* CARE: Allergies + Medical printed directly (not hidden behind QR) */}
         <div
+          className="label-col"
           style={{
             ...COL,
             borderRight: "1.5px solid #000",
@@ -345,6 +422,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
 
         {/* RIGHT: Smart label QR + Pickup Code */}
         <div
+          className="label-col"
           style={{
             ...COL,
             alignItems: "center",
@@ -420,9 +498,11 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
   const familyName = lastName.toUpperCase() + " FAMILY";
 
   return (
-    <div style={LABEL_WRAP}>
+    <div className="label-wrap" style={LABEL_WRAP}>
+      <PrintStyles />
       {/* 3-column main body */}
       <div
+        className="label-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "25% 50% 25%",
@@ -432,6 +512,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
       >
         {/* LEFT: SVG Cross+Hill + Church Name + Shield + Pickup Instruction */}
         <div
+          className="label-col"
           style={{
             ...COL,
             borderRight: "1.5px solid #000",
@@ -504,6 +585,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
         </div>
 
         {/* CENTER: First Time badge + Family name + divider + child rows + auth box */}
+        {/* NOTE: no label-col here — label-col forces padding that would break the full-width badge */}
         <div
           style={{
             borderRight: "1.5px solid #000",
@@ -516,6 +598,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
           {/* First Time Family: full-width black bar */}
           {data.isFirstTime && (
             <div
+              className="first-visit-badge"
               style={{
                 backgroundColor: "#000",
                 color: "#fff",
@@ -604,6 +687,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
 
             {/* Authorized pickups: grey rounded box */}
             <div
+              className="authorized-box"
               style={{
                 backgroundColor: "#e0e0e0",
                 borderRadius: 4,
@@ -658,6 +742,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
 
         {/* RIGHT: PICKUP CODE label + divider + large code + divider + shield + safety text */}
         <div
+          className="label-col"
           style={{
             ...COL,
             alignItems: "center",
@@ -754,6 +839,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
 
       {/* FOOTER: full-width black bar with heart icon */}
       <div
+        className="label-footer"
         style={{
           backgroundColor: "#000",
           color: "#fff",
