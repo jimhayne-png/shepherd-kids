@@ -77,9 +77,18 @@ function PrintStyles() {
   );
 }
 
+// Merge medicalNotes + specialInstructions into one sentence if both present
+function buildMedicalLine(medicalNotes: string | null, specialInstructions: string | null): string | null {
+  const parts = [medicalNotes, specialInstructions]
+    .filter(Boolean)
+    .map((s) => (s as string).trim().replace(/\.+$/, ""));
+  return parts.length > 0 ? parts.join(". ") : null;
+}
+
 // Shared left column used by both child label variants
 function ChildLabelLeft({ data }: { data: SharedLabelData }) {
-  const hasCare = !!(data.allergies || data.medicalNotes || data.specialInstructions);
+  const combinedMedical = buildMedicalLine(data.medicalNotes, data.specialInstructions);
+  const hasCare = !!(data.allergies || combinedMedical);
 
   return (
     <div
@@ -92,8 +101,16 @@ function ChildLabelLeft({ data }: { data: SharedLabelData }) {
         minWidth: 0,
       }}
     >
-      {/* Church name + first visit indicator */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexShrink: 0 }}>
+      {/* Church name left, FIRST VISIT pushed to right */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 4,
+          flexShrink: 0,
+        }}
+      >
         {data.churchName && (
           <span
             style={{
@@ -115,7 +132,7 @@ function ChildLabelLeft({ data }: { data: SharedLabelData }) {
               letterSpacing: "0.04em",
             }}
           >
-            · ★ FIRST VISIT
+            ★ FIRST VISIT
           </span>
         )}
       </div>
@@ -134,7 +151,7 @@ function ChildLabelLeft({ data }: { data: SharedLabelData }) {
         {data.childName}
       </div>
 
-      {/* Room — tight to child name */}
+      {/* Room — tight to child name, same size as before */}
       {data.roomName && (
         <div
           style={{
@@ -149,7 +166,7 @@ function ChildLabelLeft({ data }: { data: SharedLabelData }) {
         </div>
       )}
 
-      {/* Care info — directly below room, no boxes, no bottom pinning */}
+      {/* Care info — directly below room, no boxes, single MEDICAL line */}
       {hasCare && (
         <div
           style={{
@@ -166,16 +183,10 @@ function ChildLabelLeft({ data }: { data: SharedLabelData }) {
               {data.allergies}
             </div>
           )}
-          {data.medicalNotes && (
+          {combinedMedical && (
             <div>
               <span style={{ fontWeight: 700 }}>⚕ MEDICAL: </span>
-              {data.medicalNotes}
-            </div>
-          )}
-          {data.specialInstructions && (
-            <div>
-              <span style={{ fontWeight: 700 }}>⚕ MEDICAL: </span>
-              {data.specialInstructions}
+              {combinedMedical}
             </div>
           )}
         </div>
@@ -264,7 +275,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
       >
         <ChildLabelLeft data={data} />
 
-        {/* RIGHT: QR + pickup code */}
+        {/* RIGHT: QR above scan text, then pickup code */}
         <div
           className="label-right"
           style={{
@@ -278,20 +289,22 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
         >
           {showQr && (
             <>
+              <QRCodeImage value={qrUrl!} size={44} />
               <div
                 style={{
                   fontSize: 6,
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  lineHeight: 1,
-                  marginBottom: 3,
-                  color: "#555",
+                  letterSpacing: "0.04em",
+                  lineHeight: 1.5,
+                  textAlign: "center",
+                  marginTop: 4,
+                  color: "#444",
                 }}
               >
-                SCAN · STAFF ONLY
+                SCAN FOR CARE INFO<br />
+                AUTHORIZED STAFF ONLY
               </div>
-              <QRCodeImage value={qrUrl!} size={44} />
               <div
                 style={{
                   width: "80%",
@@ -360,8 +373,16 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
             minWidth: 0,
           }}
         >
-          {/* Church name + first time indicator */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, flexShrink: 0 }}>
+          {/* Church name left, FIRST TIME FAMILY pushed to right */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 5,
+              flexShrink: 0,
+            }}
+          >
             {data.churchName && (
               <span
                 style={{
@@ -383,7 +404,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
                   letterSpacing: "0.04em",
                 }}
               >
-                · ★ FIRST TIME FAMILY
+                ★ FIRST TIME FAMILY
               </span>
             )}
           </div>
@@ -402,7 +423,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
             {familyName}
           </div>
 
-          {/* Child rows: name left, room right — one row per child */}
+          {/* Child rows: name bold left, room right — separate row per child */}
           <div style={{ marginTop: 7, flexShrink: 0 }}>
             <div
               style={{
