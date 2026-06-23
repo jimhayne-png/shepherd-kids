@@ -430,7 +430,7 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
           overflow: "hidden",
         }}
       >
-        {/* LEFT: Church + pickup instruction */}
+        {/* LEFT: SVG Cross+Hill + Church Name + Shield + Pickup Instruction */}
         <div
           style={{
             ...COL,
@@ -438,9 +438,22 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
             alignItems: "center",
             justifyContent: "center",
             textAlign: "center",
+            rowGap: "4px",
           }}
         >
-          <div style={{ fontSize: 20, lineHeight: 1 }}>✝</div>
+          {/* Cross with hill/arch */}
+          <svg
+            width="28"
+            height="24"
+            viewBox="0 0 28 24"
+            style={{ display: "block" }}
+          >
+            <rect x="12" y="0" width="4" height="16" fill="black" />
+            <rect x="4" y="5" width="20" height="4" fill="black" />
+            <path d="M1 24 C1 24 4 15 14 15 C24 15 27 24 27 24 Z" fill="black" />
+          </svg>
+
+          {/* Church name: large bold uppercase, wraps to two lines */}
           {data.churchName && (
             <div
               style={{
@@ -449,102 +462,297 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
                 lineHeight: 1.2,
-                marginTop: 3,
               }}
             >
               {data.churchName}
             </div>
           )}
+
+          {/* Shield icon + pickup instruction */}
           <div
             style={{
-              fontSize: 6.5,
-              fontWeight: 900,
-              textTransform: "uppercase",
-              textAlign: "center",
-              lineHeight: 1.4,
-              marginTop: 6,
-              letterSpacing: "0.03em",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 2,
+              marginTop: 2,
             }}
           >
-            PRESENT THIS CODE &amp; PHOTO ID TO PICK UP
+            <svg
+              width="8"
+              height="10"
+              viewBox="0 0 8 10"
+              style={{ flexShrink: 0, marginTop: 1 }}
+            >
+              <path
+                d="M4 0 L8 2 L8 5.5 C8 7.8 6.3 9.2 4 10 C1.7 9.2 0 7.8 0 5.5 L0 2 Z"
+                fill="black"
+              />
+            </svg>
+            <div
+              style={{
+                fontSize: 5.5,
+                fontWeight: 900,
+                textTransform: "uppercase",
+                lineHeight: 1.35,
+                letterSpacing: "0.03em",
+                textAlign: "left",
+              }}
+            >
+              PRESENT THIS CODE &amp; PHOTO ID TO PICK UP
+            </div>
           </div>
         </div>
 
-        {/* CENTER: First Time badge + Family name + Children list */}
+        {/* CENTER: First Time badge + Family name + divider + child rows + auth box */}
         <div
           style={{
-            ...COL,
             borderRight: "1.5px solid #000",
-            justifyContent: "center",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxSizing: "border-box",
           }}
         >
+          {/* First Time Family: full-width black bar */}
           {data.isFirstTime && (
             <div
               style={{
+                backgroundColor: "#000",
+                color: "#fff",
                 fontSize: 7,
                 fontWeight: 900,
                 textTransform: "uppercase",
-                backgroundColor: "#000",
-                color: "#fff",
-                padding: "2px 5px",
-                borderRadius: 2,
-                letterSpacing: "0.04em",
-                alignSelf: "flex-start",
-                marginBottom: 5,
+                textAlign: "center",
+                padding: "3px 6px",
+                letterSpacing: "0.06em",
+                flexShrink: 0,
+                WebkitPrintColorAdjust: "exact",
+                printColorAdjust: "exact",
               }}
             >
               ★ FIRST TIME FAMILY
             </div>
           )}
+
+          {/* Inner content */}
           <div
             style={{
-              fontSize: 18,
-              fontWeight: 900,
-              lineHeight: 1.1,
-              color: "#000",
-              wordBreak: "break-word",
+              padding: "5px 7px 4px",
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              justifyContent: "center",
             }}
           >
-            {familyName}
-          </div>
-          <div
-            style={{
-              fontSize: 10,
-              color: "#333",
-              marginTop: 5,
-              lineHeight: 1.4,
-            }}
-          >
-            {data.childName}
+            {/* Family name: very large bold */}
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 900,
+                lineHeight: 1.05,
+                color: "#000",
+                wordBreak: "break-word",
+              }}
+            >
+              {familyName}
+            </div>
+
+            {/* Horizontal divider */}
+            <div
+              style={{
+                borderTop: "1px solid #000",
+                margin: "4px 0 3px",
+                flexShrink: 0,
+              }}
+            />
+
+            {/* Child row: CHILD NAME left, ROOM right */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                gap: 4,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 8.5,
+                  fontWeight: 700,
+                  color: "#000",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {data.childName}
+              </div>
+              {data.roomName && (
+                <div
+                  style={{
+                    fontSize: 8.5,
+                    fontWeight: 700,
+                    color: "#000",
+                    flexShrink: 0,
+                  }}
+                >
+                  {data.roomName}
+                </div>
+              )}
+            </div>
+
+            {/* Authorized pickups: grey rounded box */}
+            <div
+              style={{
+                backgroundColor: "#e0e0e0",
+                borderRadius: 4,
+                padding: "3px 5px",
+                marginTop: 5,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                flexShrink: 0,
+                WebkitPrintColorAdjust: "exact",
+                printColorAdjust: "exact",
+              }}
+            >
+              {/* People icon */}
+              <svg
+                width="12"
+                height="10"
+                viewBox="0 0 12 10"
+                style={{ flexShrink: 0 }}
+              >
+                <circle cx="3.5" cy="2.5" r="2" fill="#000" />
+                <circle cx="8.5" cy="2.5" r="2" fill="#000" />
+                <ellipse cx="3.5" cy="8.5" rx="3.5" ry="2" fill="#000" />
+                <ellipse cx="8.5" cy="8.5" rx="3.5" ry="2" fill="#000" />
+              </svg>
+              <div>
+                <div
+                  style={{
+                    fontSize: 6.5,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    lineHeight: 1.2,
+                    color: "#000",
+                  }}
+                >
+                  AUTHORIZED PICKUPS
+                </div>
+                <div
+                  style={{
+                    fontSize: 6,
+                    color: "#444",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  See staff with any questions
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT: Pickup code + "Code changes every service" */}
+        {/* RIGHT: PICKUP CODE label + divider + large code + divider + shield + safety text */}
         <div
           style={{
             ...COL,
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "flex-start",
+            textAlign: "center",
+            padding: "6px 4px",
           }}
         >
-          <PickupCode code={data.securityCode} size={20} />
+          {/* PICKUP CODE label */}
           <div
             style={{
-              fontSize: 6.5,
-              color: "#555",
-              textAlign: "center",
-              marginTop: 6,
-              lineHeight: 1.3,
+              fontSize: 7,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
             }}
           >
-            Code changes
-            <br />
-            every service
+            PICKUP CODE
+          </div>
+
+          {/* Divider */}
+          <div
+            style={{
+              borderTop: "1px solid #000",
+              width: "100%",
+              margin: "3px 0",
+            }}
+          />
+
+          {/* Security code: very large */}
+          <div
+            style={{
+              fontSize: 36,
+              fontWeight: 900,
+              fontFamily: "monospace",
+              letterSpacing: "0.02em",
+              lineHeight: 1,
+              color: "#000",
+            }}
+          >
+            {data.securityCode}
+          </div>
+
+          {/* Divider */}
+          <div
+            style={{
+              borderTop: "1px solid #000",
+              width: "100%",
+              margin: "3px 0",
+            }}
+          />
+
+          {/* Shield/lock icon + safety text */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 2,
+            }}
+          >
+            <svg
+              width="8"
+              height="10"
+              viewBox="0 0 8 10"
+              style={{ flexShrink: 0, marginTop: 1 }}
+            >
+              <path
+                d="M4 0 L8 2 L8 5.5 C8 7.8 6.3 9.2 4 10 C1.7 9.2 0 7.8 0 5.5 L0 2 Z"
+                fill="black"
+              />
+              <rect x="2.5" y="5" width="3" height="2.5" rx="0.4" fill="white" />
+              <path
+                d="M3 5 L3 3.5 Q4 2.5 5 3.5 L5 5"
+                fill="none"
+                stroke="white"
+                strokeWidth="0.7"
+              />
+            </svg>
+            <div
+              style={{
+                fontSize: 5.5,
+                textAlign: "left",
+                lineHeight: 1.35,
+                letterSpacing: "0.02em",
+                color: "#000",
+              }}
+            >
+              This code changes daily for your child&apos;s safety
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Footer: full-width black bar */}
+      {/* FOOTER: full-width black bar with heart icon */}
       <div
         style={{
           backgroundColor: "#000",
@@ -558,9 +766,24 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
           flexShrink: 0,
           WebkitPrintColorAdjust: "exact",
           printColorAdjust: "exact",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 5,
         }}
       >
-        Thank you for helping us keep your children safe!
+        <svg
+          width="10"
+          height="9"
+          viewBox="0 0 10 9"
+          style={{ flexShrink: 0 }}
+        >
+          <path
+            d="M5 8.5 C4.5 8 0 5.5 0 3 C0 1.3 1.2 0 2.7 0 C3.6 0 4.4 0.5 5 1.2 C5.6 0.5 6.4 0 7.3 0 C8.8 0 10 1.3 10 3 C10 5.5 5.5 8 5 8.5 Z"
+            fill="white"
+          />
+        </svg>
+        THANK YOU FOR HELPING US KEEP YOUR CHILDREN SAFE!
       </div>
     </div>
   );
