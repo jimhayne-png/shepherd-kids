@@ -19,149 +19,240 @@ export type SharedLabelData = {
   smartLabelQrEnabled: boolean;
 };
 
-const BASE: React.CSSProperties = {
+const LABEL_WRAP: React.CSSProperties = {
   width: "4in",
   height: "2in",
   boxSizing: "border-box",
   overflow: "hidden",
-  padding: "0.1in 0.12in",
   pageBreakAfter: "always",
   breakAfter: "page",
   fontFamily: "Arial, Helvetica, sans-serif",
-  display: "flex",
-  flexDirection: "column",
   backgroundColor: "#ffffff",
   color: "#000000",
+  border: "2px solid #000",
+  borderRadius: 6,
+  display: "flex",
+  flexDirection: "column",
 };
 
-function TypeBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        fontSize: 9,
-        fontWeight: 700,
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
-        backgroundColor: "#000",
-        color: "#fff",
-        padding: "1px 5px",
-        borderRadius: 3,
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
+const COL: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  padding: "0.06in 0.07in",
+  overflow: "hidden",
+  boxSizing: "border-box",
+};
 
-function RoomBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        fontWeight: 700,
-        border: "1.5px solid #000",
-        padding: "1px 7px",
-        borderRadius: 3,
-        color: "#000",
-        flexShrink: 0,
-      }}
-    >
-      {children}
-    </span>
-  );
-}
-
-function CareLine({ label, text }: { label: string; text: string }) {
+function ChildLeftCol({
+  churchName,
+  isFirstTime,
+}: {
+  churchName: string;
+  isFirstTime: boolean;
+}) {
   return (
     <div
       style={{
-        fontSize: 8.5,
-        color: "#000",
-        border: "0.75px solid #000",
-        padding: "1px 4px",
-        borderRadius: 2,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        maxWidth: "2.8in",
+        ...COL,
+        borderRight: "1.5px solid #000",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        rowGap: "4px",
       }}
     >
-      <strong>{label}:</strong> {text}
+      <div style={{ fontSize: 20, lineHeight: 1 }}>✝</div>
+      {churchName && (
+        <div
+          style={{
+            fontSize: 7.5,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+            lineHeight: 1.2,
+          }}
+        >
+          {churchName}
+        </div>
+      )}
+      {isFirstTime && (
+        <div
+          style={{
+            fontSize: 6.5,
+            fontWeight: 900,
+            textTransform: "uppercase",
+            backgroundColor: "#000",
+            color: "#fff",
+            padding: "2px 4px",
+            borderRadius: 2,
+            letterSpacing: "0.04em",
+          }}
+        >
+          ★ FIRST VISIT
+        </div>
+      )}
     </div>
   );
 }
 
-const CODE_STYLE: React.CSSProperties = {
-  fontSize: 26,
-  fontWeight: 900,
-  fontFamily: "monospace",
-  letterSpacing: "0.15em",
-  lineHeight: 1,
-  color: "#000",
-};
-
-const PARENT_CODE_STYLE: React.CSSProperties = {
-  fontSize: 30,
-  fontWeight: 900,
-  fontFamily: "monospace",
-  letterSpacing: "0.18em",
-  lineHeight: 1,
-  color: "#000",
-};
-
-export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
+function CareBox({ label, text }: { label: string; text: string }) {
   return (
-    <div style={BASE}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <TypeBadge>Child Check-In</TypeBadge>
-          {data.churchName && (
-            <div style={{ fontSize: 8, color: "#555", marginTop: 2 }}>{data.churchName}</div>
-          )}
-        </div>
-        {data.roomName && <RoomBadge>{data.roomName}</RoomBadge>}
-      </div>
-
-      {data.isFirstTime && (
-        <div style={{ fontSize: 10, fontWeight: 900, color: "#000", marginTop: 3 }}>
-          ★ FIRST VISIT
-        </div>
-      )}
-
+    <div
+      style={{
+        border: "1px solid #000",
+        borderRadius: 2,
+        padding: "2px 4px",
+        marginBottom: 4,
+        overflow: "hidden",
+        flexShrink: 0,
+      }}
+    >
       <div
         style={{
-          fontSize: 23,
+          fontSize: 6.5,
           fontWeight: 900,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          lineHeight: 1,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 8,
+          lineHeight: 1.25,
+          marginTop: 1,
+          overflow: "hidden",
+          wordBreak: "break-word",
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
+function PickupCode({ code, size }: { code: string; size: number }) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div
+        style={{
+          fontSize: 7,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          lineHeight: 1,
+        }}
+      >
+        PICKUP CODE
+      </div>
+      <div
+        style={{
+          fontSize: size,
+          fontWeight: 900,
+          fontFamily: "monospace",
+          letterSpacing: "0.04em",
           lineHeight: 1.1,
-          marginTop: data.isFirstTime ? 2 : 5,
+          marginTop: 3,
           color: "#000",
         }}
       >
-        {data.childName}
+        {code}
       </div>
+    </div>
+  );
+}
 
-      {(data.allergies || data.medicalNotes || data.specialInstructions) && (
-        <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-          {data.allergies && <CareLine label="ALLERGIES" text={data.allergies} />}
-          {data.medicalNotes && <CareLine label="MEDICAL" text={data.medicalNotes} />}
-          {data.specialInstructions && <CareLine label="NOTES" text={data.specialInstructions} />}
-        </div>
-      )}
+export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
+  const hasCare = !!(
+    data.allergies ||
+    data.medicalNotes ||
+    data.specialInstructions
+  );
 
+  return (
+    <div style={LABEL_WRAP}>
       <div
         style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "flex-end",
-          marginTop: "auto",
+          display: "grid",
+          gridTemplateColumns: "22% 28% 30% 20%",
+          flex: 1,
+          overflow: "hidden",
         }}
       >
-        <div>
-          <div style={{ fontSize: 8, textAlign: "right", color: "#555", marginBottom: 1 }}>
-            PICKUP CODE
+        {/* LEFT: Church cross + First Visit badge */}
+        <ChildLeftCol
+          churchName={data.churchName}
+          isFirstTime={data.isFirstTime}
+        />
+
+        {/* CENTER: Child name + Room */}
+        <div
+          style={{
+            ...COL,
+            borderRight: "1.5px solid #000",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 19,
+              fontWeight: 900,
+              lineHeight: 1.1,
+              color: "#000",
+              wordBreak: "break-word",
+            }}
+          >
+            {data.childName}
           </div>
-          <div style={CODE_STYLE}>{data.securityCode}</div>
+          {data.roomName && (
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                marginTop: 6,
+                color: "#000",
+              }}
+            >
+              {data.roomName}
+            </div>
+          )}
+        </div>
+
+        {/* CARE: Bordered allergy + medical boxes */}
+        <div
+          style={{
+            ...COL,
+            borderRight: "1.5px solid #000",
+            justifyContent: "center",
+          }}
+        >
+          {hasCare && (
+            <>
+              {data.allergies && (
+                <CareBox label="Allergies" text={data.allergies} />
+              )}
+              {data.medicalNotes && (
+                <CareBox label="Medical" text={data.medicalNotes} />
+              )}
+              {data.specialInstructions && (
+                <CareBox label="Notes" text={data.specialInstructions} />
+              )}
+            </>
+          )}
+        </div>
+
+        {/* RIGHT: Lock icon + Pickup Code (no instruction text) */}
+        <div
+          style={{
+            ...COL,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{ fontSize: 16, marginBottom: 4, lineHeight: 1 }}>🔒</div>
+          <PickupCode code={data.securityCode} size={18} />
         </div>
       </div>
     </div>
@@ -174,78 +265,148 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
       ? `${window.location.origin}/dashboard/children-ministry/scan/${data.qrToken}`
       : null;
   const showQr = !!(qrUrl && data.smartLabelQrEnabled);
+  const hasCare = !!(
+    data.allergies ||
+    data.medicalNotes ||
+    data.specialInstructions
+  );
 
   return (
-    <div style={BASE}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <TypeBadge>Child Check-In</TypeBadge>
-          {data.churchName && (
-            <div style={{ fontSize: 8, color: "#555", marginTop: 2 }}>{data.churchName}</div>
-          )}
-        </div>
-        {data.roomName && <RoomBadge>{data.roomName}</RoomBadge>}
-      </div>
-
-      {data.isFirstTime && (
-        <div style={{ fontSize: 10, fontWeight: 900, color: "#000", marginTop: 3 }}>
-          ★ FIRST VISIT
-        </div>
-      )}
-
+    <div style={LABEL_WRAP}>
       <div
         style={{
-          fontSize: 23,
-          fontWeight: 900,
-          lineHeight: 1.1,
-          marginTop: data.isFirstTime ? 2 : 5,
-          color: "#000",
+          display: "grid",
+          gridTemplateColumns: "22% 28% 30% 20%",
+          flex: 1,
+          overflow: "hidden",
         }}
       >
-        {data.childName}
-      </div>
+        {/* LEFT: Church cross + First Visit badge */}
+        <ChildLeftCol
+          churchName={data.churchName}
+          isFirstTime={data.isFirstTime}
+        />
 
-      {(data.allergies || data.medicalNotes || data.specialInstructions) && (
-        <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-          {data.allergies && <CareLine label="ALLERGIES" text={data.allergies} />}
-          {data.medicalNotes && <CareLine label="MEDICAL" text={data.medicalNotes} />}
-          {data.specialInstructions && <CareLine label="NOTES" text={data.specialInstructions} />}
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-end",
-          marginTop: "auto",
-        }}
-      >
-        {showQr ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <QRCodeImage value={qrUrl!} size={48} />
+        {/* CENTER: Child name + Room */}
+        <div
+          style={{
+            ...COL,
+            borderRight: "1.5px solid #000",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 19,
+              fontWeight: 900,
+              lineHeight: 1.1,
+              color: "#000",
+              wordBreak: "break-word",
+            }}
+          >
+            {data.childName}
+          </div>
+          {data.roomName && (
             <div
               style={{
-                fontSize: 7,
-                color: "#555",
-                marginTop: 2,
-                textAlign: "center",
-                lineHeight: 1.2,
+                fontSize: 12,
+                fontWeight: 700,
+                marginTop: 6,
+                color: "#000",
               }}
             >
-              SCAN FOR
-              <br />
-              COMPLETE CARE INFO
+              {data.roomName}
             </div>
-          </div>
-        ) : (
-          <div />
-        )}
-        <div>
-          <div style={{ fontSize: 8, textAlign: "right", color: "#555", marginBottom: 1 }}>
-            PICKUP CODE
-          </div>
-          <div style={CODE_STYLE}>{data.securityCode}</div>
+          )}
+        </div>
+
+        {/* CARE: Allergies + Medical printed directly (not hidden behind QR) */}
+        <div
+          style={{
+            ...COL,
+            borderRight: "1.5px solid #000",
+            justifyContent: "center",
+          }}
+        >
+          {hasCare && (
+            <>
+              {data.allergies && (
+                <CareBox label="Allergies" text={data.allergies} />
+              )}
+              {data.medicalNotes && (
+                <CareBox label="Medical" text={data.medicalNotes} />
+              )}
+              {data.specialInstructions && (
+                <CareBox label="Notes" text={data.specialInstructions} />
+              )}
+            </>
+          )}
+        </div>
+
+        {/* RIGHT: Smart label QR + Pickup Code */}
+        <div
+          style={{
+            ...COL,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {showQr ? (
+            <>
+              <div
+                style={{
+                  fontSize: 6,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.03em",
+                  textAlign: "center",
+                  lineHeight: 1,
+                  marginBottom: 2,
+                }}
+              >
+                SMART LABEL
+              </div>
+              <QRCodeImage value={qrUrl!} size={42} />
+              <div
+                style={{
+                  fontSize: 5.5,
+                  textAlign: "center",
+                  lineHeight: 1.2,
+                  marginTop: 2,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                SCAN FOR COMPLETE
+                <br />
+                CARE INFO
+              </div>
+              <div
+                style={{
+                  fontSize: 5,
+                  textAlign: "center",
+                  fontWeight: 700,
+                  marginTop: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                AUTHORIZED STAFF ONLY
+              </div>
+              <div
+                style={{
+                  width: "90%",
+                  borderTop: "0.75px solid #000",
+                  margin: "3px 0",
+                }}
+              />
+              <PickupCode code={data.securityCode} size={14} />
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 16, marginBottom: 4, lineHeight: 1 }}>🔒</div>
+              <PickupCode code={data.securityCode} size={18} />
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -254,68 +415,152 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
 
 export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
   const parts = data.parentName.trim().split(/\s+/);
-  const lastName = parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? "";
+  const lastName =
+    parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? "";
   const familyName = lastName.toUpperCase() + " FAMILY";
 
   return (
-    <div style={BASE}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <TypeBadge>Parent Pickup</TypeBadge>
-        {data.churchName && (
-          <span style={{ fontSize: 8, color: "#555" }}>{data.churchName}</span>
-        )}
-      </div>
-
+    <div style={LABEL_WRAP}>
+      {/* 3-column main body */}
       <div
         style={{
-          fontSize: 8.5,
+          display: "grid",
+          gridTemplateColumns: "25% 50% 25%",
+          flex: 1,
+          overflow: "hidden",
+        }}
+      >
+        {/* LEFT: Church + pickup instruction */}
+        <div
+          style={{
+            ...COL,
+            borderRight: "1.5px solid #000",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: 20, lineHeight: 1 }}>✝</div>
+          {data.churchName && (
+            <div
+              style={{
+                fontSize: 7.5,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                lineHeight: 1.2,
+                marginTop: 3,
+              }}
+            >
+              {data.churchName}
+            </div>
+          )}
+          <div
+            style={{
+              fontSize: 6.5,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              textAlign: "center",
+              lineHeight: 1.4,
+              marginTop: 6,
+              letterSpacing: "0.03em",
+            }}
+          >
+            PRESENT THIS CODE &amp; PHOTO ID TO PICK UP
+          </div>
+        </div>
+
+        {/* CENTER: First Time badge + Family name + Children list */}
+        <div
+          style={{
+            ...COL,
+            borderRight: "1.5px solid #000",
+            justifyContent: "center",
+          }}
+        >
+          {data.isFirstTime && (
+            <div
+              style={{
+                fontSize: 7,
+                fontWeight: 900,
+                textTransform: "uppercase",
+                backgroundColor: "#000",
+                color: "#fff",
+                padding: "2px 5px",
+                borderRadius: 2,
+                letterSpacing: "0.04em",
+                alignSelf: "flex-start",
+                marginBottom: 5,
+              }}
+            >
+              ★ FIRST TIME FAMILY
+            </div>
+          )}
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              lineHeight: 1.1,
+              color: "#000",
+              wordBreak: "break-word",
+            }}
+          >
+            {familyName}
+          </div>
+          <div
+            style={{
+              fontSize: 10,
+              color: "#333",
+              marginTop: 5,
+              lineHeight: 1.4,
+            }}
+          >
+            {data.childName}
+          </div>
+        </div>
+
+        {/* RIGHT: Pickup code + "Code changes every service" */}
+        <div
+          style={{
+            ...COL,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <PickupCode code={data.securityCode} size={20} />
+          <div
+            style={{
+              fontSize: 6.5,
+              color: "#555",
+              textAlign: "center",
+              marginTop: 6,
+              lineHeight: 1.3,
+            }}
+          >
+            Code changes
+            <br />
+            every service
+          </div>
+        </div>
+      </div>
+
+      {/* Footer: full-width black bar */}
+      <div
+        style={{
+          backgroundColor: "#000",
+          color: "#fff",
+          textAlign: "center",
+          fontSize: 7.5,
           fontWeight: 700,
-          color: "#000",
-          textTransform: "uppercase",
+          padding: "3px 8px",
           letterSpacing: "0.06em",
-          marginTop: 3,
+          textTransform: "uppercase",
+          flexShrink: 0,
+          WebkitPrintColorAdjust: "exact",
+          printColorAdjust: "exact",
         }}
       >
-        Present This Code &amp; Photo ID
-      </div>
-
-      {data.isFirstTime && (
-        <div style={{ fontSize: 10, fontWeight: 900, color: "#000", marginTop: 2 }}>
-          ★ FIRST TIME FAMILY
-        </div>
-      )}
-
-      <div
-        style={{
-          fontSize: 20,
-          fontWeight: 900,
-          lineHeight: 1.1,
-          marginTop: data.isFirstTime ? 2 : 4,
-          color: "#000",
-        }}
-      >
-        {familyName}
-      </div>
-
-      <div style={{ fontSize: 11, color: "#333", marginTop: 3, lineHeight: 1.3 }}>
-        {data.childName}
-      </div>
-
-      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 4 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <div>
-            <div style={{ fontSize: 7, color: "#555", lineHeight: 1.3 }}>
-              Code changes every service
-            </div>
-            <div style={{ fontSize: 6.5, color: "#777", marginTop: 1, lineHeight: 1.3 }}>
-              Thank you for helping us keep your children safe
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 8, color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
-            <div style={PARENT_CODE_STYLE}>{data.securityCode}</div>
-          </div>
-        </div>
+        Thank you for helping us keep your children safe!
       </div>
     </div>
   );
