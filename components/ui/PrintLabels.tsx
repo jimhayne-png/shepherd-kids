@@ -77,9 +77,114 @@ function PrintStyles() {
   );
 }
 
-export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
+// Shared left column used by both child label variants
+function ChildLabelLeft({ data }: { data: SharedLabelData }) {
   const hasCare = !!(data.allergies || data.medicalNotes || data.specialInstructions);
 
+  return (
+    <div
+      className="label-left"
+      style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        minWidth: 0,
+      }}
+    >
+      {/* Church name + first visit indicator */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexShrink: 0 }}>
+        {data.churchName && (
+          <span
+            style={{
+              fontSize: 7,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {data.churchName}
+          </span>
+        )}
+        {data.isFirstTime && (
+          <span
+            style={{
+              fontSize: 6.5,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            · ★ FIRST VISIT
+          </span>
+        )}
+      </div>
+
+      {/* Child name */}
+      <div
+        style={{
+          fontSize: 32,
+          fontWeight: 900,
+          lineHeight: 1,
+          color: "#000",
+          wordBreak: "break-word",
+          flexShrink: 0,
+        }}
+      >
+        {data.childName}
+      </div>
+
+      {/* Room — tight to child name */}
+      {data.roomName && (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            marginTop: 3,
+            color: "#000",
+            flexShrink: 0,
+          }}
+        >
+          {data.roomName}
+        </div>
+      )}
+
+      {/* Care info — directly below room, no boxes, no bottom pinning */}
+      {hasCare && (
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 7.5,
+            lineHeight: 1.6,
+            color: "#000",
+            flexShrink: 0,
+          }}
+        >
+          {data.allergies && (
+            <div>
+              <span style={{ fontWeight: 700 }}>⚠ ALLERGIES: </span>
+              {data.allergies}
+            </div>
+          )}
+          {data.medicalNotes && (
+            <div>
+              <span style={{ fontWeight: 700 }}>⚕ MEDICAL: </span>
+              {data.medicalNotes}
+            </div>
+          )}
+          {data.specialInstructions && (
+            <div>
+              <span style={{ fontWeight: 700 }}>⚕ MEDICAL: </span>
+              {data.specialInstructions}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
   return (
     <div className="label-wrap" style={LABEL_WRAP}>
       <PrintStyles />
@@ -93,109 +198,9 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
           overflow: "hidden",
         }}
       >
-        {/* LEFT: church, child name, room, care info */}
-        <div
-          className="label-left"
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            minWidth: 0,
-          }}
-        >
-          {/* Church name + first visit indicator */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexShrink: 0 }}>
-            {data.churchName && (
-              <span
-                style={{
-                  fontSize: 7,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {data.churchName}
-              </span>
-            )}
-            {data.isFirstTime && (
-              <span
-                style={{
-                  fontSize: 6.5,
-                  fontWeight: 900,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                · ★ FIRST VISIT
-              </span>
-            )}
-          </div>
+        <ChildLabelLeft data={data} />
 
-          {/* Child name */}
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 900,
-              lineHeight: 1,
-              color: "#000",
-              wordBreak: "break-word",
-              flexShrink: 0,
-            }}
-          >
-            {data.childName}
-          </div>
-
-          {/* Room */}
-          {data.roomName && (
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                marginTop: 5,
-                color: "#000",
-                flexShrink: 0,
-              }}
-            >
-              {data.roomName}
-            </div>
-          )}
-
-          {/* Care info — plain text, no boxes */}
-          {hasCare && (
-            <div
-              style={{
-                marginTop: "auto",
-                paddingTop: 5,
-                fontSize: 7.5,
-                lineHeight: 1.55,
-                color: "#000",
-                flexShrink: 0,
-              }}
-            >
-              {data.allergies && (
-                <div>
-                  <span style={{ fontWeight: 700 }}>⚠ ALLERGIES: </span>
-                  {data.allergies}
-                </div>
-              )}
-              {data.medicalNotes && (
-                <div>
-                  <span style={{ fontWeight: 700 }}>MEDICAL: </span>
-                  {data.medicalNotes}
-                </div>
-              )}
-              {data.specialInstructions && (
-                <div>
-                  <span style={{ fontWeight: 700 }}>NOTES: </span>
-                  {data.specialInstructions}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: pickup code */}
+        {/* RIGHT: pickup code only */}
         <div
           className="label-right"
           style={{
@@ -204,7 +209,7 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            minWidth: "0.85in",
+            minWidth: "0.9in",
           }}
         >
           <div
@@ -221,7 +226,7 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
           </div>
           <div
             style={{
-              fontSize: 30,
+              fontSize: 36,
               fontWeight: 900,
               fontFamily: "monospace",
               letterSpacing: "0.06em",
@@ -243,7 +248,6 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
       ? `${window.location.origin}/dashboard/children-ministry/scan/${data.qrToken}`
       : null;
   const showQr = !!(qrUrl && data.smartLabelQrEnabled);
-  const hasCare = !!(data.allergies || data.medicalNotes || data.specialInstructions);
 
   return (
     <div className="label-wrap" style={LABEL_WRAP}>
@@ -258,107 +262,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
           overflow: "hidden",
         }}
       >
-        {/* LEFT: church, child name, room, care info */}
-        <div
-          className="label-left"
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            minWidth: 0,
-          }}
-        >
-          {/* Church name + first visit indicator */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexShrink: 0 }}>
-            {data.churchName && (
-              <span
-                style={{
-                  fontSize: 7,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {data.churchName}
-              </span>
-            )}
-            {data.isFirstTime && (
-              <span
-                style={{
-                  fontSize: 6.5,
-                  fontWeight: 900,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                · ★ FIRST VISIT
-              </span>
-            )}
-          </div>
-
-          {/* Child name */}
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 900,
-              lineHeight: 1,
-              color: "#000",
-              wordBreak: "break-word",
-              flexShrink: 0,
-            }}
-          >
-            {data.childName}
-          </div>
-
-          {/* Room */}
-          {data.roomName && (
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                marginTop: 5,
-                color: "#000",
-                flexShrink: 0,
-              }}
-            >
-              {data.roomName}
-            </div>
-          )}
-
-          {/* Care info — plain text, no boxes */}
-          {hasCare && (
-            <div
-              style={{
-                marginTop: "auto",
-                paddingTop: 5,
-                fontSize: 7.5,
-                lineHeight: 1.55,
-                color: "#000",
-                flexShrink: 0,
-              }}
-            >
-              {data.allergies && (
-                <div>
-                  <span style={{ fontWeight: 700 }}>⚠ ALLERGIES: </span>
-                  {data.allergies}
-                </div>
-              )}
-              {data.medicalNotes && (
-                <div>
-                  <span style={{ fontWeight: 700 }}>MEDICAL: </span>
-                  {data.medicalNotes}
-                </div>
-              )}
-              {data.specialInstructions && (
-                <div>
-                  <span style={{ fontWeight: 700 }}>NOTES: </span>
-                  {data.specialInstructions}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <ChildLabelLeft data={data} />
 
         {/* RIGHT: QR + pickup code */}
         <div
@@ -369,7 +273,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            minWidth: showQr ? "1in" : "0.85in",
+            minWidth: showQr ? "1in" : "0.9in",
           }}
         >
           {showQr && (
@@ -411,7 +315,7 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
           </div>
           <div
             style={{
-              fontSize: showQr ? 22 : 30,
+              fontSize: showQr ? 22 : 36,
               fontWeight: 900,
               fontFamily: "monospace",
               letterSpacing: "0.06em",
@@ -498,21 +402,22 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
             {familyName}
           </div>
 
-          {/* Child name + room */}
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 10,
-              fontWeight: 400,
-              color: "#000",
-              lineHeight: 1.5,
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ fontWeight: 700 }}>{data.childName}</span>
-            {data.roomName && (
-              <span style={{ color: "#333" }}>  ·  {data.roomName}</span>
-            )}
+          {/* Child rows: name left, room right — one row per child */}
+          <div style={{ marginTop: 7, flexShrink: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                fontSize: 10,
+                lineHeight: 1.6,
+              }}
+            >
+              <span style={{ fontWeight: 700 }}>{data.childName}</span>
+              {data.roomName && (
+                <span style={{ fontWeight: 400, color: "#222" }}>{data.roomName}</span>
+              )}
+            </div>
           </div>
         </div>
 
