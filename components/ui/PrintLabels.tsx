@@ -27,20 +27,9 @@ const LABEL_WRAP: React.CSSProperties = {
   pageBreakAfter: "always",
   breakAfter: "page",
   fontFamily: "Arial, Helvetica, sans-serif",
-  backgroundColor: "#ffffff",
-  color: "#000000",
-  border: "2px solid #000",
-  borderRadius: 6,
-  display: "flex",
-  flexDirection: "column",
-};
-
-const COL: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  padding: "0.06in 0.07in",
-  overflow: "hidden",
-  boxSizing: "border-box",
+  backgroundColor: "#fff",
+  color: "#000",
+  border: "1.5px solid #000",
 };
 
 function PrintStyles() {
@@ -58,274 +47,190 @@ function PrintStyles() {
       .label-wrap {
         width: 4in !important;
         height: 2in !important;
-        display: flex !important;
-        flex-direction: column !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
-        border: 2px solid #000 !important;
-        border-radius: 6px !important;
         background: #fff !important;
         font-family: Arial, Helvetica, sans-serif !important;
         page-break-after: always !important;
+        border: 1.5px solid #000 !important;
       }
-      .label-grid {
-        display: grid !important;
-        flex: 1 !important;
+      .label-body {
+        display: flex !important;
+        height: 100% !important;
         overflow: hidden !important;
       }
-      .label-col {
+      .label-left {
+        flex: 1 !important;
         display: flex !important;
         flex-direction: column !important;
-        padding: 0.06in 0.07in !important;
         overflow: hidden !important;
-        box-sizing: border-box !important;
+        min-width: 0 !important;
       }
-      .label-footer {
-        background-color: #000 !important;
-        color: #fff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      .care-box {
-        border: 1px solid #000 !important;
-        border-radius: 2px !important;
-        padding: 2px 4px !important;
-        margin-bottom: 4px !important;
-      }
-      .authorized-box {
-        background-color: #e0e0e0 !important;
-        border-radius: 4px !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      .first-visit-badge {
-        background-color: #000 !important;
-        color: #fff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+      .label-right {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
       }
     `}</style>
   );
 }
 
-function ChildLeftCol({
-  churchName,
-  isFirstTime,
-}: {
-  churchName: string;
-  isFirstTime: boolean;
-}) {
-  return (
-    <div
-      className="label-col"
-      style={{
-        ...COL,
-        borderRight: "1.5px solid #000",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        rowGap: "4px",
-      }}
-    >
-      <div style={{ fontSize: 20, lineHeight: 1 }}>✝</div>
-      {churchName && (
-        <div
-          style={{
-            fontSize: 7.5,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.04em",
-            lineHeight: 1.2,
-          }}
-        >
-          {churchName}
-        </div>
-      )}
-      {isFirstTime && (
-        <div
-          className="first-visit-badge"
-          style={{
-            fontSize: 6.5,
-            fontWeight: 900,
-            textTransform: "uppercase",
-            backgroundColor: "#000",
-            color: "#fff",
-            padding: "2px 4px",
-            borderRadius: 2,
-            letterSpacing: "0.04em",
-          }}
-        >
-          ★ FIRST VISIT
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CareBox({ label, text }: { label: string; text: string }) {
-  return (
-    <div
-      className="care-box"
-      style={{
-        border: "1px solid #000",
-        borderRadius: 2,
-        padding: "2px 4px",
-        marginBottom: 4,
-        overflow: "hidden",
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 6.5,
-          fontWeight: 900,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          lineHeight: 1,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: 8,
-          lineHeight: 1.25,
-          marginTop: 1,
-          overflow: "hidden",
-          wordBreak: "break-word",
-        }}
-      >
-        {text}
-      </div>
-    </div>
-  );
-}
-
-function PickupCode({ code, size }: { code: string; size: number }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div
-        style={{
-          fontSize: 7,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          lineHeight: 1,
-        }}
-      >
-        PICKUP CODE
-      </div>
-      <div
-        style={{
-          fontSize: size,
-          fontWeight: 900,
-          fontFamily: "monospace",
-          letterSpacing: "0.04em",
-          lineHeight: 1.1,
-          marginTop: 3,
-          color: "#000",
-        }}
-      >
-        {code}
-      </div>
-    </div>
-  );
-}
-
 export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
-  const hasCare = !!(
-    data.allergies ||
-    data.medicalNotes ||
-    data.specialInstructions
-  );
+  const hasCare = !!(data.allergies || data.medicalNotes || data.specialInstructions);
 
   return (
     <div className="label-wrap" style={LABEL_WRAP}>
       <PrintStyles />
       <div
-        className="label-grid"
+        className="label-body"
         style={{
-          display: "grid",
-          gridTemplateColumns: "22% 28% 30% 20%",
-          flex: 1,
+          display: "flex",
+          height: "100%",
+          padding: "0.09in 0.1in",
+          gap: "0.06in",
           overflow: "hidden",
         }}
       >
-        {/* LEFT: Church cross + First Visit badge */}
-        <ChildLeftCol
-          churchName={data.churchName}
-          isFirstTime={data.isFirstTime}
-        />
-
-        {/* CENTER: Child name + Room */}
+        {/* LEFT: church, child name, room, care info */}
         <div
-          className="label-col"
+          className="label-left"
           style={{
-            ...COL,
-            borderRight: "1.5px solid #000",
-            justifyContent: "center",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            minWidth: 0,
           }}
         >
+          {/* Church name + first visit indicator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexShrink: 0 }}>
+            {data.churchName && (
+              <span
+                style={{
+                  fontSize: 7,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {data.churchName}
+              </span>
+            )}
+            {data.isFirstTime && (
+              <span
+                style={{
+                  fontSize: 6.5,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                · ★ FIRST VISIT
+              </span>
+            )}
+          </div>
+
+          {/* Child name */}
           <div
             style={{
-              fontSize: 19,
+              fontSize: 32,
               fontWeight: 900,
-              lineHeight: 1.1,
+              lineHeight: 1,
               color: "#000",
               wordBreak: "break-word",
+              flexShrink: 0,
             }}
           >
             {data.childName}
           </div>
+
+          {/* Room */}
           {data.roomName && (
             <div
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                marginTop: 6,
+                marginTop: 5,
                 color: "#000",
+                flexShrink: 0,
               }}
             >
               {data.roomName}
             </div>
           )}
-        </div>
 
-        {/* CARE: Bordered allergy + medical boxes */}
-        <div
-          className="label-col"
-          style={{
-            ...COL,
-            borderRight: "1.5px solid #000",
-            justifyContent: "center",
-          }}
-        >
+          {/* Care info — plain text, no boxes */}
           {hasCare && (
-            <>
+            <div
+              style={{
+                marginTop: "auto",
+                paddingTop: 5,
+                fontSize: 7.5,
+                lineHeight: 1.55,
+                color: "#000",
+                flexShrink: 0,
+              }}
+            >
               {data.allergies && (
-                <CareBox label="Allergies" text={data.allergies} />
+                <div>
+                  <span style={{ fontWeight: 700 }}>⚠ ALLERGIES: </span>
+                  {data.allergies}
+                </div>
               )}
               {data.medicalNotes && (
-                <CareBox label="Medical" text={data.medicalNotes} />
+                <div>
+                  <span style={{ fontWeight: 700 }}>MEDICAL: </span>
+                  {data.medicalNotes}
+                </div>
               )}
               {data.specialInstructions && (
-                <CareBox label="Notes" text={data.specialInstructions} />
+                <div>
+                  <span style={{ fontWeight: 700 }}>NOTES: </span>
+                  {data.specialInstructions}
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        {/* RIGHT: Lock icon + Pickup Code (no instruction text) */}
+        {/* RIGHT: pickup code */}
         <div
-          className="label-col"
+          className="label-right"
           style={{
-            ...COL,
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            flexShrink: 0,
+            minWidth: "0.85in",
           }}
         >
-          <div style={{ fontSize: 16, marginBottom: 4, lineHeight: 1 }}>🔒</div>
-          <PickupCode code={data.securityCode} size={18} />
+          <div
+            style={{
+              fontSize: 7,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
+              marginBottom: 5,
+            }}
+          >
+            PICKUP CODE
+          </div>
+          <div
+            style={{
+              fontSize: 30,
+              fontWeight: 900,
+              fontFamily: "monospace",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
+              color: "#000",
+            }}
+          >
+            {data.securityCode}
+          </div>
         </div>
       </div>
     </div>
@@ -338,153 +243,184 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
       ? `${window.location.origin}/dashboard/children-ministry/scan/${data.qrToken}`
       : null;
   const showQr = !!(qrUrl && data.smartLabelQrEnabled);
-  const hasCare = !!(
-    data.allergies ||
-    data.medicalNotes ||
-    data.specialInstructions
-  );
+  const hasCare = !!(data.allergies || data.medicalNotes || data.specialInstructions);
 
   return (
     <div className="label-wrap" style={LABEL_WRAP}>
       <PrintStyles />
       <div
-        className="label-grid"
+        className="label-body"
         style={{
-          display: "grid",
-          gridTemplateColumns: "22% 28% 30% 20%",
-          flex: 1,
+          display: "flex",
+          height: "100%",
+          padding: "0.09in 0.1in",
+          gap: "0.06in",
           overflow: "hidden",
         }}
       >
-        {/* LEFT: Church cross + First Visit badge */}
-        <ChildLeftCol
-          churchName={data.churchName}
-          isFirstTime={data.isFirstTime}
-        />
-
-        {/* CENTER: Child name + Room */}
+        {/* LEFT: church, child name, room, care info */}
         <div
-          className="label-col"
+          className="label-left"
           style={{
-            ...COL,
-            borderRight: "1.5px solid #000",
-            justifyContent: "center",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            minWidth: 0,
           }}
         >
+          {/* Church name + first visit indicator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexShrink: 0 }}>
+            {data.churchName && (
+              <span
+                style={{
+                  fontSize: 7,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {data.churchName}
+              </span>
+            )}
+            {data.isFirstTime && (
+              <span
+                style={{
+                  fontSize: 6.5,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                · ★ FIRST VISIT
+              </span>
+            )}
+          </div>
+
+          {/* Child name */}
           <div
             style={{
-              fontSize: 19,
+              fontSize: 32,
               fontWeight: 900,
-              lineHeight: 1.1,
+              lineHeight: 1,
               color: "#000",
               wordBreak: "break-word",
+              flexShrink: 0,
             }}
           >
             {data.childName}
           </div>
+
+          {/* Room */}
           {data.roomName && (
             <div
               style={{
                 fontSize: 12,
                 fontWeight: 700,
-                marginTop: 6,
+                marginTop: 5,
                 color: "#000",
+                flexShrink: 0,
               }}
             >
               {data.roomName}
             </div>
           )}
-        </div>
 
-        {/* CARE: Allergies + Medical printed directly (not hidden behind QR) */}
-        <div
-          className="label-col"
-          style={{
-            ...COL,
-            borderRight: "1.5px solid #000",
-            justifyContent: "center",
-          }}
-        >
+          {/* Care info — plain text, no boxes */}
           {hasCare && (
-            <>
+            <div
+              style={{
+                marginTop: "auto",
+                paddingTop: 5,
+                fontSize: 7.5,
+                lineHeight: 1.55,
+                color: "#000",
+                flexShrink: 0,
+              }}
+            >
               {data.allergies && (
-                <CareBox label="Allergies" text={data.allergies} />
+                <div>
+                  <span style={{ fontWeight: 700 }}>⚠ ALLERGIES: </span>
+                  {data.allergies}
+                </div>
               )}
               {data.medicalNotes && (
-                <CareBox label="Medical" text={data.medicalNotes} />
+                <div>
+                  <span style={{ fontWeight: 700 }}>MEDICAL: </span>
+                  {data.medicalNotes}
+                </div>
               )}
               {data.specialInstructions && (
-                <CareBox label="Notes" text={data.specialInstructions} />
+                <div>
+                  <span style={{ fontWeight: 700 }}>NOTES: </span>
+                  {data.specialInstructions}
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        {/* RIGHT: Smart label QR + Pickup Code */}
+        {/* RIGHT: QR + pickup code */}
         <div
-          className="label-col"
+          className="label-right"
           style={{
-            ...COL,
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            flexShrink: 0,
+            minWidth: showQr ? "1in" : "0.85in",
           }}
         >
-          {showQr ? (
+          {showQr && (
             <>
               <div
                 style={{
                   fontSize: 6,
-                  fontWeight: 900,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.03em",
-                  textAlign: "center",
-                  lineHeight: 1,
-                  marginBottom: 2,
-                }}
-              >
-                SMART LABEL
-              </div>
-              <QRCodeImage value={qrUrl!} size={42} />
-              <div
-                style={{
-                  fontSize: 5.5,
-                  textAlign: "center",
-                  lineHeight: 1.2,
-                  marginTop: 2,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                SCAN FOR COMPLETE
-                <br />
-                CARE INFO
-              </div>
-              <div
-                style={{
-                  fontSize: 5,
-                  textAlign: "center",
                   fontWeight: 700,
-                  marginTop: 1,
                   textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  lineHeight: 1,
+                  marginBottom: 3,
+                  color: "#555",
                 }}
               >
-                AUTHORIZED STAFF ONLY
+                SCAN · STAFF ONLY
               </div>
+              <QRCodeImage value={qrUrl!} size={44} />
               <div
                 style={{
-                  width: "90%",
-                  borderTop: "0.75px solid #000",
-                  margin: "3px 0",
+                  width: "80%",
+                  borderTop: "1px solid #ccc",
+                  margin: "5px 0 4px",
                 }}
               />
-              <PickupCode code={data.securityCode} size={14} />
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: 16, marginBottom: 4, lineHeight: 1 }}>🔒</div>
-              <PickupCode code={data.securityCode} size={18} />
             </>
           )}
+          <div
+            style={{
+              fontSize: 7,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
+              marginBottom: 4,
+            }}
+          >
+            PICKUP CODE
+          </div>
+          <div
+            style={{
+              fontSize: showQr ? 22 : 30,
+              fontWeight: 900,
+              fontFamily: "monospace",
+              letterSpacing: "0.06em",
+              lineHeight: 1,
+              color: "#000",
+            }}
+          >
+            {data.securityCode}
+          </div>
         </div>
       </div>
     </div>
@@ -493,265 +429,106 @@ export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
 
 export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
   const parts = data.parentName.trim().split(/\s+/);
-  const lastName =
-    parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? "";
+  const lastName = parts.length > 1 ? parts[parts.length - 1] : parts[0] ?? "";
   const familyName = lastName.toUpperCase() + " FAMILY";
 
   return (
     <div className="label-wrap" style={LABEL_WRAP}>
       <PrintStyles />
-      {/* 3-column main body */}
       <div
-        className="label-grid"
+        className="label-body"
         style={{
-          display: "grid",
-          gridTemplateColumns: "25% 50% 25%",
-          flex: 1,
+          display: "flex",
+          height: "100%",
+          padding: "0.09in 0.1in",
+          gap: "0.07in",
           overflow: "hidden",
         }}
       >
-        {/* LEFT: SVG Cross+Hill + Church Name + Shield + Pickup Instruction */}
+        {/* LEFT: church, family name, children list */}
         <div
-          className="label-col"
+          className="label-left"
           style={{
-            ...COL,
-            borderRight: "1.5px solid #000",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-            rowGap: "4px",
-          }}
-        >
-          {/* Cross with hill/arch */}
-          <svg
-            width="28"
-            height="24"
-            viewBox="0 0 28 24"
-            style={{ display: "block" }}
-          >
-            <rect x="12" y="0" width="4" height="16" fill="black" />
-            <rect x="4" y="5" width="20" height="4" fill="black" />
-            <path d="M1 24 C1 24 4 15 14 15 C24 15 27 24 27 24 Z" fill="black" />
-          </svg>
-
-          {/* Church name: large bold uppercase, wraps to two lines */}
-          {data.churchName && (
-            <div
-              style={{
-                fontSize: 7.5,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-                lineHeight: 1.2,
-              }}
-            >
-              {data.churchName}
-            </div>
-          )}
-
-          {/* Shield icon + pickup instruction */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 2,
-              marginTop: 2,
-            }}
-          >
-            <svg
-              width="8"
-              height="10"
-              viewBox="0 0 8 10"
-              style={{ flexShrink: 0, marginTop: 1 }}
-            >
-              <path
-                d="M4 0 L8 2 L8 5.5 C8 7.8 6.3 9.2 4 10 C1.7 9.2 0 7.8 0 5.5 L0 2 Z"
-                fill="black"
-              />
-            </svg>
-            <div
-              style={{
-                fontSize: 5.5,
-                fontWeight: 900,
-                textTransform: "uppercase",
-                lineHeight: 1.35,
-                letterSpacing: "0.03em",
-                textAlign: "left",
-              }}
-            >
-              PRESENT THIS CODE &amp; PHOTO ID TO PICK UP
-            </div>
-          </div>
-        </div>
-
-        {/* CENTER: First Time badge + Family name + divider + child rows + auth box */}
-        {/* NOTE: no label-col here — label-col forces padding that would break the full-width badge */}
-        <div
-          style={{
-            borderRight: "1.5px solid #000",
+            flex: 1,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            boxSizing: "border-box",
+            minWidth: 0,
           }}
         >
-          {/* First Time Family: full-width black bar */}
-          {data.isFirstTime && (
-            <div
-              className="first-visit-badge"
-              style={{
-                backgroundColor: "#000",
-                color: "#fff",
-                fontSize: 7,
-                fontWeight: 900,
-                textTransform: "uppercase",
-                textAlign: "center",
-                padding: "3px 6px",
-                letterSpacing: "0.06em",
-                flexShrink: 0,
-                WebkitPrintColorAdjust: "exact",
-                printColorAdjust: "exact",
-              }}
-            >
-              ★ FIRST TIME FAMILY
-            </div>
-          )}
-
-          {/* Inner content */}
-          <div
-            style={{
-              padding: "5px 7px 4px",
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              justifyContent: "center",
-            }}
-          >
-            {/* Family name: very large bold */}
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 900,
-                lineHeight: 1.05,
-                color: "#000",
-                wordBreak: "break-word",
-              }}
-            >
-              {familyName}
-            </div>
-
-            {/* Horizontal divider */}
-            <div
-              style={{
-                borderTop: "1px solid #000",
-                margin: "4px 0 3px",
-                flexShrink: 0,
-              }}
-            />
-
-            {/* Child row: CHILD NAME left, ROOM right */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                gap: 4,
-              }}
-            >
-              <div
+          {/* Church name + first time indicator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5, flexShrink: 0 }}>
+            {data.churchName && (
+              <span
                 style={{
-                  fontSize: 8.5,
+                  fontSize: 7,
                   fontWeight: 700,
-                  color: "#000",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
                 }}
               >
-                {data.childName}
-              </div>
-              {data.roomName && (
-                <div
-                  style={{
-                    fontSize: 8.5,
-                    fontWeight: 700,
-                    color: "#000",
-                    flexShrink: 0,
-                  }}
-                >
-                  {data.roomName}
-                </div>
-              )}
-            </div>
-
-            {/* Authorized pickups: grey rounded box */}
-            <div
-              className="authorized-box"
-              style={{
-                backgroundColor: "#e0e0e0",
-                borderRadius: 4,
-                padding: "3px 5px",
-                marginTop: 5,
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                flexShrink: 0,
-                WebkitPrintColorAdjust: "exact",
-                printColorAdjust: "exact",
-              }}
-            >
-              {/* People icon */}
-              <svg
-                width="12"
-                height="10"
-                viewBox="0 0 12 10"
-                style={{ flexShrink: 0 }}
+                {data.churchName}
+              </span>
+            )}
+            {data.isFirstTime && (
+              <span
+                style={{
+                  fontSize: 6.5,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
               >
-                <circle cx="3.5" cy="2.5" r="2" fill="#000" />
-                <circle cx="8.5" cy="2.5" r="2" fill="#000" />
-                <ellipse cx="3.5" cy="8.5" rx="3.5" ry="2" fill="#000" />
-                <ellipse cx="8.5" cy="8.5" rx="3.5" ry="2" fill="#000" />
-              </svg>
-              <div>
-                <div
-                  style={{
-                    fontSize: 6.5,
-                    fontWeight: 900,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    lineHeight: 1.2,
-                    color: "#000",
-                  }}
-                >
-                  AUTHORIZED PICKUPS
-                </div>
-                <div
-                  style={{
-                    fontSize: 6,
-                    color: "#444",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  See staff with any questions
-                </div>
-              </div>
-            </div>
+                · ★ FIRST TIME FAMILY
+              </span>
+            )}
+          </div>
+
+          {/* Family name */}
+          <div
+            style={{
+              fontSize: 22,
+              fontWeight: 900,
+              lineHeight: 1.05,
+              color: "#000",
+              wordBreak: "break-word",
+              flexShrink: 0,
+            }}
+          >
+            {familyName}
+          </div>
+
+          {/* Child name + room */}
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 10,
+              fontWeight: 400,
+              color: "#000",
+              lineHeight: 1.5,
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontWeight: 700 }}>{data.childName}</span>
+            {data.roomName && (
+              <span style={{ color: "#333" }}>  ·  {data.roomName}</span>
+            )}
           </div>
         </div>
 
-        {/* RIGHT: PICKUP CODE label + divider + large code + divider + shield + safety text */}
+        {/* RIGHT: pickup code + instruction */}
         <div
-          className="label-col"
+          className="label-right"
           style={{
-            ...COL,
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-start",
+            justifyContent: "center",
+            flexShrink: 0,
+            minWidth: "1.05in",
             textAlign: "center",
-            padding: "6px 4px",
           }}
         >
-          {/* PICKUP CODE label */}
           <div
             style={{
               fontSize: 7,
@@ -759,117 +536,38 @@ export function ParentPickupLabel({ data }: { data: SharedLabelData }) {
               textTransform: "uppercase",
               letterSpacing: "0.06em",
               lineHeight: 1,
+              marginBottom: 4,
             }}
           >
             PICKUP CODE
           </div>
-
-          {/* Divider */}
           <div
             style={{
-              borderTop: "1px solid #000",
-              width: "100%",
-              margin: "3px 0",
-            }}
-          />
-
-          {/* Security code: very large */}
-          <div
-            style={{
-              fontSize: 36,
+              fontSize: 34,
               fontWeight: 900,
               fontFamily: "monospace",
-              letterSpacing: "0.02em",
+              letterSpacing: "0.04em",
               lineHeight: 1,
               color: "#000",
             }}
           >
             {data.securityCode}
           </div>
-
-          {/* Divider */}
           <div
             style={{
-              borderTop: "1px solid #000",
-              width: "100%",
-              margin: "3px 0",
-            }}
-          />
-
-          {/* Shield/lock icon + safety text */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 2,
+              marginTop: 8,
+              fontSize: 6,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              lineHeight: 1.5,
+              color: "#000",
+              textAlign: "center",
             }}
           >
-            <svg
-              width="8"
-              height="10"
-              viewBox="0 0 8 10"
-              style={{ flexShrink: 0, marginTop: 1 }}
-            >
-              <path
-                d="M4 0 L8 2 L8 5.5 C8 7.8 6.3 9.2 4 10 C1.7 9.2 0 7.8 0 5.5 L0 2 Z"
-                fill="black"
-              />
-              <rect x="2.5" y="5" width="3" height="2.5" rx="0.4" fill="white" />
-              <path
-                d="M3 5 L3 3.5 Q4 2.5 5 3.5 L5 5"
-                fill="none"
-                stroke="white"
-                strokeWidth="0.7"
-              />
-            </svg>
-            <div
-              style={{
-                fontSize: 5.5,
-                textAlign: "left",
-                lineHeight: 1.35,
-                letterSpacing: "0.02em",
-                color: "#000",
-              }}
-            >
-              This code changes daily for your child&apos;s safety
-            </div>
+            PRESENT THIS CODE<br />&amp; PHOTO ID TO PICK UP
           </div>
         </div>
-      </div>
-
-      {/* FOOTER: full-width black bar with heart icon */}
-      <div
-        className="label-footer"
-        style={{
-          backgroundColor: "#000",
-          color: "#fff",
-          textAlign: "center",
-          fontSize: 7.5,
-          fontWeight: 700,
-          padding: "3px 8px",
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          flexShrink: 0,
-          WebkitPrintColorAdjust: "exact",
-          printColorAdjust: "exact",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 5,
-        }}
-      >
-        <svg
-          width="10"
-          height="9"
-          viewBox="0 0 10 9"
-          style={{ flexShrink: 0 }}
-        >
-          <path
-            d="M5 8.5 C4.5 8 0 5.5 0 3 C0 1.3 1.2 0 2.7 0 C3.6 0 4.4 0.5 5 1.2 C5.6 0.5 6.4 0 7.3 0 C8.8 0 10 1.3 10 3 C10 5.5 5.5 8 5 8.5 Z"
-            fill="white"
-          />
-        </svg>
-        THANK YOU FOR HELPING US KEEP YOUR CHILDREN SAFE!
       </div>
     </div>
   );
