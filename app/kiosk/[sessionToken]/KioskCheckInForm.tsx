@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PrintLabel } from "@/components/ui/PrintLabels";
 
 const ACCENT = "#F28C28";
 
@@ -84,6 +85,11 @@ type ImmediateLabel = {
   medicalNotes: string | null;
   specialInstructions: string | null;
   visitNumber: number | null;
+  qrToken: string | null;
+  isFirstTime: boolean;
+  churchName: string;
+  labelMode: "smart" | "classic";
+  smartLabelQrEnabled: boolean;
 };
 
 function fmtDate(d: string) {
@@ -164,180 +170,6 @@ function RoomSelect({
 }
 
 
-const PRINT_LABEL_STYLE: React.CSSProperties = {
-  width: "4in",
-  height: "2in",
-  boxSizing: "border-box",
-  overflow: "hidden",
-  padding: "0.12in 0.15in",
-  pageBreakAfter: "always",
-  breakAfter: "page",
-  fontFamily: "Arial, Helvetica, sans-serif",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  backgroundColor: "white",
-  color: "#111827",
-};
-
-function ImmediateChildLabel({ label }: { label: ImmediateLabel }) {
-  return (
-    <div style={PRINT_LABEL_STYLE}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            backgroundColor: "#000",
-            color: "#fff",
-            padding: "2px 7px",
-            borderRadius: 3,
-          }}
-        >
-          Child Label
-        </span>
-
-        {label.roomName && (
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 900,
-              border: "1.5px solid #000",
-              padding: "2px 8px",
-              borderRadius: 3,
-              maxWidth: "1.45in",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {label.roomName}
-          </span>
-        )}
-      </div>
-
-      <div style={{ fontSize: 27, fontWeight: 900, lineHeight: 1.05, marginTop: 4 }}>
-        {label.childName}
-      </div>
-
-      <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
-        Parent: {label.parentName}
-        {label.parentPhone ? ` · ${label.parentPhone}` : ""}
-      </div>
-
-      {(label.allergies || label.medicalNotes || label.specialInstructions || label.visitNumber) && (
-        <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-          {label.allergies && (
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 800,
-                color: "#fff",
-                backgroundColor: "#dc2626",
-                padding: "2px 6px",
-                borderRadius: 3,
-                display: "inline-block",
-                maxWidth: "100%",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              ⚠ ALLERGY: {label.allergies}
-            </div>
-          )}
-          {label.medicalNotes && (
-            <div style={{ fontSize: 9.5, color: "#333", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              <strong>Medical:</strong> {label.medicalNotes}
-            </div>
-          )}
-          {label.specialInstructions && (
-            <div style={{ fontSize: 9.5, color: "#333", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              <strong>Instructions:</strong> {label.specialInstructions}
-            </div>
-          )}
-          {typeof label.visitNumber === "number" && (
-            <div style={{ fontSize: 9.5, color: "#333" }}>
-              <strong>Visit #:</strong> {label.visitNumber}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", marginTop: "auto" }}>
-        <div>
-          <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
-          <div
-            style={{
-              fontSize: 29,
-              fontWeight: 900,
-              fontFamily: "monospace",
-              letterSpacing: "0.16em",
-              lineHeight: 1,
-            }}
-          >
-            {label.securityCode}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ImmediateParentLabel({ label }: { label: ImmediateLabel }) {
-  return (
-    <div style={PRINT_LABEL_STYLE}>
-      <div
-        style={{
-          backgroundColor: "#000",
-          color: "#fff",
-          fontSize: 11,
-          fontWeight: 800,
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          padding: "3px 8px",
-          alignSelf: "flex-start",
-          borderRadius: 3,
-        }}
-      >
-        Parent Pickup
-      </div>
-
-      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.08, marginTop: 5 }}>
-        {label.parentName}
-      </div>
-
-      <div style={{ fontSize: 12, color: "#333", marginTop: 3, lineHeight: 1.25 }}>
-        {label.childName}
-      </div>
-
-      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 6 }}>
-        <div style={{ fontSize: 9, color: "#555", marginBottom: 2 }}>SECURITY CODE — REQUIRED FOR PICKUP</div>
-        <div
-          style={{
-            fontSize: 39,
-            fontWeight: 900,
-            fontFamily: "monospace",
-            letterSpacing: "0.18em",
-            lineHeight: 1,
-          }}
-        >
-          {label.securityCode}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ImmediatePrintLabel({ label }: { label: ImmediateLabel }) {
-  return label.labelType === "parent" ? (
-    <ImmediateParentLabel label={label} />
-  ) : (
-    <ImmediateChildLabel label={label} />
-  );
-}
 
 function LabelPreviewCard({ label }: { label: ImmediateLabel }) {
   return (
@@ -656,48 +488,19 @@ export default function KioskCheckInForm({
 if (step === "success") {
   return (
     <>
-      <style jsx global>{`
+      <style>{`
+        @page { size: 4in 2in; margin: 0; }
         @media print {
-          body * {
-            visibility: hidden;
-          }
-
-          #print-area,
-          #print-area * {
-            visibility: visible;
-          }
-
-          #print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background: white;
-          }
-
-          .print-label {
-            width: 4in;
-            height: 2in;
-            border: 2px solid black;
-            padding: 12px;
-            margin-bottom: 12px;
-            page-break-after: always;
-            color: black !important;
-            background: white !important;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-family: Arial, sans-serif;
-          }
-
-          .no-print {
-            display: none !important;
-          }
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body { background: #fff !important; color: #000 !important; }
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
         }
+        .print-only { display: none; }
       `}</style>
 
-      <div className="min-h-screen bg-[#08060D] text-white flex flex-col items-center px-6 py-10">
-        <div className="no-print text-center max-w-xl w-full">
+      <div className="no-print min-h-screen bg-[#08060D] text-white flex flex-col items-center px-6 py-10">
+        <div className="text-center max-w-xl w-full">
           <div className="text-7xl mb-4">✅</div>
 
           <h1 className="text-5xl font-bold mb-4">
@@ -724,68 +527,7 @@ if (step === "success") {
           >
             🖨️ Print Labels
           </button>
-        </div>
 
-        <div id="print-area" className="w-full flex flex-col items-center">
-          {labels.map((label, idx) => (
-            <div
-              key={idx}
-              className="print-label"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-3xl font-black">
-                    {label.childName}
-                  </div>
-
-                  {label.roomName && (
-                    <div className="text-xl mt-1">
-                      Room: {label.roomName}
-                    </div>
-                  )}
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs uppercase font-bold">
-                    {label.labelType === "parent"
-                      ? "Parent Pickup"
-                      : "Child Label"}
-                  </div>
-
-                  <div className="text-4xl font-black mt-1">
-                    {label.securityCode}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <div className="text-lg">
-                  Parent: {label.parentName}
-                </div>
-
-                {label.allergies && (
-                  <div className="text-red-700 font-bold mt-2">
-                    Allergies: {label.allergies}
-                  </div>
-                )}
-
-                {label.medicalNotes && (
-                  <div className="mt-2">
-                    Medical: {label.medicalNotes}
-                  </div>
-                )}
-
-                {label.specialInstructions && (
-                  <div className="mt-2">
-                    Notes: {label.specialInstructions}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="no-print max-w-xl w-full mt-8">
           <button
             onClick={() => window.location.reload()}
             className="w-full bg-[#7B2CBF] text-white text-2xl font-bold py-5 rounded-2xl"
@@ -793,6 +535,12 @@ if (step === "success") {
             Check In Another Family
           </button>
         </div>
+      </div>
+
+      <div className="print-only">
+        {labels.map((label, idx) => (
+          <PrintLabel key={idx} data={label} />
+        ))}
       </div>
     </>
   );

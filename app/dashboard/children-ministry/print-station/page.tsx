@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
-import QRCodeImage from "@/components/ui/QRCodeImage";
+import { PrintLabel, type SharedLabelData } from "@/components/ui/PrintLabels";
 
 const supabase = createClient();
 const ACCENT = "#7B2CBF";
@@ -19,6 +19,7 @@ type PrintJob = {
   parent_phone: string | null;
   room_id: string | null;
   room_name: string | null;
+  church_name: string;
   security_code: string;
   allergies: string | null;
   medical_notes: string | null;
@@ -31,6 +32,24 @@ type PrintJob = {
   qr_token: string | null;
   is_first_time: boolean | null;
 };
+
+function jobToLabelData(job: PrintJob): SharedLabelData {
+  return {
+    labelType: job.label_type,
+    childName: job.child_name,
+    parentName: job.parent_name,
+    roomName: job.room_name,
+    securityCode: job.security_code,
+    allergies: job.allergies,
+    medicalNotes: job.medical_notes,
+    specialInstructions: job.special_instructions,
+    isFirstTime: job.is_first_time ?? false,
+    churchName: job.church_name,
+    qrToken: job.qr_token,
+    labelMode: job.label_mode === "classic" ? "classic" : "smart",
+    smartLabelQrEnabled: job.smart_label_qr_enabled !== false,
+  };
+}
 
 type JobGroup = {
   securityCode: string;
@@ -46,212 +65,6 @@ function fmtTime(iso: string) {
   });
 }
 
-const LABEL: React.CSSProperties = {
-  width: "4in",
-  height: "2in",
-  boxSizing: "border-box",
-  overflow: "hidden",
-  padding: "0.12in 0.15in",
-  pageBreakAfter: "always",
-  breakAfter: "page",
-  fontFamily: "Arial, Helvetica, sans-serif",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-};
-
-function ChildLabel({ job }: { job: PrintJob }) {
-  return (
-    <div style={LABEL}>
-      {/* Top: type tag + room */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            backgroundColor: "#000",
-            color: "#fff",
-            padding: "1px 6px",
-            borderRadius: 3,
-          }}
-        >
-          Child Check-In
-        </span>
-        {job.room_name && (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              border: "1.5px solid #000",
-              padding: "1px 8px",
-              borderRadius: 3,
-            }}
-          >
-            {job.room_name}
-          </span>
-        )}
-      </div>
-
-      {job.is_first_time && (
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 900,
-            color: "#000",
-            marginTop: 2,
-            letterSpacing: "0.04em",
-          }}
-        >
-          ⭐ FIRST VISIT
-        </div>
-      )}
-
-      {/* Child name — large */}
-      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: job.is_first_time ? "1px 0 0" : "4px 0 0" }}>
-        {job.child_name}
-      </div>
-
-      {/* Parent line */}
-      <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
-        Parent: {job.parent_name}
-        {job.parent_phone ? ` · ${job.parent_phone}` : ""}
-      </div>
-
-      {/* Care notes — classic: print inline; smart (default): show badge only */}
-      {(job.allergies || job.medical_notes || job.special_instructions) && job.label_mode === "classic" && (
-        <div style={{ marginTop: 3 }}>
-          {job.allergies && (
-            <div style={{ fontSize: 9, fontWeight: 700, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "3.2in" }}>
-              Allergies: {job.allergies}
-            </div>
-          )}
-          {job.medical_notes && (
-            <div style={{ fontSize: 9, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "3.2in" }}>
-              Medical: {job.medical_notes}
-            </div>
-          )}
-          {job.special_instructions && (
-            <div style={{ fontSize: 9, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "3.2in" }}>
-              Special: {job.special_instructions}
-            </div>
-          )}
-        </div>
-      )}
-      {(job.allergies || job.medical_notes || job.special_instructions) && job.label_mode !== "classic" && (
-        <div style={{ marginTop: 4 }}>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 900,
-              color: "#fff",
-              backgroundColor: "#000",
-              padding: "2px 6px",
-              borderRadius: 3,
-              display: "inline-block",
-            }}
-          >
-            ⚠ SEE CARE NOTES
-          </div>
-        </div>
-      )}
-
-      {/* Bottom: QR left, security code right */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
-        {job.label_mode === "smart" && job.qr_token && job.smart_label_qr_enabled !== false ? (
-          <QRCodeImage
-            value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${job.qr_token}`}
-            size={56}
-          />
-        ) : (
-          <div />
-        )}
-        <div>
-          <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 900,
-              fontFamily: "monospace",
-              letterSpacing: "0.18em",
-              lineHeight: 1,
-            }}
-          >
-            {job.security_code}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ParentLabel({ job }: { job: PrintJob }) {
-  return (
-    <div style={LABEL}>
-      {/* Header */}
-      <div
-        style={{
-          backgroundColor: "#000",
-          color: "#fff",
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.1em",
-          padding: "2px 8px",
-          alignSelf: "flex-start",
-          borderRadius: 3,
-        }}
-      >
-        👪 Parent Pickup
-      </div>
-
-      {job.is_first_time && (
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 900,
-            marginTop: 5,
-            color: "#000",
-            letterSpacing: "0.04em",
-          }}
-        >
-          ⭐ FIRST TIME FAMILY
-        </div>
-      )}
-
-      {/* Parent name */}
-      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: job.is_first_time ? 2 : 6 }}>
-        {job.parent_name}
-      </div>
-
-      {/* Children names (stored in child_name for parent label) */}
-      <div style={{ fontSize: 12, color: "#333", marginTop: 4 }}>
-        {job.child_name}
-      </div>
-
-      {/* Security code — very large, bottom */}
-      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 6 }}>
-        <div style={{ fontSize: 9, color: "#555", marginBottom: 2 }}>SECURITY CODE — REQUIRED FOR PICKUP</div>
-        <div
-          style={{
-            fontSize: 40,
-            fontWeight: 900,
-            fontFamily: "monospace",
-            letterSpacing: "0.2em",
-            lineHeight: 1,
-          }}
-        >
-          {job.security_code}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PrintLabel({ job }: { job: PrintJob }) {
-  return job.label_type === "parent" ? <ParentLabel job={job} /> : <ChildLabel job={job} />;
-}
 
 export default function PrintStationPage() {
   const router = useRouter();
@@ -390,7 +203,7 @@ export default function PrintStationPage() {
       {/* Labels rendered only during window.print() */}
       <div className="print-area">
         {selectedJobs.map((job) => (
-          <PrintLabel key={job.id} job={job} />
+          <PrintLabel key={job.id} data={jobToLabelData(job)} />
         ))}
       </div>
 

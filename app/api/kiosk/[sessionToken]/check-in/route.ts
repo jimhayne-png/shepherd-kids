@@ -34,6 +34,10 @@ type ImmediateLabel = {
   specialInstructions: string | null;
   visitNumber: number | null;
   qrToken: string | null;
+  isFirstTime: boolean;
+  churchName: string;
+  labelMode: 'smart' | 'classic';
+  smartLabelQrEnabled: boolean;
 };
 
 function serializeAllergies(allergies: string[], allergyOther: string): string | null {
@@ -165,7 +169,7 @@ export async function POST(
   }
 
   const [{ data: churchRow }, { data: activeRoomsRaw }] = await Promise.all([
-    admin.from('churches').select('timezone, label_mode, smart_label_qr_enabled').eq('id', session.church_id).maybeSingle(),
+    admin.from('churches').select('timezone, label_mode, smart_label_qr_enabled, name').eq('id', session.church_id).maybeSingle(),
     admin
       .from('cm_checkin_rooms')
       .select('id, name, min_age, max_age')
@@ -174,10 +178,12 @@ export async function POST(
       .order('min_age', { ascending: true }),
   ]);
 
-  const cr2 = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null } | null;
+  const cr2 = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null; name?: string | null } | null;
   const tz = cr2?.timezone ?? 'America/Los_Angeles';
-  const labelMode = cr2?.label_mode === 'classic' ? 'classic' : 'smart';
+  const labelMode: 'smart' | 'classic' = cr2?.label_mode === 'classic' ? 'classic' : 'smart';
   const smartLabelQrEnabled = cr2?.smart_label_qr_enabled !== false;
+  const churchName = cr2?.name ?? '';
+  const isFirstTimeFamily = !!isNewFamily;
 
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
 
@@ -344,6 +350,10 @@ export async function POST(
       specialInstructions: child?.specialInstructions || null,
       visitNumber: null,
       qrToken: (record as { qr_token?: string | null }).qr_token ?? null,
+      isFirstTime: isFirstTimeFamily,
+      churchName,
+      labelMode,
+      smartLabelQrEnabled,
     };
   });
 
@@ -365,6 +375,10 @@ export async function POST(
         specialInstructions: null,
         visitNumber: null,
         qrToken: null,
+        isFirstTime: isFirstTimeFamily,
+        churchName,
+        labelMode,
+        smartLabelQrEnabled,
       }
     : null;
 
@@ -396,6 +410,7 @@ export async function POST(
         smart_label_qr_enabled: smartLabelQrEnabled,
         status: 'pending',
         qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
+        is_first_time: isFirstTimeFamily,
       };
     });
 
@@ -423,6 +438,7 @@ export async function POST(
           label_mode: labelMode,
           smart_label_qr_enabled: smartLabelQrEnabled,
           status: 'pending',
+          is_first_time: isFirstTimeFamily,
         }
       : null;
 

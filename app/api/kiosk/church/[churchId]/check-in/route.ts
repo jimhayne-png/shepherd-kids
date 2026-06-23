@@ -38,6 +38,9 @@ type ImmediateLabel = {
   visitNumber: number | null;
   qrToken: string | null;
   isFirstTime: boolean;
+  churchName: string;
+  labelMode: 'smart' | 'classic';
+  smartLabelQrEnabled: boolean;
 };
 
 function clean(value: string | undefined | null): string {
@@ -206,14 +209,15 @@ export async function POST(
 
   const { data: churchRow } = await admin
     .from('churches')
-    .select('timezone, label_mode, smart_label_qr_enabled')
+    .select('timezone, label_mode, smart_label_qr_enabled, name')
     .eq('id', churchId)
     .maybeSingle();
 
-  const cr = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null } | null;
+  const cr = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null; name?: string | null } | null;
   const tz = cr?.timezone ?? 'America/Los_Angeles';
-  const labelMode = cr?.label_mode === 'classic' ? 'classic' : 'smart';
+  const labelMode: 'smart' | 'classic' = cr?.label_mode === 'classic' ? 'classic' : 'smart';
   const smartLabelQrEnabled = cr?.smart_label_qr_enabled !== false;
+  const churchName = cr?.name ?? '';
 
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
@@ -318,6 +322,9 @@ export async function POST(
       visitNumber: null,
       qrToken: (record as { qr_token?: string | null }).qr_token ?? null,
       isFirstTime: isFirstTimeFamily,
+      churchName,
+      labelMode,
+      smartLabelQrEnabled,
     };
   });
 
@@ -339,6 +346,9 @@ export async function POST(
     visitNumber: null,
     qrToken: null,
     isFirstTime: isFirstTimeFamily,
+    churchName,
+    labelMode,
+    smartLabelQrEnabled,
   };
 
   const labels: ImmediateLabel[] = [...childLabels, parentLabel];

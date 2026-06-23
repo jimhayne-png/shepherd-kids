@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import QRCodeImage from "@/components/ui/QRCodeImage";
+import { PrintLabel } from "@/components/ui/PrintLabels";
 
 type Session = { id: string; service_name: string; date: string; session_group: string | null };
 type Group = { name: string; sessions: Session[] };
@@ -37,6 +37,9 @@ type ImmediateLabel = {
   visitNumber: number | null;
   qrToken: string | null;
   isFirstTime: boolean;
+  churchName: string;
+  labelMode: "smart" | "classic";
+  smartLabelQrEnabled: boolean;
 };
 
 type Props = {
@@ -803,13 +806,9 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
 
         {/* Print-only label area */}
         <div className="print-only">
-          {labels.map((label, i) =>
-            label.labelType === "parent" ? (
-              <KioskParentLabel key={i} label={label} churchName={churchName} />
-            ) : (
-              <KioskChildLabel key={i} label={label} churchName={churchName} labelMode={labelMode} smartLabelQrEnabled={smartLabelQrEnabled} />
-            ),
-          )}
+          {labels.map((label, i) => (
+            <PrintLabel key={i} data={label} />
+          ))}
         </div>
       </>
     );
@@ -818,212 +817,6 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   return null;
 }
 
-// ── Label components ──────────────────────────────────────────────────────────
-
-const LABEL_STYLE: React.CSSProperties = {
-  width: "4in",
-  height: "2in",
-  boxSizing: "border-box",
-  overflow: "hidden",
-  padding: "0.12in 0.15in",
-  pageBreakAfter: "always",
-  breakAfter: "page",
-  fontFamily: "Arial, Helvetica, sans-serif",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  backgroundColor: "#ffffff",
-  color: "#000000",
-};
-
-function KioskChildLabel({ label, churchName, labelMode, smartLabelQrEnabled }: { label: ImmediateLabel; churchName: string; labelMode: "smart" | "classic"; smartLabelQrEnabled: boolean }) {
-  const hasCareNotes = !!(label.allergies || label.medicalNotes || label.specialInstructions);
-
-  const careLines: string[] = [];
-  if (label.allergies) careLines.push(`Allergies: ${label.allergies}`);
-  if (label.medicalNotes) careLines.push(`Medical: ${label.medicalNotes}`);
-  if (label.specialInstructions) careLines.push(`Special: ${label.specialInstructions}`);
-
-  return (
-    <div style={LABEL_STYLE}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            backgroundColor: "#000",
-            color: "#fff",
-            padding: "1px 6px",
-            borderRadius: 3,
-          }}
-        >
-          Child Check-In
-        </span>
-        <span style={{ fontSize: 9, color: "#555", textAlign: "right" }}>{churchName}</span>
-        {label.roomName && (
-          <span
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              border: "1.5px solid #000",
-              padding: "1px 8px",
-              borderRadius: 3,
-              color: "#000",
-            }}
-          >
-            {label.roomName}
-          </span>
-        )}
-      </div>
-      {label.isFirstTime && (
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 900,
-            color: "#000",
-            marginTop: 2,
-            letterSpacing: "0.04em",
-          }}
-        >
-          ⭐ FIRST VISIT
-        </div>
-      )}
-
-      <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.1, margin: label.isFirstTime ? "1px 0 0" : "4px 0 0", color: "#000" }}>
-        {label.childName}
-      </div>
-      <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>
-        Parent: {label.parentName}
-        {label.parentPhone ? ` · ${label.parentPhone}` : ""}
-      </div>
-      {hasCareNotes && labelMode === "classic" && (
-        <div style={{ marginTop: 3 }}>
-          {careLines.map((line, i) => (
-            <div
-              key={i}
-              style={{
-                fontSize: 9,
-                color: "#000",
-                fontWeight: i === 0 && label.allergies ? 700 : 400,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: "3.2in",
-              }}
-            >
-              {line}
-            </div>
-          ))}
-        </div>
-      )}
-      {hasCareNotes && labelMode === "smart" && (
-        <div style={{ marginTop: 4 }}>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 900,
-              color: "#000",
-              border: "1.5px solid #000",
-              padding: "2px 6px",
-              borderRadius: 3,
-              display: "inline-block",
-            }}
-          >
-            ⚠ SEE CARE NOTES
-          </div>
-        </div>
-      )}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto" }}>
-        {labelMode === "smart" && label.qrToken && smartLabelQrEnabled ? (
-          <QRCodeImage
-            value={`${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/children-ministry/scan/${label.qrToken}`}
-            size={56}
-          />
-        ) : (
-          <div />
-        )}
-        <div>
-          <div style={{ fontSize: 9, textAlign: "right", color: "#555", marginBottom: 1 }}>PICKUP CODE</div>
-          <div
-            style={{
-              fontSize: 28,
-              fontWeight: 900,
-              fontFamily: "monospace",
-              letterSpacing: "0.18em",
-              lineHeight: 1,
-              color: "#000",
-            }}
-          >
-            {label.securityCode}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function KioskParentLabel({ label, churchName }: { label: ImmediateLabel; churchName: string }) {
-  return (
-    <div style={LABEL_STYLE}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div
-          style={{
-            backgroundColor: "#000",
-            color: "#fff",
-            fontSize: 11,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            padding: "2px 8px",
-            borderRadius: 3,
-          }}
-        >
-          Parent Pickup
-        </div>
-        {churchName && (
-          <span style={{ fontSize: 9, color: "#555" }}>{churchName}</span>
-        )}
-      </div>
-      {label.isFirstTime && (
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 900,
-            marginTop: 5,
-            color: "#000",
-            letterSpacing: "0.04em",
-          }}
-        >
-          ⭐ FIRST TIME FAMILY
-        </div>
-      )}
-
-      <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: label.isFirstTime ? 2 : 6, color: "#000" }}>
-        {label.parentName}
-      </div>
-      <div style={{ fontSize: 12, color: "#333", marginTop: 4 }}>
-        {label.childName}
-      </div>
-      <div style={{ marginTop: "auto", borderTop: "1.5px solid #000", paddingTop: 6 }}>
-        <div style={{ fontSize: 9, color: "#555", marginBottom: 2 }}>SECURITY CODE — REQUIRED FOR PICKUP</div>
-        <div
-          style={{
-            fontSize: 40,
-            fontWeight: 900,
-            fontFamily: "monospace",
-            letterSpacing: "0.2em",
-            lineHeight: 1,
-            color: "#000",
-          }}
-        >
-          {label.securityCode}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── ChildCard ─────────────────────────────────────────────────────────────────
 

@@ -14,7 +14,7 @@ function calcAge(dob: string): number {
 }
 
 function randPin(): string {
-  return String(Math.floor(1000 + Math.random() * 9000));
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 type NewChild = {

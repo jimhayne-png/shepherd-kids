@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
 
   const admin = adminClient();
 
-  const [{ data: jobs, error }, { data: rooms }] = await Promise.all([
+  const [{ data: jobs, error }, { data: rooms }, { data: church }] = await Promise.all([
     admin
       .from('cm_label_print_jobs')
       .select('*')
@@ -18,15 +18,22 @@ export async function GET(req: NextRequest) {
       .from('cm_checkin_rooms')
       .select('id, name')
       .eq('church_id', auth.churchId),
+    admin
+      .from('churches')
+      .select('name')
+      .eq('id', auth.churchId)
+      .maybeSingle(),
   ]);
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
 
   const roomMap = Object.fromEntries((rooms ?? []).map((r) => [r.id, r.name]));
+  const churchName = (church as { name?: string | null } | null)?.name ?? '';
 
   const enriched = (jobs ?? []).map((job) => ({
     ...job,
     room_name: job.room_id ? (roomMap[job.room_id] ?? null) : null,
+    church_name: churchName,
   }));
 
   return Response.json({ jobs: enriched });
