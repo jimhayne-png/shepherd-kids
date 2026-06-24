@@ -80,6 +80,56 @@ export async function PATCH(req: NextRequest) {
       completed_steps: [],
       is_complete: false,
     };
+  } else if (action === 'create_test_family') {
+    // Insert a sample family into cm_visitor_families + one child into cm_visitor_children
+    // so the kiosk lookup (which queries cm_visitor_families by phone) can find them.
+    // Phone stored as digits-only to match lookup normalisation.
+    const testPhone = '5550100';
+    const today = new Date().toISOString().split('T')[0];
+
+    // Idempotent — skip if a test family already exists for this church.
+    const { data: existing } = await admin
+      .from('cm_visitor_families')
+      .select('id')
+      .eq('church_id', ctx.churchId)
+      .eq('parent1_phone', testPhone)
+      .maybeSingle();
+
+    if (!existing) {
+      const { data: family, error: famErr } = await admin
+        .from('cm_visitor_families')
+        .insert({
+          church_id: ctx.churchId,
+          parent1_first_name: 'David & Sarah',
+          parent1_last_name: 'Sample',
+          parent1_phone: testPhone,
+          visit_date: today,
+          status: 'new',
+        })
+        .select('id')
+        .single();
+
+      if (famErr || !family) {
+        return Response.json({ error: famErr?.message ?? 'Failed to create test family' }, { status: 500 });
+      }
+
+      await admin.from('cm_visitor_children').insert({
+        church_id: ctx.churchId,
+        family_id: family.id,
+        first_name: 'Emma',
+        last_name: 'Sample',
+        date_of_birth: '2019-06-15',
+      });
+    }
+
+    // Mark step 7 complete and advance.
+    const done = new Set<number>(current.completed_steps ?? []);
+    done.add(7);
+    update = {
+      ...update,
+      completed_steps: Array.from(done),
+      current_step: Math.max(current.current_step, 8),
+    };
   } else {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
   }
