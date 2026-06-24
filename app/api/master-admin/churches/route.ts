@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 import { type NextRequest } from "next/server";
 
 const MASTER_ADMIN_EMAIL = "jim@gratefulconsultinggroup.com";
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest) {
       .from("churches")
       .select("id, name, city, state, email, phone, subscription_status, trial_ends_at, created_at")
       .order("created_at", { ascending: false }),
-    admin.from("church_users").select("church_id, user_id, role").eq("role", "admin"),
+    admin.from("church_users").select("church_id, user_id, role, password_set").eq("role", "admin"),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -86,11 +87,15 @@ export async function GET(req: NextRequest) {
   );
 
   // Map church_id → first admin's user info
-  const adminMap = new Map<string, { userId: string; email: string | null }>();
+  const adminMap = new Map<string, { userId: string; email: string | null; passwordSet: boolean }>();
   for (const cu of cuRes.data ?? []) {
     if (!adminMap.has(cu.church_id)) {
       const u = userMap.get(cu.user_id);
-      adminMap.set(cu.church_id, { userId: cu.user_id, email: u?.email ?? null });
+      adminMap.set(cu.church_id, {
+        userId: cu.user_id,
+        email: u?.email ?? null,
+        passwordSet: cu.password_set ?? true,
+      });
     }
   }
 
@@ -123,13 +128,12 @@ export async function POST(req: NextRequest) {
 
   // 1. Ensure the admin user exists (create if new)
   let userId: string;
+  let isNewUser = false;
 
   const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
   const existing = (existingUsers?.users ?? []).find(
     (u) => u.email?.toLowerCase() === adminEmail
   );
-
-  let inviteLink: string | null = null;
 
   if (existing) {
     userId = existing.id;
@@ -146,20 +150,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: createErr?.message ?? "Failed to create user." }, { status: 500 });
     }
     userId = created.user.id;
-
-    // Generate password-set link so the admin can share it.
-    // redirectTo must point at /auth/callback so the token is exchanged for
-    // a session, and next=/auth/reset-password tells the callback where to
-    // send the user afterwards.
-    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
-    const { data: linkData } = await admin.auth.admin.generateLink({
-      type: "recovery",
-      email: adminEmail,
-      options: {
-        redirectTo: `${baseUrl}/auth/confirm`,
-      },
-    });
-    inviteLink = (linkData as { properties?: { action_link?: string } } | null)?.properties?.action_link ?? null;
+    isNewUser = true;
   }
 
   // 2. Generate unique slug
@@ -190,11 +181,17 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: churchErr.message }, { status: 500 });
   }
 
-  // 4. Link user to church as admin
+  // 4. Link user to church as admin.
+  //    New users get a setup_token so they can set their password via /auth/setup-password.
+  //    Existing users already have a password.
+  const setupToken = isNewUser ? randomUUID() : null;
+
   const { error: cuErr } = await admin.from("church_users").insert({
     church_id: church.id,
     user_id: userId,
     role: "admin",
+    password_set: !isNewUser,
+    setup_token: setupToken,
   });
   if (cuErr) {
     return Response.json({ error: cuErr.message }, { status: 500 });
@@ -205,10 +202,13 @@ export async function POST(req: NextRequest) {
     DEFAULT_DEPARTMENTS.map((d) => ({ ...d, church_id: church.id }))
   );
 
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  const inviteLink = setupToken ? `${baseUrl}/auth/setup-password?token=${setupToken}` : null;
+
   return Response.json({ success: true, church_id: church.id, invite_link: inviteLink });
 }
 
-// ── PATCH — deactivate / reactivate / get impersonate link ───────────────────
+// ── PATCH — deactivate / reactivate / impersonate / regenerate-setup ─────────
 
 export async function PATCH(req: NextRequest) {
   if (!(await checkMasterAdmin(req))) return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -242,7 +242,6 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (action === "impersonate") {
-    // Find the admin user for this church
     const { data: cu } = await admin
       .from("church_users")
       .select("user_id")
@@ -268,6 +267,40 @@ export async function PATCH(req: NextRequest) {
 
     const link = (linkData as { properties?: { action_link?: string } } | null)?.properties?.action_link;
     return Response.json({ link: link ?? null, email: userEmail });
+  }
+
+  if (action === "regenerate-setup") {
+    // Find the admin user for this church
+    const { data: cu } = await admin
+      .from("church_users")
+      .select("id, user_id, password_set")
+      .eq("church_id", churchId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!cu?.user_id) {
+      return Response.json({ error: "No admin user found for this church." }, { status: 404 });
+    }
+
+    if (cu.password_set) {
+      return Response.json({ error: "This admin has already set their password." }, { status: 409 });
+    }
+
+    const { data: userData } = await admin.auth.admin.getUserById(cu.user_id);
+    const userEmail = userData?.user?.email ?? null;
+
+    const newToken = randomUUID();
+    const { error: updateErr } = await admin
+      .from("church_users")
+      .update({ setup_token: newToken })
+      .eq("id", cu.id);
+
+    if (updateErr) return Response.json({ error: updateErr.message }, { status: 500 });
+
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+    const setupLink = `${baseUrl}/auth/setup-password?token=${newToken}`;
+
+    return Response.json({ setup_link: setupLink, email: userEmail });
   }
 
   return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });

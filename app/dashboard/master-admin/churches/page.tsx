@@ -19,7 +19,7 @@ type Church = {
   subscription_status: string | null;
   trial_ends_at: string | null;
   created_at: string;
-  admin: { userId: string; email: string | null } | null;
+  admin: { userId: string; email: string | null; passwordSet: boolean } | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ function CreateChurchModal({
       subscription_status: "trial",
       trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       created_at: new Date().toISOString(),
-      admin: { userId: "", email: form.adminEmail.trim() },
+      admin: { userId: "", email: form.adminEmail.trim(), passwordSet: false },
     };
 
     onCreated(newChurch, d.invite_link ?? null);
@@ -258,7 +258,7 @@ function InviteLinkModal({ link, email, onClose }: { link: string; email: string
           {link}
         </div>
         <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 20px" }}>
-          This link expires after use. If needed, generate a new one via the Impersonate action.
+          This link works until the admin sets their password. Use <strong>Regenerate Setup Link</strong> from the Actions menu to issue a new one if needed.
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <button
@@ -441,6 +441,28 @@ export default function ChurchManagementPage() {
         const data = d as { link: string | null; email: string };
         if (data.link) setImpersonateModal({ link: data.link, email: data.email });
         else setActionError("Could not generate impersonation link.");
+      }
+      setActionLoading(null);
+      return;
+    }
+
+    if (action === "regenerate-setup") {
+      const church = churches.find((c) => c.id === churchId);
+      const res = await fetch("/api/master-admin/churches", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ churchId, action }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setActionError((d as { error?: string }).error ?? "Failed.");
+      } else {
+        const data = d as { setup_link: string | null; email: string | null };
+        if (data.setup_link) {
+          setInviteModal({ link: data.setup_link, email: data.email ?? church?.admin?.email ?? "" });
+        } else {
+          setActionError("Could not generate setup link.");
+        }
       }
       setActionLoading(null);
       return;
@@ -644,9 +666,11 @@ export default function ChurchManagementPage() {
         const isSuspended = c.subscription_status === "suspended";
 
         type Item = { label: string; action?: string; destructive?: boolean; href?: string };
+        const needsSetup = c.admin && !c.admin.passwordSet;
         const items: Item[] = [
-          { label: "🏛️ Open Dashboard", href: `/dashboard?churchId=${c.id}` },
+          { label: "🏛️ Open Dashboard",    href: `/dashboard?churchId=${c.id}` },
           { label: "🔑 Impersonate Admin", action: "impersonate" },
+          ...(needsSetup ? [{ label: "🔗 Regenerate Setup Link", action: "regenerate-setup" }] : []),
           { label: isSuspended ? "✅ Reactivate" : "🚫 Deactivate", action: isSuspended ? "reactivate" : "deactivate", destructive: !isSuspended },
           { label: "🗑️ Delete Church", action: "delete", destructive: true },
         ];
@@ -658,10 +682,13 @@ export default function ChurchManagementPage() {
               style={{ position: "fixed", right: openMenu.right, top: openMenu.top, zIndex: 9999, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 210, overflow: "hidden" }}
               onClick={(e) => e.stopPropagation()}
             >
-              {items.map((item, i) => (
+              {items.map((item, i) => {
+                const isDeactivateItem = item.action === "deactivate" || item.action === "reactivate";
+                const isDeleteItem     = item.action === "delete";
+                return (
                 <div key={i}>
-                  {i === 2 && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
-                  {i === 3 && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
+                  {isDeactivateItem && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
+                  {isDeleteItem     && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
                   {item.href ? (
                     <a
                       href={item.href}
@@ -691,7 +718,8 @@ export default function ChurchManagementPage() {
                     </button>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </>
         );
