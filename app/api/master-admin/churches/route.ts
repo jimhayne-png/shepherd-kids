@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
       type: "recovery",
       email: adminEmail,
       options: {
-        redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password`,
+        redirectTo: `${baseUrl}/auth/confirm`,
       },
     });
     inviteLink = (linkData as { properties?: { action_link?: string } } | null)?.properties?.action_link ?? null;

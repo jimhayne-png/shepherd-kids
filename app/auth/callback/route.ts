@@ -74,8 +74,19 @@ export async function GET(request: Request) {
   }
 
   if (!verified) {
-    console.error("[auth/callback] no valid code or token_hash/type");
-    return NextResponse.redirect(`${origin}/?error=auth`);
+    // The browser may be carrying tokens in the URL hash fragment (implicit flow).
+    // Server Route Handlers never see hash fragments, so we return a tiny HTML page
+    // that forwards window.location.hash to /auth/confirm where a client component
+    // can call setSession() with the tokens.
+    console.log("[auth/callback] no server params — returning hash-forward shim");
+    return new Response(
+      `<!doctype html><html><head><meta charset="utf-8"></head><body><script>
+        var h = window.location.hash;
+        if (h) { window.location.replace('/auth/confirm' + h); }
+        else    { window.location.replace('/?error=auth'); }
+      <\/script></body></html>`,
+      { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } }
+    );
   }
 
   const destination = isRecovery ? "/auth/reset-password" : next;
