@@ -208,19 +208,26 @@ export default function SetupWizardPage() {
     setSaving(true);
     try {
       const token = accessToken || (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch("/api/children-ministry/service-events", {
+      // Generate a random 4-digit kiosk PIN (same as Check-In Setup does).
+      const kioskPin = String(Math.floor(1000 + Math.random() * 9000));
+      const res = await fetch("/api/checkin/sessions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ title: serviceName, event_date: serviceDate, start_time: serviceTime || null }),
+        body: JSON.stringify({
+          serviceName: serviceName.trim(),
+          date: serviceDate,
+          scheduledTime: serviceTime || null,
+          kioskPin,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         const msg = (body as { error?: string }).error ?? `HTTP ${res.status}`;
-        console.error("[wizard step 3] service-events error:", msg);
+        console.error("[wizard step 3] checkin/sessions error:", msg);
         setStepError((s) => ({ ...s, 3: msg }));
         setStepStatus((s) => ({ ...s, 3: "error" }));
         return;
