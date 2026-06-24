@@ -26,9 +26,7 @@ async function churchIdFromCustomer(custId: string): Promise<string | null> {
   return data?.church_id ?? null;
 }
 
-// Map Stripe subscription status → churches.subscription_status.
-// The existing trial-status route grants access when status === 'active',
-// so we treat trialing (card on file, trial period) as 'active' as well.
+// Map Stripe subscription status → churches.subscription_status
 function toAppStatus(status: Stripe.Subscription.Status): string {
   switch (status) {
     case 'active':
@@ -41,7 +39,6 @@ function toAppStatus(status: Stripe.Subscription.Status): string {
     case 'incomplete_expired':
       return 'canceled';
     default:
-      // incomplete, paused — leave as trial so existing logic handles access
       return 'trial';
   }
 }
@@ -52,17 +49,25 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const custId = customerId(sub.customer);
   if (!custId) return;
 
-  const churchId =
-    sub.metadata?.church_id || (await churchIdFromCustomer(custId));
+  const churchId = sub.metadata?.church_id || (await churchIdFromCustomer(custId));
   if (!churchId) {
     console.error('[webhook] no church_id for subscription', sub.id);
     return;
   }
 
+  const item = sub.items?.data?.[0];
+  const priceId = item?.price?.id ?? null;
   const trialEnd = sub.trial_end
     ? new Date(sub.trial_end * 1000).toISOString()
     : null;
-  const priceId = sub.items?.data?.[0]?.price?.id ?? null;
+
+  // current_period_start/end were moved to SubscriptionItem in API 2026-02-25.clover
+  const currentPeriodStart = item?.current_period_start
+    ? new Date(item.current_period_start * 1000).toISOString()
+    : null;
+  const currentPeriodEnd = item?.current_period_end
+    ? new Date(item.current_period_end * 1000).toISOString()
+    : null;
 
   await admin.from('church_subscriptions').upsert(
     {
@@ -73,6 +78,8 @@ async function syncSubscription(sub: Stripe.Subscription) {
       status: sub.status,
       cancel_at_period_end: sub.cancel_at_period_end ?? false,
       trial_end: trialEnd,
+      current_period_start: currentPeriodStart,
+      current_period_end: currentPeriodEnd,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'church_id' }
@@ -107,26 +114,37 @@ export async function POST(request: NextRequest) {
 
   try {
     switch (event.type) {
-      // ── Checkout completed — link customer + subscription IDs ──────────────
+      // ── Checkout completed ─────────────────────────────────────────────────
+      // Retrieve the subscription and do a full sync so all fields are
+      // populated immediately — don't wait for customer.subscription.created.
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const churchId = session.metadata?.church_id;
-        if (!churchId) break;
+        const custId   = customerId(session.customer);
+        const subId    = subscriptionId(session.subscription);
 
-        const custId = customerId(session.customer);
-        const subId = subscriptionId(session.subscription);
         if (!custId) break;
 
-        await admin.from('church_subscriptions').upsert(
-          {
-            church_id: churchId,
-            stripe_customer_id: custId,
-            ...(subId ? { stripe_subscription_id: subId } : {}),
-            status: 'incomplete',
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'church_id' }
-        );
+        if (subId) {
+          // Full sync — retrieves subscription and writes all fields
+          const sub = await stripe.subscriptions.retrieve(subId);
+          await syncSubscription(sub);
+        } else {
+          // No subscription yet (shouldn't happen with mode:'subscription',
+          // but guard anyway by storing at least the customer link)
+          console.warn('[webhook] checkout.session.completed: no subscription id', session.id);
+          if (churchId) {
+            await admin.from('church_subscriptions').upsert(
+              {
+                church_id: churchId,
+                stripe_customer_id: custId,
+                status: 'incomplete',
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'church_id' }
+            );
+          }
+        }
         break;
       }
 
