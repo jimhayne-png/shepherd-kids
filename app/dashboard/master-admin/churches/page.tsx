@@ -132,6 +132,7 @@ function CreateChurchModal({
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "9px 12px", border: "1px solid #d1d5db",
     borderRadius: 8, fontSize: 13, boxSizing: "border-box",
+    color: "#111827", backgroundColor: "white",
   };
   const labelStyle: React.CSSProperties = {
     display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4,

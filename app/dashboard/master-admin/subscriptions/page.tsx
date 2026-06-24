@@ -361,7 +361,7 @@ function BillingControlsModal({
               onChange={(e) => setOverrideReason(e.target.value)}
               rows={2}
               placeholder="e.g. Comp account, partnership, grace period"
-              style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, resize: "vertical", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, resize: "vertical", boxSizing: "border-box", color: "#111827", backgroundColor: "white" }}
             />
           </div>
 
@@ -373,7 +373,7 @@ function BillingControlsModal({
               type="date"
               value={overrideUntil}
               onChange={(e) => setOverrideUntil(e.target.value)}
-              style={{ padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13 }}
+              style={{ padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, color: "#111827", backgroundColor: "white" }}
             />
           </div>
         </div>
@@ -411,7 +411,7 @@ function BillingControlsModal({
                 value={discountPercent}
                 onChange={(e) => setDiscountPercent(e.target.value)}
                 placeholder="e.g. 20"
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, boxSizing: "border-box", color: "#111827", backgroundColor: "white" }}
               />
             </div>
             <div>
@@ -423,7 +423,7 @@ function BillingControlsModal({
                 value={discountReason}
                 onChange={(e) => setDiscountReason(e.target.value)}
                 placeholder="e.g. Partner church, referral"
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, boxSizing: "border-box", color: "#111827", backgroundColor: "white" }}
               />
             </div>
           </div>
@@ -436,7 +436,7 @@ function BillingControlsModal({
               type="date"
               value={discountUntil}
               onChange={(e) => setDiscountUntil(e.target.value)}
-              style={{ padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13 }}
+              style={{ padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 13, color: "#111827", backgroundColor: "white" }}
             />
           </div>
         </div>
