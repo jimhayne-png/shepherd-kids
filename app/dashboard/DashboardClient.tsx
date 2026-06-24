@@ -140,10 +140,14 @@ export default function DashboardClient({
     fetch("/api/trial-status", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : { expired: false }))
       .then((d) => {
-        if (d.expired) setTrialExpired(true);
+        if (d.needsBilling) {
+          router.push("/dashboard/billing");
+        } else if (d.expired) {
+          setTrialExpired(true);
+        }
       })
       .catch(() => {});
-  }, [isPlatformAdmin, churchId]);
+  }, [isPlatformAdmin, churchId, router]);
 
   useEffect(() => {
     if (!churchId) return;

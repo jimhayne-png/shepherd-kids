@@ -9,20 +9,29 @@ function adminClient() {
   );
 }
 
+// Stripe statuses that explicitly grant access.
+const ALLOWED_STATUSES = new Set(['active', 'trialing']);
+// Stripe statuses that explicitly revoke access.
+const DENIED_STATUSES = new Set(['canceled', 'past_due', 'unpaid', 'incomplete_expired']);
+
 export async function GET(_req: NextRequest) {
-  // Identify user via SSR cookie session (written by /auth/callback).
   const ssrClient = await createSSRClient();
   const { data: { user } } = await ssrClient.auth.getUser();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = adminClient();
 
-  // Owner accounts are always active — never show trial expired.
+  // Master admin and owner accounts always bypass billing gate.
+  const masterAdminEmail = (process.env.MASTER_ADMIN_EMAIL ?? '').trim().toLowerCase();
   const ownerEmails = (process.env.OWNER_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  if (ownerEmails.includes((user.email ?? '').toLowerCase())) {
+  const userEmail = (user.email ?? '').toLowerCase();
+  if (
+    (masterAdminEmail && userEmail === masterAdminEmail) ||
+    ownerEmails.includes(userEmail)
+  ) {
     return Response.json({ expired: false, is_owner: true, trial_ends_at: null });
   }
 
@@ -38,7 +47,7 @@ export async function GET(_req: NextRequest) {
 
   const { data: church } = await admin
     .from('churches')
-    .select('trial_ends_at, subscription_status')
+    .select('trial_ends_at')
     .eq('id', cu.church_id)
     .single();
 
@@ -46,16 +55,34 @@ export async function GET(_req: NextRequest) {
     return Response.json({ expired: false, is_owner: false, trial_ends_at: null });
   }
 
-  // Active subscription overrides trial expiry.
-  if (church.subscription_status === 'active') {
+  const { data: sub } = await admin
+    .from('church_subscriptions')
+    .select('status, admin_override_enabled, admin_override_until')
+    .eq('church_id', cu.church_id)
+    .maybeSingle();
+
+  const now = new Date();
+
+  // Admin override: grants access regardless of Stripe status.
+  if (sub?.admin_override_enabled) {
+    const overrideUntil = sub.admin_override_until ? new Date(sub.admin_override_until) : null;
+    if (!overrideUntil || overrideUntil > now) {
+      return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at });
+    }
+  }
+
+  const stripeStatus = sub?.status ?? null;
+
+  // Stripe says active → allow.
+  if (stripeStatus && ALLOWED_STATUSES.has(stripeStatus)) {
     return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at });
   }
 
-  // No trial date set means no enforcement.
-  if (!church.trial_ends_at) {
-    return Response.json({ expired: false, is_owner: false, trial_ends_at: null });
+  // Stripe says explicitly bad → deny.
+  if (stripeStatus && DENIED_STATUSES.has(stripeStatus)) {
+    return Response.json({ expired: true, is_owner: false, trial_ends_at: church.trial_ends_at });
   }
 
-  const expired = new Date(church.trial_ends_at) < new Date();
-  return Response.json({ expired, is_owner: false, trial_ends_at: church.trial_ends_at });
+  // No Stripe subscription yet (no row, incomplete, or paused) → redirect to billing.
+  return Response.json({ expired: false, needsBilling: true, is_owner: false, trial_ends_at: church.trial_ends_at });
 }
