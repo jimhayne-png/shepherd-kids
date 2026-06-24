@@ -316,6 +316,12 @@ export default function AppShell({ children }: AppShellProps) {
               >
                 Church Management
               </Link>
+              <Link
+                href="/dashboard/master-admin/users"
+                style={masterAdminLinkStyle(pathname.startsWith("/dashboard/master-admin/users"))}
+              >
+                User Audit
+              </Link>
             </div>
           )}
         </nav>
