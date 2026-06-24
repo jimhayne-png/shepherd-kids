@@ -524,7 +524,7 @@ export default function SubscriptionsPage() {
   const [statusFilter, setStatusFilter] = useState<EffectiveStatus | "all">("all");
   const [sortKey, setSortKey] = useState<SortKey>("default");
 
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<{ id: string; right: number; top: number } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
 
@@ -765,9 +765,6 @@ export default function SubscriptionsPage() {
         {/* Table */}
         {!loading && !pageError && !accessDenied && (
           <div className="bg-white rounded-2xl border border-gray-200" style={{ overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-            {openMenu && (
-              <div style={{ position: "fixed", inset: 0, zIndex: 10 }} onClick={() => setOpenMenu(null)} />
-            )}
 
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -792,7 +789,6 @@ export default function SubscriptionsPage() {
                     const status = getEffectiveStatus(church);
                     const days = getDaysRemaining(church);
                     const isActing = actionLoading === church.id;
-                    const menuOpen = openMenu === church.id;
                     const overrideOn = isOverrideActive(church.sub);
                     const discountOn = isDiscountActive(church.sub);
 
@@ -857,73 +853,21 @@ export default function SubscriptionsPage() {
                         </td>
 
                         {/* Actions */}
-                        <td style={{ ...TD_STYLE, position: "relative" }}>
+                        <td style={TD_STYLE}>
                           {isActing ? (
                             <span style={{ color: "#9ca3af", fontSize: 12 }}>Working…</span>
                           ) : (
-                            <div style={{ position: "relative", display: "inline-block" }}>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setOpenMenu(menuOpen ? null : church.id); }}
-                                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", backgroundColor: menuOpen ? "#f3f4f6" : "white", cursor: "pointer", fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap" }}
-                              >
-                                Actions ▾
-                              </button>
-
-                              {menuOpen && (
-                                <div
-                                  style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 20, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 230, overflow: "hidden" }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {ACTIONS.map((action, i) => (
-                                    <div key={action.key}>
-                                      {i === 6 && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
-                                      {i === 7 && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
-
-                                      {action.href ? (
-                                        <a
-                                          href={action.href(church.id)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          onClick={() => setOpenMenu(null)}
-                                          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 13, color: "#374151", textDecoration: "none", backgroundColor: "white", boxSizing: "border-box", width: "100%" }}
-                                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
-                                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
-                                        >
-                                          {action.label}
-                                        </a>
-                                      ) : action.disabled ? (
-                                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 13, color: "#d1d5db", cursor: "not-allowed" }}>
-                                          {action.label}
-                                          <span style={{ marginLeft: "auto", fontSize: 10, backgroundColor: "#f3f4f6", color: "#9ca3af", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>
-                                            Soon
-                                          </span>
-                                        </div>
-                                      ) : (
-                                        <button
-                                          onClick={() => {
-                                            setOpenMenu(null);
-                                            if (action.key === "suspend") {
-                                              setConfirmSuspend({ id: church.id, name: church.name });
-                                            } else if (action.key === "mark_paid") {
-                                              setConfirmMarkPaid({ id: church.id, name: church.name });
-                                            } else if (action.key === "billing_controls") {
-                                              setBillingModal(church);
-                                            } else {
-                                              doAction(church.id, action.key);
-                                            }
-                                          }}
-                                          style={{ width: "100%", padding: "10px 16px", textAlign: "left", fontSize: 13, border: "none", backgroundColor: "white", cursor: "pointer", color: action.destructive ? "#dc2626" : "#374151", fontWeight: action.destructive ? 600 : 400, display: "flex", alignItems: "center", gap: 8 }}
-                                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
-                                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
-                                        >
-                                          {action.label}
-                                        </button>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (openMenu?.id === church.id) { setOpenMenu(null); return; }
+                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                                setOpenMenu({ id: church.id, right: window.innerWidth - rect.right, top: rect.bottom + 4 });
+                              }}
+                              style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", backgroundColor: openMenu?.id === church.id ? "#f3f4f6" : "white", cursor: "pointer", fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap" }}
+                            >
+                              Actions ▾
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -941,6 +885,67 @@ export default function SubscriptionsPage() {
           </div>
         )}
       </div>
+
+      {/* Fixed-position dropdown — rendered outside the table so overflow:hidden never clips it */}
+      {openMenu && (() => {
+        const menuChurch = churches.find((c) => c.id === openMenu.id);
+        if (!menuChurch) return null;
+        return (
+          <>
+            <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={() => setOpenMenu(null)} />
+            <div
+              style={{ position: "fixed", right: openMenu.right, top: openMenu.top, zIndex: 9999, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 240, overflow: "hidden" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {ACTIONS.map((action, i) => (
+                <div key={action.key}>
+                  {i === 6 && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
+                  {i === 7 && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
+
+                  {action.href ? (
+                    <a
+                      href={action.href(menuChurch.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpenMenu(null)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 13, color: "#374151", textDecoration: "none", backgroundColor: "white", boxSizing: "border-box", width: "100%" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+                    >
+                      {action.label}
+                    </a>
+                  ) : action.disabled ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", fontSize: 13, color: "#d1d5db", cursor: "not-allowed" }}>
+                      {action.label}
+                      <span style={{ marginLeft: "auto", fontSize: 10, backgroundColor: "#f3f4f6", color: "#9ca3af", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Soon</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setOpenMenu(null);
+                        if (action.key === "suspend") {
+                          setConfirmSuspend({ id: menuChurch.id, name: menuChurch.name });
+                        } else if (action.key === "mark_paid") {
+                          setConfirmMarkPaid({ id: menuChurch.id, name: menuChurch.name });
+                        } else if (action.key === "billing_controls") {
+                          setBillingModal(menuChurch);
+                        } else {
+                          doAction(menuChurch.id, action.key);
+                        }
+                      }}
+                      style={{ width: "100%", padding: "10px 16px", textAlign: "left", fontSize: 13, border: "none", backgroundColor: "white", cursor: "pointer", color: action.destructive ? "#dc2626" : "#374151", fontWeight: action.destructive ? 600 : 400, display: "flex", alignItems: "center", gap: 8 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+                    >
+                      {action.label}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Billing Controls Modal */}
       {billingModal && token && (
