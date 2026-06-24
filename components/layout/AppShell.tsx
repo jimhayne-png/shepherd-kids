@@ -57,8 +57,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Shepherd Parents",
     children: [
-      { label: "Parents",            href: "/dashboard/children-ministry/parents" },
-      { label: "Parent Communication", href: "/dashboard/children-ministry/parent-update" },
+      { label: "Parents",                href: "/dashboard/children-ministry/parents" },
+      { label: "Parent Messages",        href: "/dashboard/children-ministry/parent-messages" },
+      { label: "Children's Lesson Plan", href: "/dashboard/children-ministry/parent-update" },
     ],
   },
   {

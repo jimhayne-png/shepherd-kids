@@ -125,6 +125,7 @@ export default function SetupWizardPage() {
 
   // Per-step save status
   const [stepStatus, setStepStatus] = useState<Record<number, "saved" | "error">>({});
+  const [stepError, setStepError] = useState<Record<number, string>>({});
 
   // Load session + wizard state
   useEffect(() => {
@@ -206,14 +207,26 @@ export default function SetupWizardPage() {
     if (!serviceName.trim() || !serviceDate) return;
     setSaving(true);
     try {
+      const token = accessToken || (await supabase.auth.getSession()).data.session?.access_token;
       const res = await fetch("/api/children-ministry/service-events", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         credentials: "include",
-        body: JSON.stringify({ title: serviceName, event_date: serviceDate, start_time: serviceTime }),
+        body: JSON.stringify({ title: serviceName, event_date: serviceDate, start_time: serviceTime || null }),
       });
-      if (!res.ok) { setStepStatus((s) => ({ ...s, 3: "error" })); return; }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = (body as { error?: string }).error ?? `HTTP ${res.status}`;
+        console.error("[wizard step 3] service-events error:", msg);
+        setStepError((s) => ({ ...s, 3: msg }));
+        setStepStatus((s) => ({ ...s, 3: "error" }));
+        return;
+      }
       setStepStatus((s) => ({ ...s, 3: "saved" }));
+      setStepError((s) => ({ ...s, 3: "" }));
       await completeStep(3);
     } finally {
       setSaving(false);
@@ -381,7 +394,7 @@ export default function SetupWizardPage() {
             </div>
 
             {stepStatus[3] === "saved" && <SuccessBadge>Session created!</SuccessBadge>}
-            {stepStatus[3] === "error" && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 12 }}>Failed to create. Please try again.</p>}
+            {stepStatus[3] === "error" && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 12 }}>Failed to create: {stepError[3] || "Please try again."}</p>}
 
             <div style={{ display: "flex", gap: 12 }}>
               <PrimaryBtn onClick={handleCreateService} loading={saving} disabled={!serviceName.trim() || !serviceDate}>
@@ -508,19 +521,9 @@ export default function SetupWizardPage() {
 
             <div style={{ background: "rgba(212,175,55,0.08)", border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <FieldLabel>Your Kiosk URL</FieldLabel>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <p style={{ color: GOLD, fontSize: 14, fontFamily: "monospace", margin: 0, wordBreak: "break-all", flex: 1 }}>
-                  {kioskUrl || "Loading…"}
-                </p>
-                {kioskUrl && (
-                  <button
-                    onClick={() => navigator.clipboard.writeText(kioskUrl)}
-                    style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, color: MUTED, cursor: "pointer", padding: "6px 10px", fontSize: 12, flexShrink: 0 }}
-                  >
-                    Copy
-                  </button>
-                )}
-              </div>
+              <p style={{ color: GOLD, fontSize: 14, fontFamily: "monospace", margin: 0, wordBreak: "break-all" }}>
+                {kioskUrl || "Loading…"}
+              </p>
             </div>
 
             {kioskUrl && (

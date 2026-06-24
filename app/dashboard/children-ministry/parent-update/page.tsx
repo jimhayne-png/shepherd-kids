@@ -124,7 +124,7 @@ export default function ParentUpdatePage() {
           ShepherdKids
         </p>
         <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
-          Parent Communication
+          Children's Lesson Plan
         </h1>
       </div>
 
@@ -142,7 +142,7 @@ export default function ParentUpdatePage() {
             }}
           >
             <h2 style={{ fontWeight: 700, color: "#ffffff", marginBottom: "22px", fontFamily: "Georgia, serif", fontSize: "17px" }}>
-              Compose Update
+              Compose Lesson Plan
             </h2>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
