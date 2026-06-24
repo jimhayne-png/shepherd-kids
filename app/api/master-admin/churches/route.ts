@@ -147,10 +147,17 @@ export async function POST(req: NextRequest) {
     }
     userId = created.user.id;
 
-    // Generate password-set link so the admin can share it
+    // Generate password-set link so the admin can share it.
+    // redirectTo must point at /auth/callback so the token is exchanged for
+    // a session, and next=/auth/reset-password tells the callback where to
+    // send the user afterwards.
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
     const { data: linkData } = await admin.auth.admin.generateLink({
       type: "recovery",
       email: adminEmail,
+      options: {
+        redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password`,
+      },
     });
     inviteLink = (linkData as { properties?: { action_link?: string } } | null)?.properties?.action_link ?? null;
   }
