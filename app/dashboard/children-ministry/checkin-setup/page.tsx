@@ -1423,7 +1423,7 @@ export default function CheckinSetupPage() {
                   The <strong style={{ color: "#FFFFFF" }}>Brother QL-810W</strong> is the recommended label printer for most Shepherd Kids churches. For approximately <strong style={{ color: "#D4AF37" }}>90% of churches</strong>, this printer provides everything needed for child check-in labels.
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-                  {["Wi-Fi connectivity", "USB connectivity", "Fast 4\" × 2\" label printing", "Simple setup", "Lower cost"].map(f => (
+                  {["Wi-Fi Direct (no router needed)", "Wi-Fi connectivity", "USB connectivity", "Fast 4\" × 2\" label printing", "Simple setup", "Lower cost"].map(f => (
                     <div key={f} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8" }}>
                       <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span> {f}
                     </div>
@@ -1435,9 +1435,15 @@ export default function CheckinSetupPage() {
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "18px 20px", marginBottom: "20px" }}>
                 <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: "0 0 10px", fontFamily: "Georgia, serif" }}>Brother QL-820NWB <span style={{ fontSize: "12px", fontWeight: 400, color: "#A9A9B8" }}>(Advanced Installations)</span></h3>
                 <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 10px", lineHeight: 1.6 }}>
-                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> supports all the same printing capabilities as the QL-810W, but adds <strong style={{ color: "#D4AF37" }}>two additional connectivity options</strong> — these are the <strong style={{ color: "#FFFFFF" }}>primary differences</strong> between the two printers:
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> supports all the same printing capabilities as the QL-810W — including <strong style={{ color: "#D4AF37" }}>Wi-Fi Direct</strong> and standard Wi-Fi — and adds <strong style={{ color: "#D4AF37" }}>two additional connectivity options</strong> as the <strong style={{ color: "#FFFFFF" }}>primary differences</strong> between the two printers:
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
+                    <span style={{ color: "#4ade80" }}>✅</span> Wi-Fi Direct (connect directly from any device — no router needed)
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
+                    <span style={{ color: "#4ade80" }}>✅</span> Wi-Fi connectivity
+                  </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
                     <span style={{ color: "#4ade80" }}>✅</span> Ethernet (wired network connection)
                   </div>
@@ -1482,6 +1488,7 @@ export default function CheckinSetupPage() {
                   </thead>
                   <tbody>
                     {[
+                      { feature: "Wi-Fi Direct (no router needed)", w810: "✅", w820: "✅", highlight: false },
                       { feature: "Wi-Fi", w810: "✅", w820: "✅", highlight: false },
                       { feature: "USB", w810: "✅", w820: "✅", highlight: false },
                       { feature: "Ethernet", w810: "❌", w820: "✅", highlight: true },

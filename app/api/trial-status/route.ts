@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest) {
 
   const { data: church } = await admin
     .from('churches')
-    .select('trial_ends_at')
+    .select('trial_ends_at, subscription_status')
     .eq('id', cu.church_id)
     .single();
 
@@ -83,6 +83,15 @@ export async function GET(_req: NextRequest) {
     return Response.json({ expired: true, is_owner: false, trial_ends_at: church.trial_ends_at });
   }
 
-  // No Stripe subscription yet (no row, incomplete, or paused) → redirect to billing.
+  // Internal trial: churches.subscription_status='trial' with a future trial_ends_at
+  // covers public signups that haven't set up Stripe yet.
+  if (church.subscription_status === 'trial') {
+    const trialEnd = church.trial_ends_at ? new Date(church.trial_ends_at) : null;
+    if (trialEnd && trialEnd > now) {
+      return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at });
+    }
+  }
+
+  // No valid trial and no active Stripe subscription → prompt billing setup.
   return Response.json({ expired: false, needsBilling: true, is_owner: false, trial_ends_at: church.trial_ends_at });
 }
