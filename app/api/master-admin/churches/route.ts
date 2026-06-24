@@ -128,7 +128,6 @@ export async function POST(req: NextRequest) {
 
   // 1. Ensure the admin user exists (create if new)
   let userId: string;
-  let isNewUser = false;
 
   const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
   const existing = (existingUsers?.users ?? []).find(
@@ -150,7 +149,6 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: createErr?.message ?? "Failed to create user." }, { status: 500 });
     }
     userId = created.user.id;
-    isNewUser = true;
   }
 
   // 2. Generate unique slug
@@ -182,16 +180,17 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Link user to church as admin.
-  //    New users get a setup_token so they can set their password via /auth/setup-password.
-  //    Existing users already have a password.
-  const setupToken = isNewUser ? randomUUID() : null;
+  //    Always generate a fresh setup_token so the admin can set their password
+  //    via /auth/setup-password. The token persists until they complete setup.
+  const setupToken = randomUUID();
 
   const { error: cuErr } = await admin.from("church_users").insert({
     church_id: church.id,
     user_id: userId,
     role: "admin",
-    password_set: !isNewUser,
+    password_set: false,
     setup_token: setupToken,
+    setup_token_expires_at: null,
   });
   if (cuErr) {
     return Response.json({ error: cuErr.message }, { status: 500 });
@@ -203,7 +202,7 @@ export async function POST(req: NextRequest) {
   );
 
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
-  const inviteLink = setupToken ? `${baseUrl}/auth/setup-password?token=${setupToken}` : null;
+  const inviteLink = `${baseUrl}/auth/setup-password?token=${setupToken}`;
 
   return Response.json({ success: true, church_id: church.id, invite_link: inviteLink });
 }
