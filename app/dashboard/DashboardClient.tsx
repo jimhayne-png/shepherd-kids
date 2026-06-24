@@ -114,6 +114,8 @@ type Stats = {
 
 type Church = { id: string; name: string };
 
+type WizardState = { current_step: number; completed_steps: number[]; is_complete: boolean };
+
 type Props = {
   userId: string;
   userEmail: string | null;
@@ -134,6 +136,7 @@ export default function DashboardClient({
   const router = useRouter();
   const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null });
   const [trialExpired, setTrialExpired] = useState(false);
+  const [wizard, setWizard] = useState<WizardState | null>(null);
 
   useEffect(() => {
     if (isPlatformAdmin || !churchId) return;
@@ -144,6 +147,21 @@ export default function DashboardClient({
           router.push("/dashboard/billing");
         } else if (d.expired) {
           setTrialExpired(true);
+        }
+      })
+      .catch(() => {});
+  }, [isPlatformAdmin, churchId, router]);
+
+  // Wizard check: new admins get redirected automatically on first load.
+  useEffect(() => {
+    if (isPlatformAdmin || !churchId) return;
+    fetch("/api/setup-wizard", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.wizard) return;
+        setWizard(d.wizard);
+        if (!d.wizard.is_complete) {
+          router.push("/dashboard/setup-wizard");
         }
       })
       .catch(() => {});
@@ -279,6 +297,32 @@ export default function DashboardClient({
       </div>
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
+        {/* Setup wizard progress card — shown while wizard is incomplete */}
+        {wizard && !wizard.is_complete && (
+          <div
+            style={{
+              background: "#120A1F", border: "1px solid rgba(212,175,55,0.28)", borderRadius: 16,
+              padding: "20px 24px", marginBottom: 24, marginTop: -24,
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <p style={{ color: "#D4AF37", fontWeight: 700, fontSize: 14, margin: "0 0 4px" }}>
+                ⚙️ Setup Wizard — {wizard.completed_steps.length} of 8 steps complete
+              </p>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 4, marginTop: 8 }}>
+                <div style={{ height: "100%", borderRadius: 4, background: "linear-gradient(90deg, #7B2CBF, #9D4EDD)", width: `${(wizard.completed_steps.length / 8) * 100}%`, transition: "width 0.4s ease" }} />
+              </div>
+            </div>
+            <a
+              href="/dashboard/setup-wizard"
+              style={{ flexShrink: 0, padding: "9px 18px", borderRadius: 9, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#fff", fontWeight: 700, fontSize: 13, textDecoration: "none" }}
+            >
+              Continue →
+            </a>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 -mt-6">
           {[
             { label: "Active Families", value: stats.members, emoji: "👨‍👩‍👧‍👦", color: "#7B2CBF" },
