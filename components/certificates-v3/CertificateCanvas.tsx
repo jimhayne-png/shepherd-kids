@@ -12,6 +12,7 @@ import PremiumFrame from "./layers/PremiumFrame";
 import ArtworkRegistry from "./artwork/ArtworkRegistry";
 import CrossGlow from "./layers/CrossGlow";
 import CertificateText from "./layers/CertificateText";
+import CertificateStaticOverlay from "./layers/CertificateStaticOverlay";
 import GoldMedallion from "./layers/GoldMedallion";
 
 export type { CertificateData };
@@ -125,9 +126,9 @@ function StaticCertificateCanvas({ data }: { data: CertificateData }) {
         }}
       />
 
-      {/* Dynamic text overlay — all personalised certificate fields */}
+      {/* Text-only overlay — no CSS artwork; all artwork is in the background image */}
       <div style={{ position: "absolute", inset: 0, zIndex: 2 }}>
-        <CertificateText data={data} />
+        <CertificateStaticOverlay data={data} />
       </div>
     </div>
   );
