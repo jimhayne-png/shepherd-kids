@@ -12,70 +12,101 @@ export default function CrossGlow() {
         overflow: "hidden",
       }}
     >
-      {/* Soft Purple Aura */}
-
+      {/* Outer diffuse purple halo */}
       <div
         style={{
           position: "absolute",
-          top: "30px",
+          top: "18px",
           left: "50%",
           transform: "translateX(-50%)",
-          width: "92px",
-          height: "92px",
+          width: "148px",
+          height: "148px",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(190,95,255,.34) 0%, rgba(130,50,210,.18) 42%, rgba(70,20,120,.08) 68%, transparent 82%)",
-          filter: "blur(14px)",
+            "radial-gradient(circle, rgba(160,72,240,.22) 0%, rgba(110,40,190,.12) 38%, rgba(64,18,110,.05) 66%, transparent 84%)",
+          filter: "blur(22px)",
         }}
       />
 
-      {/* White Cross */}
-
+      {/* Inner close aura */}
       <div
         style={{
           position: "absolute",
-          top: "46px",
+          top: "26px",
           left: "50%",
           transform: "translateX(-50%)",
-          width: "56px",
-          height: "78px",
+          width: "82px",
+          height: "82px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(200,110,255,.28) 0%, rgba(140,54,216,.14) 44%, transparent 80%)",
+          filter: "blur(12px)",
+        }}
+      />
+
+      {/* Cross */}
+      <div
+        style={{
+          position: "absolute",
+          top: "38px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "58px",
+          height: "100px",
         }}
       >
-        {/* Vertical */}
-
+        {/* Vertical bar */}
         <div
           style={{
             position: "absolute",
             left: "50%",
             top: 0,
             transform: "translateX(-50%)",
-            width: "5px",
-            height: "78px",
-            background: "#ffffff",
-            borderRadius: "1px",
+            width: "4px",
+            height: "100px",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,.92) 0%, #ffffff 40%, rgba(255,255,255,.88) 100%)",
+            borderRadius: "2px",
             boxShadow:
-              "0 0 2px rgba(255,255,255,.95)," +
-              "0 0 7px rgba(255,255,255,.55)," +
-              "0 0 14px rgba(170,85,255,.32)",
+              "0 0 2px rgba(255,255,255,.98)," +
+              "0 0 8px rgba(255,255,255,.60)," +
+              "0 0 18px rgba(200,140,255,.38)," +
+              "0 0 36px rgba(160,80,255,.18)",
           }}
         />
 
-        {/* Horizontal */}
-
+        {/* Horizontal bar */}
         <div
           style={{
             position: "absolute",
             left: "50%",
-            top: "21px",
+            top: "26px",
             transform: "translateX(-50%)",
-            width: "42px",
-            height: "5px",
-            background: "#ffffff",
-            borderRadius: "1px",
+            width: "54px",
+            height: "4px",
+            background:
+              "linear-gradient(90deg, rgba(255,255,255,.78) 0%, #ffffff 40%, rgba(255,255,255,.78) 100%)",
+            borderRadius: "2px",
             boxShadow:
-              "0 0 2px rgba(255,255,255,.95)," +
-              "0 0 7px rgba(255,255,255,.55)," +
-              "0 0 14px rgba(170,85,255,.32)",
+              "0 0 2px rgba(255,255,255,.98)," +
+              "0 0 8px rgba(255,255,255,.60)," +
+              "0 0 18px rgba(200,140,255,.38)," +
+              "0 0 36px rgba(160,80,255,.18)",
+          }}
+        />
+
+        {/* Center intersection bloom */}
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "26px",
+            transform: "translate(-50%, -50%)",
+            width: "12px",
+            height: "12px",
+            borderRadius: "50%",
+            background: "rgba(255,255,255,.95)",
+            filter: "blur(3px)",
           }}
         />
       </div>

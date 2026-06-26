@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const ACCENT  = "#7B2CBF";
@@ -22,71 +23,71 @@ const CERT_TYPES: Record<string, CertMeta> = {
     label: 'Birthday Celebration', icon: '🎈', scriptureRef: 'Psalm 139:13–14',
     subtitle: 'Celebrating the Wonderful Gift God Has Given',
     scripture: {
-      kjv: `“For thou hast possessed my reins: thou hast covered me in my mother's womb. I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well.”`,
-      niv: `“For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.”`,
+      kjv: `"For thou hast possessed my reins: thou hast covered me in my mother's womb. I will praise thee; for I am fearfully and wonderfully made: marvellous are thy works; and that my soul knoweth right well."`,
+      niv: `"For you created my inmost being; you knit me together in my mother's womb. I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well."`,
     },
   },
   spiritual_birthday: {
     label: 'Spiritual Birthday', icon: '✝️', scriptureRef: 'Romans 8:31',
     scripture: {
-      kjv: '“If God be for us, who can be against us?”',
-      niv: '“If God is for us, who can be against us?”',
+      kjv: '"If God be for us, who can be against us?"',
+      niv: '"If God is for us, who can be against us?"',
     },
   },
   baptism: {
     label: 'Baptism Celebration', icon: '💧', scriptureRef: '2 Corinthians 5:17',
     scripture: {
-      kjv: '“Therefore if any man be in Christ, he is a new creature: old things are passed away; all things are become new.”',
-      niv: '“Therefore, if anyone is in Christ, the new creation has come: the old has gone, the new is here!”',
+      kjv: '"Therefore if any man be in Christ, he is a new creature: old things are passed away; all things are become new."',
+      niv: '"Therefore, if anyone is in Christ, the new creation has come: the old has gone, the new is here!"',
     },
   },
   faith_milestone: {
     label: 'Faith Milestone', icon: '👑', scriptureRef: 'Philippians 4:13',
     scripture: {
-      kjv: '“I can do all things through Christ which strengtheneth me.”',
-      niv: '“I can do all this through him who gives me strength.”',
+      kjv: '"I can do all things through Christ which strengtheneth me."',
+      niv: '"I can do all this through him who gives me strength."',
     },
   },
   scripture_memory: {
     label: 'Scripture Memory Award', icon: '📖', scriptureRef: 'Psalm 119:105',
     scripture: {
-      kjv: '“Thy word is a lamp unto my feet, and a light unto my path.”',
-      niv: '“Your word is a lamp for my feet, a light on my path.”',
+      kjv: '"Thy word is a lamp unto my feet, and a light unto my path."',
+      niv: '"Your word is a lamp for my feet, a light on my path."',
     },
   },
   promotion: {
     label: 'Promotion Sunday', icon: '🎓', scriptureRef: 'Jeremiah 29:11',
     scripture: {
-      kjv: '“For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil.”',
-      niv: '“For I know the plans I have for you,” declares the Lord, “plans to prosper you and not to harm you.”',
+      kjv: '"For I know the thoughts that I think toward you, saith the Lord, thoughts of peace, and not of evil."',
+      niv: '"For I know the plans I have for you," declares the Lord, "plans to prosper you and not to harm you."',
     },
   },
   servant_heart: {
     label: 'Servant Heart Award', icon: '❤️', scriptureRef: 'Galatians 5:13',
     scripture: {
-      kjv: '“By love serve one another.”',
-      niv: '“Serve one another humbly in love.”',
+      kjv: '"By love serve one another."',
+      niv: '"Serve one another humbly in love."',
     },
   },
   kindness: {
     label: 'Kindness Award', icon: '💛', scriptureRef: 'Ephesians 4:32',
     scripture: {
-      kjv: '“And be ye kind one to another, tenderhearted, forgiving one another.”',
-      niv: '“Be kind and compassionate to one another, forgiving each other.”',
+      kjv: '"And be ye kind one to another, tenderhearted, forgiving one another."',
+      niv: '"Be kind and compassionate to one another, forgiving each other."',
     },
   },
   helper: {
     label: 'Helper Award', icon: '⭐', scriptureRef: 'Colossians 3:23',
     scripture: {
-      kjv: '“Whatsoever ye do, do it heartily, as to the Lord, and not unto men.”',
-      niv: '“Whatever you do, work at it with all your heart, as working for the Lord.”',
+      kjv: '"Whatsoever ye do, do it heartily, as to the Lord, and not unto men."',
+      niv: '"Whatever you do, work at it with all your heart, as working for the Lord."',
     },
   },
   attendance: {
     label: 'Attendance Award', icon: '📅', scriptureRef: 'Hebrews 10:25',
     scripture: {
-      kjv: '“Not forsaking the assembling of ourselves together, as the manner of some is.”',
-      niv: '“Not giving up meeting together, as some are in the habit of doing.”',
+      kjv: '"Not forsaking the assembling of ourselves together, as the manner of some is."',
+      niv: '"Not giving up meeting together, as some are in the habit of doing."',
     },
   },
 };
@@ -159,328 +160,6 @@ function FormSection({ title, children }: { title: string; children: React.React
   );
 }
 
-// ── Birthday balloon motif ────────────────────────────────────────────────────
-function BirthdayMotif({ template }: { template: "purple" | "white" }) {
-  const isPurple = template === "purple";
-  const b1  = isPurple ? "#9D4EDD" : "#5B1E8C";   // left:   purple / deep violet
-  const b2  = isPurple ? "#D4AF37" : "#B8860B";   // center: gold  / dark goldenrod
-  const b3  = isPurple ? "#7B2CBF" : "#8B4513";   // right:  purple / warm bronze
-  const str = isPurple ? "rgba(212,175,55,0.55)" : "rgba(100,50,10,0.50)";
-  const sh  = isPurple ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.40)";
-  return (
-    <svg width="95" height="85" viewBox="0 0 76 68" style={{ overflow: "visible" as const }}>
-      {/* Left balloon */}
-      <ellipse cx="18" cy="24" rx="13" ry="16" fill={b1} opacity={0.88} />
-      <ellipse cx="14" cy="18" rx="4" ry="3" fill={sh} transform="rotate(-20, 14, 18)" />
-      <circle cx="18" cy="40" r="2" fill={b1} opacity={0.70} />
-      <path d="M18 42 Q14 52 18 62" stroke={str} strokeWidth="1.2" fill="none" />
-      {/* Center balloon — gold, tallest */}
-      <ellipse cx="38" cy="19" rx="14" ry="17" fill={b2} opacity={0.92} />
-      <ellipse cx="33" cy="13" rx="4" ry="3" fill={sh} transform="rotate(-20, 33, 13)" />
-      <circle cx="38" cy="36" r="2.2" fill={b2} opacity={0.70} />
-      <path d="M38 38 Q34 50 38 62" stroke={str} strokeWidth="1.2" fill="none" />
-      {/* Right balloon */}
-      <ellipse cx="58" cy="24" rx="13" ry="16" fill={b3} opacity={0.82} />
-      <ellipse cx="54" cy="18" rx="4" ry="3" fill={sh} transform="rotate(-20, 54, 18)" />
-      <circle cx="58" cy="40" r="2" fill={b3} opacity={0.70} />
-      <path d="M58 42 Q54 52 58 62" stroke={str} strokeWidth="1.2" fill="none" />
-    </svg>
-  );
-}
-
-// ── Church logo area placeholder (rectangular — never circular) ───────────────
-function ChurchLogoArea({ width, height, template }: { width: number; height: number; template: "purple" | "white" }) {
-  const isPurple = template === "purple";
-  return (
-    <div style={{
-      width: `${width}px`,
-      height: `${height}px`,
-      border: `1.5px dashed ${isPurple ? "rgba(212,175,55,0.38)" : "rgba(139,105,20,0.42)"}`,
-      borderRadius: "3px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "3px",
-      background: isPurple ? "rgba(212,175,55,0.04)" : "rgba(139,105,20,0.04)",
-      flexShrink: 0,
-    }}>
-      <span style={{ fontSize: "16px", opacity: 0.40, lineHeight: 1 }}>✝</span>
-      <span style={{
-        fontSize: "7px",
-        color: isPurple ? "rgba(212,175,55,0.45)" : "rgba(139,105,20,0.52)",
-        letterSpacing: "0.08em",
-        fontWeight: 700,
-        textTransform: "uppercase" as const,
-      }}>Church Logo</span>
-    </div>
-  );
-}
-
-// ── Ministry seal placeholder (cross only — no initials) ──────────────────────
-function MinistrySeal({ size, template }: { size: number; template: "purple" | "white" }) {
-  const isPurple = template === "purple";
-  const clr = isPurple ? "rgba(212,175,55,0.72)" : "rgba(139,105,20,0.68)";
-  return (
-    <div style={{
-      width: `${size}px`,
-      height: `${size}px`,
-      borderRadius: "50%",
-      border: `1.5px solid ${clr}`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: isPurple ? "radial-gradient(circle at 50% 35%, rgba(42,13,64,0.96), rgba(5,2,18,0.94))" : "radial-gradient(circle at 50% 35%, rgba(255,252,240,0.98), rgba(238,214,162,0.90))",
-      flexShrink: 0,
-    }}>
-      <span style={{ fontSize: `${Math.round(size * 0.46)}px`, color: clr, lineHeight: 1, fontFamily: "Georgia, serif" }}>✝</span>
-    </div>
-  );
-}
-
-
-function CornerFiligree({ position, color }: { position: "tl" | "tr" | "bl" | "br"; color: string }) {
-  const placement: React.CSSProperties =
-    position === "tl" ? { top: "20px", left: "20px" } :
-    position === "tr" ? { top: "20px", right: "20px", transform: "scaleX(-1)" } :
-    position === "bl" ? { bottom: "20px", left: "20px", transform: "scaleY(-1)" } :
-    { bottom: "20px", right: "20px", transform: "scale(-1)" };
-
-  return (
-    <svg viewBox="0 0 96 96" style={{ position: "absolute", width: "78px", height: "78px", color, opacity: 0.72, pointerEvents: "none", ...placement }}>
-      <path d="M10 86V10h76" fill="none" stroke="currentColor" strokeWidth="2.4" />
-      <path d="M22 74V22h52" fill="none" stroke="currentColor" strokeWidth="1" opacity=".68" />
-      <path d="M26 28c18 4 24 18 12 28 20-2 30 12 24 30M35 22c-4 18 10 26 28 18M20 62c16-5 28 2 34 18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" opacity=".82" />
-      <circle cx="42" cy="42" r="3.2" fill="currentColor" opacity=".86" />
-    </svg>
-  );
-}
-
-// ── Premium certificate templates ─────────────────────────────────────────────
-function CertPreview({
-  childName, certType, churchName, churchTagline,
-  ministerName, ministerTitle, date, blessing, template, translation,
-}: {
-  childName: string; certType: string; churchName: string; churchTagline: string;
-  ministerName: string; ministerTitle: string; date: string; blessing: string;
-  template: "purple" | "white"; translation: Translation;
-}) {
-  const meta      = CERT_TYPES[certType] ?? CERT_TYPES["spiritual_birthday"];
-  const dispChild = childName     || "Child's Name";
-  const dispChurch= churchName    || "Your Church Name";
-  const dispMin   = ministerName  || "Minister's Name";
-  const dispTitle = ministerTitle || "Children's Ministry Director";
-  const dispDate  = date ? fmtCertDate(date) : "—";
-  const isPurple  = template === "purple";
-
-  // ── Theme tokens ──────────────────────────────────────────────────────────────
-  const bg           = isPurple
-    ? `radial-gradient(circle at 50% 42%, rgba(255,235,170,0.10), transparent 34%), radial-gradient(circle at 18% 18%, rgba(123,44,191,0.18), transparent 26%), radial-gradient(circle at 84% 74%, rgba(212,175,55,0.08), transparent 30%), linear-gradient(160deg, #050212 0%, #130828 50%, #0A0320 100%)`
-    : `radial-gradient(circle at 50% 38%, rgba(255,255,255,0.58), transparent 38%), radial-gradient(circle at 85% 82%, rgba(212,175,55,0.10), transparent 30%), #FDFAEF`;
-  const outerBorder  = isPurple ? `3px solid ${GOLD}`                  : "2.5px solid #8B6914";
-  const midBorder    = isPurple ? "1px solid rgba(212,175,55,0.55)"    : "1px solid rgba(175,135,40,0.50)";
-  const innerBorder  = isPurple ? "1px solid rgba(212,175,55,0.18)"    : "1px solid rgba(175,135,40,0.28)";
-  const cornerClr    = isPurple ? GOLD                                  : "#8B6914";
-  const titleClr     = isPurple ? GOLD                                  : "#1C0A2E";
-  const nameClr      = isPurple ? "#FFFFFF"                             : "#1C0A2E";
-  const subClr       = isPurple ? "rgba(212,175,55,0.72)"               : "#8B6914";
-  const dimClr       = isPurple ? "rgba(255,255,255,0.40)"              : "#8B7355";
-  const divClr       = isPurple ? "rgba(212,175,55,0.28)"               : "rgba(175,135,40,0.38)";
-  const ornClr       = isPurple ? "rgba(212,175,55,0.58)"               : "#B8860B";
-  const scriptClr    = isPurple ? "rgba(255,255,255,0.72)"              : "#4A3728";
-  const scriptRef    = isPurple ? GOLD                                  : "#8B6914";
-  const blessClr     = isPurple ? "rgba(255,255,255,0.55)"              : "#5C4A3A";
-  const medallionBg  = isPurple ? "rgba(212,175,55,0.05)"               : "rgba(139,105,20,0.05)";
-  const medallionBdr = isPurple ? "rgba(212,175,55,0.24)"               : "rgba(139,105,20,0.32)";
-  const glow: React.CSSProperties = isPurple
-    ? { boxShadow: "0 8px 56px rgba(5,2,18,0.80), 0 0 120px rgba(212,175,55,0.04)" }
-    : { boxShadow: "0 4px 28px rgba(0,0,0,0.09)" };
-  const crossGlow: React.CSSProperties = isPurple
-    ? { textShadow: "0 0 18px rgba(212,175,55,0.70), 0 0 40px rgba(212,175,55,0.30)" }
-    : {};
-
-  return (
-    <div style={{ position: "relative", background: bg, border: outerBorder, borderRadius: "4px", padding: "28px 46px 30px", width: "100%", boxSizing: "border-box", ...glow }}>
-      {/* Second border line */}
-      <div style={{ position: "absolute", inset: "6px", border: midBorder, borderRadius: "3px", pointerEvents: "none" }} />
-      {/* Inner frame */}
-      <div style={{ position: "absolute", inset: "13px", border: innerBorder, borderRadius: "2px", pointerEvents: "none" }} />
-
-      {/* Corner L-brackets */}
-      <div style={{ position: "absolute", top: "18px",    left: "18px",  width: "24px", height: "24px", borderTop:    `2px solid ${cornerClr}`, borderLeft:   `2px solid ${cornerClr}` }} />
-      <div style={{ position: "absolute", top: "18px",    right: "18px", width: "24px", height: "24px", borderTop:    `2px solid ${cornerClr}`, borderRight:  `2px solid ${cornerClr}` }} />
-      <div style={{ position: "absolute", bottom: "18px", left: "18px",  width: "24px", height: "24px", borderBottom: `2px solid ${cornerClr}`, borderLeft:   `2px solid ${cornerClr}` }} />
-      <div style={{ position: "absolute", bottom: "18px", right: "18px", width: "24px", height: "24px", borderBottom: `2px solid ${cornerClr}`, borderRight:  `2px solid ${cornerClr}` }} />
-
-      {/* Corner diamond accents */}
-      <div style={{ position: "absolute", top: "14px",    left: "16px",  fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
-      <div style={{ position: "absolute", top: "14px",    right: "16px", fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
-      <div style={{ position: "absolute", bottom: "14px", left: "16px",  fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
-      <div style={{ position: "absolute", bottom: "14px", right: "16px", fontSize: "8px", color: cornerClr, opacity: 0.60, lineHeight: 1, userSelect: "none" as const }}>◆</div>
-
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          background: isPurple
-            ? "radial-gradient(circle at 50% 46%, rgba(255,235,170,0.08), transparent 28%), radial-gradient(circle at 50% 50%, transparent 48%, rgba(0,0,0,0.28) 100%)"
-            : "radial-gradient(circle at 50% 46%, rgba(212,175,55,0.08), transparent 30%), radial-gradient(circle at 50% 50%, transparent 54%, rgba(139,105,20,0.08) 100%)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          opacity: isPurple ? 0.32 : 0.18,
-          backgroundImage: isPurple
-            ? "radial-gradient(circle at 12% 22%, rgba(248,230,160,0.50) 0 1px, transparent 1.6px), radial-gradient(circle at 78% 18%, rgba(212,175,55,0.45) 0 1px, transparent 1.6px), radial-gradient(circle at 88% 78%, rgba(157,78,221,0.45) 0 1px, transparent 1.6px)"
-            : "radial-gradient(circle at 18% 20%, rgba(139,105,20,0.35) 0 1px, transparent 1.6px), radial-gradient(circle at 82% 72%, rgba(212,175,55,0.30) 0 1px, transparent 1.6px)",
-          backgroundSize: "190px 140px, 260px 210px, 220px 170px",
-        }}
-      />
-
-      <CornerFiligree position="tl" color={cornerClr} />
-      <CornerFiligree position="tr" color={cornerClr} />
-      <CornerFiligree position="bl" color={cornerClr} />
-      <CornerFiligree position="br" color={cornerClr} />
-
-      <div style={{ position: "relative", textAlign: "center" }}>
-
-        {/* Sacred cross accent */}
-        <div style={{ fontSize: isPurple ? "25px" : "22px", lineHeight: 1, marginBottom: "8px", color: isPurple ? GOLD : "#8B6914", ...crossGlow }}>✝</div>
-
-        {/* Church logo area — rectangular, no initials */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: "5px" }}>
-          <ChurchLogoArea width={isPurple ? 120 : 110} height={isPurple ? 48 : 44} template={template} />
-        </div>
-
-        {/* Church name */}
-        <p style={{ fontSize: "15px", fontWeight: 700, letterSpacing: "0.16em", color: titleClr, textTransform: "uppercase", margin: "0 0 2px", fontFamily: "Georgia, serif" }}>
-          {dispChurch}
-        </p>
-        {churchTagline && (
-          <p style={{ fontSize: "10px", color: subClr, margin: 0, fontStyle: "italic", letterSpacing: "0.05em" }}>
-            {churchTagline}
-          </p>
-        )}
-
-        {/* ❖ ❖ ❖ ornamental rule */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "10px 0 13px" }}>
-          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${divClr})` }} />
-          <span style={{ color: ornClr, fontSize: "11px", letterSpacing: "0.28em" }}>❖ ❖ ❖</span>
-          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${divClr})` }} />
-        </div>
-
-        {/* Certificate motif: birthday keeps balloons; all other certificates remain ceremonial and text-first */}
-        {certType === 'birthday' && (
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "4px" }}>
-            <BirthdayMotif template={template} />
-          </div>
-        )}
-        <h2 style={{
-          fontSize: "25px", fontWeight: 700, color: titleClr, margin: "0 0 3px",
-          fontFamily: "Georgia, serif", letterSpacing: "0.06em", textTransform: "uppercase" as const,
-        }}>
-          {meta.label}
-        </h2>
-        {meta.subtitle && (
-          <p style={{ fontSize: "13px", color: subClr, margin: "0 0 2px", fontStyle: "italic", letterSpacing: "0.04em" }}>
-            {meta.subtitle}
-          </p>
-        )}
-
-        {/* Title ribbon divider */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "4px auto 10px", maxWidth: "280px" }}>
-          <div style={{ flex: 1, height: "1px", background: divClr }} />
-          <div style={{ width: "5px", height: "5px", background: ornClr, transform: "rotate(45deg)", opacity: 0.75, flexShrink: 0 }} />
-          <div style={{ flex: 1, height: "1px", background: divClr }} />
-        </div>
-
-        {/* Child Name — primary focal point */}
-        <h1 style={{
-          fontSize: "62px", fontWeight: 900, color: nameClr, margin: "0 0 12px",
-          fontFamily: "Georgia, serif", lineHeight: 1.05, letterSpacing: "0.01em",
-          fontStyle: "italic",
-          textShadow: isPurple ? "0 3px 0 rgba(0,0,0,0.58), 0 0 34px rgba(212,175,55,0.18)" : "0 1px 0 rgba(255,255,255,0.75)",
-        }}>
-          {dispChild}
-        </h1>
-
-        {/* Rule below name */}
-        <div style={{ height: "1px", background: divClr, margin: "0 8% 14px" }} />
-
-        {/* Scripture plaque */}
-        <div style={{
-          position: "relative",
-          border: `2px solid ${isPurple ? "rgba(212,175,55,0.62)" : "rgba(139,105,20,0.50)"}`,
-          background: isPurple
-            ? "linear-gradient(180deg, rgba(42,13,64,0.78), rgba(12,4,24,0.92))"
-            : "linear-gradient(180deg, rgba(255,252,240,0.96), rgba(238,214,162,0.48))",
-          borderRadius: "2px",
-          padding: "15px 28px",
-          maxWidth: "500px",
-          margin: "0 auto 15px",
-          boxShadow: isPurple
-            ? "0 0 28px rgba(212,175,55,0.12), inset 0 0 22px rgba(255,255,255,0.035)"
-            : "0 6px 16px rgba(0,0,0,0.08), inset 0 0 20px rgba(139,105,20,0.06)",
-        }}>
-          <div style={{ position: "absolute", inset: "6px", border: `1px solid ${isPurple ? "rgba(248,230,160,0.22)" : "rgba(139,105,20,0.24)"}`, pointerEvents: "none" }} />
-          <div style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", color: ornClr, fontSize: "16px", lineHeight: 1 }}>✦</div>
-          <p style={{ position: "relative", zIndex: 1, fontSize: "13px", color: scriptClr, margin: "0 0 6px", lineHeight: 1.45, fontStyle: "italic" }}>
-            {meta.scripture[translation]}
-          </p>
-          <p style={{ position: "relative", zIndex: 1, fontSize: "11px", fontWeight: 700, color: scriptRef, margin: 0, letterSpacing: "0.12em" }}>
-            — {meta.scriptureRef} {translation.toUpperCase()}
-          </p>
-        </div>
-
-        {/* Personalized blessing (optional) */}
-        {blessing && (
-          <>
-            <div style={{ height: "1px", background: divClr, margin: "0 4% 13px" }} />
-            <p style={{ fontSize: "11px", color: blessClr, lineHeight: 1.85, fontStyle: "italic", maxWidth: "430px", margin: "0 auto 12px" }}>
-              {blessing}
-            </p>
-          </>
-        )}
-
-        {/* Bottom ❖ ornamental rule */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0 13px" }}>
-          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to right, transparent, ${divClr})` }} />
-          <span style={{ color: ornClr, fontSize: "9px" }}>❖</span>
-          <div style={{ flex: 1, height: "1px", background: `linear-gradient(to left, transparent, ${divClr})` }} />
-        </div>
-
-        {/* Bottom row: Presented By | Seal | Date */}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "12px" }}>
-
-          {/* Left: Presented By */}
-          <div style={{ textAlign: "left", flex: 1 }}>
-            <p style={{ fontSize: "8px", fontWeight: 700, color: dimClr, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 4px" }}>Presented By</p>
-            <p style={{ fontSize: "17px", color: titleClr, margin: "0 0 2px", fontFamily: "Georgia, serif", fontStyle: "italic", lineHeight: 1.15 }}>{dispMin}</p>
-            <p style={{ fontSize: "9px", color: dimClr, margin: "0 0 1px", letterSpacing: "0.05em" }}>{dispTitle}</p>
-            <p style={{ fontSize: "9px", fontWeight: 600, color: subClr, margin: 0, letterSpacing: "0.04em" }}>{dispChurch}</p>
-          </div>
-
-          {/* Center: Ministry seal */}
-          <div style={{ flexShrink: 0 }}>
-            <MinistrySeal size={58} template={template} />
-          </div>
-
-          {/* Right: Date */}
-          <div style={{ textAlign: "right", flex: 1 }}>
-            <p style={{ fontSize: "8px", fontWeight: 700, color: dimClr, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 4px" }}>Date of Presentation</p>
-            <p style={{ fontSize: "15px", fontWeight: 700, color: titleClr, margin: 0, fontFamily: "Georgia, serif" }}>{dispDate}</p>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Main creator ──────────────────────────────────────────────────────────────
 function CertificateCreatorInner() {
   const router       = useRouter();
@@ -509,11 +188,28 @@ function CertificateCreatorInner() {
     ? `/dashboard/children-ministry/children/${childIdParam}#celebration-timeline`
     : "/dashboard/children-ministry/children";
 
+  const meta = CERT_TYPES[certType];
+
+  // Build the live CertificateData from current form state
+  const certData = {
+    certType,
+    template,
+    childName:     childName     || "Child's Name",
+    churchName:    churchName    || undefined,
+    churchTagline: churchTagline || undefined,
+    ministerName:  ministerName  || undefined,
+    ministerTitle: ministerTitle || undefined,
+    date:          date ? fmtCertDate(date) : undefined,
+    verse:         meta?.scripture[translation] ?? undefined,
+    reference:     meta?.scriptureRef ?? undefined,
+    translation,
+    blessing:      blessing || undefined,
+  };
+
   async function saveDraft() {
     if (!childName.trim()) { setSaveError("Child name is required."); return; }
     setSaving(true); setSaveError(null);
     try {
-      const meta = CERT_TYPES[certType];
       const r = await fetch("/api/children-ministry/certificates", {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -769,18 +465,7 @@ function CertificateCreatorInner() {
           </p>
 
           <div id="certificate-print-area">
-            <CertPreview
-              childName={childName}
-              certType={certType}
-              churchName={churchName}
-              churchTagline={churchTagline}
-              ministerName={ministerName}
-              ministerTitle={ministerTitle}
-              date={date}
-              blessing={blessing}
-              template={template}
-              translation={translation}
-            />
+            <CertificateCanvas data={certData} />
           </div>
 
           {/* Action buttons */}

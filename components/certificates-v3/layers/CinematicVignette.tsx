@@ -11,53 +11,67 @@ export default function CinematicVignette() {
         overflow: "hidden",
       }}
     >
+      {/* Main radial vignette — stronger edge darkening */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "radial-gradient(ellipse at center, transparent 0%, transparent 38%, rgba(0,0,0,.18) 62%, rgba(0,0,0,.48) 84%, rgba(0,0,0,.78) 100%)",
+            "radial-gradient(ellipse at center, transparent 0%, transparent 34%, rgba(0,0,0,.20) 58%, rgba(0,0,0,.56) 80%, rgba(0,0,0,.88) 100%)",
         }}
       />
 
+      {/* Top edge darkening */}
       <div
         style={{
           position: "absolute",
-          inset: "7%",
-          borderRadius: "6px",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,.32) 0%, rgba(0,0,0,.12) 12%, transparent 28%)",
+        }}
+      />
+
+      {/* Inset corner shadows */}
+      <div
+        style={{
+          position: "absolute",
+          inset: "5%",
+          borderRadius: "4px",
           boxShadow:
-            "inset 0 0 90px rgba(0,0,0,.42), inset 0 0 180px rgba(0,0,0,.34)",
+            "inset 0 0 100px rgba(0,0,0,.50), inset 0 0 200px rgba(0,0,0,.38)",
         }}
       />
 
+      {/* Soft center luminosity */}
       <div
         style={{
           position: "absolute",
           left: "50%",
-          top: "46%",
+          top: "44%",
           transform: "translate(-50%, -50%)",
-          width: "62%",
-          height: "58%",
+          width: "60%",
+          height: "56%",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(255,255,255,.045) 0%, rgba(255,255,255,.02) 44%, transparent 76%)",
-          filter: "blur(55px)",
+            "radial-gradient(circle, rgba(255,255,255,.048) 0%, rgba(255,255,255,.018) 42%, transparent 74%)",
+          filter: "blur(58px)",
         }}
       />
 
+      {/* Warm gold bottom glow */}
       <div
         style={{
           position: "absolute",
           left: "50%",
-          bottom: "-13%",
+          bottom: "-16%",
           transform: "translateX(-50%)",
-          width: "82%",
-          height: "26%",
+          width: "86%",
+          height: "28%",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(212,175,55,.13) 0%, rgba(212,175,55,.055) 42%, transparent 78%)",
-          filter: "blur(38px)",
-          opacity: 0.9,
+            "radial-gradient(circle, rgba(212,175,55,.17) 0%, rgba(212,175,55,.07) 40%, transparent 76%)",
+          filter: "blur(42px)",
+          opacity: 0.95,
         }}
       />
     </div>

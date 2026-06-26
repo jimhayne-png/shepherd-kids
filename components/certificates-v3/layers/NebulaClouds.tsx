@@ -11,70 +11,82 @@ export default function NebulaClouds() {
         pointerEvents: "none",
       }}
     >
-      {/* Upper Left Atmosphere */}
-
+      {/* Upper-left atmosphere */}
       <div
         style={{
           position: "absolute",
-          left: "-6%",
-          top: "-2%",
-          width: "34%",
-          height: "42%",
+          left: "-8%",
+          top: "-4%",
+          width: "38%",
+          height: "46%",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(118,58,190,.065) 0%, rgba(82,32,140,.045) 42%, transparent 82%)",
-          filter: "blur(95px)",
-          transform: "rotate(-12deg)",
+            "radial-gradient(circle, rgba(130,64,204,.09) 0%, rgba(90,38,156,.058) 38%, transparent 78%)",
+          filter: "blur(112px)",
+          transform: "rotate(-14deg)",
         }}
       />
 
-      {/* Upper Right Atmosphere */}
+      {/* Upper-right atmosphere */}
+      <div
+        style={{
+          position: "absolute",
+          right: "-12%",
+          top: "5%",
+          width: "40%",
+          height: "44%",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(116,54,188,.075) 0%, rgba(80,34,132,.048) 40%, transparent 78%)",
+          filter: "blur(122px)",
+          transform: "rotate(16deg)",
+        }}
+      />
 
+      {/* Lower-right atmosphere */}
       <div
         style={{
           position: "absolute",
           right: "-10%",
-          top: "8%",
-          width: "36%",
-          height: "38%",
+          bottom: "-10%",
+          width: "46%",
+          height: "48%",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(104,48,176,.055) 0%, rgba(72,28,120,.035) 45%, transparent 82%)",
-          filter: "blur(105px)",
-          transform: "rotate(18deg)",
+            "radial-gradient(circle, rgba(122,58,196,.085) 0%, rgba(82,36,140,.054) 42%, transparent 80%)",
+          filter: "blur(128px)",
         }}
       />
 
-      {/* Lower Right Atmosphere */}
-
+      {/* Lower-left atmosphere */}
       <div
         style={{
           position: "absolute",
-          right: "-8%",
+          left: "-8%",
           bottom: "-8%",
           width: "42%",
-          height: "42%",
+          height: "44%",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(112,52,184,.06) 0%, rgba(76,30,128,.04) 46%, transparent 84%)",
-          filter: "blur(115px)",
+            "radial-gradient(circle, rgba(110,50,178,.075) 0%, rgba(70,28,122,.048) 42%, transparent 80%)",
+          filter: "blur(122px)",
+          transform: "rotate(12deg)",
         }}
       />
 
-      {/* Very soft center haze */}
-
+      {/* Soft center haze */}
       <div
         style={{
           position: "absolute",
           left: "50%",
           top: "48%",
           transform: "translate(-50%, -50%)",
-          width: "54%",
-          height: "56%",
+          width: "60%",
+          height: "62%",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(88,38,150,.025) 0%, transparent 72%)",
-          filter: "blur(130px)",
+            "radial-gradient(circle, rgba(96,44,162,.034) 0%, transparent 68%)",
+          filter: "blur(144px)",
         }}
       />
     </div>
