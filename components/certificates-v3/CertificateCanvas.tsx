@@ -119,8 +119,7 @@ function StaticCertificateCanvas({ data }: { data: CertificateData }) {
           inset: 0,
           width: "100%",
           height: "100%",
-          objectFit: "cover",
-          objectPosition: "center",
+          objectFit: "fill",
           zIndex: 1,
           display: "block",
         }}
