@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
+import CertificateExportButtons from "@/components/certificates-v3/CertificateExportButtons";
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const ACCENT  = "#7B2CBF";
@@ -101,27 +102,6 @@ const CERT_BLESSINGS: Partial<Record<string, Record<BlessingPreset, string>>> = 
   },
 };
 
-// ── Print styles ──────────────────────────────────────────────────────────────
-const PRINT_STYLES = `
-@media print {
-  @page { size: landscape; margin: 0.4in; }
-  body * { visibility: hidden; }
-  #certificate-print-area, #certificate-print-area * { visibility: visible; }
-  #certificate-print-area {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #certificate-print-area > div {
-    width: 100%;
-    max-width: 9.5in;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-}
-`;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtCertDate(d: string): string {
@@ -183,6 +163,7 @@ function CertificateCreatorInner() {
   const [translation,   setTranslation]   = useState<Translation>("kjv");
   const [saving,        setSaving]        = useState(false);
   const [saveError,     setSaveError]     = useState<string | null>(null);
+  const certRef = useRef<HTMLDivElement>(null);
 
   const backHref = childIdParam
     ? `/dashboard/children-ministry/children/${childIdParam}#celebration-timeline`
@@ -243,8 +224,7 @@ function CertificateCreatorInner() {
 
   return (
     <AppShell navItems={[]}>
-      {/* eslint-disable-next-line react/no-danger */}
-      <style dangerouslySetInnerHTML={{ __html: PRINT_STYLES }} />
+
 
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div style={{ padding: "32px 32px 24px", background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)", borderBottom: "1px solid rgba(212,175,55,0.15)" }}>
@@ -464,17 +444,12 @@ function CertificateCreatorInner() {
             Live Preview — {template === "purple" ? "Royal Purple Premium" : "Classic Ivory Premium"}
           </p>
 
-          <div id="certificate-print-area">
+          <div ref={certRef}>
             <CertificateCanvas data={certData} />
           </div>
 
-          {/* Action buttons */}
+          {/* Save draft */}
           <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
-            <button
-              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", cursor: "pointer", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, color: "#ffffff", fontSize: "13px", fontWeight: 700 }}
-            >
-              👁️ Preview
-            </button>
             <button
               onClick={saveDraft}
               disabled={saving}
@@ -482,13 +457,13 @@ function CertificateCreatorInner() {
             >
               {saving ? "Saving…" : "💾 Save Draft"}
             </button>
-            <button
-              onClick={() => window.print()}
-              style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(212,175,55,0.35)", cursor: "pointer", background: "rgba(212,175,55,0.1)", color: GOLD, fontSize: "13px", fontWeight: 700 }}
-            >
-              🖨️ Print Certificate
-            </button>
           </div>
+
+          {/* Export — same rendering path as the certificate detail page */}
+          <CertificateExportButtons
+            certRef={certRef}
+            filename={childName.trim() ? `${childName.trim().replace(/\s+/g, "-").toLowerCase()}-certificate` : "certificate"}
+          />
 
           {saveError && (
             <p style={{ fontSize: "11px", color: "#FF6B6B", margin: "8px 0 0" }}>{saveError}</p>
