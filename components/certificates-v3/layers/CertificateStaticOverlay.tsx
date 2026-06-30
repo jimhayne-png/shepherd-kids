@@ -1,8 +1,12 @@
 "use client";
 
+import type React from "react";
 import type { CertificateData } from "../types";
 
-const TYPE_CONFIG: Record<string, { title: string; subtitle: string; body: string; blessing: string }> = {
+const TYPE_CONFIG: Record<
+  string,
+  { title: string; subtitle: string; body: string; blessing: string }
+> = {
   birthday: {
     title: "Happy Birthday!",
     subtitle: "CELEBRATING GOD'S AMAZING GIFT OF YOU",
@@ -72,8 +76,6 @@ const DEFAULT_CONFIG = {
   blessing: "May God's blessings follow you all the days of your life.",
 };
 
-// ─── Shared style helpers ─────────────────────────────────────────────────────
-
 function center(top: string): React.CSSProperties {
   return {
     position: "absolute",
@@ -84,34 +86,33 @@ function center(top: string): React.CSSProperties {
   };
 }
 
-// Text-only overlay for static-background certificates.
-// All positions are percentage-based so the layout scales with the container.
-// No boxes, borders, backgrounds, or decorative elements — the PNG supplies all artwork.
-export default function CertificateStaticOverlay({ data }: { data: CertificateData }) {
+export default function CertificateStaticOverlay({
+  data,
+}: {
+  data: CertificateData;
+}) {
   const churchName = data.churchName || "LIGHTHOUSE BAPTIST CHURCH";
-  const cfg        = TYPE_CONFIG[data.certType] ?? DEFAULT_CONFIG;
-  const blessing   = data.blessing || cfg.blessing;
-  const isPurple   = data.template === "purple";
-  const isClassic  = data.template === "white";
+  const cfg = TYPE_CONFIG[data.certType] ?? DEFAULT_CONFIG;
+  const blessing = data.blessing || cfg.blessing;
 
-  // Premium artwork is denser → slightly smaller type so text breathes.
-  // Classic/traditional backgrounds are lighter → can carry slightly larger type.
+  const isPurple = data.template === "purple";
+  const isClassic = data.template === "white";
+
   const sz = {
-    church:    isClassic ? "13px" : "12px",
-    title:     isClassic ? "52px" : "44px",
-    subtitle:  isClassic ? "12px" : "11px",
-    body:      isClassic ? "14px" : "13px",
-    childName: isClassic ? "60px" : "52px",
-    blessing:  isClassic ? "16px" : "15px",
-    footer:    isClassic ? "12px" : "11px",
-    minister:  isClassic ? "24px" : "22px",
+    church: isClassic ? "13px" : "12px",
+    title: isClassic ? "46px" : "39px",
+    subtitle: isClassic ? "12px" : "11px",
+    body: isClassic ? "14px" : "13px",
+    childName: isClassic ? "48px" : "42px",
+    blessing: isClassic ? "15px" : "14px",
+    footer: isClassic ? "12px" : "11px",
+    minister: isClassic ? "22px" : "20px",
   };
 
-  const textColor  = isPurple ? "#ffffff"                          : "#2B1A09";
-  const gold       = "#D4AF37";
+  const textColor = isPurple ? "#ffffff" : "#2B1A09";
+  const gold = "#D4AF37";
 
-  // Strong shadows ensure legibility over both dark (premium) and light (classic) backgrounds.
-  const shadow     = isPurple
+  const shadow = isPurple
     ? "0 1px 5px rgba(0,0,0,.95), 0 0 2px #000"
     : "0 1px 2px rgba(255,255,255,.85), 0 0 5px rgba(255,255,255,.6)";
 
@@ -123,163 +124,212 @@ export default function CertificateStaticOverlay({ data }: { data: CertificateDa
     ? "0 1px 0 #7c5607, 0 3px 7px rgba(0,0,0,.8)"
     : "0 1px 0 #7c5607, 0 3px 5px rgba(0,0,0,.35)";
 
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+  const scriptFont = `"Segoe Script", "Brush Script MT", cursive`;
+  const serifFont = `"Georgia", "Times New Roman", serif`;
 
-      {/* ── Church name — 25 % from top ──────────────────────────────────── */}
-      <div style={{
-        ...center("25%"),
-        fontFamily:    "Georgia, serif",
-        fontSize:      sz.church,
-        letterSpacing: ".22em",
-        textTransform: "uppercase",
-        whiteSpace:    "nowrap",
-        color:         textColor,
-        textShadow:    shadow,
-      }}>
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        overflow: "hidden",
+      }}
+    >
+      {/* Church name — moved much higher */}
+      <div
+        style={{
+          ...center("18.5%"),
+          fontFamily: serifFont,
+          fontSize: sz.church,
+          lineHeight: 1.15,
+          letterSpacing: ".24em",
+          textTransform: "uppercase",
+          whiteSpace: "nowrap",
+          color: textColor,
+          textShadow: shadow,
+        }}
+      >
         {churchName}
       </div>
 
-      {/* ── Certificate title — 37 % from top ───────────────────────────── */}
-      <div style={{
-        ...center("37%"),
-        fontFamily:  "Brush Script MT, Segoe Script, cursive",
-        fontSize:    sz.title,
-        lineHeight:  1,
-        color:       gold,
-        textShadow:  goldShadow,
-        maxWidth:    "58%",
-        whiteSpace:  "nowrap",
-      }}>
+      {/* Certificate title */}
+      <div
+        style={{
+          ...center("34.5%"),
+          fontFamily: scriptFont,
+          fontSize: sz.title,
+          lineHeight: 0.92,
+          color: gold,
+          textShadow: goldShadow,
+          maxWidth: "58%",
+          whiteSpace: "nowrap",
+        }}
+      >
         {cfg.title}
       </div>
 
-      {/* ── Subtitle — 49 % from top ─────────────────────────────────────── */}
-      <div style={{
-        ...center("49%"),
-        fontFamily:    "Georgia, serif",
-        fontSize:      sz.subtitle,
-        letterSpacing: ".10em",
-        whiteSpace:    "nowrap",
-        color:         textColor,
-        textShadow:    shadow,
-      }}>
+      {/* Subtitle */}
+      <div
+        style={{
+          ...center("43.5%"),
+          fontFamily: serifFont,
+          fontSize: sz.subtitle,
+          lineHeight: 1.1,
+          letterSpacing: ".10em",
+          whiteSpace: "nowrap",
+          color: textColor,
+          textShadow: shadow,
+        }}
+      >
         {cfg.subtitle}
       </div>
 
-      {/* ── Body text — 54 % from top ────────────────────────────────────── */}
-      <div style={{
-        ...center("54%"),
-        fontFamily:  "Georgia, serif",
-        fontSize:    sz.body,
-        lineHeight:  1.5,
-        width:       "52%",
-        color:       textColor,
-        textShadow:  shadow,
-      }}>
+      {/* Body text */}
+      <div
+        style={{
+          ...center("50%"),
+          fontFamily: serifFont,
+          fontSize: sz.body,
+          lineHeight: 1.42,
+          width: "52%",
+          color: textColor,
+          textShadow: shadow,
+        }}
+      >
         {cfg.body.split("\n").map((line, i, arr) => (
-          <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+          <span key={i}>
+            {line}
+            {i < arr.length - 1 && <br />}
+          </span>
         ))}
       </div>
 
-      {/* ── Child name — 63 % from top ───────────────────────────────────── */}
-      <div style={{
-        ...center("63%"),
-        fontFamily:  "Brush Script MT, Segoe Script, cursive",
-        fontSize:    sz.childName,
-        lineHeight:  1,
-        color:       gold,
-        textShadow:  nameShadow,
-        maxWidth:    "68%",
-        whiteSpace:  "nowrap",
-      }}>
+      {/* Child name */}
+      <div
+        style={{
+          ...center("62%"),
+          fontFamily: scriptFont,
+          fontSize: sz.childName,
+          lineHeight: 0.9,
+          color: gold,
+          textShadow: nameShadow,
+          maxWidth: "66%",
+          whiteSpace: "nowrap",
+        }}
+      >
         {data.childName}
       </div>
 
-      {/* ── Blessing — 73 % from top ─────────────────────────────────────── */}
-      <div style={{
-        ...center("73%"),
-        fontFamily:  "Georgia, serif",
-        fontSize:    sz.blessing,
-        lineHeight:  1.35,
-        width:       "66%",
-        color:       gold,
-        textShadow:  goldShadow,
-      }}>
+      {/* Blessing */}
+      <div
+        style={{
+          ...center("72.5%"),
+          fontFamily: serifFont,
+          fontSize: sz.blessing,
+          lineHeight: 1.28,
+          width: "62%",
+          color: gold,
+          textShadow: goldShadow,
+        }}
+      >
         {blessing}
       </div>
 
-      {/* ── Footer — 86 % from top ───────────────────────────────────────── */}
-      {/* Three columns: date | scripture reference | minister */}
-      <div style={{
-        position:        "absolute",
-        top:             "86%",
-        left:            "7%",
-        right:           "7%",
-        display:         "flex",
-        justifyContent:  "space-between",
-        alignItems:      "flex-start",
-        fontFamily:      "Georgia, serif",
-        fontSize:        sz.footer,
-        color:           textColor,
-      }}>
-
-        {/* Date */}
-        <div style={{ textAlign: "center", minWidth: "120px" }}>
-          <div style={{ textShadow: shadow }}>
-            {data.date || "April 14, 2026"}
-          </div>
-          <div style={{
-            marginTop:     "4px",
-            fontSize:      "10px",
+      {/* Date */}
+      <div
+        style={{
+          position: "absolute",
+          top: "86%",
+          left: "8.5%",
+          width: "22%",
+          textAlign: "center",
+          fontFamily: serifFont,
+          fontSize: sz.footer,
+          color: textColor,
+        }}
+      >
+        <div style={{ lineHeight: 1.1, textShadow: shadow }}>
+          {data.date || "April 14, 2026"}
+        </div>
+        <div
+          style={{
+            marginTop: "4px",
+            fontSize: "10px",
+            lineHeight: 1,
             letterSpacing: ".16em",
             textTransform: "uppercase",
-            opacity:       0.75,
-            textShadow:    shadow,
-          }}>
-            Date
-          </div>
+            opacity: 0.75,
+            textShadow: shadow,
+          }}
+        >
+          Date
         </div>
+      </div>
 
-        {/* Scripture reference (center) — only the citation, not the full verse */}
-        {data.reference && (
-          <div style={{ textAlign: "center", flex: "0 0 auto" }}>
-            <div style={{
-              fontSize:      "10px",
-              letterSpacing: ".10em",
-              textTransform: "uppercase",
-              color:         gold,
-              fontWeight:    700,
-              textShadow:    goldShadow,
-            }}>
-              {data.reference}
-            </div>
-          </div>
-        )}
+      {/* Scripture reference */}
+      {data.reference && (
+        <div
+          style={{
+            position: "absolute",
+            top: "86%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "28%",
+            textAlign: "center",
+            fontFamily: serifFont,
+            fontSize: "10px",
+            lineHeight: 1.1,
+            letterSpacing: ".10em",
+            textTransform: "uppercase",
+            color: gold,
+            fontWeight: 700,
+            textShadow: goldShadow,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {data.reference}
+        </div>
+      )}
 
-        {/* Minister */}
-        <div style={{ textAlign: "center", minWidth: "120px" }}>
-          <div style={{
-            fontFamily:  "Brush Script MT, Segoe Script, cursive",
-            fontSize:    sz.minister,
-            lineHeight:  1,
-            color:       isPurple ? "#F7F0DD" : textColor,
-            textShadow:  isPurple ? "0 2px 8px rgba(0,0,0,.85)" : shadow,
-          }}>
-            {data.ministerName || "Children’s Ministry"}
-          </div>
-          <div style={{
-            marginTop:     "4px",
-            fontSize:      "10px",
+      {/* Minister */}
+      <div
+        style={{
+          position: "absolute",
+          top: "84.8%",
+          right: "8.5%",
+          width: "24%",
+          textAlign: "center",
+          fontFamily: serifFont,
+          fontSize: sz.footer,
+          color: textColor,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: scriptFont,
+            fontSize: sz.minister,
+            lineHeight: 0.95,
+            color: isPurple ? "#F7F0DD" : textColor,
+            textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.85)" : shadow,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {data.ministerName || "Children’s Ministry"}
+        </div>
+        <div
+          style={{
+            marginTop: "5px",
+            fontSize: "10px",
+            lineHeight: 1,
             letterSpacing: ".16em",
             textTransform: "uppercase",
-            opacity:       0.75,
-            textShadow:    shadow,
-          }}>
-            {data.ministerTitle || "Director"}
-          </div>
+            opacity: 0.75,
+            textShadow: shadow,
+          }}
+        >
+          {data.ministerTitle || "Director"}
         </div>
-
       </div>
     </div>
   );
