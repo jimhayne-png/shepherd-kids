@@ -166,7 +166,7 @@ export default function CertificateStaticOverlay({
 
       <div
         style={{
-          ...center("20%"),
+          ...center("18%"),
           fontFamily: scriptFont,
           fontSize: sz.title,
           lineHeight: 0.95,
@@ -181,7 +181,7 @@ export default function CertificateStaticOverlay({
 
       <div
         style={{
-          ...center("30%"),
+          ...center("28%"),
           fontFamily: serifFont,
           fontSize: sz.subtitle,
           fontWeight: 600,
@@ -197,7 +197,7 @@ export default function CertificateStaticOverlay({
 
       <div
         style={{
-          ...center("36%"),
+          ...center("34%"),
           fontFamily: `"Georgia", "Times New Roman", serif`,
           fontSize: sz.body,
           lineHeight: 1.28,
@@ -216,7 +216,7 @@ export default function CertificateStaticOverlay({
 
       <div
         style={{
-          ...center("56%"),
+          ...center("52%"),
           fontFamily: scriptFont,
           fontSize: sz.childName,
           lineHeight: 0.95,
@@ -231,7 +231,7 @@ export default function CertificateStaticOverlay({
 
       <div
         style={{
-          ...center("66%"),
+          ...center("62%"),
           fontFamily: `"Georgia", "Times New Roman", serif`,
           fontSize: sz.blessing,
           fontWeight: 700,
