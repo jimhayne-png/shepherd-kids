@@ -139,7 +139,7 @@ export default function CertificateStaticOverlay({
       {/* Church name — moved much higher */}
       <div
         style={{
-          ...center("18.5%"),
+          ...center("15.5%"),
           fontFamily: serifFont,
           fontSize: sz.church,
           lineHeight: 1.15,
@@ -156,7 +156,7 @@ export default function CertificateStaticOverlay({
       {/* Certificate title */}
       <div
         style={{
-          ...center("34.5%"),
+          ...center("29.5%"),
           fontFamily: scriptFont,
           fontSize: sz.title,
           lineHeight: 0.92,
@@ -172,7 +172,7 @@ export default function CertificateStaticOverlay({
       {/* Subtitle */}
       <div
         style={{
-          ...center("43.5%"),
+          ...center("38.5%"),
           fontFamily: serifFont,
           fontSize: sz.subtitle,
           lineHeight: 1.1,
@@ -188,7 +188,7 @@ export default function CertificateStaticOverlay({
       {/* Body text */}
       <div
         style={{
-          ...center("50%"),
+          ...center("45%"),
           fontFamily: serifFont,
           fontSize: sz.body,
           lineHeight: 1.42,
@@ -208,7 +208,7 @@ export default function CertificateStaticOverlay({
       {/* Child name */}
       <div
         style={{
-          ...center("62%"),
+          ...center("56.5%"),
           fontFamily: scriptFont,
           fontSize: sz.childName,
           lineHeight: 0.9,
@@ -224,7 +224,7 @@ export default function CertificateStaticOverlay({
       {/* Blessing */}
       <div
         style={{
-          ...center("72.5%"),
+          ...center("64.5%"),
           fontFamily: serifFont,
           fontSize: sz.blessing,
           lineHeight: 1.28,
@@ -240,7 +240,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "86%",
+          top: "81%",
           left: "8.5%",
           width: "22%",
           textAlign: "center",
@@ -296,7 +296,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "84.8%",
+          top: "79.8%",
           right: "8.5%",
           width: "24%",
           textAlign: "center",
