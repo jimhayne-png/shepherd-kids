@@ -14,77 +14,158 @@ const greatVibes = Great_Vibes({
   weight: "400",
 });
 
-const TYPE_CONFIG: Record<
-  string,
-  { title: string; subtitle: string; body: string; blessing: string }
-> = {
+type CertificateTypeConfig = {
+  title: string;
+  subtitle: string;
+  bodyLines: string[];
+  blessingLines: string[];
+};
+
+const TYPE_CONFIG: Record<string, CertificateTypeConfig> = {
   birthday: {
     title: "Happy Birthday!",
     subtitle: "CELEBRATING GOD'S AMAZING GIFT OF YOU",
-    body: "This certificate celebrates the wonderful gift of you\nand the joy you bring to our church family.",
-    blessing: "May God bless you today and always as you grow in His love!",
+    bodyLines: [
+      "This certificate celebrates",
+      "the wonderful gift of you",
+      "and the joy you bring to our church family.",
+    ],
+    blessingLines: [
+      "May God bless you today and always",
+      "as you grow in His love!",
+    ],
   },
   spiritual_birthday: {
     title: "Spiritual Birthday!",
     subtitle: "THE DAY YOU GAVE YOUR HEART TO JESUS",
-    body: "This certificate honors the most important decision of your life —\nchoosing to follow Jesus Christ as Lord.",
-    blessing: "May you grow in faith, love, and wisdom as you walk with the Lord.",
+    bodyLines: [
+      "This certificate honors the most important",
+      "decision of your life — choosing to follow",
+      "Jesus Christ as Lord.",
+    ],
+    blessingLines: [
+      "May you grow in faith, love, and wisdom",
+      "as you walk with the Lord.",
+    ],
   },
   baptism: {
     title: "Baptized!",
     subtitle: "FOLLOWING JESUS IN BELIEVER'S BAPTISM",
-    body: "This certificate celebrates your public declaration of faith\nthrough the waters of baptism.",
-    blessing: "May your baptism be a reminder of the new life you have in Christ.",
+    bodyLines: [
+      "This certificate celebrates your public",
+      "declaration of faith through",
+      "the waters of baptism.",
+    ],
+    blessingLines: [
+      "May your baptism be a reminder",
+      "of the new life you have in Christ.",
+    ],
   },
   faith_milestone: {
     title: "Faith Milestone!",
     subtitle: "GROWING IN FAITH AND KNOWLEDGE",
-    body: "This certificate recognizes a meaningful step forward\nin your faith journey with Jesus.",
-    blessing: "May God continue to guide your steps as you grow in His grace.",
+    bodyLines: [
+      "This certificate recognizes",
+      "a meaningful step forward",
+      "in your faith journey with Jesus.",
+    ],
+    blessingLines: [
+      "May God continue to guide your steps",
+      "as you grow in His grace.",
+    ],
   },
   scripture_memory: {
     title: "Scripture Memory!",
     subtitle: "HIDING GOD'S WORD IN YOUR HEART",
-    body: "This certificate honors your commitment to memorizing\nand treasuring the Word of God.",
-    blessing: "May God's Word be a lamp unto your feet and a light unto your path.",
+    bodyLines: [
+      "This certificate honors your commitment",
+      "to memorizing and treasuring",
+      "the Word of God.",
+    ],
+    blessingLines: [
+      "May God's Word be a lamp unto your feet",
+      "and a light unto your path.",
+    ],
   },
   attendance: {
     title: "Faithful Attendance!",
     subtitle: "FAITHFUL AND PRESENT",
-    body: "This certificate celebrates your faithful presence\nand commitment to our church family.",
-    blessing: "May your faithfulness be a blessing to all who know you.",
+    bodyLines: [
+      "This certificate celebrates",
+      "your faithful presence and commitment",
+      "to our church family.",
+    ],
+    blessingLines: [
+      "May your faithfulness be a blessing",
+      "to all who know you.",
+    ],
   },
   promotion: {
     title: "Promotion Sunday!",
     subtitle: "MOVING FORWARD IN FAITH",
-    body: "This certificate recognizes your growth and readiness\nto take your next step in ministry.",
-    blessing: "May God lead you forward with courage, joy, and faith.",
+    bodyLines: [
+      "This certificate recognizes your growth",
+      "and readiness to take your next step",
+      "in ministry.",
+    ],
+    blessingLines: [
+      "May God lead you forward",
+      "with courage, joy, and faith.",
+    ],
   },
   servant_heart: {
     title: "Servant Heart!",
     subtitle: "FOLLOWING JESUS BY SERVING OTHERS",
-    body: "This certificate honors the servant heart you have shown\nto our church family and beyond.",
-    blessing: "May you always find joy in serving others as Jesus served us.",
+    bodyLines: [
+      "This certificate honors",
+      "the servant heart you have shown",
+      "to our church family and beyond.",
+    ],
+    blessingLines: [
+      "May you always find joy",
+      "in serving others as Jesus served us.",
+    ],
   },
   kindness: {
     title: "Kindness Award!",
     subtitle: "LOVING OTHERS AS JESUS LOVES US",
-    body: "This certificate celebrates the kindness and love\nyou have shown to those around you.",
-    blessing: "May your kindness be a light that leads others to Christ.",
+    bodyLines: [
+      "This certificate celebrates",
+      "the kindness and love you have shown",
+      "to those around you.",
+    ],
+    blessingLines: [
+      "May your kindness be a light",
+      "that leads others to Christ.",
+    ],
   },
   helper: {
     title: "Helper Award!",
     subtitle: "A HELPING HAND FOR GOD'S GLORY",
-    body: "This certificate honors your willingness to help\nand serve with a joyful heart.",
-    blessing: "May God bless every act of help and service you offer in His name.",
+    bodyLines: [
+      "This certificate honors your willingness",
+      "to help and serve",
+      "with a joyful heart.",
+    ],
+    blessingLines: [
+      "May God bless every act of help",
+      "and service you offer in His name.",
+    ],
   },
 };
 
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: CertificateTypeConfig = {
   title: "Well Done!",
   subtitle: "A SPECIAL RECOGNITION",
-  body: "This certificate celebrates a meaningful achievement\nin your faith journey.",
-  blessing: "May God's blessings follow you all the days of your life.",
+  bodyLines: [
+    "This certificate celebrates",
+    "a meaningful achievement",
+    "in your faith journey.",
+  ],
+  blessingLines: [
+    "May God's blessings follow you",
+    "all the days of your life.",
+  ],
 };
 
 function center(top: string): React.CSSProperties {
@@ -97,6 +178,22 @@ function center(top: string): React.CSSProperties {
   };
 }
 
+function renderLines(lines: string[]) {
+  return lines.map((line, i) => (
+    <span key={`${line}-${i}`}>
+      {line}
+      {i < lines.length - 1 && <br />}
+    </span>
+  ));
+}
+
+function splitCustomText(text: string): string[] {
+  return text
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+}
+
 export default function CertificateStaticOverlay({
   data,
 }: {
@@ -104,7 +201,10 @@ export default function CertificateStaticOverlay({
 }) {
   const churchName = data.churchName || "LIGHTHOUSE BAPTIST CHURCH";
   const cfg = TYPE_CONFIG[data.certType] ?? DEFAULT_CONFIG;
-  const blessing = data.blessing || cfg.blessing;
+
+  const blessingLines = data.blessing
+    ? splitCustomText(data.blessing)
+    : cfg.blessingLines;
 
   const isPurple = data.template === "purple";
   const isClassic = data.template === "white";
@@ -137,6 +237,7 @@ export default function CertificateStaticOverlay({
 
   const scriptFont = greatVibes.style.fontFamily;
   const serifFont = cinzel.style.fontFamily;
+  const bodyFont = `"Georgia", "Times New Roman", serif`;
 
   return (
     <div
@@ -149,7 +250,7 @@ export default function CertificateStaticOverlay({
     >
       <div
         style={{
-          ...center("9%"),
+          ...center("12%"),
           fontFamily: serifFont,
           fontSize: sz.church,
           fontWeight: 600,
@@ -198,20 +299,15 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           ...center("34%"),
-          fontFamily: `"Georgia", "Times New Roman", serif`,
+          fontFamily: bodyFont,
           fontSize: sz.body,
           lineHeight: 1.28,
-          width: "52%",
+          width: "58%",
           color: textColor,
           textShadow: shadow,
         }}
       >
-        {cfg.body.split("\n").map((line, i, arr) => (
-          <span key={i}>
-            {line}
-            {i < arr.length - 1 && <br />}
-          </span>
-        ))}
+        {renderLines(cfg.bodyLines)}
       </div>
 
       <div
@@ -232,16 +328,16 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           ...center("62%"),
-          fontFamily: `"Georgia", "Times New Roman", serif`,
+          fontFamily: bodyFont,
           fontSize: sz.blessing,
           fontWeight: 700,
           lineHeight: 1.28,
-          width: "62%",
+          width: "66%",
           color: gold,
           textShadow: goldShadow,
         }}
       >
-        {blessing}
+        {renderLines(blessingLines)}
       </div>
 
       {data.reference && (
@@ -275,7 +371,7 @@ export default function CertificateStaticOverlay({
           left: "8.5%",
           width: "22%",
           textAlign: "center",
-          fontFamily: `"Georgia", "Times New Roman", serif`,
+          fontFamily: bodyFont,
           fontSize: sz.footer,
           color: textColor,
         }}
