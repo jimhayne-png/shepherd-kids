@@ -2,6 +2,7 @@
 
 import type React from "react";
 import type { CertificateData } from "../types";
+import { Cinzel } from "next/font/google";
 
 const TYPE_CONFIG: Record<
   string,
@@ -156,8 +157,8 @@ export default function CertificateStaticOverlay({
       {/* Certificate title */}
       <div
         style={{
-          ...center("20%"),
-          fontFamily: scriptFont,
+          ...center("22%"),
+          fontFamily: Cinzel,
           fontSize: sz.title,
           lineHeight: 0.92,
           color: gold,
@@ -172,7 +173,7 @@ export default function CertificateStaticOverlay({
       {/* Subtitle */}
       <div
         style={{
-          ...center("28%"),
+          ...center("32%"),
           fontFamily: serifFont,
           fontSize: sz.subtitle,
           lineHeight: 1.1,
@@ -188,7 +189,7 @@ export default function CertificateStaticOverlay({
       {/* Body text */}
       <div
         style={{
-          ...center("38%"),
+          ...center("40%"),
           fontFamily: serifFont,
           fontSize: sz.body,
           lineHeight: 1.42,
@@ -208,8 +209,8 @@ export default function CertificateStaticOverlay({
       {/* Child name */}
       <div
         style={{
-          ...center("48%"),
-          fontFamily: scriptFont,
+          ...center("50%"),
+          fontFamily: Cinzel,
           fontSize: sz.childName,
           lineHeight: 0.9,
           color: gold,
@@ -224,7 +225,7 @@ export default function CertificateStaticOverlay({
       {/* Blessing */}
       <div
         style={{
-          ...center("58%"),
+          ...center("62%"),
           fontFamily: serifFont,
           fontSize: sz.blessing,
           lineHeight: 1.28,
@@ -240,7 +241,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "80%",
+          top: "82%",
           left: "8.5%",
           width: "22%",
           textAlign: "center",
@@ -272,7 +273,7 @@ export default function CertificateStaticOverlay({
         <div
           style={{
             position: "absolute",
-            top: "74%",
+            top: "76%",
             left: "50%",
             transform: "translateX(-50%)",
             width: "28%",
@@ -296,11 +297,11 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "80%",
+          top: "82%",
           right: "8.5%",
           width: "24%",
           textAlign: "center",
-          fontFamily: serifFont,
+          fontFamily: Cinzel,
           fontSize: sz.footer,
           color: textColor,
         }}
