@@ -156,7 +156,7 @@ export default function CertificateStaticOverlay({
       {/* Certificate title */}
       <div
         style={{
-          ...center("22%"),
+          ...center("20%"),
           fontFamily: scriptFont,
           fontSize: sz.title,
           lineHeight: 0.92,
@@ -172,7 +172,7 @@ export default function CertificateStaticOverlay({
       {/* Subtitle */}
       <div
         style={{
-          ...center("32%"),
+          ...center("28%"),
           fontFamily: serifFont,
           fontSize: sz.subtitle,
           lineHeight: 1.1,
@@ -188,7 +188,7 @@ export default function CertificateStaticOverlay({
       {/* Body text */}
       <div
         style={{
-          ...center("40%"),
+          ...center("38%"),
           fontFamily: serifFont,
           fontSize: sz.body,
           lineHeight: 1.42,
@@ -208,7 +208,7 @@ export default function CertificateStaticOverlay({
       {/* Child name */}
       <div
         style={{
-          ...center("52%"),
+          ...center("48%"),
           fontFamily: scriptFont,
           fontSize: sz.childName,
           lineHeight: 0.9,
@@ -224,7 +224,7 @@ export default function CertificateStaticOverlay({
       {/* Blessing */}
       <div
         style={{
-          ...center("64%"),
+          ...center("58%"),
           fontFamily: serifFont,
           fontSize: sz.blessing,
           lineHeight: 1.28,
@@ -240,7 +240,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "78%",
+          top: "80%",
           left: "8.5%",
           width: "22%",
           textAlign: "center",
@@ -272,7 +272,7 @@ export default function CertificateStaticOverlay({
         <div
           style={{
             position: "absolute",
-            top: "78%",
+            top: "74%",
             left: "50%",
             transform: "translateX(-50%)",
             width: "28%",
@@ -296,7 +296,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "76%",
+          top: "80%",
           right: "8.5%",
           width: "24%",
           textAlign: "center",
