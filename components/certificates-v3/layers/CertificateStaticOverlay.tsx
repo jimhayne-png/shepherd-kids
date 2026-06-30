@@ -2,7 +2,17 @@
 
 import type React from "react";
 import type { CertificateData } from "../types";
-import { Cinzel } from "next/font/google";
+import { Cinzel, Great_Vibes } from "next/font/google";
+
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 const TYPE_CONFIG: Record<
   string,
@@ -101,13 +111,13 @@ export default function CertificateStaticOverlay({
 
   const sz = {
     church: isClassic ? "13px" : "12px",
-    title: isClassic ? "46px" : "39px",
+    title: isClassic ? "48px" : "43px",
     subtitle: isClassic ? "12px" : "11px",
     body: isClassic ? "14px" : "13px",
-    childName: isClassic ? "48px" : "42px",
+    childName: isClassic ? "44px" : "40px",
     blessing: isClassic ? "15px" : "14px",
     footer: isClassic ? "12px" : "11px",
-    minister: isClassic ? "22px" : "20px",
+    minister: isClassic ? "16px" : "15px",
   };
 
   const textColor = isPurple ? "#ffffff" : "#2B1A09";
@@ -125,8 +135,8 @@ export default function CertificateStaticOverlay({
     ? "0 1px 0 #7c5607, 0 3px 7px rgba(0,0,0,.8)"
     : "0 1px 0 #7c5607, 0 3px 5px rgba(0,0,0,.35)";
 
-  const scriptFont = `"Segoe Script", "Brush Script MT", cursive`;
-  const serifFont = `"Georgia", "Times New Roman", serif`;
+  const scriptFont = greatVibes.style.fontFamily;
+  const serifFont = cinzel.style.fontFamily;
 
   return (
     <div
@@ -137,12 +147,12 @@ export default function CertificateStaticOverlay({
         overflow: "hidden",
       }}
     >
-      {/* Church name — moved much higher */}
       <div
         style={{
           ...center("9%"),
           fontFamily: serifFont,
           fontSize: sz.church,
+          fontWeight: 600,
           lineHeight: 1.15,
           letterSpacing: ".24em",
           textTransform: "uppercase",
@@ -154,28 +164,27 @@ export default function CertificateStaticOverlay({
         {churchName}
       </div>
 
-      {/* Certificate title */}
       <div
         style={{
-          ...center("22%"),
-          fontFamily: Cinzel,
+          ...center("21%"),
+          fontFamily: scriptFont,
           fontSize: sz.title,
-          lineHeight: 0.92,
+          lineHeight: 0.95,
           color: gold,
           textShadow: goldShadow,
-          maxWidth: "58%",
+          maxWidth: "68%",
           whiteSpace: "nowrap",
         }}
       >
         {cfg.title}
       </div>
 
-      {/* Subtitle */}
       <div
         style={{
-          ...center("32%"),
+          ...center("31%"),
           fontFamily: serifFont,
           fontSize: sz.subtitle,
+          fontWeight: 600,
           lineHeight: 1.1,
           letterSpacing: ".10em",
           whiteSpace: "nowrap",
@@ -186,11 +195,10 @@ export default function CertificateStaticOverlay({
         {cfg.subtitle}
       </div>
 
-      {/* Body text */}
       <div
         style={{
           ...center("40%"),
-          fontFamily: serifFont,
+          fontFamily: `"Georgia", "Times New Roman", serif`,
           fontSize: sz.body,
           lineHeight: 1.42,
           width: "52%",
@@ -206,28 +214,27 @@ export default function CertificateStaticOverlay({
         ))}
       </div>
 
-      {/* Child name */}
       <div
         style={{
-          ...center("50%"),
-          fontFamily: Cinzel,
+          ...center("51%"),
+          fontFamily: scriptFont,
           fontSize: sz.childName,
-          lineHeight: 0.9,
+          lineHeight: 0.95,
           color: gold,
           textShadow: nameShadow,
-          maxWidth: "66%",
+          maxWidth: "70%",
           whiteSpace: "nowrap",
         }}
       >
         {data.childName}
       </div>
 
-      {/* Blessing */}
       <div
         style={{
-          ...center("62%"),
-          fontFamily: serifFont,
+          ...center("63%"),
+          fontFamily: `"Georgia", "Times New Roman", serif`,
           fontSize: sz.blessing,
+          fontWeight: 700,
           lineHeight: 1.28,
           width: "62%",
           color: gold,
@@ -237,7 +244,30 @@ export default function CertificateStaticOverlay({
         {blessing}
       </div>
 
-      {/* Date */}
+      {data.reference && (
+        <div
+          style={{
+            position: "absolute",
+            top: "74%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "28%",
+            textAlign: "center",
+            fontFamily: serifFont,
+            fontSize: "9px",
+            fontWeight: 700,
+            lineHeight: 1.1,
+            letterSpacing: ".10em",
+            textTransform: "uppercase",
+            color: gold,
+            textShadow: goldShadow,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {data.reference}
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",
@@ -245,7 +275,7 @@ export default function CertificateStaticOverlay({
           left: "8.5%",
           width: "22%",
           textAlign: "center",
-          fontFamily: serifFont,
+          fontFamily: `"Georgia", "Times New Roman", serif`,
           fontSize: sz.footer,
           color: textColor,
         }}
@@ -256,11 +286,13 @@ export default function CertificateStaticOverlay({
         <div
           style={{
             marginTop: "4px",
+            fontFamily: serifFont,
             fontSize: "10px",
+            fontWeight: 600,
             lineHeight: 1,
             letterSpacing: ".16em",
             textTransform: "uppercase",
-            opacity: 0.75,
+            opacity: 0.9,
             textShadow: shadow,
           }}
         >
@@ -268,49 +300,24 @@ export default function CertificateStaticOverlay({
         </div>
       </div>
 
-      {/* Scripture reference */}
-      {data.reference && (
-        <div
-          style={{
-            position: "absolute",
-            top: "76%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "28%",
-            textAlign: "center",
-            fontFamily: serifFont,
-            fontSize: "10px",
-            lineHeight: 1.1,
-            letterSpacing: ".10em",
-            textTransform: "uppercase",
-            color: gold,
-            fontWeight: 700,
-            textShadow: goldShadow,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {data.reference}
-        </div>
-      )}
-
-      {/* Minister */}
       <div
         style={{
           position: "absolute",
           top: "82%",
-          right: "8.5%",
-          width: "24%",
+          right: "5.5%",
+          width: "34%",
           textAlign: "center",
-          fontFamily: Cinzel,
+          fontFamily: serifFont,
           fontSize: sz.footer,
           color: textColor,
         }}
       >
         <div
           style={{
-            fontFamily: scriptFont,
+            fontFamily: serifFont,
             fontSize: sz.minister,
-            lineHeight: 0.95,
+            fontWeight: 500,
+            lineHeight: 1.05,
             color: isPurple ? "#F7F0DD" : textColor,
             textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.85)" : shadow,
             whiteSpace: "nowrap",
@@ -318,18 +325,22 @@ export default function CertificateStaticOverlay({
         >
           {data.ministerName || "Children’s Ministry"}
         </div>
+
         <div
           style={{
             marginTop: "5px",
+            fontFamily: serifFont,
             fontSize: "10px",
+            fontWeight: 600,
             lineHeight: 1,
-            letterSpacing: ".16em",
-            textTransform: "uppercase",
-            opacity: 0.75,
+            letterSpacing: ".05em",
+            textTransform: "none",
+            opacity: 0.9,
             textShadow: shadow,
+            whiteSpace: "nowrap",
           }}
         >
-          {data.ministerTitle || "Director"}
+          {data.ministerTitle || "Children’s Ministry Director"}
         </div>
       </div>
     </div>
