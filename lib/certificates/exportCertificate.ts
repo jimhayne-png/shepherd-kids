@@ -1,214 +1,261 @@
 /**
  * Certificate export engine — browser-side, no server required.
  *
- * Pipeline:  DOM element  →  html2canvas (high-DPI canvas)  →  jsPDF / PNG blob
+ * Core rule:
+ * The live certificate is responsive, but every export is normalized to
+ * exactly US Letter landscape at 300 DPI: 3300 × 2550 px.
  *
- * All measurements assume US Letter landscape (11 × 8.5 in) at 300 DPI.
- * html2canvas limitations: CSS `box-shadow` and `filter` (glows) are not
- * rendered — intentional for print output.
+ * This keeps PNG, home PDF, and print-shop PDF using the same certificate image
+ * so text placement does not shift between preview and export.
  */
 
-const CERT_W_IN = 11;     // US Letter landscape width
-const CERT_H_IN = 8.5;    // US Letter landscape height
-const DPI       = 300;
-const BLEED_IN  = 0.125;  // 1/8 in bleed (print shop)
-const GAP_IN    = 0.0625; // 1/16 in gap between bleed and crop mark
-const MARK_IN   = 0.125;  // 1/8 in crop mark length
+const CERT_W_IN = 11;
+const CERT_H_IN = 8.5;
+const DPI = 300;
+
+const CERT_W_PX = CERT_W_IN * DPI;
+const CERT_H_PX = CERT_H_IN * DPI;
+
+const BLEED_IN = 0.125;
+const GAP_IN = 0.0625;
+const MARK_IN = 0.125;
 
 export type ExportFormat = "pdf-home" | "pdf-print" | "png";
 
-// ── Canvas capture ────────────────────────────────────────────────────────────
+async function waitForAssets(el: HTMLElement): Promise<void> {
+  if (document.fonts?.ready) {
+    await document.fonts.ready;
+  }
 
-// Sanitize the cloned document before html2canvas renders it.
-// Targets two known html2canvas 1.4.1 crash paths:
-//
-// 1. SVGs with width="100%" — in the offline iframe their container has no
-//    layout width, so getBoundingClientRect returns 0. html2canvas records
-//    intrinsicWidth=0, serialises the SVG with width="0px", loads it as a
-//    0×0 image, then calls createPattern(zero_size_image) which throws.
-//    Fix: replace % width with the viewBox pixel width.
-//
-// 2. SVGs with overflow:visible containing content outside the viewBox —
-//    the bounding-rect calculation may expand to 0 in certain iframe
-//    layout states. Fix: clip to viewBox (hidden) in the clone only.
-//
-// Additional defensive measures: remove CSS filter (html2canvas ignores it
-// but keeping it can produce internal zero-size canvases on some builds),
-// remove canvas/img with zero size, clamp sub-pixel heights.
+  const images = Array.from(el.querySelectorAll("img"));
+
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete) {
+            resolve();
+            return;
+          }
+
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        })
+    )
+  );
+}
+
 function sanitizeClone(clonedDoc: Document): void {
-  // ── Remove zero-size canvas elements ───────────────────────────────────
-  clonedDoc.querySelectorAll<HTMLCanvasElement>("canvas").forEach(c => {
-    if (!c.width || !c.height) c.remove();
+  clonedDoc.querySelectorAll<HTMLCanvasElement>("canvas").forEach((canvas) => {
+    if (!canvas.width || !canvas.height) canvas.remove();
   });
 
-  // ── Remove zero-size img elements ──────────────────────────────────────
-  clonedDoc.querySelectorAll<HTMLImageElement>("img").forEach(img => {
+  clonedDoc.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
     if (img.getAttribute("width") === "0" || img.getAttribute("height") === "0") {
       img.remove();
     }
   });
 
-  // ── Fix SVG elements ───────────────────────────────────────────────────
-  clonedDoc.querySelectorAll<SVGSVGElement>("svg").forEach(svg => {
-    // Remove CSS filter — html2canvas doesn't render it anyway, and on
-    // some code paths it can trigger a zero-size internal canvas.
+  clonedDoc.querySelectorAll<SVGSVGElement>("svg").forEach((svg) => {
     if (svg.style.filter) svg.style.removeProperty("filter");
-
-    // Clip overflow:visible so out-of-bounds content doesn't expand the
-    // bounds calculation in the offline iframe to an unexpected value.
     if (svg.style.overflow === "visible") svg.style.overflow = "hidden";
 
-    // Replace percentage width with the explicit viewBox pixel width.
-    // Without this, width="100%" resolves to 0 in the offline iframe,
-    // producing a zero-intrinsicWidth SVGElementContainer that later
-    // throws in createPattern.
-    const wAttr = svg.getAttribute("width") ?? "";
-    if (wAttr.endsWith("%")) {
-      const vbParts = (svg.getAttribute("viewBox") ?? "").trim().split(/[\s,]+/);
-      const vbW = vbParts.length >= 4 ? parseFloat(vbParts[2]) : 0;
-      if (vbW > 0) {
-        svg.setAttribute("width", `${vbW}`);
+    const widthAttr = svg.getAttribute("width") ?? "";
+
+    if (widthAttr.endsWith("%")) {
+      const viewBoxParts = (svg.getAttribute("viewBox") ?? "").trim().split(/[\s,]+/);
+      const viewBoxWidth = viewBoxParts.length >= 4 ? parseFloat(viewBoxParts[2]) : 0;
+
+      if (viewBoxWidth > 0) {
+        svg.setAttribute("width", `${viewBoxWidth}`);
       } else {
-        svg.remove(); // no fallback dimension — drop the element
+        svg.remove();
       }
     }
 
-    // Remove SVG if it still has zero explicit dimensions and no viewBox.
-    const w = parseFloat(svg.getAttribute("width") ?? "0");
-    const h = parseFloat(svg.getAttribute("height") ?? "0");
-    if (w === 0 && h === 0 && !svg.getAttribute("viewBox")) {
+    const width = parseFloat(svg.getAttribute("width") ?? "0");
+    const height = parseFloat(svg.getAttribute("height") ?? "0");
+
+    if (width === 0 && height === 0 && !svg.getAttribute("viewBox")) {
       svg.remove();
     }
   });
 
-  // ── Fix sub-pixel heights on non-SVG elements ──────────────────────────
-  // e.g. the 0.75 px divider divs in CertificateRibbon / CertificateFooter.
-  // html2canvas floors fractional px to 0 in certain layout contexts,
-  // producing a zero-height gradient canvas → createPattern crash.
-  clonedDoc.querySelectorAll<HTMLElement>("div, span, p").forEach(el => {
-    const h = el.style.height;
-    if (h) {
-      const v = parseFloat(h);
-      if (v > 0 && v < 1) el.style.height = "1px";
+  clonedDoc.querySelectorAll<HTMLElement>("div, span, p").forEach((node) => {
+    const height = node.style.height;
+    if (height) {
+      const value = parseFloat(height);
+      if (value > 0 && value < 1) node.style.height = "1px";
     }
-    const w = el.style.width;
-    if (w) {
-      const v = parseFloat(w);
-      if (v > 0 && v < 1) el.style.width = "1px";
+
+    const width = node.style.width;
+    if (width) {
+      const value = parseFloat(width);
+      if (value > 0 && value < 1) node.style.width = "1px";
     }
   });
+}
+
+function sampleCornerColor(canvas: HTMLCanvasElement): string {
+  const context = canvas.getContext("2d");
+  if (!context) return "#08060D";
+
+  const pixel = context.getImageData(2, 2, 1, 1).data;
+  return `rgb(${pixel[0]},${pixel[1]},${pixel[2]})`;
+}
+
+function normalizeToLetterCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+  const out = document.createElement("canvas");
+  out.width = CERT_W_PX;
+  out.height = CERT_H_PX;
+
+  const context = out.getContext("2d");
+  if (!context) throw new Error("Could not create normalized certificate canvas.");
+
+  const ctx: CanvasRenderingContext2D = context;
+
+  const fill = sampleCornerColor(source);
+  ctx.fillStyle = fill;
+  ctx.fillRect(0, 0, out.width, out.height);
+
+  const sourceRatio = source.width / source.height;
+  const targetRatio = CERT_W_PX / CERT_H_PX;
+
+  let drawW = CERT_W_PX;
+  let drawH = CERT_H_PX;
+
+  if (sourceRatio > targetRatio) {
+    drawW = CERT_W_PX;
+    drawH = CERT_W_PX / sourceRatio;
+  } else {
+    drawH = CERT_H_PX;
+    drawW = CERT_H_PX * sourceRatio;
+  }
+
+  const x = (CERT_W_PX - drawW) / 2;
+  const y = (CERT_H_PX - drawH) / 2;
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(source, x, y, drawW, drawH);
+
+  return out;
 }
 
 async function captureElement(el: HTMLElement): Promise<HTMLCanvasElement> {
-  const w = el.offsetWidth;
-  if (!w) throw new Error("Certificate element has zero width — is it rendered and visible?");
+  const rect = el.getBoundingClientRect();
 
-  const scale = (CERT_W_IN * DPI) / w;  // ≈ 3.84 at 860px wide
+  if (!rect.width || !rect.height) {
+    throw new Error("Certificate element has zero size — is it rendered and visible?");
+  }
+
+  await waitForAssets(el);
 
   const html2canvas = (await import("html2canvas")).default;
-  const canvas = await html2canvas(el, {
+
+  const scale = Math.max(CERT_W_PX / rect.width, CERT_H_PX / rect.height);
+
+  const raw = await html2canvas(el, {
     scale,
-    useCORS:         true,
-    allowTaint:      true,
-    logging:         false,
+    useCORS: true,
+    allowTaint: true,
+    logging: false,
     backgroundColor: null,
-    onclone:         (_clonedDoc: Document) => sanitizeClone(_clonedDoc),
+    onclone: (clonedDoc: Document) => sanitizeClone(clonedDoc),
   });
 
-  if (!canvas.width || !canvas.height) {
-    throw new Error(`html2canvas returned an empty canvas (${canvas.width}×${canvas.height})`);
+  if (!raw.width || !raw.height) {
+    throw new Error(`html2canvas returned an empty canvas (${raw.width}×${raw.height})`);
   }
-  return canvas;
-}
 
-// Sample top-left corner pixel for bleed fill (avoids hard-coding theme colors)
-function sampleCornerColor(canvas: HTMLCanvasElement): string {
-  const px = canvas.getContext("2d")!.getImageData(2, 2, 1, 1).data;
-  return `rgb(${px[0]},${px[1]},${px[2]})`;
+  return normalizeToLetterCanvas(raw);
 }
-
-// ── Download helpers ──────────────────────────────────────────────────────────
 
 function triggerDownload(dataUrl: string, filename: string): void {
-  const a = document.createElement("a");
-  a.href     = dataUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const anchor = document.createElement("a");
+  anchor.href = dataUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
 }
 
-// ── Print Shop canvas: bleed + crop marks ────────────────────────────────────
-
 function buildPrintShopCanvas(cert: HTMLCanvasElement): HTMLCanvasElement {
-  const pxPerIn = cert.width / CERT_W_IN;  // ≈ 300 at 300 DPI
-
-  const bleedPx = Math.round(BLEED_IN * pxPerIn);
-  const gapPx   = Math.round(GAP_IN   * pxPerIn);
-  const markPx  = Math.round(MARK_IN  * pxPerIn);
+  const bleedPx = Math.round(BLEED_IN * DPI);
+  const gapPx = Math.round(GAP_IN * DPI);
+  const markPx = Math.round(MARK_IN * DPI);
 
   const offset = markPx + gapPx + bleedPx;
 
-  const outW = cert.width  + offset * 2;
+  const outW = cert.width + offset * 2;
   const outH = cert.height + offset * 2;
 
   const out = document.createElement("canvas");
-  out.width  = outW;
+  out.width = outW;
   out.height = outH;
-  const ctx  = out.getContext("2d")!;
 
-  // White base
+  const context = out.getContext("2d");
+  if (!context) throw new Error("Could not create print-shop canvas.");
+
+  const ctx: CanvasRenderingContext2D = context;
+
   ctx.fillStyle = "#FFFFFF";
   ctx.fillRect(0, 0, outW, outH);
 
-  // Bleed area filled with cert's edge color
   ctx.fillStyle = sampleCornerColor(cert);
   ctx.fillRect(
-    offset - bleedPx, offset - bleedPx,
-    cert.width + bleedPx * 2, cert.height + bleedPx * 2,
+    offset - bleedPx,
+    offset - bleedPx,
+    cert.width + bleedPx * 2,
+    cert.height + bleedPx * 2
   );
 
-  // Certificate at trim position
   ctx.drawImage(cert, offset, offset);
 
-  // Crop marks — 4 corners × 2 lines
   ctx.strokeStyle = "#000000";
-  ctx.lineWidth   = 1;
+  ctx.lineWidth = 1;
 
   const x0 = offset;
   const x1 = offset + cert.width;
   const y0 = offset;
   const y1 = offset + cert.height;
 
-  function hLine(xa: number, xb: number, y: number) {
-    ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xb, y); ctx.stroke();
-  }
-  function vLine(x: number, ya: number, yb: number) {
-    ctx.beginPath(); ctx.moveTo(x, ya); ctx.lineTo(x, yb); ctx.stroke();
+  function hLine(xa: number, xb: number, y: number): void {
+    ctx.beginPath();
+    ctx.moveTo(xa, y);
+    ctx.lineTo(xb, y);
+    ctx.stroke();
   }
 
-  hLine(0,             markPx,        y0);  // TL horizontal
-  vLine(x0,            0,             markPx);  // TL vertical
-  hLine(outW - markPx, outW,          y0);  // TR horizontal
-  vLine(x1,            0,             markPx);  // TR vertical
-  hLine(0,             markPx,        y1);  // BL horizontal
-  vLine(x0,            outH - markPx, outH);  // BL vertical
-  hLine(outW - markPx, outW,          y1);  // BR horizontal
-  vLine(x1,            outH - markPx, outH);  // BR vertical
+  function vLine(x: number, ya: number, yb: number): void {
+    ctx.beginPath();
+    ctx.moveTo(x, ya);
+    ctx.lineTo(x, yb);
+    ctx.stroke();
+  }
+
+  hLine(0, markPx, y0);
+  vLine(x0, 0, markPx);
+
+  hLine(outW - markPx, outW, y0);
+  vLine(x1, 0, markPx);
+
+  hLine(0, markPx, y1);
+  vLine(x0, outH - markPx, outH);
+
+  hLine(outW - markPx, outW, y1);
+  vLine(x1, outH - markPx, outH);
 
   return out;
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
-
 export async function exportCertificate(
-  el:       HTMLElement,
-  format:   ExportFormat,
-  filename: string = "certificate",
+  el: HTMLElement,
+  format: ExportFormat,
+  filename = "certificate"
 ): Promise<void> {
   const cert = await captureElement(el);
 
-  // ── PNG ───────────────────────────────────────────────────────────────────
   if (format === "png") {
     triggerDownload(cert.toDataURL("image/png"), `${filename}.png`);
     return;
@@ -216,30 +263,30 @@ export async function exportCertificate(
 
   const { jsPDF } = await import("jspdf");
 
-  // ── Home printer PDF — letter landscape, JPEG 0.96 ────────────────────────
   if (format === "pdf-home") {
-    const pdf = new jsPDF({ orientation: "landscape", unit: "in", format: "letter" });
-    pdf.addImage(
-      cert.toDataURL("image/jpeg", 0.96),
-      "JPEG", 0, 0, CERT_W_IN, CERT_H_IN,
-    );
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "in",
+      format: "letter",
+      compress: true,
+    });
+
+    pdf.addImage(cert.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, CERT_W_IN, CERT_H_IN);
     pdf.save(`${filename}.pdf`);
     return;
   }
 
-  // ── Print Shop PDF — custom size with 1/8 in bleed + crop marks ───────────
-  const out     = buildPrintShopCanvas(cert);
-  const pxPerIn = cert.width / CERT_W_IN;
-  const totalW  = out.width  / pxPerIn;
-  const totalH  = out.height / pxPerIn;
+  const out = buildPrintShopCanvas(cert);
+  const totalW = out.width / DPI;
+  const totalH = out.height / DPI;
 
-  const pdfW = Math.max(totalW, totalH);
-  const pdfH = Math.min(totalW, totalH);
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "in",
+    format: [totalW, totalH],
+    compress: true,
+  });
 
-  const pdf = new jsPDF({ orientation: "landscape", unit: "in", format: [pdfW, pdfH] });
-  pdf.addImage(
-    out.toDataURL("image/jpeg", 0.99),
-    "JPEG", 0, 0, pdfW, pdfH,
-  );
+  pdf.addImage(out.toDataURL("image/jpeg", 0.99), "JPEG", 0, 0, totalW, totalH);
   pdf.save(`${filename}-printshop.pdf`);
 }
