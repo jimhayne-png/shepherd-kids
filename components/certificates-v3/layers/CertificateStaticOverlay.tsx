@@ -200,7 +200,7 @@ export default function CertificateStaticOverlay({
           ...center("36%"),
           fontFamily: `"Georgia", "Times New Roman", serif`,
           fontSize: sz.body,
-          lineHeight: 1.42,
+          lineHeight: 1.28,
           width: "52%",
           color: textColor,
           textShadow: shadow,
@@ -248,7 +248,7 @@ export default function CertificateStaticOverlay({
         <div
           style={{
             position: "absolute",
-            top: "74%",
+            top: "78%",
             left: "50%",
             transform: "translateX(-50%)",
             width: "28%",
@@ -271,7 +271,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "86%",
+          top: "84%",
           left: "8.5%",
           width: "22%",
           textAlign: "center",
