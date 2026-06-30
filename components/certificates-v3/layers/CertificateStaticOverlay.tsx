@@ -139,7 +139,7 @@ export default function CertificateStaticOverlay({
       {/* Church name — moved much higher */}
       <div
         style={{
-          ...center("15.5%"),
+          ...center("8%"),
           fontFamily: serifFont,
           fontSize: sz.church,
           lineHeight: 1.15,
