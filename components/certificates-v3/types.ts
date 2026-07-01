@@ -1,4 +1,4 @@
-export type CertTemplate = "purple" | "white";
+export type CertTemplate = "purple" | "white" | "minimal";
 export type CertTranslation = "kjv" | "niv";
 
 export interface CertificateData {
@@ -6,7 +6,6 @@ export interface CertificateData {
   template: CertTemplate;
   childName: string;
   churchName?: string;
-  churchTagline?: string;
   ministerName?: string;
   ministerTitle?: string;
   date?: string;
