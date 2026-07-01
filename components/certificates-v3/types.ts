@@ -1,4 +1,4 @@
-export type CertTemplate = "purple" | "white" | "minimal";
+export type CertTemplate = "premium" | "classic" | "minimal";
 export type CertTranslation = "kjv" | "niv";
 
 export interface CertificateData {
