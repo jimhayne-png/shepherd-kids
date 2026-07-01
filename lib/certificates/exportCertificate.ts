@@ -2,11 +2,11 @@
  * Certificate export engine — browser-side, no server required.
  *
  * Core rule:
- * The live certificate is responsive, but every export is normalized to
- * exactly US Letter landscape at 300 DPI: 3300 × 2550 px.
+ * Capture the exact live certificate DOM first, then normalize the captured
+ * image to US Letter landscape at 300 DPI: 3300 × 2550 px.
  *
  * This keeps PNG, home PDF, and print-shop PDF using the same certificate image
- * so text placement does not shift between preview and export.
+ * so text placement matches the platform preview as closely as possible.
  */
 
 const CERT_W_IN = 11;
@@ -31,8 +31,8 @@ async function waitForAssets(el: HTMLElement): Promise<void> {
 
   await Promise.all(
     images.map(
-      (img) =>
-        new Promise<void>((resolve) => {
+      img =>
+        new Promise<void>(resolve => {
           if (img.complete) {
             resolve();
             return;
@@ -46,25 +46,28 @@ async function waitForAssets(el: HTMLElement): Promise<void> {
 }
 
 function sanitizeClone(clonedDoc: Document): void {
-  clonedDoc.querySelectorAll<HTMLCanvasElement>("canvas").forEach((canvas) => {
+  clonedDoc.querySelectorAll<HTMLCanvasElement>("canvas").forEach(canvas => {
     if (!canvas.width || !canvas.height) canvas.remove();
   });
 
-  clonedDoc.querySelectorAll<HTMLImageElement>("img").forEach((img) => {
+  clonedDoc.querySelectorAll<HTMLImageElement>("img").forEach(img => {
     if (img.getAttribute("width") === "0" || img.getAttribute("height") === "0") {
       img.remove();
     }
   });
 
-  clonedDoc.querySelectorAll<SVGSVGElement>("svg").forEach((svg) => {
+  clonedDoc.querySelectorAll<SVGSVGElement>("svg").forEach(svg => {
     if (svg.style.filter) svg.style.removeProperty("filter");
     if (svg.style.overflow === "visible") svg.style.overflow = "hidden";
 
     const widthAttr = svg.getAttribute("width") ?? "";
 
     if (widthAttr.endsWith("%")) {
-      const viewBoxParts = (svg.getAttribute("viewBox") ?? "").trim().split(/[\s,]+/);
-      const viewBoxWidth = viewBoxParts.length >= 4 ? parseFloat(viewBoxParts[2]) : 0;
+      const viewBoxParts = (svg.getAttribute("viewBox") ?? "")
+        .trim()
+        .split(/[\s,]+/);
+      const viewBoxWidth =
+        viewBoxParts.length >= 4 ? parseFloat(viewBoxParts[2]) : 0;
 
       if (viewBoxWidth > 0) {
         svg.setAttribute("width", `${viewBoxWidth}`);
@@ -81,7 +84,7 @@ function sanitizeClone(clonedDoc: Document): void {
     }
   });
 
-  clonedDoc.querySelectorAll<HTMLElement>("div, span, p").forEach((node) => {
+  clonedDoc.querySelectorAll<HTMLElement>("div, span, p").forEach(node => {
     const height = node.style.height;
     if (height) {
       const value = parseFloat(height);
@@ -153,10 +156,8 @@ async function captureElement(el: HTMLElement): Promise<HTMLCanvasElement> {
 
   const html2canvas = (await import("html2canvas")).default;
 
-  const scale = Math.max(CERT_W_PX / rect.width, CERT_H_PX / rect.height);
-
   const raw = await html2canvas(el, {
-    scale,
+    scale: 2,
     useCORS: true,
     allowTaint: true,
     logging: false,
@@ -271,7 +272,14 @@ export async function exportCertificate(
       compress: true,
     });
 
-    pdf.addImage(cert.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, CERT_W_IN, CERT_H_IN);
+    pdf.addImage(
+      cert.toDataURL("image/jpeg", 0.98),
+      "JPEG",
+      0,
+      0,
+      CERT_W_IN,
+      CERT_H_IN
+    );
     pdf.save(`${filename}.pdf`);
     return;
   }
