@@ -513,7 +513,6 @@ export default function CertificateDetailPage() {
                 template: cert.template,
                 childName: cert.child_name,
                 churchName: cert.church_name ?? undefined,
-                churchTagline: cert.church_tagline ?? undefined,
                 verse: cert.verse ?? undefined,
                 reference: cert.reference ?? undefined,
                 translation: cert.translation,
