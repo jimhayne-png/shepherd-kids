@@ -76,7 +76,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
   const churchName = data.churchName || "LIGHTHOUSE BAPTIST CHURCH";
   const cfg = TYPE_CONFIG[data.certType] ?? DEFAULT_CONFIG;
   const blessing = data.blessing || cfg.blessing;
-  const isPurple = data.template === "purple";
+  const isPremium = data.template === "premium";
 
   return (
     <div
@@ -89,7 +89,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           "82px 34px 48px 106px 48px 72px 88px 46px 94px 88px",
         justifyItems: "center",
         alignItems: "center",
-        color: isPurple ? "#fff" : "#2B1A09",
+        color: isPremium ? "#fff" : "#2B1A09",
       }}
     >
       <div
@@ -99,10 +99,10 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           fontFamily: "Georgia, serif",
           fontSize: "15px",
           letterSpacing: ".24em",
-          color: isPurple ? "rgba(255,255,255,.96)" : "rgba(43,26,9,.88)",
+          color: isPremium? "rgba(255,255,255,.96)" : "rgba(43,26,9,.88)",
           textTransform: "uppercase",
           textAlign: "center",
-          textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.55)" : "none",
+          textShadow: isPremium ? "0 2px 8px rgba(0,0,0,.55)" : "none",
         }}
       >
         {churchName}
@@ -231,7 +231,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
             style={{
               fontFamily: "Georgia, serif",
               fontSize: "18px",
-              color: isPurple ? "#ffffff" : "#2B1A09",
+              color: isPremium ? "#ffffff" : "#2B1A09",
               letterSpacing: ".02em",
               paddingBottom: 6,
               borderBottom: "1px solid rgba(212,175,55,.82)",
@@ -246,7 +246,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
               fontFamily: "Georgia, serif",
               fontSize: "12px",
               letterSpacing: ".18em",
-              color: isPurple ? "rgba(255,255,255,.92)" : "rgba(43,26,9,.74)",
+              color: isPremium ? "rgba(255,255,255,.92)" : "rgba(43,26,9,.74)",
               textTransform: "uppercase",
             }}
           >
@@ -268,10 +268,10 @@ export default function CertificateText({ data }: { data: CertificateData }) {
               fontFamily: "Brush Script MT, Segoe Script, cursive",
               fontSize: "28px",
               lineHeight: 1,
-              color: isPurple ? "#F7F0DD" : "#2B1A09",
+              color: isPremium ? "#F7F0DD" : "#2B1A09",
               paddingBottom: 5,
               borderBottom: "1px solid rgba(212,175,55,.82)",
-              textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.6)" : "none",
+              textShadow: isPremium ? "0 2px 8px rgba(0,0,0,.6)" : "none",
             }}
           >
             Children&apos;s Ministry
@@ -283,7 +283,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
               fontFamily: "Georgia, serif",
               fontSize: "12px",
               letterSpacing: ".18em",
-              color: isPurple ? "rgba(255,255,255,.92)" : "rgba(43,26,9,.74)",
+              color: isPremium ? "rgba(255,255,255,.92)" : "rgba(43,26,9,.74)",
               textTransform: "uppercase",
             }}
           >
@@ -301,7 +301,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
           padding: "14px 16px 12px",
           borderRadius: "12px",
           border: "1px solid rgba(212,175,55,.72)",
-          background: isPurple
+          background: isPremium
             ? "linear-gradient(180deg, rgba(8,6,13,.88), rgba(18,10,31,.78))"
             : "linear-gradient(180deg, rgba(255,253,246,.94), rgba(242,229,200,.88))",
           boxShadow:
@@ -314,7 +314,7 @@ export default function CertificateText({ data }: { data: CertificateData }) {
             fontFamily: "Georgia, serif",
             fontSize: "13px",
             lineHeight: 1.45,
-            color: isPurple ? "#FFFFFF" : "#2B1A09",
+            color: isPremium ? "#FFFFFF" : "#2B1A09",
             fontStyle: "italic",
           }}
         >
