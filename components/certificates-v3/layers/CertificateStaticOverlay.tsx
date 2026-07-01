@@ -267,7 +267,7 @@ export default function CertificateStaticOverlay({
 
       <div
         style={{
-          ...center("18%"),
+          ...center("16%"),
           fontFamily: scriptFont,
           fontSize: sz.title,
           lineHeight: 0.95,
