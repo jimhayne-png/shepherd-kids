@@ -1,10 +1,10 @@
 // Certificate background image registry.
-// Maps cert type key + template ("purple" | "white" | "minimal") to a static image path in
+// Maps cert type key + template ("premium" | "classic" | "minimal") to a static image path in
 // public/certificates/backgrounds/.
 //
 // UI template names:
-// Premium Colors (template === "purple"): *-premium-landscape.png
-// Classic        (template === "white"):  *-classic-landscape.png
+// Premium Colors (template === "premium"): *-premium-landscape.png
+// Classic        (template === "classic"): *-classic-landscape.png
 // Minimal        (template === "minimal"): *-traditional-landscape.png
 
 const BASE = "/certificates/backgrounds";
@@ -25,18 +25,21 @@ const CERT_TYPE_SLUG: Record<string, string> = {
 };
 
 const TEMPLATE_SLUG: Record<string, string> = {
-  purple: "premium",
-  white: "classic",
+  premium: "premium",
+  classic: "classic",
   minimal: "traditional",
 };
 
-function getRegisteredBackgroundPath(certType: string, template: string): string | null {
+function getRegisteredBackgroundPath(
+  certType: string,
+  template: string
+): string | null {
   const typeSlug = CERT_TYPE_SLUG[certType];
   const tplSlug = TEMPLATE_SLUG[template];
 
   if (!typeSlug || !tplSlug) return null;
 
-  if (certType === "servant_heart" && template === "purple") {
+  if (certType === "servant_heart" && template === "premium") {
     return `${BASE}/servant-heart-award-premium-landscape.png`;
   }
 
