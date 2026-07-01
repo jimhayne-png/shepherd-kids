@@ -1,13 +1,14 @@
 "use client";
 
 import { Suspense, useRef, useState } from "react";
+import type React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
 import CertificateExportButtons from "@/components/certificates-v3/CertificateExportButtons";
+import type { CertTemplate } from "@/components/certificates-v3/types";
 
 // ── Palette ───────────────────────────────────────────────────────────────────
-const ACCENT  = "#7B2CBF";
 const ACCENT2 = "#9D4EDD";
 const GOLD    = "#D4AF37";
 const MUTED   = "#A9A9B8";
@@ -152,14 +153,13 @@ function CertificateCreatorInner() {
   const [childName,     setChildName]     = useState(childNameParam);
   const [certType,      setCertType]      = useState(Object.hasOwn(CERT_TYPES, typeParam) ? typeParam : "spiritual_birthday");
   const [churchName,    setChurchName]    = useState("");
-  const [churchTagline, setChurchTagline] = useState("");
   const [ministerName,  setMinisterName]  = useState("");
   const [ministerTitle, setMinisterTitle] = useState("Children's Ministry Director");
   const [parentEmail,   setParentEmail]   = useState("");
   const [date,          setDate]          = useState(new Date().toISOString().slice(0, 10));
   const [blessing,       setBlessing]       = useState("");
   const [blessingPreset, setBlessingPreset] = useState<BlessingPreset | 'custom' | 'none'>('none');
-  const [template,       setTemplate]       = useState<"purple" | "white">("purple");
+  const [template,       setTemplate]       = useState<CertTemplate>("premium");
   const [translation,   setTranslation]   = useState<Translation>("kjv");
   const [saving,        setSaving]        = useState(false);
   const [saveError,     setSaveError]     = useState<string | null>(null);
@@ -177,7 +177,6 @@ function CertificateCreatorInner() {
     template,
     childName:     childName     || "Child's Name",
     churchName:    churchName    || undefined,
-    churchTagline: churchTagline || undefined,
     ministerName:  ministerName  || undefined,
     ministerTitle: ministerTitle || undefined,
     date:          date ? fmtCertDate(date) : undefined,
@@ -200,7 +199,6 @@ function CertificateCreatorInner() {
           template,
           child_name:      childName.trim(),
           church_name:     churchName.trim() || null,
-          church_tagline:  churchTagline.trim() || null,
           minister_name:   ministerName.trim() || null,
           minister_title:  ministerTitle.trim() || null,
           verse:           meta?.scripture[translation] ?? null,
@@ -282,11 +280,6 @@ function CertificateCreatorInner() {
               <FieldLabel>Church Name</FieldLabel>
               <input type="text" value={churchName} onChange={e => setChurchName(e.target.value)}
                 placeholder="Your church name" style={inputStyle} />
-            </div>
-            <div>
-              <FieldLabel>Church Tagline <span style={{ color: "#4a4a65", fontWeight: 400, textTransform: "none" }}>(optional)</span></FieldLabel>
-              <input type="text" value={churchTagline} onChange={e => setChurchTagline(e.target.value)}
-                placeholder="e.g., Where Faith Grows" style={inputStyle} />
             </div>
           </FormSection>
 
@@ -390,22 +383,74 @@ function CertificateCreatorInner() {
 
           {/* Template */}
           <FormSection title="Template">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              {(["purple", "white"] as const).map(t => {
-                const active = template === t;
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+              {([
+                {
+                  key: "premium",
+                  label: "Premium Colors",
+                  sublabel: "Full color",
+                  swatch: "linear-gradient(135deg, #1A083E, #32177A)",
+                  activeColor: ACCENT2,
+                  activeBg: "rgba(123,44,191,0.2)",
+                  borderColor: "rgba(212,175,55,0.25)",
+                  icon: "👑",
+                },
+                {
+                  key: "classic",
+                  label: "Classic",
+                  sublabel: "Ivory",
+                  swatch: "#FDFAEF",
+                  activeColor: "#B8860B",
+                  activeBg: "rgba(253,250,239,0.06)",
+                  borderColor: "#C9A84C",
+                  icon: "📄",
+                },
+                {
+                  key: "minimal",
+                  label: "Minimal",
+                  sublabel: "Simple",
+                  swatch: "linear-gradient(135deg, #F8F4E8, #FFFFFF)",
+                  activeColor: "#D4AF37",
+                  activeBg: "rgba(212,175,55,0.08)",
+                  borderColor: "#D4AF37",
+                  icon: "⬜",
+                },
+              ] as const).map(t => {
+                const active = template === t.key;
                 return (
-                  <button key={t} onClick={() => setTemplate(t)} style={{
-                    padding: 0, borderRadius: "12px", overflow: "hidden", cursor: "pointer",
-                    border: `2px solid ${active ? (t === "purple" ? ACCENT2 : "#8B6914") : "rgba(212,175,55,0.15)"}`,
-                    background: active ? (t === "purple" ? "rgba(123,44,191,0.2)" : "rgba(253,250,239,0.06)") : "transparent",
-                  }}>
-                    {/* Color swatch */}
-                    <div style={{ height: "28px", background: t === "purple" ? "linear-gradient(135deg, #1A083E, #32177A)" : "#FDFAEF", borderBottom: `1px solid ${t === "purple" ? "rgba(212,175,55,0.25)" : "#C9A84C"}` }} />
+                  <button
+                    key={t.key}
+                    onClick={() => setTemplate(t.key)}
+                    style={{
+                      padding: 0,
+                      borderRadius: "12px",
+                      overflow: "hidden",
+                      cursor: "pointer",
+                      border: `2px solid ${active ? t.activeColor : "rgba(212,175,55,0.15)"}`,
+                      background: active ? t.activeBg : "transparent",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "28px",
+                        background: t.swatch,
+                        borderBottom: `1px solid ${t.borderColor}`,
+                      }}
+                    />
                     <div style={{ padding: "7px 8px" }}>
-                      <p style={{ fontSize: "11px", fontWeight: 700, margin: 0, color: active ? (t === "purple" ? ACCENT2 : "#B8860B") : MUTED }}>
-                        {t === "purple" ? "👑 Royal Purple" : "📄 Classic Ivory"}
+                      <p
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          margin: 0,
+                          color: active ? t.activeColor : MUTED,
+                        }}
+                      >
+                        {t.icon} {t.label}
                       </p>
-                      <p style={{ fontSize: "9px", color: "#4a4a65", margin: "2px 0 0" }}>Premium</p>
+                      <p style={{ fontSize: "9px", color: "#4a4a65", margin: "2px 0 0" }}>
+                        {t.sublabel}
+                      </p>
                     </div>
                   </button>
                 );
@@ -441,7 +486,7 @@ function CertificateCreatorInner() {
         {/* ── Preview panel ────────────────────────────────────────────────── */}
         <div>
           <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>
-            Live Preview — {template === "purple" ? "Royal Purple Premium" : "Classic Ivory Premium"}
+            Live Preview — {template === "premium" ? "Premium Colors" : template === "classic" ? "Classic" : "Minimal"}
           </p>
 
           <div ref={certRef}>

@@ -19,7 +19,7 @@ import GoldMedallion from "./layers/GoldMedallion";
 export type { CertificateData };
 
 function getFallbackBackground(template: CertificateData["template"]) {
-  if (template === "white") return "#FDFAEF";
+  if (template === "classic") return "#FDFAEF";
   if (template === "minimal") return "#ffffff";
   return "#08060D";
 }

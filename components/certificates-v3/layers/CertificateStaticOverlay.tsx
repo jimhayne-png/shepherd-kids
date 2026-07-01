@@ -206,8 +206,8 @@ export default function CertificateStaticOverlay({
     ? splitCustomText(data.blessing)
     : cfg.blessingLines;
 
-  const isPurple = data.template === "purple";
-  const isClassic = data.template === "white";
+  const isPremium = data.template === "premium";
+  const isClassic = data.template === "classic";
 
   const sz = {
     church: isClassic ? "13px" : "12px",
@@ -220,18 +220,18 @@ export default function CertificateStaticOverlay({
     minister: isClassic ? "16px" : "15px",
   };
 
-  const textColor = isPurple ? "#ffffff" : "#2B1A09";
+  const textColor = isPremium ? "#ffffff" : "#2B1A09";
   const gold = "#D4AF37";
 
-  const shadow = isPurple
+  const shadow = isPremium
     ? "0 1px 5px rgba(0,0,0,.95), 0 0 2px #000"
     : "0 1px 2px rgba(255,255,255,.85), 0 0 5px rgba(255,255,255,.6)";
 
-  const goldShadow = isPurple
+  const goldShadow = isPremium
     ? "0 1px 0 #7c5607, 0 3px 8px rgba(0,0,0,.75), 0 0 10px rgba(212,175,55,.2)"
     : "0 1px 0 #8b6508, 0 3px 6px rgba(0,0,0,.3)";
 
-  const nameShadow = isPurple
+  const nameShadow = isPremium
     ? "0 1px 0 #7c5607, 0 3px 7px rgba(0,0,0,.8)"
     : "0 1px 0 #7c5607, 0 3px 5px rgba(0,0,0,.35)";
 
@@ -414,8 +414,8 @@ export default function CertificateStaticOverlay({
             fontSize: sz.minister,
             fontWeight: 500,
             lineHeight: 1.05,
-            color: isPurple ? "#F7F0DD" : textColor,
-            textShadow: isPurple ? "0 2px 8px rgba(0,0,0,.85)" : shadow,
+            color: isPremium ? "#F7F0DD" : textColor,
+            textShadow: isPremium ? "0 2px 8px rgba(0,0,0,.85)" : shadow,
             whiteSpace: "nowrap",
           }}
         >
