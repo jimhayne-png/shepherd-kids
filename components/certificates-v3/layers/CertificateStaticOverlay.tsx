@@ -434,7 +434,7 @@ export default function CertificateStaticOverlay({
       <div
         style={{
           position: "absolute",
-          top: "82%",
+          top: "81%",
           left: "8.5%",
           width: "22%",
           textAlign: "center",
