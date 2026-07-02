@@ -489,7 +489,7 @@ function CertificateCreatorInner() {
             Live Preview — {template === "premium" ? "Premium Colors" : template === "classic" ? "Classic" : "Minimal"}
           </p>
 
-          <div ref={certRef}>
+          <div ref={certRef} data-certificate-export="true">
             <CertificateCanvas data={certData} />
           </div>
 

@@ -2,11 +2,9 @@
  * Certificate export engine — browser-side, no server required.
  *
  * Core rule:
- * Capture the exact live certificate DOM first, then normalize the captured
- * image to US Letter landscape at 300 DPI: 3300 × 2550 px.
- *
- * This keeps PNG, home PDF, and print-shop PDF using the same certificate image
- * so text placement matches the platform preview as closely as possible.
+ * Capture the exact visible certificate DOM first, using the same browser
+ * layout size, then normalize the captured image to US Letter landscape
+ * at 300 DPI: 3300 × 2550 px.
  */
 
 const CERT_W_IN = 11;
@@ -66,6 +64,7 @@ function sanitizeClone(clonedDoc: Document): void {
       const viewBoxParts = (svg.getAttribute("viewBox") ?? "")
         .trim()
         .split(/[\s,]+/);
+
       const viewBoxWidth =
         viewBoxParts.length >= 4 ? parseFloat(viewBoxParts[2]) : 0;
 
@@ -162,7 +161,28 @@ async function captureElement(el: HTMLElement): Promise<HTMLCanvasElement> {
     allowTaint: true,
     logging: false,
     backgroundColor: null,
-    onclone: (clonedDoc: Document) => sanitizeClone(clonedDoc),
+
+    width: rect.width,
+    height: rect.height,
+    windowWidth: window.innerWidth,
+    windowHeight: window.innerHeight,
+    scrollX: 0,
+    scrollY: 0,
+
+    onclone: (clonedDoc: Document) => {
+      sanitizeClone(clonedDoc);
+
+      const clonedEl = clonedDoc.body.querySelector(
+        "[data-certificate-export='true']"
+      ) as HTMLElement | null;
+
+      if (clonedEl) {
+        clonedEl.style.width = `${rect.width}px`;
+        clonedEl.style.height = `${rect.height}px`;
+        clonedEl.style.transform = "none";
+        clonedEl.style.transformOrigin = "top left";
+      }
+    },
   });
 
   if (!raw.width || !raw.height) {
@@ -280,6 +300,7 @@ export async function exportCertificate(
       CERT_W_IN,
       CERT_H_IN
     );
+
     pdf.save(`${filename}.pdf`);
     return;
   }
