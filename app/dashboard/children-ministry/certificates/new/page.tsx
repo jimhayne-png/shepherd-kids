@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
 import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
 import CertificateExportButtons from "@/components/certificates-v3/CertificateExportButtons";
-import type { CertTemplate } from "@/components/certificates-v3/types";
+import type { CertificateData, CertTemplate } from "@/components/certificates-v3/types";
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const ACCENT2 = "#9D4EDD";
@@ -163,7 +163,8 @@ function CertificateCreatorInner() {
   const [translation,   setTranslation]   = useState<Translation>("kjv");
   const [saving,        setSaving]        = useState(false);
   const [saveError,     setSaveError]     = useState<string | null>(null);
-  const certRef = useRef<HTMLDivElement>(null);
+  const previewCertRef = useRef<HTMLDivElement>(null);
+  const exportCertRef = useRef<HTMLDivElement>(null);
 
   const backHref = childIdParam
     ? `/dashboard/children-ministry/children/${childIdParam}#celebration-timeline`
@@ -172,7 +173,7 @@ function CertificateCreatorInner() {
   const meta = CERT_TYPES[certType];
 
   // Build the live CertificateData from current form state
-  const certData = {
+  const certData: CertificateData = {
     certType,
     template,
     childName:     childName     || "Child's Name",
@@ -489,8 +490,26 @@ function CertificateCreatorInner() {
             Live Preview — {template === "premium" ? "Premium Colors" : template === "classic" ? "Classic" : "Minimal"}
           </p>
 
-          <div ref={certRef}>
+          <div ref={previewCertRef}>
             <CertificateCanvas data={certData} />
+          </div>
+
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              left: "-10000px",
+              top: 0,
+              width: "1100px",
+              height: "850px",
+              pointerEvents: "none",
+              overflow: "hidden",
+              background: "transparent",
+            }}
+          >
+            <div ref={exportCertRef} style={{ width: "1100px", height: "850px" }}>
+              <CertificateCanvas data={certData} />
+            </div>
           </div>
 
           {/* Save draft */}
@@ -506,7 +525,7 @@ function CertificateCreatorInner() {
 
           {/* Export — same rendering path as the certificate detail page */}
           <CertificateExportButtons
-            certRef={certRef}
+            certRef={exportCertRef}
             filename={childName.trim() ? `${childName.trim().replace(/\s+/g, "-").toLowerCase()}-certificate` : "certificate"}
           />
 
