@@ -194,6 +194,75 @@ function splitCustomText(text: string): string[] {
     .filter(Boolean);
 }
 
+function getTitleLength(title: string): number {
+  if (title.length >= 19) return 770;
+  if (title.length >= 17) return 720;
+  if (title.length >= 15) return 680;
+  if (title.length >= 12) return 600;
+  return 500;
+}
+
+function ScriptSvgText({
+  text,
+  top,
+  width,
+  height,
+  fontSize,
+  textLength,
+  color,
+  shadow,
+  fontFamily,
+}: {
+  text: string;
+  top: string;
+  width: string;
+  height: string;
+  fontSize: number;
+  textLength: number;
+  color: string;
+  shadow: string;
+  fontFamily: string;
+}) {
+  return (
+    <div
+      style={{
+        ...center(top),
+        width,
+        height,
+        overflow: "visible",
+      }}
+    >
+      <svg
+        viewBox="0 0 1000 140"
+        preserveAspectRatio="xMidYMid meet"
+        width="100%"
+        height="100%"
+        style={{
+          display: "block",
+          overflow: "visible",
+        }}
+      >
+        <text
+          x="500"
+          y="76"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          lengthAdjust="spacingAndGlyphs"
+          textLength={textLength}
+          style={{
+            fontFamily,
+            fontSize,
+            fill: color,
+            filter: `drop-shadow(${shadow})`,
+          }}
+        >
+          {text}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 export default function CertificateStaticOverlay({
   data,
 }: {
@@ -211,10 +280,10 @@ export default function CertificateStaticOverlay({
 
   const sz = {
     church: isClassic ? "13px" : "12px",
-    title: isClassic ? "48px" : "43px",
+    title: isClassic ? 96 : 92,
     subtitle: isClassic ? "12px" : "11px",
     body: isClassic ? "14px" : "13px",
-    childName: isClassic ? "44px" : "40px",
+    childName: isClassic ? 88 : 86,
     blessing: isClassic ? "15px" : "14px",
     footer: isClassic ? "12px" : "11px",
     minister: isClassic ? "16px" : "15px",
@@ -228,12 +297,12 @@ export default function CertificateStaticOverlay({
     : "0 1px 2px rgba(255,255,255,.85), 0 0 5px rgba(255,255,255,.6)";
 
   const goldShadow = isPremium
-    ? "0 1px 0 #7c5607, 0 3px 8px rgba(0,0,0,.75), 0 0 10px rgba(212,175,55,.2)"
-    : "0 1px 0 #8b6508, 0 3px 6px rgba(0,0,0,.3)";
+    ? "0px 2px 0px #7c5607, 0px 5px 8px rgba(0,0,0,.75)"
+    : "0px 1px 0px #8b6508, 0px 3px 6px rgba(0,0,0,.3)";
 
   const nameShadow = isPremium
-    ? "0 1px 0 #7c5607, 0 3px 7px rgba(0,0,0,.8)"
-    : "0 1px 0 #7c5607, 0 3px 5px rgba(0,0,0,.35)";
+    ? "0px 2px 0px #7c5607, 0px 4px 7px rgba(0,0,0,.8)"
+    : "0px 1px 0px #7c5607, 0px 3px 5px rgba(0,0,0,.35)";
 
   const scriptFont = greatVibes.style.fontFamily;
   const serifFont = cinzel.style.fontFamily;
@@ -265,24 +334,21 @@ export default function CertificateStaticOverlay({
         {churchName}
       </div>
 
-      <div
-        style={{
-          ...center("18%"),
-          fontFamily: scriptFont,
-          fontSize: sz.title,
-          lineHeight: 0.95,
-          color: gold,
-          textShadow: goldShadow,
-          maxWidth: "68%",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {cfg.title}
-      </div>
+      <ScriptSvgText
+        text={cfg.title}
+        top="17.5%"
+        width="70%"
+        height="12%"
+        fontSize={sz.title}
+        textLength={getTitleLength(cfg.title)}
+        color={gold}
+        shadow={goldShadow}
+        fontFamily={scriptFont}
+      />
 
       <div
         style={{
-          ...center("28%"),
+          ...center("28.5%"),
           fontFamily: serifFont,
           fontSize: sz.subtitle,
           fontWeight: 600,
@@ -310,20 +376,17 @@ export default function CertificateStaticOverlay({
         {renderLines(cfg.bodyLines)}
       </div>
 
-      <div
-        style={{
-          ...center("50%"),
-          fontFamily: scriptFont,
-          fontSize: sz.childName,
-          lineHeight: 0.95,
-          color: gold,
-          textShadow: nameShadow,
-          maxWidth: "70%",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {data.childName}
-      </div>
+      <ScriptSvgText
+        text={data.childName}
+        top="48.5%"
+        width="68%"
+        height="11%"
+        fontSize={sz.childName}
+        textLength={data.childName.length > 18 ? 700 : 560}
+        color={gold}
+        shadow={nameShadow}
+        fontFamily={scriptFont}
+      />
 
       <div
         style={{
@@ -334,7 +397,9 @@ export default function CertificateStaticOverlay({
           lineHeight: 1.28,
           width: "66%",
           color: gold,
-          textShadow: goldShadow,
+          textShadow: isPremium
+            ? "0 1px 0 #7c5607, 0 3px 8px rgba(0,0,0,.75)"
+            : "0 1px 0 #8b6508, 0 3px 6px rgba(0,0,0,.3)",
         }}
       >
         {renderLines(blessingLines)}
@@ -356,7 +421,9 @@ export default function CertificateStaticOverlay({
             letterSpacing: ".10em",
             textTransform: "uppercase",
             color: gold,
-            textShadow: goldShadow,
+            textShadow: isPremium
+              ? "0 1px 0 #7c5607, 0 3px 8px rgba(0,0,0,.75)"
+              : "0 1px 0 #8b6508, 0 3px 6px rgba(0,0,0,.3)",
             whiteSpace: "nowrap",
           }}
         >
