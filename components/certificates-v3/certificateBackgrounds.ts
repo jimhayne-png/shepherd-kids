@@ -40,7 +40,7 @@ function getRegisteredBackgroundPath(
   if (!typeSlug || !tplSlug) return null;
 
   if (certType === "servant_heart" && template === "premium") {
-    return `${BASE}/servant-heart-award-premium-landscape.png`;
+    return `${BASE}/servant-heart-premium-landscape.png`;
   }
 
   return `${BASE}/${typeSlug}-${tplSlug}-landscape.png`;
