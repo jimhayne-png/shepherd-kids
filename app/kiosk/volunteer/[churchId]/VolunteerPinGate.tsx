@@ -230,7 +230,7 @@ export default function VolunteerPinGate({
     setRequestingParent(record.id);
 
     try {
-      const res = await fetch("/api/checkin/parent-request", {
+      const res = await fetch(`/api/kiosk/volunteer/${churchId}/parent-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
        body: JSON.stringify({
