@@ -272,27 +272,30 @@ export default function VolunteerPinGate({
               Enter Today&apos;s PIN
             </label>
 
-            <input
-              type="number"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={4}
-              value={entered}
-              onChange={e => {
-                setPinError(false);
-                setEntered(e.target.value.replace(/\D/g, "").slice(0, 4));
-              }}
-              onKeyDown={e => {
-                if (e.key === "Enter") handlePinSubmit();
-              }}
-              placeholder="• • • •"
-              className="w-full text-center text-3xl font-mono tracking-widest px-4 py-4 border-2 rounded-xl outline-none transition-colors mb-4"
-              style={{
-                borderColor: pinError ? "#ef4444" : entered.length === 4 ? ACCENT : "#e5e7eb",
-                color: "#1f2937",
-              }}
-              autoFocus
-            />
+<input
+  type="text"
+  inputMode="numeric"
+  pattern="[0-9]*"
+  maxLength={4}
+  value={entered}
+  onChange={e => {
+    setPinError(false);
+    setEntered(e.target.value.replace(/\D/g, "").slice(0, 4));
+  }}
+  onKeyDown={e => {
+    if (e.key === "Enter") handlePinSubmit();
+  }}
+  placeholder="• • • •"
+  className="w-full text-center text-3xl font-mono tracking-widest px-4 py-4 border-2 rounded-xl outline-none transition-colors mb-4"
+  style={{
+    borderColor: pinError ? "#ef4444" : entered.length === 4 ? ACCENT : "#e5e7eb",
+    color: "#ffffff",
+    backgroundColor: "#12051f",
+    WebkitTextFillColor: "#ffffff",
+    caretColor: "#ffffff",
+  }}
+  autoFocus
+/>
 
             {pinError && (
               <p className="text-sm text-red-500 text-center mb-4 font-medium">
