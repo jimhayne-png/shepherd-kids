@@ -421,7 +421,7 @@ export default function LiveCheckinPage() {
         ? { "x-selected-church-id": selectedChurchIdRef.current }
         : {};
 
-      const res = await fetch("/api/communications/sms/request-parent", {
+      const res = await fetch("/api/checkin/parent-request", {
         method: "POST",
         credentials: "include",
         headers: {
