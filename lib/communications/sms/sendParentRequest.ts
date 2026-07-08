@@ -14,7 +14,14 @@ export interface SendParentRequestParams {
 }
 
 function buildParentRequestMessage(churchName: string): string {
-  return `${churchName}: The Children's Ministry team is requesting that you come to your child's classroom. Please bring your parent pickup label with you. This is a one-way text message. We do not see responses.`;
+  return `${churchName}: The Children's Ministry team is requesting that you come to your child's classroom.
+
+Please bring your parent pickup label with you.
+
+This is a one-way text message. We do not see responses.
+
+Thanks,
+${churchName}`;
 }
 
 export async function sendParentRequestSms(params: SendParentRequestParams) {

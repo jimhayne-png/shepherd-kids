@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Step = "pin" | "rooms" | "attendance";
 
@@ -31,13 +31,21 @@ type AttendanceRecord = {
 
 const ACCENT = "#F28C28";
 const REFRESH_MS = 30_000;
+const REQUEST_COUNTDOWN_SECONDS = 10;
 
 function Logo() {
   return (
     <div className="flex items-center justify-center gap-2">
       <svg width="24" height="24" viewBox="0 0 36 36" fill="none" aria-hidden="true">
         <rect width="36" height="36" rx="8" fill="#1C0A30" />
-        <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="#F28C28" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <path
+          d="M18 8 L18 28 M12 14 Q18 8 24 14"
+          stroke="#F28C28"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
       </svg>
       <span className="text-lg font-bold" style={{ color: "#1C0A30" }}>
         Shepherd<span style={{ color: ACCENT }}>Kids</span>
@@ -82,23 +90,41 @@ export default function VolunteerPinGate({
   const [acting, setActing] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
+  const [requestingParent, setRequestingParent] = useState<string | null>(null);
+  const [requestCountdowns, setRequestCountdowns] = useState<Record<string, number>>({});
+  const countdownTimersRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(countdownTimersRef.current).forEach(clearInterval);
+    };
+  }, []);
+
   async function handlePinSubmit() {
     if (entered.length !== 4 || verifying) return;
+
     setVerifying(true);
+
     const res = await fetch(`/api/kiosk/volunteer/${churchId}/verify-pin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin: entered }),
     });
+
     const data = await res.json();
+
     setVerifying(false);
+
     if (data.success) {
       setRoomsLoading(true);
+
       const rRes = await fetch(`/api/kiosk/volunteer/${churchId}/rooms`);
+
       if (rRes.ok) {
         const rData = await rRes.json();
         setRooms(rData.rooms ?? []);
       }
+
       setRoomsLoading(false);
       setStep("rooms");
     } else {
@@ -107,49 +133,145 @@ export default function VolunteerPinGate({
     }
   }
 
-  const fetchAttendance = useCallback(async (roomId: string) => {
-    const res = await fetch(`/api/kiosk/volunteer/${churchId}/attendance?roomId=${roomId}`);
-    if (res.ok) {
-      const d = await res.json();
-      setRecords(d.records ?? []);
-      setLastRefresh(new Date());
-    }
-  }, [churchId]);
+  const fetchAttendance = useCallback(
+    async (roomId: string) => {
+      const res = await fetch(`/api/kiosk/volunteer/${churchId}/attendance?roomId=${roomId}`);
+
+      if (res.ok) {
+        const d = await res.json();
+        setRecords(d.records ?? []);
+        setLastRefresh(new Date());
+      }
+    },
+    [churchId]
+  );
 
   useEffect(() => {
     if (step !== "attendance" || !selectedRoom) return;
+
     setAttendanceLoading(true);
     fetchAttendance(selectedRoom.id).then(() => setAttendanceLoading(false));
+
     const interval = setInterval(() => fetchAttendance(selectedRoom.id), REFRESH_MS);
+
     return () => clearInterval(interval);
   }, [step, selectedRoom, fetchAttendance]);
 
   async function handleCheckout(recordId: string, action: "checkout" | "undo") {
     setActing(recordId);
+
     await fetch(`/api/kiosk/volunteer/${churchId}/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ recordId, action }),
     });
+
     if (selectedRoom) await fetchAttendance(selectedRoom.id);
+
     setActing(null);
   }
 
-  // ── PIN STEP ──────────────────────────────────────────────────────────────────
+  function cancelParentRequest(recordId: string) {
+    const timer = countdownTimersRef.current[recordId];
+
+    if (timer) {
+      clearInterval(timer);
+      delete countdownTimersRef.current[recordId];
+    }
+
+    setRequestCountdowns(current => {
+      const next = { ...current };
+      delete next[recordId];
+      return next;
+    });
+  }
+
+  function startParentRequestCountdown(record: AttendanceRecord) {
+    if (requestCountdowns[record.id] || requestingParent === record.id) return;
+
+    setRequestCountdowns(current => ({
+      ...current,
+      [record.id]: REQUEST_COUNTDOWN_SECONDS,
+    }));
+
+    countdownTimersRef.current[record.id] = setInterval(() => {
+      setRequestCountdowns(current => {
+        const currentCount = current[record.id];
+
+        if (!currentCount) {
+          return current;
+        }
+
+        if (currentCount <= 1) {
+          const timer = countdownTimersRef.current[record.id];
+
+          if (timer) {
+            clearInterval(timer);
+            delete countdownTimersRef.current[record.id];
+          }
+
+          const next = { ...current };
+          delete next[record.id];
+
+          void sendParentRequest(record);
+
+          return next;
+        }
+
+        return {
+          ...current,
+          [record.id]: currentCount - 1,
+        };
+      });
+    }, 1000);
+  }
+
+  async function sendParentRequest(record: AttendanceRecord) {
+    setRequestingParent(record.id);
+
+    try {
+      const res = await fetch("/api/checkin/parent-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recordId: record.id,
+          childName: record.child_name,
+          parentName: record.parent_name,
+          parentPhone: record.parent_phone,
+          churchName,
+        }),
+      });
+
+      if (!res.ok) {
+        alert("Failed to send parent request.");
+      }
+    } catch {
+      alert("Failed to send parent request.");
+    } finally {
+      setRequestingParent(null);
+    }
+  }
+
   if (step === "pin") {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#08060D" }}>
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="mb-3"><Logo /></div>
+            <div className="mb-3">
+              <Logo />
+            </div>
             <h1 className="text-2xl font-bold text-white mb-1">Volunteer Check-In Access</h1>
             <p className="text-sm text-[#A9A9B8]">{churchName}</p>
           </div>
 
-          <div className="rounded-2xl border p-8" style={{ backgroundColor: "#1C0A30", borderColor: "rgba(123,44,191,0.4)" }}>
+          <div
+            className="rounded-2xl border p-8"
+            style={{ backgroundColor: "#1C0A30", borderColor: "rgba(123,44,191,0.4)" }}
+          >
             <label className="block text-sm font-semibold text-[#D8D8E8] mb-2 text-center">
               Enter Today&apos;s PIN
             </label>
+
             <input
               type="number"
               inputMode="numeric"
@@ -160,7 +282,9 @@ export default function VolunteerPinGate({
                 setPinError(false);
                 setEntered(e.target.value.replace(/\D/g, "").slice(0, 4));
               }}
-              onKeyDown={e => { if (e.key === "Enter") handlePinSubmit(); }}
+              onKeyDown={e => {
+                if (e.key === "Enter") handlePinSubmit();
+              }}
               placeholder="• • • •"
               className="w-full text-center text-3xl font-mono tracking-widest px-4 py-4 border-2 rounded-xl outline-none transition-colors mb-4"
               style={{
@@ -169,11 +293,13 @@ export default function VolunteerPinGate({
               }}
               autoFocus
             />
+
             {pinError && (
               <p className="text-sm text-red-500 text-center mb-4 font-medium">
                 Incorrect PIN. Please try again.
               </p>
             )}
+
             <button
               onClick={handlePinSubmit}
               disabled={entered.length !== 4 || verifying}
@@ -188,21 +314,25 @@ export default function VolunteerPinGate({
     );
   }
 
-  // ── ROOM SELECTION STEP ───────────────────────────────────────────────────────
   if (step === "rooms") {
     return (
       <div className="min-h-screen" style={{ backgroundColor: "#08060D" }}>
-        <div
-          className="px-6 py-6"
-          style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}
-        >
+        <div className="px-6 py-6" style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}>
           <div className="flex items-center gap-2 mb-1 opacity-80">
             <svg width="18" height="18" viewBox="0 0 36 36" fill="none" aria-hidden="true">
               <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.25)" />
-              <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <path
+                d="M18 8 L18 28 M12 14 Q18 8 24 14"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
             </svg>
             <span className="text-white text-xs font-semibold">ShepherdKids</span>
           </div>
+
           <h1 className="text-2xl font-bold text-white mb-0.5">Select Your Room</h1>
           <p className="text-orange-100 text-sm">{churchName}</p>
         </div>
@@ -221,7 +351,11 @@ export default function VolunteerPinGate({
               {rooms.map(room => (
                 <button
                   key={room.id}
-                  onClick={() => { setSelectedRoom(room); setRecords([]); setStep("attendance"); }}
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    setRecords([]);
+                    setStep("attendance");
+                  }}
                   className="bg-white rounded-2xl shadow border border-gray-100 p-6 text-left hover:border-orange-300 hover:shadow-md transition-all"
                 >
                   <div className="text-3xl mb-3">🏠</div>
@@ -237,42 +371,43 @@ export default function VolunteerPinGate({
     );
   }
 
-  // ── ATTENDANCE STEP ───────────────────────────────────────────────────────────
   const checkedIn = records.filter(r => !r.checked_out_at).length;
   const checkedOut = records.filter(r => r.checked_out_at).length;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#08060D" }}>
-      {/* Header */}
-      <div
-        className="px-6 py-5"
-        style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}
-      >
+      <div className="px-6 py-5" style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}>
         <button
-          onClick={() => { setStep("rooms"); setRecords([]); setSelectedRoom(null); }}
+          onClick={() => {
+            setStep("rooms");
+            setRecords([]);
+            setSelectedRoom(null);
+          }}
           className="text-orange-200 text-xs mb-2 hover:text-white transition-colors block"
         >
           ← All Rooms
         </button>
+
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-white">{selectedRoom?.name}</h1>
             <p className="text-orange-100 text-sm">{churchName}</p>
           </div>
+
           <div className="text-right flex-shrink-0">
             <div className="flex gap-4 justify-end">
               <div className="text-center">
                 <p className="text-2xl font-bold text-white">{checkedIn}</p>
                 <p className="text-xs text-orange-100">Checked In</p>
               </div>
+
               <div className="text-center">
                 <p className="text-2xl font-bold text-white opacity-60">{checkedOut}</p>
                 <p className="text-xs text-orange-100 opacity-60">Checked Out</p>
               </div>
             </div>
-            {lastRefresh && (
-              <p className="text-xs text-orange-200 mt-1">Updated {fmtTime(lastRefresh.toISOString())}</p>
-            )}
+
+            {lastRefresh && <p className="text-xs text-orange-200 mt-1">Updated {fmtTime(lastRefresh.toISOString())}</p>}
           </div>
         </div>
       </div>
@@ -292,6 +427,8 @@ export default function VolunteerPinGate({
               const isOut = !!record.checked_out_at;
               const hasAllergies = record.allergies.length > 0 || !!record.allergy_other;
               const isActing = acting === record.id;
+              const countdown = requestCountdowns[record.id];
+              const isRequesting = requestingParent === record.id;
 
               return (
                 <div
@@ -303,12 +440,19 @@ export default function VolunteerPinGate({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <h3 className="text-lg font-bold text-gray-900">{record.child_name}</h3>
+
                         {record.is_new_visitor && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700">New Visitor</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-blue-100 text-blue-700">
+                            New Visitor
+                          </span>
                         )}
+
                         {record.service_name && (
-                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-gray-100 text-gray-600">{record.service_name}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-gray-100 text-gray-600">
+                            {record.service_name}
+                          </span>
                         )}
+
                         <span
                           className="text-xs px-2 py-0.5 rounded-full font-bold"
                           style={{
@@ -325,14 +469,17 @@ export default function VolunteerPinGate({
                           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block">Parent</span>
                           {record.parent_name}
                         </div>
+
                         <div>
                           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block">Phone</span>
                           {record.parent_phone}
                         </div>
+
                         <div>
                           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block">Security Code</span>
                           <span className="font-mono font-bold text-gray-800">{record.security_code}</span>
                         </div>
+
                         <div>
                           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block">Check-In Time</span>
                           {fmtTime(record.checked_in_at)}
@@ -340,9 +487,12 @@ export default function VolunteerPinGate({
                             <span className="text-gray-400 ml-1">→ {fmtTime(record.checked_out_at)}</span>
                           )}
                         </div>
+
                         {record.authorized_pickups && (
                           <div className="sm:col-span-2">
-                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block">Authorized Pickups</span>
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block">
+                              Authorized Pickups
+                            </span>
                             {record.authorized_pickups}
                           </div>
                         )}
@@ -358,11 +508,43 @@ export default function VolunteerPinGate({
                       )}
                     </div>
 
-                    <div className="flex-shrink-0 pt-1">
+                    <div className="flex-shrink-0 pt-1 flex flex-col gap-2">
+                      {!isOut && (
+                        <>
+                          {countdown ? (
+                            <div className="min-w-[170px]">
+                              <button
+                                disabled
+                                className="w-full px-4 py-2.5 rounded-xl text-sm font-bold text-white text-center"
+                                style={{ backgroundColor: "#991b1b" }}
+                              >
+                                Sending in {countdown}s
+                              </button>
+
+                              <button
+                                onClick={() => cancelParentRequest(record.id)}
+                                className="w-full mt-1 px-4 py-2 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startParentRequestCountdown(record)}
+                              disabled={isRequesting}
+                              className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50 min-w-[170px] text-center"
+                              style={{ backgroundColor: "#991b1b" }}
+                            >
+                              {isRequesting ? "Sending…" : "Request Parent"}
+                            </button>
+                          )}
+                        </>
+                      )}
+
                       <button
                         onClick={() => handleCheckout(record.id, isOut ? "undo" : "checkout")}
                         disabled={isActing}
-                        className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50 min-w-[140px] text-center"
+                        className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50 min-w-[170px] text-center"
                         style={{ backgroundColor: isOut ? "#6b7280" : ACCENT }}
                       >
                         {isActing ? "…" : isOut ? "Undo Checkout" : "Mark Checked Out"}
