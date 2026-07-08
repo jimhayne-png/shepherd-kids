@@ -233,13 +233,9 @@ export default function VolunteerPinGate({
       const res = await fetch("/api/checkin/parent-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recordId: record.id,
-          childName: record.child_name,
-          parentName: record.parent_name,
-          parentPhone: record.parent_phone,
-          churchName,
-        }),
+       body: JSON.stringify({
+  checkinRecordId: record.id,
+}),
       });
 
       if (!res.ok) {
@@ -524,12 +520,17 @@ export default function VolunteerPinGate({
                                 Sending in {countdown}s
                               </button>
 
-                              <button
-                                onClick={() => cancelParentRequest(record.id)}
-                                className="w-full mt-1 px-4 py-2 rounded-xl text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                              >
-                                Cancel
-                              </button>
+                             <button
+  onClick={() => cancelParentRequest(record.id)}
+  className="w-full mt-1 px-4 py-2 rounded-xl text-xs font-bold transition-colors"
+  style={{
+    backgroundColor: "#FEE2E2",
+    color: "#991B1B",
+    border: "1px solid #FCA5A5",
+  }}
+>
+  Cancel
+</button>
                             </div>
                           ) : (
                             <button
