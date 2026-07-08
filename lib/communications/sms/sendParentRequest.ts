@@ -62,6 +62,7 @@ export async function sendParentRequestSms(params: SendParentRequestParams) {
 const result = await sendSms({
   gateway,
   phone: params.parentPhone,
+  parentName: params.parentName,
   message,
 });
 
