@@ -92,6 +92,7 @@ export default function VolunteerPinGate({
 
   const [requestingParent, setRequestingParent] = useState<string | null>(null);
   const [requestCountdowns, setRequestCountdowns] = useState<Record<string, number>>({});
+  const [sentParentRequests, setSentParentRequests] = useState<Record<string, boolean>>({});
   const countdownTimersRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
   useEffect(() => {
@@ -233,14 +234,20 @@ export default function VolunteerPinGate({
       const res = await fetch(`/api/kiosk/volunteer/${churchId}/parent-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({
-  checkinRecordId: record.id,
-}),
+        body: JSON.stringify({
+          checkinRecordId: record.id,
+        }),
       });
 
       if (!res.ok) {
         alert("Failed to send parent request.");
+        return;
       }
+
+      setSentParentRequests(current => ({
+        ...current,
+        [record.id]: true,
+      }));
     } catch {
       alert("Failed to send parent request.");
     } finally {
@@ -428,6 +435,7 @@ export default function VolunteerPinGate({
               const isActing = acting === record.id;
               const countdown = requestCountdowns[record.id];
               const isRequesting = requestingParent === record.id;
+              const wasParentRequested = !!sentParentRequests[record.id];
 
               return (
                 <div
@@ -505,6 +513,19 @@ export default function VolunteerPinGate({
                           </span>
                         </div>
                       )}
+
+                      {wasParentRequested && (
+                        <div
+                          className="mt-3 rounded-xl border px-3 py-2 text-sm font-semibold"
+                          style={{
+                            backgroundColor: "#DCFCE7",
+                            borderColor: "#22C55E",
+                            color: "#166534",
+                          }}
+                        >
+                          ✓ Parent request sent for this session.
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-shrink-0 pt-1 flex flex-col gap-2">
@@ -535,11 +556,11 @@ export default function VolunteerPinGate({
                           ) : (
                             <button
                               onClick={() => startParentRequestCountdown(record)}
-                              disabled={isRequesting}
+                              disabled={isRequesting || wasParentRequested}
                               className="px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50 min-w-[170px] text-center"
-                              style={{ backgroundColor: "#991b1b" }}
+                              style={{ backgroundColor: wasParentRequested ? "#166534" : "#991b1b" }}
                             >
-                              {isRequesting ? "Sending…" : "Request Parent"}
+                              {isRequesting ? "Sending…" : wasParentRequested ? "✓ Sent" : "Request Parent"}
                             </button>
                           )}
                         </>
