@@ -114,13 +114,15 @@ export default function FollowUpPage() {
 
   useEffect(() => {
     async function init() {
+      selectedChurchIdRef.current = localStorage.getItem("selected_church_id");
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push("/");
         return;
       }
 
-      const churchRes = await fetch("/api/auth/church", { credentials: "include" });
+      const churchRes = await fetch("/api/auth/church", { credentials: "include", headers: ch() });
       if (churchRes.ok) {
         const d = await churchRes.json();
         selectedChurchIdRef.current = d.churchId;
