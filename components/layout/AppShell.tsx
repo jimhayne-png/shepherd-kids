@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import SelectedChurchBanner from "@/components/layout/SelectedChurchBanner";
 
 const MASTER_ADMIN_EMAIL = "jim@gratefulconsultinggroup.com";
 const supabase = createClient();
@@ -366,7 +367,10 @@ export default function AppShell({ children }: AppShellProps) {
         </div>
       </aside>
 
-      <main style={{ flex: 1, overflowY: "auto", backgroundColor: "#08060D" }}>{children}</main>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", backgroundColor: "#08060D" }}>
+        <SelectedChurchBanner isMasterAdmin={isMasterAdmin} />
+        <div style={{ flex: 1, overflowY: "auto" }}>{children}</div>
+      </main>
     </div>
   );
 }
