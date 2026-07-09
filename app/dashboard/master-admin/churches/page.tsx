@@ -668,7 +668,7 @@ export default function ChurchManagementPage() {
         type Item = { label: string; action?: string; destructive?: boolean; href?: string };
         const needsSetup = c.admin && !c.admin.passwordSet;
         const items: Item[] = [
-          { label: "🏛️ Open Dashboard",    href: `/dashboard?churchId=${c.id}` },
+          { label: "🏛️ Open Dashboard", action: "open-dashboard" },
           { label: "🔑 Impersonate Admin", action: "impersonate" },
           ...(needsSetup ? [{ label: "🔗 Regenerate Setup Link", action: "regenerate-setup" }] : []),
           { label: isSuspended ? "✅ Reactivate" : "🚫 Deactivate", action: isSuspended ? "reactivate" : "deactivate", destructive: !isSuspended },
@@ -705,10 +705,14 @@ export default function ChurchManagementPage() {
                     <button
                       onClick={() => {
                         setOpenMenu(null);
-                        if (item.action === "delete") setConfirmDelete(c);
-                        else if (item.action === "deactivate") setConfirmDeactivate(c);
-                        else if (item.action === "reactivate") setConfirmReactivate(c);
-                        else if (item.action) doAction(c.id, item.action);
+                      if (item.action === "open-dashboard") {
+  localStorage.setItem("selectedChurchId", c.id);
+  window.location.href = "/dashboard";
+}
+else if (item.action === "delete") setConfirmDelete(c);
+else if (item.action === "deactivate") setConfirmDeactivate(c);
+else if (item.action === "reactivate") setConfirmReactivate(c);
+else if (item.action) doAction(c.id, item.action);
                       }}
                       style={{ width: "100%", padding: "10px 16px", textAlign: "left", fontSize: 13, border: "none", backgroundColor: "white", cursor: "pointer", color: item.destructive ? "#dc2626" : "#374151", fontWeight: item.destructive ? 600 : 400 }}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
