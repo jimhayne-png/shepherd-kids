@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -52,7 +53,7 @@ export default function AttendancePage() {
   }, [records]);
 
   async function loadAttendance(t: string) {
-    const res = await fetch(`/api/children-ministry/attendance`, { headers: { Authorization: `Bearer ${t}` } });
+    const res = await fetch(`/api/children-ministry/attendance`, { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } });
     const data = await res.json();
     setRecords(data.attendance ?? []);
   }
@@ -70,8 +71,8 @@ export default function AttendancePage() {
       setToken(t);
 
       const [attRes, cRes] = await Promise.all([
-        fetch("/api/children-ministry/attendance", { headers: { Authorization: `Bearer ${t}` } }),
-        fetch("/api/children-ministry/children", { headers: { Authorization: `Bearer ${t}` } }),
+        fetch("/api/children-ministry/attendance", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
+        fetch("/api/children-ministry/children", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
       ]);
       const attData = await attRes.json();
       const cData = await cRes.json();
@@ -91,7 +92,7 @@ export default function AttendancePage() {
     const currentlyPresent = attendanceMap[key] ?? false;
     await fetch("/api/children-ministry/attendance", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
       body: JSON.stringify({ childId: child.id, sessionDate: date, present: !currentlyPresent }),
     });
 

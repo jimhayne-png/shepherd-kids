@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -77,7 +78,7 @@ export default function ParentMessagesPage() {
 
   async function loadMessages(t: string) {
     const res = await fetch("/api/children-ministry/parent-messages", {
-      headers: { Authorization: `Bearer ${t}` },
+      headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() },
     });
     if (res.ok) {
       const { messages: data } = await res.json();
@@ -87,7 +88,7 @@ export default function ParentMessagesPage() {
 
   async function loadRooms(t: string) {
     const res = await fetch("/api/checkin/rooms", {
-      headers: { Authorization: `Bearer ${t}` },
+      headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() },
     });
     if (res.ok) {
       const { rooms: data } = await res.json();
@@ -130,13 +131,13 @@ export default function ParentMessagesPage() {
       if (editingId) {
         res = await fetch("/api/children-ministry/parent-messages", {
           method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
           body: JSON.stringify({ id: editingId, action: "save_draft", ...form }),
         });
       } else {
         res = await fetch("/api/children-ministry/parent-messages", {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
           body: JSON.stringify(form),
         });
       }
@@ -171,7 +172,7 @@ export default function ParentMessagesPage() {
     try {
       const res = await fetch("/api/children-ministry/parent-messages", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
         body: JSON.stringify({ id: editingId, action: "mark_sent" }),
       });
       if (!res.ok) {

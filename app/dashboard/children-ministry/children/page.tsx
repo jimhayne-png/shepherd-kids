@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -39,7 +40,7 @@ export default function ChildrenPage() {
   const [search, setSearch] = useState("");
 
   async function load(t: string) {
-    const res = await fetch("/api/children-ministry/children", { headers: { Authorization: `Bearer ${t}` } });
+    const res = await fetch("/api/children-ministry/children", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } });
     const data = await res.json();
     setChildren(data.children ?? []);
   }

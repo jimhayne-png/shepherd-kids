@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -44,7 +45,7 @@ export default function ParentsPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const res = await fetch("/api/children-ministry/parents", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}`, ...selectedChurchHeaders() },
       });
       if (res.ok) { const d = await res.json(); setParents(d.parents ?? []); }
       setLoading(false);

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -55,7 +56,7 @@ export default function ParentUpdatePage() {
   const [sendSuccess, setSendSuccess] = useState("");
 
   async function loadHistory(t: string) {
-    const res = await fetch(`/api/children-ministry/parent-update`, { headers: { Authorization: `Bearer ${t}` } });
+    const res = await fetch(`/api/children-ministry/parent-update`, { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } });
     const data = await res.json();
     setHistory(data.updates ?? []);
   }
@@ -93,7 +94,7 @@ export default function ParentUpdatePage() {
 
     const res = await fetch("/api/children-ministry/parent-update", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
       body: JSON.stringify({ ...form, sendNow }),
     });
     const data = await res.json();
