@@ -171,31 +171,29 @@ export default function DashboardClient({
     if (!churchId) return;
 
     async function fetchStats() {
-      const [familiesRes, childrenRes, prayersRes] = await Promise.all([
-        supabase
-          .from("cm_visitor_families")
-          .select("id", { count: "exact", head: true })
-          .eq("church_id", churchId),
-        supabase
-          .from("cm_visitor_children")
-          .select("id", { count: "exact", head: true })
-          .eq("church_id", churchId),
-        supabase
-          .from("prayer_requests")
-          .select("id", { count: "exact", head: true })
-          .eq("church_id", churchId)
-          .eq("status", "open"),
-      ]);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${session.access_token}`,
+      };
+      if (isPlatformAdmin && churchId) {
+        headers["x-selected-church-id"] = churchId;
+      }
+
+      const res = await fetch("/api/dashboard/stats", { headers });
+      if (!res.ok) return;
+
+      const d = await res.json();
       setStats({
-        members: familiesRes.count ?? 0,
-        events: childrenRes.count ?? 0,
-        prayers: prayersRes.count ?? 0,
+        members: d.activeFamilies ?? 0,
+        events: d.totalChildren ?? 0,
+        prayers: d.familyCareNeeds ?? 0,
       });
     }
 
     fetchStats();
-  }, [churchId]);
+  }, [churchId, isPlatformAdmin]);
 
   function handleChurchSelect(church: Church) {
     localStorage.setItem("selected_church_id", church.id);
