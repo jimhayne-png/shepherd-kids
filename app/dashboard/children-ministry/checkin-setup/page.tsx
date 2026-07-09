@@ -256,6 +256,7 @@ export default function CheckinSetupPage() {
 
   useEffect(() => {
     async function init() {
+      selectedChurchIdRef.current = localStorage.getItem("selected_church_id");
       const { data: { user }, error } = await supabase.auth.getUser();
       if (!user || error) {
         console.log("Dashboard client user unavailable:", error?.message ?? null);
