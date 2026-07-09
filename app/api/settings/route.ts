@@ -1,19 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { type NextRequest } from 'next/server';
-
-function adminClient() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-}
-async function getAuthUser(req: NextRequest) {
-  const token = req.headers.get('authorization')?.replace('Bearer ', '');
-  if (!token) return null;
-  const { data: { user } } = await adminClient().auth.getUser(token);
-  return user ?? null;
-}
-async function getChurchId(userId: string) {
-  const { data } = await adminClient().from('church_users').select('church_id').eq('user_id', userId).maybeSingle();
-  return data?.church_id ?? null;
-}
+import { getAuthContext, adminClient } from '@/lib/api-auth';
 
 const CHURCH_FIELDS = [
   'name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'website', 'logo_url',
@@ -25,15 +11,13 @@ const CHURCH_FIELDS = [
 ].join(', ');
 
 export async function GET(req: NextRequest) {
-  const user = await getAuthUser(req);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const churchId = await getChurchId(user.id);
-  if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
+  const ctx = await getAuthContext(req);
+  if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data, error } = await adminClient()
     .from('churches')
     .select(CHURCH_FIELDS)
-    .eq('id', churchId)
+    .eq('id', ctx.churchId)
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
@@ -41,10 +25,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getAuthUser(req);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const churchId = await getChurchId(user.id);
-  if (!churchId) return Response.json({ error: 'No church found' }, { status: 403 });
+  const ctx = await getAuthContext(req);
+  if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
   const allowed = [
@@ -89,7 +71,7 @@ export async function POST(req: NextRequest) {
   const { error } = await adminClient()
     .from('churches')
     .update(updates)
-    .eq('id', churchId);
+    .eq('id', ctx.churchId);
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ success: true });

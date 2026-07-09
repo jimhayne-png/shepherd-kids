@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 import { type CertificateRecord, STATUS_LABEL, STATUS_COLOR } from "@/lib/certificates/types";
 
 const GOLD  = "#D4AF37";
@@ -73,7 +74,7 @@ export default function CertificateVaultPage() {
       ? `/api/children-ministry/certificates?status=${filter}`
       : `/api/children-ministry/certificates`;
     setLoading(true);
-    fetch(url, { credentials: "include" })
+    fetch(url, { credentials: "include", headers: selectedChurchHeaders() })
       .then(r => r.json())
       .then(d => { setCerts(d.certificates ?? []); setError(null); })
       .catch(() => setError("Failed to load certificates."))

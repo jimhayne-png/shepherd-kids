@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 const navItems: NavItem[] = [];
@@ -206,7 +207,7 @@ export default function SettingsPage() {
       const t = session.access_token;
       setToken(t);
 
-      const res = await fetch("/api/settings", { headers: { Authorization: `Bearer ${t}` } });
+      const res = await fetch("/api/settings", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } });
       if (res.ok) {
         const { church } = await res.json();
         setForm({
@@ -255,7 +256,7 @@ export default function SettingsPage() {
 
     const res = await fetch("/api/settings", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}`, ...selectedChurchHeaders() },
       body: JSON.stringify(form),
     });
     setSaving(false);

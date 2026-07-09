@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import MinistryShell from "@/components/layout/MinistryShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -41,7 +42,7 @@ export default function LetterTemplatePage() {
       const t = session.access_token;
       setToken(t);
       const res = await fetch("/api/children-ministry/letter-template", {
-        headers: { Authorization: `Bearer ${t}` },
+        headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() },
       });
       if (res.ok) {
         const d = await res.json();
@@ -58,7 +59,7 @@ export default function LetterTemplatePage() {
     setSaving(true); setError(""); setSaved(false);
     const res = await fetch("/api/children-ministry/letter-template", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
       body: JSON.stringify({ subject, body_html: bodyHtml }),
     });
     setSaving(false);

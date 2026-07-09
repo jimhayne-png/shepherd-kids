@@ -98,6 +98,8 @@ export default function PrintStationPage() {
 
   useEffect(() => {
     async function init() {
+      selectedChurchIdRef.current = localStorage.getItem("selected_church_id");
+
       const {
         data: { user },
         error,

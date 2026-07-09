@@ -4,6 +4,7 @@ import { Suspense, useRef, useState } from "react";
 import type React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import AppShell from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 import CertificateCanvas from "@/components/certificates-v3/CertificateCanvas";
 import CertificateExportButtons from "@/components/certificates-v3/CertificateExportButtons";
 import type { CertTemplate } from "@/components/certificates-v3/types";
@@ -192,7 +193,7 @@ function CertificateCreatorInner() {
     try {
       const r = await fetch("/api/children-ministry/certificates", {
         method: "POST", credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...selectedChurchHeaders() },
         body: JSON.stringify({
           child_id:        childIdParam || null,
           cert_type:       certType,

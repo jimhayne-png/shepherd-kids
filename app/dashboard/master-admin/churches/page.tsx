@@ -706,7 +706,7 @@ export default function ChurchManagementPage() {
                       onClick={() => {
                         setOpenMenu(null);
                       if (item.action === "open-dashboard") {
-  localStorage.setItem("selectedChurchId", c.id);
+  localStorage.setItem("selected_church_id", c.id);
   window.location.href = "/dashboard";
 }
 else if (item.action === "delete") setConfirmDelete(c);
