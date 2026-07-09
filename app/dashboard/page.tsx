@@ -5,6 +5,19 @@ import DashboardClient from "./DashboardClient";
 
 type Church = { id: string; name: string };
 
+const MASTER_ADMIN_EMAIL = "jim@gratefulconsultinggroup.com";
+
+function isMasterAdmin(email: string | null | undefined) {
+  const masterAdminEnv = (process.env.MASTER_ADMIN_EMAIL ?? "").trim().toLowerCase();
+  const ownerEmails = (process.env.OWNER_EMAILS ?? "")
+    .split(",")
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+
+  return new Set([MASTER_ADMIN_EMAIL, masterAdminEnv, ...ownerEmails].filter(Boolean))
+    .has((email ?? "").toLowerCase());
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -13,22 +26,12 @@ export default async function DashboardPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  console.log("server dashboard getUser:", {
-    hasUser: !!user,
-  });
-
   if (!user) redirect("/");
 
   const params = await searchParams;
   const admin = adminClient();
 
-  const { data: adminRow } = await admin
-    .from("platform_admins")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (adminRow) {
+  if (isMasterAdmin(user.email)) {
     const selectedChurchId =
       typeof params.churchId === "string" ? params.churchId : null;
 
@@ -70,7 +73,6 @@ export default async function DashboardPage({
     );
   }
 
-  // Normal church user
   const { data: churchUsers } = await admin
     .from("church_users")
     .select("church_id, churches(name)")
