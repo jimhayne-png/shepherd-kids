@@ -28,53 +28,59 @@ type NavChild = { label: string; href: string; exact?: boolean };
 type NavGroup = { label: string; children: NavChild[] };
 
 const TOP_ITEMS: NavChild[] = [
-  { label: "Dashboard",     href: "/dashboard",            exact: true },
-  { label: "Ministry Care", href: "/dashboard/children-ministry" },
+  { label: "Dashboard", href: "/dashboard", exact: true },
 ];
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Check-In Center",
+    label: "Ministry Care",
     children: [
-      { label: "Check-In Setup",     href: "/dashboard/children-ministry/checkin-setup" },
-      { label: "Live Check-In",      href: "/dashboard/children-ministry/live-checkin" },
-      { label: "Label Printing",     href: "/dashboard/children-ministry/print-station" },
+      { label: "Ministry Care Today", href: "/dashboard/children-ministry", exact: true },
+      { label: "Follow-Up",           href: "/dashboard/children-ministry/followup" },
     ],
   },
   {
-    label: "Follow-Up",
+    label: "Check-In",
     children: [
-      { label: "Follow-Up",          href: "/dashboard/children-ministry/followup" },
-      { label: "Attendance Records", href: "/dashboard/children-ministry/attendance-report" },
+      { label: "Live Check-In",  href: "/dashboard/children-ministry/live-checkin" },
+      { label: "Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
+      { label: "Print Station",  href: "/dashboard/children-ministry/print-station" },
     ],
   },
   {
-    label: "Shepherd Kids",
+    label: "ShepherdKids",
     children: [
-      { label: "Children",           href: "/dashboard/children-ministry/children" },
-      { label: "Faith Journey",      href: "/dashboard/children-ministry/faith-journey" },
+      { label: "Children",      href: "/dashboard/children-ministry/children" },
+      { label: "Attendance",    href: "/dashboard/children-ministry/attendance" },
+      { label: "Faith Journey", href: "/dashboard/children-ministry/faith-journey" },
     ],
   },
   {
     label: "Shepherd Parents",
     children: [
-      { label: "Parents",                href: "/dashboard/children-ministry/parents" },
-      { label: "Parent Messages",        href: "/dashboard/children-ministry/parent-messages" },
-      { label: "Children's Lesson Plan", href: "/dashboard/children-ministry/parent-update" },
+      { label: "Parents",                      href: "/dashboard/children-ministry/parents" },
+      { label: "Household Records",            href: "/dashboard/children-ministry/visitors" },
+      { label: "Parent Communication",         href: "/dashboard/children-ministry/parent-update" },
+      { label: "Annual Family Safety Review",  href: "/dashboard/children-ministry/family-safety-review" },
     ],
   },
   {
-    label: "Celebrations",
+    label: "Birthdays",
     children: [
-      { label: "Birthdays",          href: "/dashboard/children-ministry/birthdays" },
-      { label: "Certificates",       href: "/dashboard/children-ministry/certificates/new", exact: true },
+      { label: "Birthdays", href: "/dashboard/children-ministry/birthdays" },
+    ],
+  },
+  {
+    label: "Certificates",
+    children: [
+      { label: "Certificates", href: "/dashboard/children-ministry/certificates/new", exact: true },
     ],
   },
 ];
 
-const BOTTOM_LINKS: NavChild[] = [
-  { label: "⚙️ Settings",               href: "/dashboard/settings" },
-  { label: "💳 Subscription & Billing",  href: "/dashboard/billing" },
+const SETTINGS_LINKS: NavChild[] = [
+  { label: "⚙️ Settings",              href: "/dashboard/settings" },
+  { label: "💳 Subscription & Billing", href: "/dashboard/billing" },
 ];
 
 // ── Active-state helpers ──────────────────────────────────────────────────────
@@ -300,6 +306,15 @@ export default function AppShell({ children }: AppShellProps) {
             );
           })}
 
+          {/* Settings and Billing — scroll with nav, above Master Admin */}
+          <div style={{ borderTop: "1px solid rgba(212,175,55,0.15)", marginTop: 8, paddingTop: 6, display: "flex", flexDirection: "column", gap: 1 }}>
+            {SETTINGS_LINKS.map(link => (
+              <Link key={link.href} href={link.href} style={bottomLinkStyle(pathname.startsWith(link.href))}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
           {/* Master Admin (only visible to jim@gratefulconsultinggroup.com) */}
           {isMasterAdmin && (
             <div style={{ borderTop: "1px solid rgba(212,175,55,0.15)", marginTop: 8, paddingTop: 6, display: "flex", flexDirection: "column", gap: 1 }}>
@@ -328,13 +343,8 @@ export default function AppShell({ children }: AppShellProps) {
           )}
         </nav>
 
-        {/* ── Bottom pinned area ──────────────────────────────────────────── */}
+        {/* ── Bottom pinned area — Sign Out only ──────────────────────────── */}
         <div style={{ flexShrink: 0, borderTop: "1px solid rgba(212,175,55,0.15)", padding: "8px" }}>
-          {BOTTOM_LINKS.map(link => (
-            <Link key={link.href} href={link.href} style={bottomLinkStyle(pathname.startsWith(link.href))}>
-              {link.label}
-            </Link>
-          ))}
           <button
             type="button"
             onClick={handleSignOut}

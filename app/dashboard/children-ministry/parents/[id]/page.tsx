@@ -33,6 +33,8 @@ type VisitorFamily = {
   parent2_email: string | null;
   parent2_phone: string | null;
   address: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
   how_did_you_hear: string | null;
   visit_date: string | null;
   follow_up_sent: boolean;
@@ -718,7 +720,18 @@ export default function FamilyProfilePage() {
                 {/* Emergency Contact */}
                 <div>
                   <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Emergency Contact</p>
-                  <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>Emergency contact coming soon.</p>
+                  {family.emergency_contact_name || family.emergency_contact_phone ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      {family.emergency_contact_name && (
+                        <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{family.emergency_contact_name}</p>
+                      )}
+                      {family.emergency_contact_phone && (
+                        <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{family.emergency_contact_phone}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>No emergency contact provided</p>
+                  )}
                 </div>
 
                 {/* Authorized Pickups */}
@@ -727,14 +740,6 @@ export default function FamilyProfilePage() {
                   <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>
                     Additional authorized adults will appear here when added from Household Members.
                   </p>
-                </div>
-
-                {/* Pickup Security Code */}
-                <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Pickup Security Code</p>
-                  <div style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "8px" }}>
-                    <span style={{ fontSize: "13px", color: MUTED, fontStyle: "italic" }}>Not configured</span>
-                  </div>
                 </div>
               </div>
             </div>
