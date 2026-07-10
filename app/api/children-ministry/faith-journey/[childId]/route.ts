@@ -34,27 +34,13 @@ export async function PATCH(
   }
 
   const ctx = await getAuthContext(request);
-
-  const selectedChurchId =
-    ctx?.churchId ??
-    request.headers.get("x-selected-church-id") ??
-    request.headers.get("X-Selected-Church-Id");
-
-  if (!selectedChurchId) {
-    return Response.json(
-      {
-        error: "Unauthorized",
-        detail: "Missing auth context or x-selected-church-id header.",
-      },
-      { status: 401 }
-    );
-  }
+  if (!ctx) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await adminClient()
     .from("cm_visitor_children")
     .update({ pipeline_stage: pipelineStage })
     .eq("id", childId)
-    .eq("church_id", selectedChurchId)
+    .eq("church_id", ctx.churchId)
     .select("id, first_name, last_name, pipeline_stage")
     .maybeSingle();
 

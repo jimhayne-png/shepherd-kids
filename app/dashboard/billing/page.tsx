@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 // ── nav ───────────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,7 @@ function BillingContent() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/billing/status", { credentials: "include" });
+      const res = await fetch("/api/billing/status", { credentials: "include", headers: selectedChurchHeaders() });
       if (res.ok) setInfo(await res.json());
     } finally {
       setLoading(false);

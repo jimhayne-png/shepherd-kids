@@ -5,15 +5,6 @@ import { Resend } from "resend";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function resolveChurchId(request: NextRequest, auth: Awaited<ReturnType<typeof getAuthContext>>) {
-  return (
-    request.headers.get("x-selected-church-id") ??
-    request.headers.get("X-Selected-Church-Id") ??
-    auth?.churchId ??
-    null
-  );
-}
-
 function normalizePhone(phone: string | null | undefined) {
   return String(phone ?? "").replace(/\D/g, "");
 }
@@ -34,7 +25,7 @@ function plainToHtml(text: string): string {
 
 export async function GET(request: NextRequest) {
   const auth = await getAuthContext(request);
-  const churchId = resolveChurchId(request, auth);
+  const churchId = auth?.churchId ?? null;
 
   if (!churchId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -252,7 +243,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const auth = await getAuthContext(request);
-  const churchId = resolveChurchId(request, auth);
+  const churchId = auth?.churchId ?? null;
 
   if (!churchId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });

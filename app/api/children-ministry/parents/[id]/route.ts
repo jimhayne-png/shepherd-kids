@@ -22,7 +22,7 @@ export async function GET(
 
   const { data: children } = await admin
     .from('cm_visitor_children')
-    .select('id, first_name, last_name, date_of_birth, grade, allergies, medical_notes, special_instructions')
+    .select('id, first_name, last_name, date_of_birth, grade, allergies, medical_notes, special_instructions, authorized_pickups, photo_permission_status')
     .eq('family_id', id)
     .eq('church_id', auth.churchId)
     .order('date_of_birth', { ascending: true });

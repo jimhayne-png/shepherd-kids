@@ -14,11 +14,11 @@ type VisitorChildRow = {
   first_name: string;
   last_name: string;
   date_of_birth: string | null;
-  allergies: string | null;         // stored as JSON.stringify(string[])
+  allergies: string | null;          // stored as JSON.stringify(string[])
   medical_notes: string | null;
   special_instructions: string | null;
+  authorized_pickups: string | null; // canonical source (migration 20260709); cm_checkin_records is fallback
   // allergy_other does NOT exist — detail is baked into the allergies JSON array
-  // authorized_pickups does NOT exist — lives in cm_checkin_records
 };
 
 // Columns confirmed in cm_checkin_records production schema
@@ -159,7 +159,7 @@ export async function GET(
     ] = await Promise.all([
       admin
         .from('cm_visitor_children')
-        .select('id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions')
+        .select('id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions, authorized_pickups')
         .eq('family_id', f.id)
         .order('created_at', { ascending: true }),
       admin
@@ -221,8 +221,12 @@ export async function GET(
         // special_instructions: only in cm_visitor_children.
         const specialInstructions = c.special_instructions?.trim() ?? '';
 
-        // authorized_pickups: only in cm_checkin_records; take first non-empty.
-        const authorizedPickups = firstNonEmpty(...recs.map((r) => r.authorized_pickups));
+        // authorized_pickups: canonical source is cm_visitor_children (since migration 20260709);
+        // fall back to cm_checkin_records for families checked in before the migration.
+        const authorizedPickups = firstNonEmpty(
+          c.authorized_pickups,
+          ...recs.map((r) => r.authorized_pickups),
+        );
 
         return {
           id: c.id,

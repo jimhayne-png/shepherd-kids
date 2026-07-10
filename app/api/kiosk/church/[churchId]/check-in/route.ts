@@ -450,6 +450,7 @@ export async function POST(
             allergies: allergyProfileValue(child),
             medical_notes: clean(child.medicalNotes) || null,
             special_instructions: clean(child.specialInstructions) || null,
+            authorized_pickups: clean(child.authorizedPickups) || null,
           })),
         );
 
@@ -525,6 +526,8 @@ export async function POST(
           };
           if (medNotes) updatePayload.medical_notes = medNotes;
           if (specInstr) updatePayload.special_instructions = specInstr;
+          const authPickups = clean(child.authorizedPickups);
+          if (authPickups) updatePayload.authorized_pickups = authPickups;
 
           const { error: childUpdateError } = await admin
             .from('cm_visitor_children')
@@ -545,6 +548,7 @@ export async function POST(
               allergies: allergyProfileValue(child),
               medical_notes: medNotes || null,
               special_instructions: specInstr || null,
+              authorized_pickups: clean(child.authorizedPickups) || null,
             });
 
           if (childInsertError) throw childInsertError;

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 const navItems: NavItem[] = [];
@@ -135,12 +136,6 @@ const STAGE_ICONS: Record<string, string> = {
   Leadership: "🌟",
   leadership: "🌟",
 };
-
-function selectedChurchHeaders(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  const churchId = localStorage.getItem("selected_church_id");
-  return churchId ? { "x-selected-church-id": churchId } : {};
-}
 
 function fmtDate(iso: string | null) {
   if (!iso) return null;

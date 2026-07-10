@@ -10,35 +10,16 @@ function weeksAttending(joinedDate: string | null): number {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24 * 7)));
 }
 
-function resolveChurchId(request: NextRequest, ctx: Awaited<ReturnType<typeof getAuthContext>>) {
-  return (
-    request.headers.get("x-selected-church-id") ??
-    request.headers.get("X-Selected-Church-Id") ??
-    ctx?.churchId ??
-    null
-  );
-}
-
 export async function GET(request: NextRequest) {
   const ctx = await getAuthContext(request);
-  const churchId = resolveChurchId(request, ctx);
-
-  if (!churchId) {
-    return Response.json(
-      {
-        error: "Unauthorized",
-        detail: "Missing auth context or selected church id.",
-      },
-      { status: 401 }
-    );
-  }
+  if (!ctx) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const admin = adminClient();
 
   const { data: children, error } = await admin
     .from("cm_visitor_children")
     .select("id, first_name, last_name, family_id, pipeline_stage, created_at")
-    .eq("church_id", churchId)
+    .eq("church_id", ctx.churchId)
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
 
@@ -80,6 +61,6 @@ export async function GET(request: NextRequest) {
   return Response.json({
     members,
     total: members.length,
-    church_id: churchId,
+    church_id: ctx.churchId,
   });
 }

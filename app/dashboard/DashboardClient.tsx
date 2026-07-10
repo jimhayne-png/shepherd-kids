@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
   { label: "👪 Parents", href: "/dashboard/children-ministry/parents" },
   { label: "📧 Parent Communication", href: "/dashboard/children-ministry/parent-update" },
   { label: "✝️ Faith Journey", href: "/dashboard/children-ministry/faith-journey" },
+  { label: "🛡️ Family Safety Review", href: "/dashboard/children-ministry/family-safety-review" },
   { label: "🎉 Celebrations", href: "/dashboard/children-ministry/birthdays" },
   { label: "🎓 Certificates", href: "/dashboard/children-ministry/certificates/new" },
   { label: "⚙️ Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
@@ -69,12 +70,12 @@ const CARE_CARDS = [
     countLabel: "children",
   },
   {
-    title: "Parent Updates Overdue",
-    desc: "Allergies, pickups, or family info",
-    href: "/dashboard/children-ministry/children",
+    title: "Annual Family Safety Review",
+    desc: "Confirm allergies, contacts, pickups, and care details",
+    href: "/dashboard/children-ministry/family-safety-review",
     action: "Review",
-    emoji: "📋",
-    countLabel: "parents",
+    emoji: "🛡️",
+    countLabel: "families",
   },
 ];
 
@@ -110,6 +111,7 @@ type Stats = {
   members: number | null;
   events: number | null;
   prayers: number | null;
+  safetyReviewsDue: number | null;
 };
 
 type Church = { id: string; name: string };
@@ -134,9 +136,15 @@ export default function DashboardClient({
   allChurches,
 }: Props) {
   const router = useRouter();
-  const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null });
+  const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null, safetyReviewsDue: null });
   const [trialExpired, setTrialExpired] = useState(false);
   const [wizard, setWizard] = useState<WizardState | null>(null);
+
+  useEffect(() => {
+    if (isPlatformAdmin && churchId) {
+      localStorage.setItem("selected_church_id", churchId);
+    }
+  }, [isPlatformAdmin, churchId]);
 
   useEffect(() => {
     if (isPlatformAdmin || !churchId) return;
@@ -189,6 +197,7 @@ export default function DashboardClient({
         members: d.activeFamilies ?? 0,
         events: d.totalChildren ?? 0,
         prayers: d.familyCareNeeds ?? 0,
+        safetyReviewsDue: d.familySafetyReviewsDue ?? 0,
       });
     }
 
@@ -358,61 +367,67 @@ export default function DashboardClient({
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {CARE_CARDS.map((card) => (
-              <div
-                key={card.title}
-                style={{
-                  background: "#120A1F",
-                  border: "1px solid rgba(212,175,55,0.28)",
-                  borderRadius: "16px",
-                  padding: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "14px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px" }}>
-                      <span style={{ fontSize: "17px", flexShrink: 0 }}>{card.emoji}</span>
-                      <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "13px", lineHeight: 1.3, margin: 0 }}>
-                        {card.title}
-                      </p>
-                    </div>
-                    <p style={{ color: "#D8D8E8", fontSize: "12px", lineHeight: 1.5, margin: 0 }}>
-                      {card.desc}
-                    </p>
-                  </div>
-                  <div style={{ flexShrink: 0, textAlign: "right" }}>
-                    <p style={{ color: "#D4AF37", fontSize: "30px", fontWeight: 700, lineHeight: 1, margin: 0 }}>
-                      0
-                    </p>
-                    <p style={{ color: "rgba(212,175,55,0.6)", fontSize: "10px", margin: "2px 0 0", fontWeight: 500 }}>
-                      {card.countLabel}
-                    </p>
-                  </div>
-                </div>
-
-                <a
-                  href={card.href}
+            {CARE_CARDS.map((card) => {
+              const count =
+                card.title === "Annual Family Safety Review"
+                  ? (stats.safetyReviewsDue ?? 0)
+                  : 0;
+              return (
+                <div
+                  key={card.title}
                   style={{
-                    alignSelf: "flex-start",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    color: "#ffffff",
-                    background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
-                    borderRadius: "8px",
-                    padding: "5px 12px",
-                    textDecoration: "none",
+                    background: "#120A1F",
+                    border: "1px solid rgba(212,175,55,0.28)",
+                    borderRadius: "16px",
+                    padding: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "14px",
                   }}
                 >
-                  {card.action} →
-                </a>
-              </div>
-            ))}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "5px" }}>
+                        <span style={{ fontSize: "17px", flexShrink: 0 }}>{card.emoji}</span>
+                        <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "13px", lineHeight: 1.3, margin: 0 }}>
+                          {card.title}
+                        </p>
+                      </div>
+                      <p style={{ color: "#D8D8E8", fontSize: "12px", lineHeight: 1.5, margin: 0 }}>
+                        {card.desc}
+                      </p>
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: "right" }}>
+                      <p style={{ color: "#D4AF37", fontSize: "30px", fontWeight: 700, lineHeight: 1, margin: 0 }}>
+                        {count}
+                      </p>
+                      <p style={{ color: "rgba(212,175,55,0.6)", fontSize: "10px", margin: "2px 0 0", fontWeight: 500 }}>
+                        {card.countLabel}
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={card.href}
+                    style={{
+                      alignSelf: "flex-start",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                      borderRadius: "8px",
+                      padding: "5px 12px",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {card.action} →
+                  </a>
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -314,7 +314,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Upsert each child into children_ministry_children (every check-in)
+  // LEGACY DUAL-WRITE — temporary, kept for parent-communication feature compatibility.
+  // children_ministry_children is the legacy child table. The canonical record is cm_visitor_children.
+  // This write must remain until the weekly Parent Communication email is migrated to read from
+  // cm_visitor_families (parent emails) + cm_visitor_children (child names) instead.
+  // Do not add new fields here; add them to cm_visitor_children instead.
   console.log('[checkin] resultMeta:', JSON.stringify(resultMeta));
   for (const r of resultMeta) {
     const { firstName: cFirst, lastName: cLast } = splitName(r.childName);
