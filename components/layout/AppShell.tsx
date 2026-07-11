@@ -41,19 +41,18 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Ministry Care",
+    label: "New Family Care",
     children: [
-      { label: "Ministry Care Today", href: "/dashboard/children-ministry",                exact: true },
-      { label: "Follow-Up",          href: "/dashboard/children-ministry/followup" },
-      { label: "Visitor Journey",    href: "/dashboard/children-ministry/visitor-journey" },
+      { label: "Follow-Up",       href: "/dashboard/children-ministry/followup" },
+      { label: "Visitor Journey", href: "/dashboard/children-ministry/visitor-journey" },
     ],
   },
   {
     label: "ShepherdKids",
     children: [
-      { label: "Children",      href: "/dashboard/children-ministry/children" },
-      { label: "Attendance",    href: "/dashboard/children-ministry/attendance" },
-      { label: "Faith Journey", href: "/dashboard/children-ministry/faith-journey" },
+      { label: "Children",          href: "/dashboard/children-ministry/children" },
+      { label: "Attendance",        href: "/dashboard/children-ministry/attendance" },
+      { label: "Kids Faith Journey", href: "/dashboard/children-ministry/faith-journey" },
     ],
   },
   {
