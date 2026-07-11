@@ -10,6 +10,14 @@ if (!resendApiKey) {
 
 export const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+// Bare email address extracted from defaultFromEmail ("Name <addr>" or "addr").
+// Used by callers that need to construct a custom display name while keeping
+// the same verified sending domain.
+export const defaultFromAddress = (() => {
+  const m = defaultFromEmail.match(/<([^>]+)>/);
+  return m ? m[1] : defaultFromEmail;
+})();
+
 export type SendEmailParams = {
   to: string | string[];
   subject: string;
@@ -17,6 +25,7 @@ export type SendEmailParams = {
   text?: string;
   from?: string;
   replyTo?: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
 };
 
 export async function sendEmail({
@@ -26,6 +35,7 @@ export async function sendEmail({
   text,
   from,
   replyTo,
+  attachments,
 }: SendEmailParams) {
   if (!resend) {
     throw new Error("Email service is not configured. Missing RESEND_API_KEY.");
@@ -38,6 +48,7 @@ export async function sendEmail({
     html,
     text,
     replyTo,
+    attachments,
   });
 
   if (result.error) {

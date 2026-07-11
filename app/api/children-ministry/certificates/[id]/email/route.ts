@@ -1,20 +1,23 @@
-/**
- * Certificate email API
- *
- * POST /api/children-ministry/certificates/[id]/email
- *
- * Body:
- *   send_now?:        boolean  — mark as sent immediately (stubbed delivery)
- *   schedule_for?:    string   — ISO timestamp to schedule delivery
- *   force?:           boolean  — bypass not-presented guard (with user acknowledgement)
- *
- * Email delivery is STUBBED. When ready, replace the stub block below with a
- * Resend call following the pattern in parents/[id]/send-email/route.ts.
- * The scheduled_for timestamp should be processed by a cron job.
- */
-
 import { type NextRequest } from 'next/server';
 import { getAuthContext, adminClient } from '@/lib/api-auth';
+import { sendEmail, defaultFromAddress } from '@/lib/communications/email/resend';
+import { buildCertificateEmail } from '@/lib/communications/email/templates';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const CERT_TYPE_LABEL: Record<string, string> = {
+  birthday: 'Birthday Celebration',
+  spiritual_birthday: 'Spiritual Birthday',
+  baptism: 'Baptism Celebration',
+  faith_milestone: 'Faith Milestone',
+  scripture_memory: 'Scripture Memory Award',
+  promotion: 'Promotion Sunday',
+  servant_heart: 'Servant Heart Award',
+  kindness: 'Kindness Award',
+  helper: 'Helper Award',
+  attendance: 'Attendance Award',
+};
 
 export async function POST(
   req: NextRequest,
@@ -25,19 +28,30 @@ export async function POST(
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { churchId } = ctx;
 
-  const { send_now, schedule_for, force } = await req.json();
+  const { pdfData, filename, force } = await req.json();
+
+  if (!pdfData || typeof pdfData !== 'string') {
+    return Response.json({ error: 'Missing PDF data' }, { status: 400 });
+  }
 
   const admin = adminClient();
-  const { data: cert } = await admin
-    .from('cm_certificates')
-    .select('status, parent_email')
-    .eq('id', id)
-    .eq('church_id', churchId)
-    .single();
+
+  const [{ data: cert }, { data: church }] = await Promise.all([
+    admin
+      .from('cm_certificates')
+      .select('status, parent_email, child_name, cert_type, minister_name, minister_title, child_id')
+      .eq('id', id)
+      .eq('church_id', churchId)
+      .single(),
+    admin
+      .from('churches')
+      .select('name, email, logo_url')
+      .eq('id', churchId)
+      .single(),
+  ]);
 
   if (!cert) return Response.json({ error: 'Not found' }, { status: 404 });
 
-  // Guard: require Presented status (or explicit force override from UI warning)
   const allowedStatuses = ['presented', 'email_scheduled', 'email_sent'];
   if (!allowedStatuses.includes(cert.status) && !force) {
     return Response.json(
@@ -50,38 +64,60 @@ export async function POST(
     return Response.json({ error: 'No parent email on this certificate' }, { status: 400 });
   }
 
-  const now = new Date().toISOString();
+  // Resolve family last name: cert → cm_visitor_children → cm_visitor_families
+  let familyGreeting = 'Parent';
+  if (cert.child_id) {
+    const { data: child } = await admin
+      .from('cm_visitor_children')
+      .select('family_id')
+      .eq('id', cert.child_id)
+      .single();
 
-  // ── Send now (delivery stubbed) ──────────────────────────────────────────────
-  if (send_now) {
-    // STUB: replace this block with a Resend call when email delivery is ready.
-    // See app/api/children-ministry/parents/[id]/send-email/route.ts for pattern.
-    await admin
-      .from('cm_certificates')
-      .update({ status: 'email_sent', parent_email_sent_at: now, updated_at: now })
-      .eq('id', id)
-      .eq('church_id', churchId);
+    if (child?.family_id) {
+      const { data: family } = await admin
+        .from('cm_visitor_families')
+        .select('parent1_last_name')
+        .eq('id', child.family_id)
+        .single();
 
-    return Response.json({
-      success: true,
-      stubbed: true,
-      note: 'Delivery is stubbed — status set to email_sent. Wire Resend here when ready.',
-    });
+      if (family?.parent1_last_name) {
+        familyGreeting = `${family.parent1_last_name} Family`;
+      }
+    }
   }
 
-  // ── Schedule for later ───────────────────────────────────────────────────────
-  const scheduledFor = schedule_for ? new Date(schedule_for).toISOString() : null;
+  const churchName = church?.name ?? 'Your Church';
+  const from = `${churchName} Children's Ministry <${defaultFromAddress}>`;
 
+  const template = buildCertificateEmail({
+    childName: cert.child_name,
+    certTypeLabel: CERT_TYPE_LABEL[cert.cert_type] ?? cert.cert_type,
+    churchName,
+    churchLogoUrl: church?.logo_url ?? undefined,
+    ministerName: cert.minister_name ?? undefined,
+    ministerTitle: cert.minister_title ?? undefined,
+    familyGreeting,
+  });
+
+  const pdfBuffer = Buffer.from(pdfData, 'base64');
+  const safeFilename = filename ?? `${cert.child_name.replace(/\s+/g, '-').toLowerCase()}-certificate.pdf`;
+
+  await sendEmail({
+    to: cert.parent_email,
+    from,
+    replyTo: church?.email ?? undefined,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    attachments: [{ filename: safeFilename, content: pdfBuffer }],
+  });
+
+  const now = new Date().toISOString();
   await admin
     .from('cm_certificates')
-    .update({
-      status: 'email_scheduled',
-      parent_email_scheduled_at: now,
-      email_scheduled_for:       scheduledFor,
-      updated_at:                now,
-    })
+    .update({ status: 'email_sent', parent_email_sent_at: now, updated_at: now })
     .eq('id', id)
     .eq('church_id', churchId);
 
-  return Response.json({ success: true, scheduled_for: scheduledFor });
+  return Response.json({ success: true });
 }

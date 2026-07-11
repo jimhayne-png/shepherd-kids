@@ -13,8 +13,12 @@ export interface ChurchBranding {
 function shell(
   branding: ChurchBranding,
   title: string,
-  body: string
+  body: string,
+  footer?: string,
 ): string {
+  const footerContent = footer !== undefined
+    ? footer
+    : `Sent by ${branding.churchName} using Shepherd Kids`;
   return `
 <!DOCTYPE html>
 <html>
@@ -66,6 +70,7 @@ ${body}
 </td>
 </tr>
 
+${footerContent ? `
 <tr>
 <td
 style="
@@ -75,9 +80,10 @@ font-size:12px;
 color:#666;
 text-align:center;
 ">
-Sent by ${branding.churchName} using Shepherd Kids
+${footerContent}
 </td>
 </tr>
+` : ""}
 
 </table>
 
@@ -88,6 +94,83 @@ Sent by ${branding.churchName} using Shepherd Kids
 </body>
 </html>
 `;
+}
+
+export function buildCertificateEmail({
+  childName,
+  certTypeLabel,
+  churchName,
+  churchLogoUrl,
+  ministerName,
+  ministerTitle,
+  familyGreeting,
+}: {
+  childName: string;
+  certTypeLabel: string;
+  churchName: string;
+  churchLogoUrl?: string;
+  ministerName?: string;
+  ministerTitle?: string;
+  familyGreeting?: string;
+}): EmailTemplate {
+  const subject = `A Special Certificate for ${childName} from ${churchName}`;
+
+  const branding: ChurchBranding = {
+    churchName,
+    logoUrl: churchLogoUrl,
+    primaryColor: "#7B2CBF",
+  };
+
+  const greeting = familyGreeting ?? "Parent";
+  const closingName = ministerName ?? "Your Children's Ministry Team";
+
+  const html = shell(
+    branding,
+    `A Special Certificate for ${childName}`,
+    `
+<p>Dear ${greeting},</p>
+
+<p>
+We are grateful for the opportunity to recognize this special milestone in ${childName}'s life.
+</p>
+
+<p>
+Attached is ${childName}'s ${certTypeLabel}. We hope this certificate will serve as a meaningful reminder of God's work and encouragement in the years ahead.
+</p>
+
+<p>
+Thank you for allowing us to partner with your family as we care for and encourage ${childName}.
+</p>
+
+<p style="margin-top:28px;">
+Blessings,<br /><br />
+<strong>${closingName}</strong>${ministerTitle ? `<br />${ministerTitle}` : ""}<br />
+${churchName}<br />
+Children's Ministry
+</p>
+`,
+    churchName,
+  );
+
+  return {
+    subject,
+    html,
+    text: `${churchName}
+
+Dear ${greeting},
+
+We are grateful for the opportunity to recognize this special milestone in ${childName}'s life.
+
+Attached is ${childName}'s ${certTypeLabel}. We hope this certificate will serve as a meaningful reminder of God's work and encouragement in the years ahead.
+
+Thank you for allowing us to partner with your family as we care for and encourage ${childName}.
+
+Blessings,
+
+${closingName}${ministerTitle ? `\n${ministerTitle}` : ""}
+${churchName}
+Children's Ministry`,
+  };
 }
 
 export function buildTestEmail(

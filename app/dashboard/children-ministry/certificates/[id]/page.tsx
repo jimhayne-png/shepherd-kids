@@ -13,6 +13,7 @@ import {
   STATUS_STEPS,
   stepIndex,
 } from "@/lib/certificates/types";
+import { captureCertificateForEmail } from "@/lib/certificates/exportCertificate";
 
 const GOLD = "#D4AF37";
 const MUTED = "#A9A9B8";
@@ -51,48 +52,6 @@ function getTemplateLabel(template: string | null | undefined): string {
   if (normalized === "premium") return "Premium Colors";
   if (normalized === "classic") return "Classic";
   return "Minimal";
-}
-
-function getScheduleISO(option: string): string {
-  const now = new Date();
-
-  if (option === "tonight") {
-    const t = new Date(now);
-    t.setHours(19, 0, 0, 0);
-    if (t <= now) t.setDate(t.getDate() + 1);
-    return t.toISOString();
-  }
-
-  if (option === "tomorrow-morning") {
-    const t = new Date(now);
-    t.setDate(t.getDate() + 1);
-    t.setHours(8, 0, 0, 0);
-    return t.toISOString();
-  }
-
-  if (option === "sunday-evening") {
-    const t = new Date(now);
-    const day = t.getDay();
-    const daysUntilSunday = day === 0 ? 7 : 7 - day;
-    t.setDate(t.getDate() + daysUntilSunday);
-    t.setHours(18, 0, 0, 0);
-    return t.toISOString();
-  }
-
-  return now.toISOString();
-}
-
-function fmtScheduleLabel(option: string): string {
-  const iso = getScheduleISO(option);
-  const d = new Date(iso);
-
-  return d.toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 function StatusBadge({ status }: { status: CertificateRecord["status"] }) {
@@ -382,68 +341,21 @@ function EmailWarningModal({
   );
 }
 
-const SCHEDULE_OPTIONS = [
-  {
-    id: "now",
-    label: "Send Immediately",
-    detail: "Email will be sent right now",
-  },
-  {
-    id: "tonight",
-    label: "Tonight at 7:00 PM",
-    detail: () => fmtScheduleLabel("tonight"),
-  },
-  {
-    id: "tomorrow-morning",
-    label: "Tomorrow Morning",
-    detail: () => fmtScheduleLabel("tomorrow-morning"),
-  },
-  {
-    id: "sunday-evening",
-    label: "Sunday Evening",
-    detail: () => fmtScheduleLabel("sunday-evening"),
-  },
-  {
-    id: "custom",
-    label: "Custom Date & Time",
-    detail: "Pick a specific date and time",
-  },
-] as const;
-
-type ScheduleOptionId = (typeof SCHEDULE_OPTIONS)[number]["id"];
-
-function EmailScheduleModal({
+function SendConfirmModal({
   parentEmail,
+  childName,
+  certTypeLabel,
   force,
   onCancel,
   onConfirm,
 }: {
   parentEmail: string;
+  childName: string;
+  certTypeLabel: string;
   force?: boolean;
   onCancel: () => void;
-  onConfirm: (sendNow: boolean, scheduledFor: string | null) => void;
+  onConfirm: () => void;
 }) {
-  const [selected, setSelected] = useState<ScheduleOptionId>("now");
-  const [customDt, setCustomDt] = useState(() => {
-    const d = new Date();
-    d.setHours(d.getHours() + 1, 0, 0, 0);
-    return d.toISOString().slice(0, 16);
-  });
-
-  function handleConfirm() {
-    if (selected === "now") {
-      onConfirm(true, null);
-      return;
-    }
-
-    if (selected === "custom") {
-      onConfirm(false, new Date(customDt).toISOString());
-      return;
-    }
-
-    onConfirm(false, getScheduleISO(selected));
-  }
-
   return (
     <div
       style={{
@@ -463,7 +375,7 @@ function EmailScheduleModal({
           border: "1px solid rgba(212,175,55,0.28)",
           borderRadius: "16px",
           padding: "28px",
-          maxWidth: "440px",
+          maxWidth: "420px",
           width: "100%",
           boxShadow: "0 8px 64px rgba(0,0,0,0.70)",
         }}
@@ -473,132 +385,46 @@ function EmailScheduleModal({
             fontSize: "16px",
             fontWeight: 700,
             color: "#ffffff",
-            margin: "0 0 6px",
+            margin: "0 0 14px",
             fontFamily: "Georgia, serif",
           }}
         >
           Email Certificate to Parent
         </h3>
 
-        <p style={{ fontSize: "12px", color: MUTED, margin: "0 0 18px" }}>
-          Sending to: <strong style={{ color: BODY }}>{parentEmail}</strong>
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "10px",
+            padding: "12px 14px",
+            marginBottom: "14px",
+          }}
+        >
+          <p style={{ fontSize: "11px", color: MUTED, margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>
+            Recipient
+          </p>
+          <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{parentEmail}</p>
           {force && (
-            <span style={{ color: "#FCD34D", marginLeft: "8px" }}>
-              (bypassing Presented check)
-            </span>
+            <p style={{ fontSize: "11px", color: "#FCD34D", margin: "4px 0 0" }}>
+              Bypassing Presented check
+            </p>
           )}
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "18px" }}>
-          {SCHEDULE_OPTIONS.map(opt => {
-            const detail = typeof opt.detail === "function" ? opt.detail() : opt.detail;
-
-            return (
-              <button
-                key={opt.id}
-                onClick={() => setSelected(opt.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "11px 14px",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  border: `1.5px solid ${
-                    selected === opt.id
-                      ? "rgba(212,175,55,0.50)"
-                      : "rgba(255,255,255,0.08)"
-                  }`,
-                  background: selected === opt.id ? "rgba(212,175,55,0.09)" : "transparent",
-                }}
-              >
-                <div
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                    borderRadius: "50%",
-                    flexShrink: 0,
-                    border: `2px solid ${
-                      selected === opt.id ? GOLD : "rgba(255,255,255,0.25)"
-                    }`,
-                    background: selected === opt.id ? GOLD : "transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {selected === opt.id && (
-                    <div
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        background: "#120A1F",
-                      }}
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      color: selected === opt.id ? "#ffffff" : BODY,
-                      margin: 0,
-                    }}
-                  >
-                    {opt.label}
-                  </p>
-
-                  <p style={{ fontSize: "11px", color: MUTED, margin: 0 }}>
-                    {detail}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+          <p style={{ fontSize: "11px", color: MUTED, margin: "10px 0 3px", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 700 }}>
+            Certificate
+          </p>
+          <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>
+            {childName} — {certTypeLabel}
+          </p>
         </div>
 
-        {selected === "custom" && (
-          <div style={{ marginBottom: "18px" }}>
-            <p
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: MUTED,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                margin: "0 0 6px",
-              }}
-            >
-              Date &amp; Time
-            </p>
-
-            <input
-              type="datetime-local"
-              value={customDt}
-              onChange={e => setCustomDt(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(212,175,55,0.3)",
-                borderRadius: "8px",
-                fontSize: "13px",
-                color: "#ffffff",
-                outline: "none",
-                boxSizing: "border-box",
-                colorScheme: "dark",
-              }}
-            />
-          </div>
-        )}
+        <p style={{ fontSize: "12px", color: MUTED, margin: "0 0 18px", lineHeight: 1.5 }}>
+          The certificate PDF will be generated and attached to a personalized email delivered to the parent.
+        </p>
 
         <div style={{ display: "flex", gap: "8px" }}>
           <button
-            onClick={handleConfirm}
+            onClick={onConfirm}
             style={{
               flex: 1,
               padding: "11px",
@@ -611,7 +437,7 @@ function EmailScheduleModal({
               fontWeight: 700,
             }}
           >
-            {selected === "now" ? "Send Now" : "Schedule Email"}
+            Send Certificate
           </button>
 
           <button
@@ -722,8 +548,10 @@ export default function CertificateDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const [showWarning, setShowWarning] = useState(false);
-  const [showSchedule, setShowSchedule] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [forceEmail, setForceEmail] = useState(false);
+  const [sendingPhase, setSendingPhase] = useState<null | "generating" | "sending">(null);
+  const [sendSuccess, setSendSuccess] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -806,36 +634,44 @@ export default function CertificateDetailPage() {
     }
   }
 
-  async function sendEmail(sendNow: boolean, scheduleFor: string | null, force = false) {
-    if (!cert) return;
+  async function handleSendCertificate(force = false) {
+    if (!cert || !certRef.current) return;
 
-    setSaving(true);
-    setActionError(null);
-    setShowSchedule(false);
+    setShowConfirm(false);
     setShowWarning(false);
+    setActionError(null);
+    setForceEmail(false);
+    setSendSuccess(null);
 
     try {
+      setSendingPhase("generating");
+      const pdfData = await captureCertificateForEmail(certRef.current);
+
+      setSendingPhase("sending");
+      const filename = `${cert.child_name.replace(/\s+/g, "-").toLowerCase()}-certificate.pdf`;
+
       const r = await fetch(`/api/children-ministry/certificates/${id}/email`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          send_now: sendNow,
-          schedule_for: scheduleFor,
-          force,
-        }),
+        body: JSON.stringify({ pdfData, filename, force }),
       });
 
       const d = await r.json();
 
       if (!r.ok) {
-        setActionError(d.message ?? d.error ?? "Email action failed.");
+        setActionError(
+          d.message ?? d.error ?? "The certificate could not be sent. No delivery status was recorded. Please try again."
+        );
         return;
       }
 
+      setSendSuccess(`Certificate sent successfully to ${cert.parent_email}.`);
       await load();
+    } catch {
+      setActionError("The certificate could not be sent. No delivery status was recorded. Please try again.");
     } finally {
-      setSaving(false);
+      setSendingPhase(null);
     }
   }
 
@@ -850,7 +686,7 @@ export default function CertificateDetailPage() {
     }
 
     setForceEmail(false);
-    setShowSchedule(true);
+    setShowConfirm(true);
   }
 
   if (loading) {
@@ -1072,6 +908,36 @@ export default function CertificateDetailPage() {
               </div>
             )}
 
+            {sendSuccess && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  background: "rgba(16,185,129,0.10)",
+                  border: "1px solid rgba(16,185,129,0.30)",
+                  borderRadius: "10px",
+                }}
+              >
+                <p style={{ color: "#34D399", fontSize: "12px", margin: 0, fontWeight: 700 }}>
+                  ✓ {sendSuccess}
+                </p>
+              </div>
+            )}
+
+            {sendingPhase && (
+              <div
+                style={{
+                  padding: "10px 14px",
+                  background: "rgba(123,44,191,0.10)",
+                  border: "1px solid rgba(123,44,191,0.30)",
+                  borderRadius: "10px",
+                }}
+              >
+                <p style={{ color: "#C084FC", fontSize: "12px", margin: 0 }}>
+                  {sendingPhase === "generating" ? "Generating certificate PDF…" : "Sending email…"}
+                </p>
+              </div>
+            )}
+
             <div
               style={{
                 background: CARD,
@@ -1139,14 +1005,10 @@ export default function CertificateDetailPage() {
                   cert.status === "email_scheduled") && (
                   <>
                     <ActionButton
-                      label={
-                        cert.status === "email_scheduled"
-                          ? "📧 Reschedule or Send Email"
-                          : "📧 Schedule Parent Email"
-                      }
+                      label="📧 Email Certificate to Parent"
                       onClick={handleEmailClick}
                       primary={!hasEmail}
-                      disabled={saving || !hasEmail}
+                      disabled={saving || sendingPhase !== null || !hasEmail}
                     />
 
                     {!hasEmail && (
@@ -1208,7 +1070,7 @@ export default function CertificateDetailPage() {
                   <ActionButton
                     label="📧 Email Certificate to Parent"
                     onClick={handleEmailClick}
-                    disabled={saving || !hasEmail}
+                    disabled={saving || sendingPhase !== null || !hasEmail}
                   />
                 )}
 
@@ -1302,28 +1164,28 @@ export default function CertificateDetailPage() {
           onForce={() => {
             setShowWarning(false);
             setForceEmail(true);
-            setShowSchedule(true);
+            setShowConfirm(true);
           }}
           onMarkPresented={async () => {
             setShowWarning(false);
             await patchStatus("presented");
             setForceEmail(false);
-            setShowSchedule(true);
+            setShowConfirm(true);
           }}
         />
       )}
 
-      {showSchedule && cert?.parent_email && (
-        <EmailScheduleModal
+      {showConfirm && cert?.parent_email && (
+        <SendConfirmModal
           parentEmail={cert.parent_email}
+          childName={cert.child_name}
+          certTypeLabel={CERT_TYPE_LABEL[cert.cert_type] ?? cert.cert_type}
           force={forceEmail}
           onCancel={() => {
-            setShowSchedule(false);
+            setShowConfirm(false);
             setForceEmail(false);
           }}
-          onConfirm={(sendNow, scheduledFor) =>
-            sendEmail(sendNow, scheduledFor, forceEmail)
-          }
+          onConfirm={() => handleSendCertificate(forceEmail)}
         />
       )}
     </AppShell>

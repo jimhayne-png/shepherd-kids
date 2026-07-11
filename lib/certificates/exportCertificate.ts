@@ -270,6 +270,30 @@ function buildPrintShopCanvas(cert: HTMLCanvasElement): HTMLCanvasElement {
   return out;
 }
 
+export async function captureCertificateForEmail(el: HTMLElement): Promise<string> {
+  const cert = await captureElement(el);
+
+  const { jsPDF } = await import("jspdf");
+
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "in",
+    format: "letter",
+    compress: true,
+  });
+
+  pdf.addImage(
+    cert.toDataURL("image/jpeg", 0.98),
+    "JPEG",
+    0,
+    0,
+    CERT_W_IN,
+    CERT_H_IN
+  );
+
+  return pdf.output("datauristring").split(",")[1];
+}
+
 export async function exportCertificate(
   el: HTMLElement,
   format: ExportFormat,
