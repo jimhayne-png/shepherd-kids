@@ -2,12 +2,13 @@ import { type NextRequest } from 'next/server';
 import { getAuthContext, adminClient } from '@/lib/api-auth';
 
 const CHURCH_FIELDS = [
-  'name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'website', 'logo_url',
-  'senior_pastor', 'children_pastor', 'youth_pastor', 'choir_director',
-  'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
-  'subscription_status', 'subscription_tier', 'trial_ends_at', 'timezone',
-  'check_in_opens_minutes_before', 'typical_class_duration_minutes', 'check_in_closes_minutes_after',
-  'label_mode', 'smart_label_qr_enabled', 'volunteer_checkin_qr_enabled',
+  'name', 'slug', 'email', 'phone', 'website',
+  'address', 'city', 'state', 'zip', 'logo_url', 'pastor_email',
+  'timezone', 'subscription_status', 'subscription_tier', 'trial_ends_at',
+  'check_in_opens_minutes_before', 'check_in_closes_minutes_after',
+  'label_mode', 'typical_class_duration_minutes',
+  'smart_label_qr_enabled', 'volunteer_checkin_qr_enabled', 'qr_checkin_enabled',
+  'senior_pastor', 'children_pastor',
 ].join(', ');
 
 export async function GET(req: NextRequest) {
@@ -31,8 +32,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const allowed = [
     'name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'website', 'logo_url',
-    'senior_pastor', 'children_pastor', 'youth_pastor', 'choir_director',
-    'mens_ministry_leader', 'womens_ministry_leader', 'young_adult_leader', 'senior_ministry_leader',
+    'senior_pastor', 'children_pastor',
     'timezone',
   ];
   const integerFields = ['check_in_opens_minutes_before', 'typical_class_duration_minutes', 'check_in_closes_minutes_after'];

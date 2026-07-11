@@ -42,32 +42,14 @@ type ChurchForm = {
   timezone: string;
   senior_pastor: string;
   children_pastor: string;
-  youth_pastor: string;
-  choir_director: string;
-  mens_ministry_leader: string;
-  womens_ministry_leader: string;
-  young_adult_leader: string;
-  senior_ministry_leader: string;
-  notification_email: string;
-  default_checkin_service: string;
-  label_printer_type: string;
-  qr_expiration_minutes: string;
-  birthday_cert_automation: boolean;
-  visitor_followup_automation: boolean;
+  label_mode: string;
 };
 
 const EMPTY: ChurchForm = {
   name: "", email: "", phone: "", address: "", city: "", state: "",
   zip: "", website: "", logo_url: "", timezone: "America/Los_Angeles",
-  senior_pastor: "", children_pastor: "", youth_pastor: "",
-  choir_director: "", mens_ministry_leader: "", womens_ministry_leader: "",
-  young_adult_leader: "", senior_ministry_leader: "",
-  notification_email: "",
-  default_checkin_service: "Sunday Morning",
-  label_printer_type: "standard",
-  qr_expiration_minutes: "60",
-  birthday_cert_automation: false,
-  visitor_followup_automation: false,
+  senior_pastor: "", children_pastor: "",
+  label_mode: "smart",
 };
 
 // ── Shared input components ──────────────────────────────────────────────────
@@ -127,38 +109,6 @@ function DarkSelect({
   );
 }
 
-function Toggle({
-  label, description, checked, onChange,
-}: {
-  label: string; description?: string; checked: boolean; onChange: (v: boolean) => void;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, padding: "14px 0", borderBottom: `1px solid ${BORDER}` }}>
-      <div style={{ flex: 1 }}>
-        <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 600, color: TEXT }}>{label}</p>
-        {description && <p style={{ margin: 0, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{description}</p>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        style={{
-          width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", flexShrink: 0,
-          background: checked ? PURPLE : "rgba(255,255,255,0.12)",
-          position: "relative", transition: "background 0.2s",
-        }}
-      >
-        <span style={{
-          position: "absolute", top: 3, left: checked ? 22 : 3,
-          width: 18, height: 18, borderRadius: "50%", background: TEXT,
-          transition: "left 0.2s",
-        }} />
-      </button>
-    </div>
-  );
-}
-
 function Card({ children, title, subtitle }: { children: React.ReactNode; title?: string; subtitle?: string }) {
   return (
     <section style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: "24px 28px", marginBottom: 20 }}>
@@ -175,24 +125,22 @@ function Card({ children, title, subtitle }: { children: React.ReactNode; title?
 export default function SettingsPage() {
   const router = useRouter();
 
-  const [tab, setTab]           = useState<Tab>("profile");
+  const [tab, setTab]             = useState<Tab>("profile");
   const [userEmail, setUserEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [form, setForm]         = useState<ChurchForm>(EMPTY);
-  const [billing, setBilling]   = useState<{ subscription_status?: string; subscription_tier?: string; trial_ends_at?: string }>({});
-  const [token, setToken]       = useState<string | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [msg, setMsg]           = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [form, setForm]           = useState<ChurchForm>(EMPTY);
+  const [billing, setBilling]     = useState<{ subscription_status?: string; subscription_tier?: string; trial_ends_at?: string }>({});
+  const [token, setToken]         = useState<string | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [saving, setSaving]       = useState(false);
+  const [msg, setMsg]             = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [resetSent, setResetSent] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
 
   function setStr(key: keyof ChurchForm) {
     return (v: string) => setForm(f => ({ ...f, [key]: v }));
-  }
-  function setBool(key: keyof ChurchForm) {
-    return (v: boolean) => setForm(f => ({ ...f, [key]: v }));
   }
 
   useEffect(() => {
@@ -211,36 +159,28 @@ export default function SettingsPage() {
       if (res.ok) {
         const { church } = await res.json();
         setForm({
-          name:                    church.name ?? "",
-          email:                   church.email ?? "",
-          phone:                   church.phone ?? "",
-          address:                 church.address ?? "",
-          city:                    church.city ?? "",
-          state:                   church.state ?? "",
-          zip:                     church.zip ?? "",
-          website:                 church.website ?? "",
-          logo_url:                church.logo_url ?? "",
-          timezone:                church.timezone ?? "America/Los_Angeles",
-          senior_pastor:           church.senior_pastor ?? "",
-          children_pastor:         church.children_pastor ?? "",
-          youth_pastor:            church.youth_pastor ?? "",
-          choir_director:          church.choir_director ?? "",
-          mens_ministry_leader:    church.mens_ministry_leader ?? "",
-          womens_ministry_leader:  church.womens_ministry_leader ?? "",
-          young_adult_leader:      church.young_adult_leader ?? "",
-          senior_ministry_leader:  church.senior_ministry_leader ?? "",
-          notification_email:      church.notification_email ?? church.email ?? "",
-          default_checkin_service: church.default_checkin_service ?? "Sunday Morning",
-          label_printer_type:      church.label_printer_type ?? "standard",
-          qr_expiration_minutes:   String(church.qr_expiration_minutes ?? "60"),
-          birthday_cert_automation:    church.birthday_cert_automation ?? false,
-          visitor_followup_automation: church.visitor_followup_automation ?? false,
+          name:            church.name ?? "",
+          email:           church.email ?? "",
+          phone:           church.phone ?? "",
+          address:         church.address ?? "",
+          city:            church.city ?? "",
+          state:           church.state ?? "",
+          zip:             church.zip ?? "",
+          website:         church.website ?? "",
+          logo_url:        church.logo_url ?? "",
+          timezone:        church.timezone ?? "America/Los_Angeles",
+          senior_pastor:   church.senior_pastor ?? "",
+          children_pastor: church.children_pastor ?? "",
+          label_mode:      church.label_mode ?? "smart",
         });
         setBilling({
           subscription_status: church.subscription_status ?? "",
           subscription_tier:   church.subscription_tier ?? "",
           trial_ends_at:       church.trial_ends_at ?? "",
         });
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setFetchError(d.error ?? "Failed to load settings. Please try again.");
       }
       setLoading(false);
     }
@@ -283,7 +223,6 @@ export default function SettingsPage() {
     router.push("/");
   }
 
-  // ── Layout helpers ──
   const g2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 };
   const s2: React.CSSProperties = { gridColumn: "1 / -1" };
 
@@ -340,6 +279,23 @@ export default function SettingsPage() {
       <div style={{ background: BG, minHeight: "calc(100vh - 152px)", padding: "32px 36px 64px" }}>
         <div style={{ maxWidth: 700 }}>
 
+          {/* Fetch error banner */}
+          {fetchError && (
+            <div style={{
+              marginBottom: 20, padding: "16px 20px", borderRadius: 10,
+              background: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.28)",
+            }}>
+              <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "#f87171" }}>Unable to Load Settings</p>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: MUTED }}>{fetchError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                style={{ padding: "7px 18px", background: "rgba(239,68,68,0.18)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 7, fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Status message */}
           {msg && (
             <div style={{
@@ -381,109 +337,82 @@ export default function SettingsPage() {
 
           {/* ── Church ── */}
           {tab === "church" && (
-            <Card title="Church Profile" subtitle="Details shown in letters, emails, and ministry reports.">
-              <div style={g2}>
-                <div style={s2}>
-                  <DarkInput label="Church Name" value={form.name} onChange={setStr("name")} />
+            <>
+              <Card title="Church Profile" subtitle="Details shown in letters, emails, and ministry reports.">
+                <div style={g2}>
+                  <div style={s2}>
+                    <DarkInput label="Church Name" value={form.name} onChange={setStr("name")} />
+                  </div>
+                  <DarkInput label="Email" value={form.email} onChange={setStr("email")} type="email" />
+                  <DarkInput label="Phone" value={form.phone} onChange={setStr("phone")} />
+                  <div style={s2}>
+                    <DarkInput label="Website" value={form.website} onChange={setStr("website")} />
+                  </div>
+                  <div style={s2}>
+                    <DarkInput label="Address" value={form.address} onChange={setStr("address")} />
+                  </div>
+                  <DarkInput label="City" value={form.city} onChange={setStr("city")} />
+                  <DarkInput label="State" value={form.state} onChange={setStr("state")} />
+                  <DarkInput label="Zip" value={form.zip} onChange={setStr("zip")} />
+                  <div style={s2}>
+                    <DarkSelect
+                      label="Timezone"
+                      value={form.timezone}
+                      onChange={setStr("timezone")}
+                      options={[
+                        { value: "America/New_York",    label: "Eastern — America/New_York" },
+                        { value: "America/Chicago",     label: "Central — America/Chicago" },
+                        { value: "America/Denver",      label: "Mountain — America/Denver" },
+                        { value: "America/Los_Angeles", label: "Pacific — America/Los_Angeles" },
+                        { value: "America/Anchorage",   label: "Alaska — America/Anchorage" },
+                        { value: "Pacific/Honolulu",    label: "Hawaii — Pacific/Honolulu" },
+                      ]}
+                    />
+                  </div>
+                  <div style={s2}>
+                    <DarkInput label="Logo URL" value={form.logo_url} onChange={setStr("logo_url")} placeholder="https://…" />
+                  </div>
                 </div>
-                <DarkInput label="Phone" value={form.phone} onChange={setStr("phone")} />
-                <DarkInput label="Website" value={form.website} onChange={setStr("website")} />
-                <div style={s2}>
-                  <DarkInput label="Address" value={form.address} onChange={setStr("address")} />
+                {form.logo_url && (
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.logo_url} alt="Logo preview" style={{ maxHeight: 64, borderRadius: 8, objectFit: "contain" }} />
+                  </div>
+                )}
+              </Card>
+
+              <Card title="Pastoral Leadership" subtitle="Staff displayed in ministry communications.">
+                <div style={g2}>
+                  <DarkInput label="Senior Pastor" value={form.senior_pastor} onChange={setStr("senior_pastor")} placeholder="Pastor name" />
+                  <DarkInput label="Children's Pastor" value={form.children_pastor} onChange={setStr("children_pastor")} placeholder="Pastor name" />
                 </div>
-                <DarkInput label="City" value={form.city} onChange={setStr("city")} />
-                <DarkInput label="State" value={form.state} onChange={setStr("state")} />
-                <DarkInput label="Zip" value={form.zip} onChange={setStr("zip")} />
-                <div style={s2}>
-                  <DarkSelect
-                    label="Timezone"
-                    value={form.timezone}
-                    onChange={setStr("timezone")}
-                    options={[
-                      { value: "America/New_York",    label: "Eastern — America/New_York" },
-                      { value: "America/Chicago",     label: "Central — America/Chicago" },
-                      { value: "America/Denver",      label: "Mountain — America/Denver" },
-                      { value: "America/Los_Angeles", label: "Pacific — America/Los_Angeles" },
-                      { value: "America/Anchorage",   label: "Alaska — America/Anchorage" },
-                      { value: "Pacific/Honolulu",    label: "Hawaii — Pacific/Honolulu" },
-                    ]}
-                  />
-                </div>
-                <div style={s2}>
-                  <DarkInput label="Logo URL" value={form.logo_url} onChange={setStr("logo_url")} placeholder="https://…" />
-                </div>
-              </div>
-              {form.logo_url && (
-                <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={form.logo_url} alt="Logo preview" style={{ maxHeight: 64, borderRadius: 8, objectFit: "contain" }} />
-                </div>
-              )}
-            </Card>
+              </Card>
+            </>
           )}
 
           {/* ── Platform ── */}
           {tab === "platform" && (
             <>
-              <Card title="Check-In" subtitle="Defaults for the kiosk and label printing system.">
-                <div style={g2}>
-                  <DarkSelect
-                    label="Default Check-In Service"
-                    value={form.default_checkin_service}
-                    onChange={setStr("default_checkin_service")}
-                    options={[
-                      { value: "Sunday Morning",  label: "Sunday Morning" },
-                      { value: "Sunday Evening",  label: "Sunday Evening" },
-                      { value: "Wednesday",       label: "Wednesday Evening" },
-                      { value: "Saturday",        label: "Saturday Service" },
-                    ]}
-                  />
-                  <DarkSelect
-                    label="Label Printer Type"
-                    value={form.label_printer_type}
-                    onChange={setStr("label_printer_type")}
-                    options={[
-                      { value: "standard", label: "Standard (Letter/PDF)" },
-                      { value: "dymo",     label: "Dymo LabelWriter" },
-                      { value: "zebra",    label: "Zebra Label Printer" },
-                      { value: "brother",  label: "Brother P-Touch" },
-                    ]}
-                  />
-                  <DarkInput
-                    label="QR Code Expiration (minutes)"
-                    value={form.qr_expiration_minutes}
-                    onChange={setStr("qr_expiration_minutes")}
-                    type="number"
-                    placeholder="60"
-                  />
-                </div>
+              <Card title="Check-In" subtitle="Label printing mode for the kiosk.">
+                <DarkSelect
+                  label="Label Mode"
+                  value={form.label_mode}
+                  onChange={setStr("label_mode")}
+                  options={[
+                    { value: "smart",   label: "Smart Labels (QR Code)" },
+                    { value: "classic", label: "Classic Labels" },
+                  ]}
+                />
               </Card>
 
-              <Card title="Notifications" subtitle="Where system alerts and daily digests are delivered.">
+              <Card title="Notifications" subtitle="Where system alerts are delivered.">
                 <DarkInput
                   label="Notification Email"
-                  value={form.notification_email}
-                  onChange={setStr("notification_email")}
+                  value={form.email}
+                  onChange={setStr("email")}
                   type="email"
                   placeholder="pastor@yourchurch.com"
                 />
-              </Card>
-
-              <Card title="Automation" subtitle="Automatic workflows triggered by ministry events.">
-                <Toggle
-                  label="Birthday Certificate Automation"
-                  description="Queue a certificate automatically when a birthday or spiritual birthday is logged."
-                  checked={form.birthday_cert_automation}
-                  onChange={setBool("birthday_cert_automation")}
-                />
-                <div style={{ marginTop: 4 }}>
-                  <Toggle
-                    label="Visitor Follow-Up Automation"
-                    description="Start a follow-up email sequence automatically when a new visitor checks in."
-                    checked={form.visitor_followup_automation}
-                    onChange={setBool("visitor_followup_automation")}
-                  />
-                </div>
               </Card>
             </>
           )}
@@ -567,24 +496,24 @@ export default function SettingsPage() {
             <Card title="Subscription" subtitle="Your current plan and billing status.">
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
                 {[
-                  { label: "Status", value: billing.subscription_status },
+                  { label: "Status", value: billing.subscription_status || null },
                   {
                     label: "Plan",
                     value: billing.subscription_tier
                       ? (planLabel[billing.subscription_tier] ?? billing.subscription_tier)
-                      : undefined,
+                      : null,
                   },
                   {
                     label: "Trial Ends",
                     value: billing.trial_ends_at
                       ? new Date(billing.trial_ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                      : undefined,
+                      : null,
                   },
                 ].map(b => (
                   <div key={b.label} style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER}`, borderRadius: 10, padding: "14px 18px" }}>
                     <p style={{ margin: "0 0 4px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: MUTED }}>{b.label}</p>
                     <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: TEXT, textTransform: "capitalize" }}>
-                      {b.value ?? <span style={{ color: MUTED, fontWeight: 400, fontStyle: "italic" }}>—</span>}
+                      {b.value ?? <span style={{ color: MUTED, fontWeight: 400, fontStyle: "italic" }}>Not assigned</span>}
                     </p>
                   </div>
                 ))}
