@@ -133,6 +133,7 @@ export default function SettingsPage() {
   const [token, setToken]         = useState<string | null>(null);
   const [loading, setLoading]     = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [warnings, setWarnings]   = useState<string[]>([]);
   const [saving, setSaving]       = useState(false);
   const [msg, setMsg]             = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [resetSent, setResetSent] = useState(false);
@@ -157,7 +158,8 @@ export default function SettingsPage() {
 
       const res = await fetch("/api/settings", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } });
       if (res.ok) {
-        const { church } = await res.json();
+        const { church, warnings: w } = await res.json();
+        setWarnings(w ?? []);
         setForm({
           name:            church.name ?? "",
           email:           church.email ?? "",
@@ -382,6 +384,11 @@ export default function SettingsPage() {
               </Card>
 
               <Card title="Pastoral Leadership" subtitle="Staff displayed in ministry communications.">
+                {warnings.includes("pastoral_leadership_unavailable") && (
+                  <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", fontSize: 12, color: "#fbbf24" }}>
+                    Pastoral fields could not be loaded from the database. Other settings are unaffected.
+                  </div>
+                )}
                 <div style={g2}>
                   <DarkInput label="Senior Pastor" value={form.senior_pastor} onChange={setStr("senior_pastor")} placeholder="Pastor name" />
                   <DarkInput label="Children's Pastor" value={form.children_pastor} onChange={setStr("children_pastor")} placeholder="Pastor name" />
