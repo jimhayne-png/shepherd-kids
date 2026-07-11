@@ -33,19 +33,19 @@ const TOP_ITEMS: NavChild[] = [
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Ministry Care",
-    children: [
-      { label: "Ministry Care Today", href: "/dashboard/children-ministry",                   exact: true },
-      { label: "Follow-Up",          href: "/dashboard/children-ministry/followup" },
-      { label: "Visitor Journey",    href: "/dashboard/children-ministry/visitor-journey" },
-    ],
-  },
-  {
     label: "Check-In",
     children: [
       { label: "Live Check-In",  href: "/dashboard/children-ministry/live-checkin" },
       { label: "Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
       { label: "Print Station",  href: "/dashboard/children-ministry/print-station" },
+    ],
+  },
+  {
+    label: "Ministry Care",
+    children: [
+      { label: "Ministry Care Today", href: "/dashboard/children-ministry",                exact: true },
+      { label: "Follow-Up",          href: "/dashboard/children-ministry/followup" },
+      { label: "Visitor Journey",    href: "/dashboard/children-ministry/visitor-journey" },
     ],
   },
   {
@@ -59,10 +59,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Shepherd Parents",
     children: [
-      { label: "Parents",                      href: "/dashboard/children-ministry/parents" },
-      { label: "Household Records",            href: "/dashboard/children-ministry/visitors" },
-      { label: "Parent Communication",         href: "/dashboard/children-ministry/parent-update" },
-      { label: "Annual Family Safety Review",  href: "/dashboard/children-ministry/family-safety-review" },
+      { label: "Parents",                     href: "/dashboard/children-ministry/parents" },
+      { label: "Parent Communication",        href: "/dashboard/children-ministry/parent-update" },
+      { label: "Household Records",           href: "/dashboard/children-ministry/visitors" },
+      { label: "Annual Family Safety Review", href: "/dashboard/children-ministry/family-safety-review" },
     ],
   },
   {
