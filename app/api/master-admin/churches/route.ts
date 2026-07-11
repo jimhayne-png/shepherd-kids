@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { type NextRequest } from "next/server";
+import { sendEmail, defaultFromAddress } from "@/lib/communications/email/resend";
 
 const MASTER_ADMIN_EMAIL = "jim@gratefulconsultinggroup.com";
 
@@ -300,6 +301,85 @@ export async function PATCH(req: NextRequest) {
     const setupLink = `${baseUrl}/auth/setup-password?token=${newToken}`;
 
     return Response.json({ setup_link: setupLink, email: userEmail });
+  }
+
+  if (action === "send-setup-email") {
+    const { data: cu } = await admin
+      .from("church_users")
+      .select("id, user_id")
+      .eq("church_id", churchId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!cu?.user_id) {
+      return Response.json({ error: "No admin user found for this church." }, { status: 404 });
+    }
+
+    const { data: userData } = await admin.auth.admin.getUserById(cu.user_id);
+    const userEmail = userData?.user?.email ?? null;
+    if (!userEmail) {
+      return Response.json({ error: "Admin user has no email." }, { status: 400 });
+    }
+
+    const newToken = randomUUID();
+    await admin.from("church_users").update({ setup_token: newToken, password_set: false }).eq("id", cu.id);
+
+    const { data: churchData } = await admin.from("churches").select("name").eq("id", churchId).single();
+    const churchName = churchData?.name ?? "Your Church";
+
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+    const setupLink = `${baseUrl}/auth/setup-password?token=${newToken}`;
+
+    await sendEmail({
+      to: userEmail,
+      from: `Shepherd Kids <${defaultFromAddress}>`,
+      subject: `Set up your ${churchName} admin account`,
+      html: `<p>You have been invited to manage <strong>${churchName}</strong> on Shepherd Kids.</p><p><a href="${setupLink}">Click here to set your password and get started</a></p><p>This link will work until you complete your account setup.</p>`,
+      text: `You have been invited to manage ${churchName} on Shepherd Kids.\n\nSet up your account: ${setupLink}\n\nThis link will work until you complete your account setup.`,
+    });
+
+    return Response.json({ success: true, email: userEmail });
+  }
+
+  if (action === "reset-password") {
+    const { data: cu } = await admin
+      .from("church_users")
+      .select("user_id")
+      .eq("church_id", churchId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!cu?.user_id) {
+      return Response.json({ error: "No admin user found for this church." }, { status: 404 });
+    }
+
+    const { data: userData } = await admin.auth.admin.getUserById(cu.user_id);
+    const userEmail = userData?.user?.email ?? null;
+    if (!userEmail) {
+      return Response.json({ error: "Admin user has no email." }, { status: 400 });
+    }
+
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email: userEmail,
+    });
+    if (linkErr) return Response.json({ error: linkErr.message }, { status: 500 });
+
+    const resetLink = (linkData as { properties?: { action_link?: string } } | null)?.properties?.action_link;
+    if (!resetLink) return Response.json({ error: "Could not generate reset link." }, { status: 500 });
+
+    const { data: churchData } = await admin.from("churches").select("name").eq("id", churchId).single();
+    const churchName = churchData?.name ?? "Your Church";
+
+    await sendEmail({
+      to: userEmail,
+      from: `Shepherd Kids <${defaultFromAddress}>`,
+      subject: `Password reset for ${churchName} — Shepherd Kids`,
+      html: `<p>A password reset was requested for your Shepherd Kids account for <strong>${churchName}</strong>.</p><p><a href="${resetLink}">Click here to reset your password</a></p><p>If you did not request this, you can ignore this email.</p>`,
+      text: `A password reset was requested for your Shepherd Kids account for ${churchName}.\n\nReset your password: ${resetLink}\n\nIf you did not request this, you can ignore this email.`,
+    });
+
+    return Response.json({ success: true, email: userEmail });
   }
 
   return Response.json({ error: `Unknown action: ${action}` }, { status: 400 });

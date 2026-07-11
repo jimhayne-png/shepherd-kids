@@ -112,7 +112,6 @@ function CreateChurchModal({
 
     const d = data as { church_id: string; invite_link?: string | null };
 
-    // Minimal church object for local state — page will reload full data
     const newChurch: Church = {
       id: d.church_id,
       name: form.churchName.trim(),
@@ -226,7 +225,7 @@ function CreateChurchModal({
   );
 }
 
-// ── Invite Link Modal ─────────────────────────────────────────────────────────
+// ── Invite Link Modal (shown after church creation) ────────────────────────────
 
 function InviteLinkModal({ link, email, onClose }: { link: string; email: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -258,65 +257,12 @@ function InviteLinkModal({ link, email, onClose }: { link: string; email: string
           {link}
         </div>
         <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 20px" }}>
-          This link works until the admin sets their password. Use <strong>Regenerate Setup Link</strong> from the Actions menu to issue a new one if needed.
+          Use <strong>Send Password Setup Email</strong> from the Actions menu to email this link directly to the admin.
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={copy}
             style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", backgroundColor: copied ? "#16a34a" : DARK_GREEN, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background-color 0.2s" }}
-          >
-            {copied ? "✓ Copied!" : "Copy Link"}
-          </button>
-          <button
-            onClick={onClose}
-            style={{ flex: 1, padding: 11, borderRadius: 10, border: "1px solid #e5e7eb", backgroundColor: "white", fontSize: 14, fontWeight: 500, color: "#374151", cursor: "pointer" }}
-          >
-            Done
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Impersonate Modal ─────────────────────────────────────────────────────────
-
-function ImpersonateModal({ link, email, onClose }: { link: string; email: string; onClose: () => void }) {
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    navigator.clipboard.writeText(link).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
-
-  return (
-    <div
-      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-      onClick={onClose}
-    >
-      <div
-        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 480, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ fontSize: 36, marginBottom: 12 }}>🔑</div>
-        <h2 style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700, color: "#111827", margin: "0 0 8px" }}>
-          Impersonate Church Admin
-        </h2>
-        <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 12px" }}>
-          One-time login link for <strong style={{ color: "#111827" }}>{email}</strong>.
-        </p>
-        <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "10px 12px", marginBottom: 12, fontSize: 12, color: "#92400e" }}>
-          Paste this link in an incognito window to avoid signing out of your current session.
-        </div>
-        <div style={{ backgroundColor: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8, padding: "10px 12px", marginBottom: 20, wordBreak: "break-all", fontSize: 12, color: "#374151", lineHeight: 1.5 }}>
-          {link}
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            onClick={copy}
-            style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", backgroundColor: copied ? "#16a34a" : "#7B2CBF", color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background-color 0.2s" }}
           >
             {copied ? "✓ Copied!" : "Copy Link"}
           </button>
@@ -383,13 +329,11 @@ export default function ChurchManagementPage() {
   const [openMenu, setOpenMenu] = useState<{ id: string; right: number; top: number } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   // Modals
   const [showCreate, setShowCreate] = useState(false);
   const [inviteModal, setInviteModal] = useState<{ link: string; email: string } | null>(null);
-  const [impersonateModal, setImpersonateModal] = useState<{ link: string; email: string } | null>(null);
-  const [confirmDeactivate, setConfirmDeactivate] = useState<Church | null>(null);
-  const [confirmReactivate, setConfirmReactivate] = useState<Church | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Church | null>(null);
   const [confirmWorking, setConfirmWorking] = useState(false);
 
@@ -422,13 +366,18 @@ export default function ChurchManagementPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function showSuccess(msg: string) {
+    setActionSuccess(msg);
+    setTimeout(() => setActionSuccess(null), 5000);
+  }
+
   async function doAction(churchId: string, action: string) {
     if (!token) return;
     setActionLoading(churchId);
     setActionError("");
     setOpenMenu(null);
 
-    if (action === "impersonate") {
+    if (action === "send-setup-email" || action === "reset-password") {
       const res = await fetch("/api/master-admin/churches", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -438,31 +387,12 @@ export default function ChurchManagementPage() {
       if (!res.ok) {
         setActionError((d as { error?: string }).error ?? "Failed.");
       } else {
-        const data = d as { link: string | null; email: string };
-        if (data.link) setImpersonateModal({ link: data.link, email: data.email });
-        else setActionError("Could not generate impersonation link.");
-      }
-      setActionLoading(null);
-      return;
-    }
-
-    if (action === "regenerate-setup") {
-      const church = churches.find((c) => c.id === churchId);
-      const res = await fetch("/api/master-admin/churches", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ churchId, action }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setActionError((d as { error?: string }).error ?? "Failed.");
-      } else {
-        const data = d as { setup_link: string | null; email: string | null };
-        if (data.setup_link) {
-          setInviteModal({ link: data.setup_link, email: data.email ?? church?.admin?.email ?? "" });
-        } else {
-          setActionError("Could not generate setup link.");
-        }
+        const data = d as { email: string };
+        showSuccess(
+          action === "send-setup-email"
+            ? `Setup email sent to ${data.email}.`
+            : `Password reset email sent to ${data.email}.`
+        );
       }
       setActionLoading(null);
       return;
@@ -478,7 +408,6 @@ export default function ChurchManagementPage() {
       const d = await res.json().catch(() => ({}));
       setActionError((d as { error?: string }).error ?? "Action failed.");
     } else {
-      // Refresh the church list
       await load(token);
     }
     setActionLoading(null);
@@ -571,6 +500,13 @@ export default function ChurchManagementPage() {
           </div>
         )}
 
+        {actionSuccess && (
+          <div className="rounded-xl flex items-center justify-between" style={{ backgroundColor: "#f0fdf4", border: "1px solid #86efac", padding: "10px 16px", color: "#15803d", fontSize: 13, marginBottom: 16 }}>
+            <span>{actionSuccess}</span>
+            <button onClick={() => setActionSuccess(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#15803d", fontWeight: 700, fontSize: 16 }}>×</button>
+          </div>
+        )}
+
         {!loading && !pageError && (
           <>
             {/* Toolbar */}
@@ -597,8 +533,8 @@ export default function ChurchManagementPage() {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      {["Church", "City / State", "Admin Email", "Status", "Trial Ends", "Created", "Actions"].map((h) => (
-                        <th key={h} style={TH}>{h}</th>
+                      {["Church", "City / State", "Admin Email", "Status", "Trial Ends", "Created", ""].map((h, i) => (
+                        <th key={i} style={TH}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -632,17 +568,28 @@ export default function ChurchManagementPage() {
                             {isActing ? (
                               <span style={{ color: "#9ca3af", fontSize: 12 }}>Working…</span>
                             ) : (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (openMenu?.id === church.id) { setOpenMenu(null); return; }
-                                  const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                                  setOpenMenu({ id: church.id, right: window.innerWidth - rect.right, top: rect.bottom + 4 });
-                                }}
-                                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", backgroundColor: openMenu?.id === church.id ? "#f3f4f6" : "white", cursor: "pointer", fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap" }}
-                              >
-                                Actions ▾
-                              </button>
+                              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                <button
+                                  onClick={() => {
+                                    localStorage.setItem("selected_church_id", church.id);
+                                    window.location.href = "/dashboard";
+                                  }}
+                                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", backgroundColor: DARK_GREEN, color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}
+                                >
+                                  View Church
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (openMenu?.id === church.id) { setOpenMenu(null); return; }
+                                    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                                    setOpenMenu({ id: church.id, right: window.innerWidth - rect.right, top: rect.bottom + 4 });
+                                  }}
+                                  style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", backgroundColor: openMenu?.id === church.id ? "#f3f4f6" : "white", cursor: "pointer", fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap" }}
+                                >
+                                  Actions ▾
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -663,15 +610,12 @@ export default function ChurchManagementPage() {
       {openMenu && (() => {
         const c = churches.find((x) => x.id === openMenu.id);
         if (!c) return null;
-        const isSuspended = c.subscription_status === "suspended";
-
-        type Item = { label: string; action?: string; destructive?: boolean; href?: string };
         const needsSetup = c.admin && !c.admin.passwordSet;
+
+        type Item = { label: string; action: string; destructive?: boolean };
         const items: Item[] = [
-          { label: "🏛️ Open Dashboard", action: "open-dashboard" },
-          { label: "🔑 Impersonate Admin", action: "impersonate" },
-          ...(needsSetup ? [{ label: "🔗 Regenerate Setup Link", action: "regenerate-setup" }] : []),
-          { label: isSuspended ? "✅ Reactivate" : "🚫 Deactivate", action: isSuspended ? "reactivate" : "deactivate", destructive: !isSuspended },
+          ...(needsSetup ? [{ label: "✉️ Send Password Setup Email", action: "send-setup-email" }] : []),
+          { label: "🔑 Reset Password", action: "reset-password" },
           { label: "🗑️ Delete Church", action: "delete", destructive: true },
         ];
 
@@ -679,40 +623,19 @@ export default function ChurchManagementPage() {
           <>
             <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={() => setOpenMenu(null)} />
             <div
-              style={{ position: "fixed", right: openMenu.right, top: openMenu.top, zIndex: 9999, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 210, overflow: "hidden" }}
+              style={{ position: "fixed", right: openMenu.right, top: openMenu.top, zIndex: 9999, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 220, overflow: "hidden" }}
               onClick={(e) => e.stopPropagation()}
             >
               {items.map((item, i) => {
-                const isDeactivateItem = item.action === "deactivate" || item.action === "reactivate";
-                const isDeleteItem     = item.action === "delete";
+                const isDeleteItem = item.action === "delete";
                 return (
-                <div key={i}>
-                  {isDeactivateItem && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
-                  {isDeleteItem     && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
-                  {item.href ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setOpenMenu(null)}
-                      style={{ display: "block", padding: "10px 16px", fontSize: 13, color: "#374151", textDecoration: "none" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
-                    >
-                      {item.label}
-                    </a>
-                  ) : (
+                  <div key={i}>
+                    {isDeleteItem && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
                     <button
                       onClick={() => {
                         setOpenMenu(null);
-                      if (item.action === "open-dashboard") {
-  localStorage.setItem("selected_church_id", c.id);
-  window.location.href = "/dashboard";
-}
-else if (item.action === "delete") setConfirmDelete(c);
-else if (item.action === "deactivate") setConfirmDeactivate(c);
-else if (item.action === "reactivate") setConfirmReactivate(c);
-else if (item.action) doAction(c.id, item.action);
+                        if (item.action === "delete") setConfirmDelete(c);
+                        else doAction(c.id, item.action);
                       }}
                       style={{ width: "100%", padding: "10px 16px", textAlign: "left", fontSize: 13, border: "none", backgroundColor: "white", cursor: "pointer", color: item.destructive ? "#dc2626" : "#374151", fontWeight: item.destructive ? 600 : 400 }}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
@@ -720,8 +643,7 @@ else if (item.action) doAction(c.id, item.action);
                     >
                       {item.label}
                     </button>
-                  )}
-                </div>
+                  </div>
                 );
               })}
             </div>
@@ -745,49 +667,6 @@ else if (item.action) doAction(c.id, item.action);
       {/* Invite link after creation */}
       {inviteModal && (
         <InviteLinkModal link={inviteModal.link} email={inviteModal.email} onClose={() => setInviteModal(null)} />
-      )}
-
-      {/* Impersonate modal */}
-      {impersonateModal && (
-        <ImpersonateModal link={impersonateModal.link} email={impersonateModal.email} onClose={() => setImpersonateModal(null)} />
-      )}
-
-      {/* Deactivate confirm */}
-      {confirmDeactivate && (
-        <ConfirmModal
-          icon="🚫"
-          title="Deactivate Church?"
-          body={<>This will suspend <strong style={{ color: "#111827" }}>{confirmDeactivate.name}</strong> and block their access immediately. You can reactivate at any time.</>}
-          confirmLabel="Deactivate"
-          confirmColor="#dc2626"
-          working={confirmWorking}
-          onCancel={() => setConfirmDeactivate(null)}
-          onConfirm={async () => {
-            setConfirmWorking(true);
-            await doAction(confirmDeactivate.id, "deactivate");
-            setConfirmWorking(false);
-            setConfirmDeactivate(null);
-          }}
-        />
-      )}
-
-      {/* Reactivate confirm */}
-      {confirmReactivate && (
-        <ConfirmModal
-          icon="✅"
-          title="Reactivate Church?"
-          body={<>This will restore trial access for <strong style={{ color: "#111827" }}>{confirmReactivate.name}</strong>.</>}
-          confirmLabel="Reactivate"
-          confirmColor="#16a34a"
-          working={confirmWorking}
-          onCancel={() => setConfirmReactivate(null)}
-          onConfirm={async () => {
-            setConfirmWorking(true);
-            await doAction(confirmReactivate.id, "reactivate");
-            setConfirmWorking(false);
-            setConfirmReactivate(null);
-          }}
-        />
       )}
 
       {/* Delete confirm */}
