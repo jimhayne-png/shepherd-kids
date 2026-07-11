@@ -30,11 +30,11 @@ const navItems: NavItem[] = [
 
 const CARE_CARDS = [
   {
-    title: "First-Time Families",
-    desc: "Welcome and connect with new visitors.",
-    href: "/dashboard/children-ministry/children",
-    action: "Welcome",
-    emoji: "👋",
+    title: "Returning Visitor Follow-Up",
+    desc: "Families waiting for second-week follow-up",
+    href: "/dashboard/children-ministry/visitor-journey",
+    action: "View",
+    emoji: "🏠",
     countLabel: "families",
   },
   {
@@ -107,6 +107,7 @@ type Stats = {
   events: number | null;
   prayers: number | null;
   safetyReviewsDue: number | null;
+  waitingVisitors: number | null;
 };
 
 type Church = { id: string; name: string };
@@ -131,7 +132,7 @@ export default function DashboardClient({
   allChurches,
 }: Props) {
   const router = useRouter();
-  const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null, safetyReviewsDue: null });
+  const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null, safetyReviewsDue: null, waitingVisitors: null });
   const [trialExpired, setTrialExpired] = useState(false);
   const [wizard, setWizard] = useState<WizardState | null>(null);
 
@@ -189,10 +190,11 @@ export default function DashboardClient({
 
       const d = await res.json();
       setStats({
-        members: d.activeFamilies ?? 0,
-        events: d.totalChildren ?? 0,
-        prayers: d.familyCareNeeds ?? 0,
-        safetyReviewsDue: d.familySafetyReviewsDue ?? 0,
+        members:          d.activeFamilies          ?? 0,
+        events:           d.totalChildren           ?? 0,
+        prayers:          d.familyCareNeeds         ?? 0,
+        safetyReviewsDue: d.familySafetyReviewsDue  ?? 0,
+        waitingVisitors:  d.waitingVisitors          ?? 0,
       });
     }
 
@@ -381,6 +383,8 @@ export default function DashboardClient({
               const count =
                 card.title === "Annual Family Safety Review"
                   ? (stats.safetyReviewsDue ?? 0)
+                  : card.title === "Returning Visitor Follow-Up"
+                  ? (stats.waitingVisitors ?? 0)
                   : 0;
               return (
                 <div

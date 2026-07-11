@@ -35,7 +35,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Ministry Care",
     children: [
-      { label: "Ministry Care Today", href: "/dashboard/children-ministry", exact: true },
+      { label: "Ministry Care Today", href: "/dashboard/children-ministry",          exact: true },
+      { label: "Visitor Journey",     href: "/dashboard/children-ministry/visitor-journey" },
       { label: "Follow-Up",           href: "/dashboard/children-ministry/followup" },
     ],
   },
