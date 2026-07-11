@@ -30,6 +30,14 @@ const navItems: NavItem[] = [
 
 const CARE_CARDS = [
   {
+    title: "First-Time Families",
+    desc: "Welcome and connect with new visitors.",
+    href: "/dashboard/children-ministry/followup",
+    action: "Welcome",
+    emoji: "👋",
+    countLabel: "families",
+  },
+  {
     title: "Returning Visitor Follow-Up",
     desc: "Families waiting for second-week follow-up",
     href: "/dashboard/children-ministry/visitor-journey",
@@ -38,28 +46,20 @@ const CARE_CARDS = [
     countLabel: "families",
   },
   {
+    title: "Parent Communication",
+    desc: "Send updates and messages to families",
+    href: "/dashboard/children-ministry/parent-update",
+    action: "Send",
+    emoji: "📧",
+    countLabel: "",
+  },
+  {
     title: "Families Needing Encouragement",
     desc: "Missed 3 or more Sundays",
     href: "/dashboard/children-ministry",
     action: "View",
     emoji: "🤝",
     countLabel: "families",
-  },
-  {
-    title: "Birthdays This Week",
-    desc: "Celebrate children and families",
-    href: "/dashboard/children-ministry/birthdays",
-    action: "View",
-    emoji: "🎂",
-    countLabel: "upcoming",
-  },
-  {
-    title: "Upcoming Spiritual Birthdays",
-    desc: "Celebrate faith milestones",
-    href: "/dashboard/children-ministry/birthdays",
-    action: "View",
-    emoji: "✝️",
-    countLabel: "upcoming",
   },
   {
     title: "Promotion Sunday Ready",
@@ -79,11 +79,13 @@ const CARE_CARDS = [
   },
 ];
 
+const PURPLE_GRADIENT = "linear-gradient(135deg, #7B2CBF, #9D4EDD)";
+
 const QUICK_CARDS = [
-  { label: "Check-In Setup",       href: "/dashboard/children-ministry/checkin-setup",  emoji: "✅", gradient: "linear-gradient(135deg, #0ea5e9, #0369a1)" },
-  { label: "Follow-Up",            href: "/dashboard/children-ministry/followup",        emoji: "📞", gradient: "linear-gradient(135deg, #10b981, #047857)" },
-  { label: "Birthdays",            href: "/dashboard/children-ministry/birthdays",       emoji: "🎂", gradient: "linear-gradient(135deg, #D4AF37, #a07c10)" },
-  { label: "Parent Communication", href: "/dashboard/children-ministry/parent-update",   emoji: "📧", gradient: "linear-gradient(135deg, #e11d48, #be123c)" },
+  { label: "Check-In Setup", href: "/dashboard/children-ministry/checkin-setup", emoji: "✅", gradient: PURPLE_GRADIENT },
+  { label: "Live Check-In",  href: "/dashboard/children-ministry/live-checkin",  emoji: "📋", gradient: PURPLE_GRADIENT },
+  { label: "Follow-Up",      href: "/dashboard/children-ministry/followup",      emoji: "📞", gradient: PURPLE_GRADIENT },
+  { label: "Birthdays",      href: "/dashboard/children-ministry/birthdays",     emoji: "🎂", gradient: PURPLE_GRADIENT },
 ];
 
 function getGreeting() {
