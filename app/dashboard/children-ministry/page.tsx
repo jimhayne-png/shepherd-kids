@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
-
-const supabase = createClient();
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 type Child = { id: string; first_name: string; last_name: string; date_of_birth: string | null };
 type SessionSummary = { id: string; service_name: string; date: string; status: string };
@@ -17,6 +15,24 @@ type SpiritualBirthdayEntry = {
   notes: string | null;
   first_name: string;
   last_name: string;
+};
+
+type MinistryCareStats = {
+  parentFirstVisitFollowUp: number;
+  newChildrenFollowUp: number;
+  kidsFaithJourney: number;
+  familiesNeedingEncouragement: number;
+  promotionSundayReady: number;
+  encouragementCertificates: number;
+};
+
+const EMPTY_STATS: MinistryCareStats = {
+  parentFirstVisitFollowUp: 0,
+  newChildrenFollowUp: 0,
+  kidsFaithJourney: 0,
+  familiesNeedingEncouragement: 0,
+  promotionSundayReady: 0,
+  encouragementCertificates: 0,
 };
 
 function upcomingBirthdays(children: Child[], days: number) {
@@ -50,15 +66,41 @@ function upcomingSpiritualBirthdays(entries: SpiritualBirthdayEntry[], days: num
   return results.sort((a, b) => a.daysAway - b.daysAway);
 }
 
-const ACTION_CARDS = [
+// Cards in the required order — counts injected at render time from the API.
+const ACTION_CARDS: {
+  key: keyof MinistryCareStats;
+  emoji: string;
+  title: string;
+  desc: string;
+  action: string;
+  href: string;
+}[] = [
   {
+    key: "parentFirstVisitFollowUp",
     emoji: "👋",
-    title: "First-Time Families",
-    desc: "Welcome and connect with new visitors.",
+    title: "Parent First-Visit Follow-Up",
+    desc: "Welcome and connect with new families.",
     action: "Review",
     href: "/dashboard/children-ministry/visitors",
   },
   {
+    key: "newChildrenFollowUp",
+    emoji: "🧒",
+    title: "New Children Follow-Up",
+    desc: "Continue caring for every new child.",
+    action: "Review",
+    href: "/dashboard/children-ministry/followup",
+  },
+  {
+    key: "kidsFaithJourney",
+    emoji: "🌱",
+    title: "Kids Faith Journey",
+    desc: "Guide children through their spiritual journey.",
+    action: "View",
+    href: "/dashboard/children-ministry/faith-journey",
+  },
+  {
+    key: "familiesNeedingEncouragement",
     emoji: "❤️",
     title: "Families Needing Encouragement",
     desc: "Families absent multiple weeks.",
@@ -66,13 +108,7 @@ const ACTION_CARDS = [
     href: "/dashboard/children-ministry/parents",
   },
   {
-    emoji: "🎂",
-    title: "Upcoming Birthdays",
-    desc: "Children's birthdays and spiritual birthdays",
-    action: "View",
-    href: "/dashboard/children-ministry/birthdays",
-  },
-  {
+    key: "promotionSundayReady",
     emoji: "🏫",
     title: "Promotion Sunday Ready",
     desc: "Children ready for next classroom.",
@@ -80,65 +116,39 @@ const ACTION_CARDS = [
     href: "/dashboard/children-ministry/children",
   },
   {
-    emoji: "📧",
-    title: "Parent Updates Needed",
-    desc: "Missing allergies, pickups or information.",
-    action: "Review",
-    href: "/dashboard/children-ministry/parent-update",
-  },
-  {
+    key: "encouragementCertificates",
     emoji: "🏆",
-    title: "Certificates Ready",
-    desc: "Faith milestones and awards ready to print.",
-    action: "Print",
-    href: "/dashboard/children-ministry/print-station",
+    title: "Encouragement Certificates",
+    desc: "Celebrate spiritual growth and meaningful milestones.",
+    action: "Create",
+    href: "/dashboard/children-ministry/certificates/new",
   },
-  {
-    emoji: "🌱",
-    title: "Faith Journey Activity",
-    desc: "Children progressing through discipleship.",
-    action: "View",
-    href: "/dashboard/children-ministry/faith-journey",
-  },
-];
-
-const ACTIVITY_FEED = [
-  { emoji: "👋", text: "Smith family checked in for the first time" },
-  { emoji: "✝️", text: "Emma received a Faith Milestone" },
-  { emoji: "🎂", text: "Noah has a birthday this week" },
-  { emoji: "🌱", text: "Jackson moved to Baptism stage" },
-  { emoji: "📋", text: "Parent profile updated" },
-  { emoji: "🏫", text: "Promotion Sunday candidate identified" },
 ];
 
 export default function ChildrenMinistryPage() {
   const router = useRouter();
-  const selectedChurchIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<Child[]>([]);
   const [recentSessions, setRecentSessions] = useState<SessionSummary[]>([]);
   const [spiritualBirthdayEntries, setSpiritualBirthdayEntries] = useState<SpiritualBirthdayEntry[]>([]);
+  const [careStats, setCareStats] = useState<MinistryCareStats>(EMPTY_STATS);
 
   useEffect(() => {
     async function init() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (!user || error) {
-        console.log("Dashboard client user unavailable:", error?.message ?? null);
-        return;
-      }
-      const urlParams = new URLSearchParams(window.location.search);
-      selectedChurchIdRef.current = urlParams.get("churchId") ?? localStorage.getItem("selected_church_id");
-      const churchHeader: Record<string, string> = selectedChurchIdRef.current
-        ? { "x-selected-church-id": selectedChurchIdRef.current }
-        : {};
-      const [childrenRes, sessionsRes, spiritualBdRes] = await Promise.all([
-        fetch("/api/children-ministry/children", { credentials: "include", headers: churchHeader }),
-        fetch("/api/checkin/attendance-report", { credentials: "include", headers: churchHeader }),
-        fetch("/api/children-ministry/spiritual-birthdays", { credentials: "include", headers: churchHeader }),
+      const headers = selectedChurchHeaders();
+
+      const [childrenRes, sessionsRes, spiritualBdRes, careStatsRes] = await Promise.all([
+        fetch("/api/children-ministry/children",             { credentials: "include", headers }),
+        fetch("/api/checkin/attendance-report",             { credentials: "include", headers }),
+        fetch("/api/children-ministry/spiritual-birthdays", { credentials: "include", headers }),
+        fetch("/api/children-ministry/ministry-care-stats", { credentials: "include", headers }),
       ]);
-      if (childrenRes.ok) { const d = await childrenRes.json(); setChildren(d.children ?? []); }
-      if (sessionsRes.ok) { const d = await sessionsRes.json(); setRecentSessions((d.sessions ?? []).slice(0, 4)); }
+
+      if (childrenRes.ok)    { const d = await childrenRes.json();    setChildren(d.children ?? []); }
+      if (sessionsRes.ok)    { const d = await sessionsRes.json();    setRecentSessions((d.sessions ?? []).slice(0, 4)); }
       if (spiritualBdRes.ok) { const d = await spiritualBdRes.json(); setSpiritualBirthdayEntries(d.entries ?? []); }
+      if (careStatsRes.ok)   { const d = await careStatsRes.json();   setCareStats(d); }
+
       setLoading(false);
     }
     init();
@@ -175,9 +185,9 @@ export default function ChildrenMinistryPage() {
         {/* Stat row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" style={{ marginBottom: "36px" }}>
           {[
-            { label: "Total Children",       value: children.length,          emoji: "🧒", color: "#7B2CBF" },
-            { label: "Upcoming Birthdays",     value: birthdaysThisWeek.length + upcomingSpiritual.length, emoji: "🎂", color: "#D4AF37" },
-            { label: "Recent Sessions",       value: recentSessions.length,    emoji: "📋", color: "#6366f1" },
+            { label: "Total Children",    value: children.length,                                        emoji: "🧒", color: "#7B2CBF" },
+            { label: "Upcoming Birthdays", value: birthdaysThisWeek.length + upcomingSpiritual.length,  emoji: "🎂", color: "#D4AF37" },
+            { label: "Recent Sessions",   value: recentSessions.length,                                  emoji: "📋", color: "#6366f1" },
           ].map(stat => (
             <div
               key={stat.label}
@@ -224,8 +234,7 @@ export default function ChildrenMinistryPage() {
           </p>
         </div>
 
-        {/* 8 Action cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" style={{ marginBottom: "40px" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" style={{ marginBottom: "40px" }}>
           {ACTION_CARDS.map(card => (
             <div
               key={card.title}
@@ -252,7 +261,9 @@ export default function ChildrenMinistryPage() {
                   </p>
                 </div>
                 <div style={{ flexShrink: 0, textAlign: "right" }}>
-                  <p style={{ color: "#D4AF37", fontSize: "28px", fontWeight: 700, lineHeight: 1, margin: 0 }}>0</p>
+                  <p style={{ color: "#D4AF37", fontSize: "28px", fontWeight: 700, lineHeight: 1, margin: 0 }}>
+                    {careStats[card.key]}
+                  </p>
                 </div>
               </div>
               <Link
@@ -277,7 +288,7 @@ export default function ChildrenMinistryPage() {
           ))}
         </div>
 
-        {/* Recent Ministry Activity */}
+        {/* Recent Ministry Activity — empty state until a real feed is built */}
         <div style={{ marginBottom: "18px" }}>
           <h2 style={{ fontSize: "19px", fontWeight: 700, color: "#ffffff", margin: 0, fontFamily: "Georgia, serif" }}>
             Recent Ministry Activity
@@ -292,52 +303,15 @@ export default function ChildrenMinistryPage() {
             background: "#120A1F",
             border: "1px solid rgba(212,175,55,0.22)",
             borderRadius: "16px",
-            overflow: "hidden",
+            padding: "32px 24px",
+            textAlign: "center",
           }}
         >
-          {ACTIVITY_FEED.map((item, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-                padding: "16px 24px",
-                borderBottom: i < ACTIVITY_FEED.length - 1 ? "1px solid rgba(212,175,55,0.1)" : "none",
-              }}
-            >
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  backgroundColor: "rgba(123,44,191,0.2)",
-                  border: "1px solid rgba(157,78,221,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                  flexShrink: 0,
-                }}
-              >
-                {item.emoji}
-              </div>
-              <p style={{ fontSize: "13px", color: "#D8D8E8", margin: 0, flex: 1 }}>{item.text}</p>
-              <span
-                style={{
-                  fontSize: "11px",
-                  color: "#A9A9B8",
-                  flexShrink: 0,
-                  background: "rgba(255,255,255,0.05)",
-                  borderRadius: "6px",
-                  padding: "2px 8px",
-                }}
-              >
-                Placeholder
-              </span>
-            </div>
-          ))}
+          <p style={{ fontSize: "13px", color: "#A9A9B8", margin: 0 }}>
+            No recent ministry activity to display.
+          </p>
         </div>
+
       </div>
     </AppShell>
   );

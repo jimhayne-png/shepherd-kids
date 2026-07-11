@@ -94,7 +94,7 @@ export default function Home() {
             More Than a Check-In Platform.
           </p>
           <p style={{ color: "#A9A9B8", fontSize: "13px" }}>
-            Welcome Every Family. Know Every Child. Shepherd Every Journey.
+            Welcome Every Family Safely. Care for Every Child. Shepherd Every Journey.
           </p>
         </div>
 

@@ -9,7 +9,7 @@ const geist = Geist({
 
 export const metadata: Metadata = {
   title: "ShepherdKids",
-  description: "Welcome Every Family. Know Every Child. Shepherd Every Journey.",
+  description: "Welcome Every Family Safely. Care for Every Child. Shepherd Every Journey.",
 };
 
 export default function RootLayout({
