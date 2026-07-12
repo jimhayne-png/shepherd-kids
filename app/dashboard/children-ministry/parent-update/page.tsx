@@ -281,6 +281,33 @@ export default function ParentCommunicationPage() {
       <div style={{ backgroundColor: "#0A0814", minHeight: "100vh", padding: "32px" }}>
         <div style={{ maxWidth: "840px" }}>
 
+          {/* ── Communication type tabs ── */}
+          <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: "rgba(255,255,255,0.04)", borderRadius: "10px", padding: "4px" }}>
+            <span
+              style={{
+                flex: 1, textAlign: "center",
+                padding: "9px 16px", borderRadius: "8px",
+                fontSize: "13px", fontWeight: 700,
+                background: "rgba(212,175,55,0.12)", color: "#D4AF37",
+                display: "block",
+              }}
+            >
+              General Email
+            </span>
+            <Link
+              href="/dashboard/children-ministry/parent-update/lesson-plan"
+              style={{
+                flex: 1, textAlign: "center",
+                padding: "9px 16px", borderRadius: "8px",
+                fontSize: "13px", fontWeight: 400,
+                background: "transparent", color: "#A9A9B8",
+                textDecoration: "none", display: "block",
+              }}
+            >
+              Children&apos;s Lesson Plan
+            </Link>
+          </div>
+
           {/* ── Main composer ── */}
           <div
             style={{

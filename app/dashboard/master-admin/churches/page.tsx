@@ -572,7 +572,7 @@ export default function ChurchManagementPage() {
                                 <button
                                   onClick={() => {
                                     localStorage.setItem("selected_church_id", church.id);
-                                    window.location.href = "/dashboard";
+                                    window.location.href = `/dashboard?churchId=${church.id}`;
                                   }}
                                   style={{ padding: "6px 14px", borderRadius: 8, border: "none", backgroundColor: DARK_GREEN, color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}
                                 >
