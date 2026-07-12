@@ -417,7 +417,7 @@ export default function CheckinSetupPage() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>;
 
-  const activeRooms = rooms.filter(r => r.is_active);
+  const activeRooms = Array.from(new Map(rooms.filter(r => r.is_active).map(r => [r.id, r])).values());
   const activeSessions = sessions.filter(s => s.status === "open");
 
   return (
@@ -684,8 +684,11 @@ export default function CheckinSetupPage() {
                   <div className="flex items-start gap-3 mb-3">
                     <span className="text-2xl flex-shrink-0">👥</span>
                     <div>
-                      <h3 className="font-bold text-base" style={{ color: "#ffffff" }}>Volunteer Room View</h3>
-                      <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Share with room volunteers — they enter today&apos;s PIN and select their room</p>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-base" style={{ color: "#ffffff" }}>Volunteer Classroom Tablet</h3>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)" }}>RECOMMENDED</span>
+                      </div>
+                      <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>Secure classroom access for approved volunteers. Volunteers sign in using their Personal Volunteer PIN before selecting one of their assigned classrooms.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)" }}>
@@ -713,7 +716,7 @@ export default function CheckinSetupPage() {
               ) : (
                 <div className="rounded-2xl p-4 mb-6" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.25)" }}>
                   <p style={{ color: "#6b7280", fontSize: "13px", margin: 0 }}>
-                    👥 <strong style={{ color: "#9ca3af" }}>Volunteer Room View</strong> — Volunteer QR tools are turned off in{" "}
+                    👥 <strong style={{ color: "#9ca3af" }}>Volunteer Classroom Tablet</strong> — Volunteer QR tools are turned off in{" "}
                     <button onClick={() => setTab("label-printing")} style={{ color: "#D4AF37", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "13px", fontWeight: 600 }}>Label Printing settings</button>.
                   </p>
                 </div>
@@ -793,24 +796,35 @@ export default function CheckinSetupPage() {
               );
             })()}
 
-            {/* Classroom access links */}
+            {/* Direct classroom access links */}
             {activeRooms.length > 0 && APP_URL && (
               volunteerCheckinQrEnabled ? (
-                <div className="rounded-2xl p-5 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                  <h3 className="font-bold mb-3 text-sm" style={{ color: "#ffffff" }}>🏫 Classroom Tablet Links</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {activeRooms.map(room => {
-                      const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
-                      return (
-                        <div key={room.id} className="flex items-center gap-1.5 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)" }}>
-                          <span className="text-sm font-medium" style={{ color: "#D8D8E8" }}>{room.name}</span>
-                          <button onClick={() => handleCopy(url)} className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: ACCENT }}>{copiedUrl === url ? "Copied!" : "Copy"}</button>
-                          <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "#A9A9B8" }}>↗</a>
-                        </div>
-                      );
-                    })}
+                <>
+                  <div className="rounded-2xl p-5 mb-3" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                    <h3 className="font-bold text-sm mb-1" style={{ color: "#ffffff" }}>🏫 Direct Classroom Tablet Links</h3>
+                    <p className="text-xs mb-3" style={{ color: "#A9A9B8" }}>Opens each classroom directly without volunteer authentication. Best for churches that do not require volunteer PINs or background check verification.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {activeRooms.map(room => {
+                        const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
+                        return (
+                          <div key={room.id} className="flex items-center gap-1.5 rounded-xl px-3 py-2" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)" }}>
+                            <span className="text-sm font-medium" style={{ color: "#D8D8E8" }}>{room.name}</span>
+                            <button onClick={() => handleCopy(url)} className="text-xs px-2 py-0.5 rounded font-bold" style={{ color: ACCENT }}>{copiedUrl === url ? "Copied!" : "Copy"}</button>
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "#A9A9B8" }}>↗</a>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                  <div className="rounded-xl px-4 py-3 mb-6" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
+                    <p className="text-xs font-bold mb-1" style={{ color: "#9ca3af" }}>Security Notice</p>
+                    <p className="text-xs" style={{ color: "#6b7280" }}>
+                      Direct Classroom Tablet Links do not require volunteer sign-in. Anyone with the classroom link may access that classroom while an active check-in session is open.
+                      Churches that want volunteer verification, background check enforcement, audit logging, and secure child information should use the{" "}
+                      <strong style={{ color: "#9ca3af" }}>Volunteer Classroom Tablet</strong> above.
+                    </p>
+                  </div>
+                </>
               ) : null
             )}
 
@@ -1046,22 +1060,6 @@ export default function CheckinSetupPage() {
                           </button>
                         </div>
 
-                        {/* Classroom links for this session */}
-                        {isOpen && activeRooms.length > 0 && APP_URL && volunteerCheckinQrEnabled && (
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#A9A9B8" }}>Classroom Links</p>
-                            <div className="flex flex-wrap gap-2">
-                              {activeRooms.map(room => {
-                                const url = `${APP_URL}/classroom/${room.classroom_qr_token}`;
-                                return (
-                                  <a key={room.id} href={url} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 rounded-xl font-semibold border" style={{ borderColor: ACCENT, color: ACCENT }}>
-                                    {room.name} ↗
-                                  </a>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
