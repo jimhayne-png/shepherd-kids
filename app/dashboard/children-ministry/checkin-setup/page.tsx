@@ -84,6 +84,9 @@ export default function CheckinSetupPage() {
   const [newPINInput, setNewPINInput] = useState("");
   const [savingPIN, setSavingPIN] = useState(false);
 
+  // Past sessions collapsed state
+  const [showPastSessions, setShowPastSessions] = useState(false);
+
   // Automation settings (persisted in localStorage — no DB yet)
   const [autoOpen, setAutoOpen] = useState(false);
   const [autoOpenMinutes, setAutoOpenMinutes] = useState(60);
@@ -817,11 +820,11 @@ export default function CheckinSetupPage() {
                     </div>
                   </div>
                   <div className="rounded-xl px-4 py-3 mb-6" style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.2)" }}>
-                    <p className="text-xs font-bold mb-1" style={{ color: "#9ca3af" }}>Security Notice</p>
-                    <p className="text-xs" style={{ color: "#6b7280" }}>
+                    <p className="text-xs font-bold mb-1" style={{ color: "#f3f4f6" }}>Security Notice</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.78)" }}>
                       Direct Classroom Tablet Links do not require volunteer sign-in. Anyone with the classroom link may access that classroom while an active check-in session is open.
                       Churches that want volunteer verification, background check enforcement, audit logging, and secure child information should use the{" "}
-                      <strong style={{ color: "#9ca3af" }}>Volunteer Classroom Tablet</strong> above.
+                      <strong style={{ color: "#d1d5db" }}>Volunteer Classroom Tablet</strong> above.
                     </p>
                   </div>
                 </>
@@ -1039,33 +1042,65 @@ export default function CheckinSetupPage() {
 
             {sessions.length === 0 ? (
               <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div className="text-4xl mb-3">🔑</div><p style={{ color: "#A9A9B8" }}>No sessions yet. Create one to start check-in.</p></div>
-            ) : (
-              <div className="space-y-4">
-                {sessions.map(session => {
-                  const isOpen = session.status === "open";
-                  return (
-                    <div key={session.id} className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                      <div className="p-5">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-bold" style={{ color: "#ffffff" }}>{session.service_name}</h3>
-                              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold" style={{ background: isOpen ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.07)", color: isOpen ? "#4ade80" : "#A9A9B8" }}>{isOpen ? "Open" : "Closed"}</span>
-                            </div>
-                            <p className="text-sm" style={{ color: "#A9A9B8" }}>{fmtDate(session.date)}{session.scheduled_time ? ` · ${fmtTime(session.scheduled_time)}` : ""}</p>
-                            <p className="text-xs font-mono mt-0.5" style={{ color: "#A9A9B8" }}>PIN: {session.kiosk_pin}</p>
-                          </div>
-                          <button onClick={() => toggleSession(session)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ backgroundColor: isOpen ? "rgba(220,38,38,0.15)" : "rgba(34,197,94,0.15)", color: isOpen ? "#f87171" : "#4ade80" }}>
-                            {isOpen ? "Close Session" : "Reopen"}
-                          </button>
-                        </div>
+            ) : (() => {
+              const openSessions = sessions.filter(s => s.status === "open");
+              const closedSessions = sessions
+                .filter(s => s.status !== "open")
+                .sort((a, b) => {
+                  const dateCompare = b.date.localeCompare(a.date);
+                  if (dateCompare !== 0) return dateCompare;
+                  return (b.scheduled_time ?? "").localeCompare(a.scheduled_time ?? "");
+                });
+              const recentClosed = closedSessions.slice(0, 8);
+              const pastSessions = closedSessions.slice(8);
 
+              const renderSessionCard = (session: typeof sessions[0]) => {
+                const isOpen = session.status === "open";
+                return (
+                  <div key={session.id} className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold" style={{ color: "#ffffff" }}>{session.service_name}</h3>
+                            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold" style={{ background: isOpen ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.07)", color: isOpen ? "#4ade80" : "#A9A9B8" }}>{isOpen ? "Open" : "Closed"}</span>
+                          </div>
+                          <p className="text-sm" style={{ color: "#A9A9B8" }}>{fmtDate(session.date)}{session.scheduled_time ? ` · ${fmtTime(session.scheduled_time)}` : ""}</p>
+                          <p className="text-xs font-mono mt-0.5" style={{ color: "#A9A9B8" }}>PIN: {session.kiosk_pin}</p>
+                        </div>
+                        <button onClick={() => toggleSession(session)} className="px-4 py-2 rounded-xl text-sm font-bold" style={{ backgroundColor: isOpen ? "rgba(220,38,38,0.15)" : "rgba(34,197,94,0.15)", color: isOpen ? "#f87171" : "#4ade80" }}>
+                          {isOpen ? "Close Session" : "Reopen"}
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              };
+
+              return (
+                <div className="space-y-4">
+                  {openSessions.map(renderSessionCard)}
+                  {recentClosed.map(renderSessionCard)}
+                  {pastSessions.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => setShowPastSessions(v => !v)}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#A9A9B8" }}
+                      >
+                        <span>Past Sessions ({pastSessions.length})</span>
+                        <span style={{ fontSize: "12px" }}>{showPastSessions ? "▲ Hide" : "▼ Show"}</span>
+                      </button>
+                      {showPastSessions && (
+                        <div className="space-y-4">
+                          {pastSessions.map(renderSessionCard)}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
 
