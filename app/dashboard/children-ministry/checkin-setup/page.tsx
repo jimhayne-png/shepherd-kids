@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 import QRCodeImage from "@/components/ui/QRCodeImage";
@@ -718,6 +719,19 @@ export default function CheckinSetupPage() {
                 </div>
               )
             )}
+
+            {/* Volunteer Access management card */}
+            <div className="rounded-2xl p-5 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-sm mb-0.5" style={{ color: "#ffffff" }}>Volunteer Access</h3>
+                  <p className="text-xs" style={{ color: "#A9A9B8" }}>Approve vetted volunteers, assign classrooms, configure PINs, and review classroom access.</p>
+                </div>
+                <Link href="/dashboard/children-ministry/volunteers" className="px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 whitespace-nowrap" style={{ backgroundColor: ACCENT, color: "#ffffff" }}>
+                  Manage →
+                </Link>
+              </div>
+            </div>
 
             {/* Today's PIN card */}
             {(() => {

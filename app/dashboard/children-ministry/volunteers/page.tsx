@@ -1,611 +1,543 @@
 "use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
-
 const ACCENT = "#7B2CBF";
 
+type Volunteer = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  background_check_status: string;
+  background_check_date: string | null;
+  is_active: boolean;
+  notes: string | null;
+  approved: boolean;
+  has_pin: boolean;
+  classrooms: { id: string; name: string }[];
+  last_issued_at: string | null;
+  is_signed_in: boolean;
+  current_room_name: string | null;
+};
 
-type Volunteer = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; roles: string[]; background_check_status: string; background_check_date: string | null; reliability_score: number; is_active: boolean; notes: string | null; assignment_count: number; approved: boolean; has_pin: boolean };
-type Role = { id: string; name: string; color: string; sort_order: number; is_active: boolean; description: string | null };
-type ServiceEvent = { id: string; title: string; event_date: string; start_time: string | null; end_time: string | null; status: string; assignment_count: number; confirmed_count: number; notes: string | null };
-type Assignment = { id: string; volunteer_id: string; role_name: string; status: string; reminder_sent: boolean; volunteer: { first_name: string; last_name: string; email: string | null; reliability_score: number } | null };
-type AllMember = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null };
+type Room = { id: string; name: string };
 
-const BG_STATUS: Record<string, string> = { cleared: "#22c55e", pending: "#f59e0b", expired: "#ef4444", denied: "#ef4444", not_recorded: "#9ca3af" };
-const STATUS_COLORS: Record<string, string> = { assigned: "#6366f1", confirmed: "#22c55e", declined: "#ef4444", no_show: "#9ca3af" };
+const BG_COLORS: Record<string, string> = {
+  cleared: "#22c55e",
+  pending: "#f59e0b",
+  expired: "#ef4444",
+  denied: "#ef4444",
+  not_recorded: "#9ca3af",
+};
 
-function reliabilityColor(score: number) { return score >= 80 ? "#22c55e" : score >= 50 ? "#f59e0b" : "#ef4444"; }
+const BG_LABELS: Record<string, string> = {
+  cleared: "Cleared",
+  pending: "Pending",
+  expired: "Expired",
+  denied: "Denied",
+  not_recorded: "Not Recorded",
+};
 
-function fmtDate(iso: string) { return new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); }
-function fmtTime(t: string | null) { if (!t) return ""; try { const [h, m] = t.split(":"); const d = new Date(); d.setHours(parseInt(h), parseInt(m)); return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); } catch { return t; } }
+function fmtDateTime(iso: string) {
+  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+}
 
-const COLORS = ["#6366f1","#9D4EDD","#22c55e","#3b82f6","#ec4899","#14b8a6","#f59e0b","#ef4444","#8b5cf6","#06b6d4"];
+const inputStyle = {
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid rgba(212,175,55,0.3)",
+  color: "#ffffff",
+  outline: "none",
+} as const;
 
-function VolunteersPageContent() {
+const defaultForm = {
+  first_name: "", last_name: "", email: "", phone: "",
+  background_check_status: "not_recorded", background_check_date: "",
+  approved: false, is_active: true, newPin: "", notes: "",
+  classroom_ids: [] as string[],
+};
+
+function VolunteerAccessContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") ?? "volunteers";
-
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [events, setEvents] = useState<ServiceEvent[]>([]);
-  const [allMembers, setAllMembers] = useState<AllMember[]>([]);
-  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-  const [eventAssignments, setEventAssignments] = useState<Record<string, Assignment[]>>({});
+  const [rooms, setRooms] = useState<Room[]>([]);
 
-  // Volunteer modal
-  const [showVolModal, setShowVolModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [editVol, setEditVol] = useState<Volunteer | null>(null);
-  const [volForm, setVolForm] = useState({ first_name: "", last_name: "", email: "", phone: "", roles: [] as string[], background_check_status: "pending", background_check_date: "", notes: "", approved: false, newPin: "", memberSearch: "" });
-  const [savingVol, setSavingVol] = useState(false);
-  const [volError, setVolError] = useState("");
+  const [form, setForm] = useState({ ...defaultForm });
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState("");
 
-  // Event modal
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [eventForm, setEventForm] = useState({ title: "", event_date: "", start_time: "", end_time: "", notes: "" });
-  const [savingEvent, setSavingEvent] = useState(false);
-
-  // Assign modal
-  const [assignEvent, setAssignEvent] = useState<ServiceEvent | null>(null);
-  const [assignSearch, setAssignSearch] = useState("");
-  const [assigning, setAssigning] = useState<string | null>(null);
-  const [assignRole, setAssignRole] = useState("");
-  const [assignWarning, setAssignWarning] = useState("");
-
-  // Role modal
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [editRole, setEditRole] = useState<Role | null>(null);
-  const [roleForm, setRoleForm] = useState({ name: "", description: "", color: "#6366f1" });
-  const [savingRole, setSavingRole] = useState(false);
-
-  // Reminders
-  const [sendingReminders, setSendingReminders] = useState<string | null>(null);
-  const [reminderMsg, setReminderMsg] = useState<Record<string, string>>({});
-
-  // Unavailability
-  const [unavailVol, setUnavailVol] = useState<Volunteer | null>(null);
-  const [unavailDate, setUnavailDate] = useState(new Date().toISOString().slice(0, 10));
-
-  async function loadAll(t: string) {
-    const [vRes, rRes, eRes, mRes] = await Promise.all([
+  async function loadData(t: string) {
+    const [vRes, rRes] = await Promise.all([
       fetch("/api/children-ministry/volunteers", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
-      fetch("/api/children-ministry/volunteer-roles", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
-      fetch("/api/children-ministry/service-events", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
-      fetch("/api/members", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
+      fetch("/api/checkin/rooms", { credentials: "include", headers: selectedChurchHeaders() }),
     ]);
     if (vRes.ok) setVolunteers((await vRes.json()).volunteers ?? []);
-    if (rRes.ok) setRoles((await rRes.json()).roles ?? []);
-    if (eRes.ok) setEvents((await eRes.json()).events ?? []);
-    if (mRes.ok) setAllMembers((await mRes.json()).members ?? []);
+    if (rRes.ok) setRooms(((await rRes.json()).rooms ?? []).filter((r: Room & { is_active?: boolean }) => r.is_active !== false));
   }
 
   useEffect(() => {
     async function init() {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (!user || error) {
-        console.log("Dashboard client user unavailable:", error?.message ?? null);
-        return;
-      }
+      if (!user || error) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const t = session.access_token;
       setToken(t);
-      await loadAll(t);
+      await loadData(t);
       setLoading(false);
     }
     init();
   }, [router]);
 
-  async function loadAssignments(eventId: string) {
-    if (!token) return;
-    const res = await fetch(`/api/children-ministry/service-events/${eventId}/assignments`, { headers: { Authorization: `Bearer ${token}`, ...selectedChurchHeaders() } });
-    if (res.ok) { const d = await res.json(); setEventAssignments(m => ({ ...m, [eventId]: d.assignments ?? [] })); }
+  function openAdd() {
+    setEditVol(null);
+    setForm({ ...defaultForm });
+    setFormError("");
+    setShowModal(true);
   }
 
-  async function toggleEvent(eventId: string) {
-    if (expandedEvent === eventId) { setExpandedEvent(null); return; }
-    setExpandedEvent(eventId);
-    if (!eventAssignments[eventId]) await loadAssignments(eventId);
+  function openEdit(v: Volunteer) {
+    setEditVol(v);
+    setForm({
+      first_name: v.first_name,
+      last_name: v.last_name,
+      email: v.email ?? "",
+      phone: v.phone ?? "",
+      background_check_status: v.background_check_status,
+      background_check_date: v.background_check_date ?? "",
+      approved: v.approved,
+      is_active: v.is_active,
+      newPin: "",
+      notes: v.notes ?? "",
+      classroom_ids: v.classrooms.map(c => c.id),
+    });
+    setFormError("");
+    setShowModal(true);
   }
 
-  async function saveVolunteer() {
-    if (!token || !volForm.first_name.trim() || !volForm.last_name.trim()) { setVolError("First and last name required"); return; }
-    setSavingVol(true); setVolError("");
-    const payload: Record<string, unknown> = { first_name: volForm.first_name, last_name: volForm.last_name, email: volForm.email, phone: volForm.phone, roles: volForm.roles, background_check_status: volForm.background_check_status, background_check_date: volForm.background_check_date || undefined, notes: volForm.notes, approved: volForm.approved };
-    if (volForm.newPin) payload.pin = volForm.newPin;
+  async function save() {
+    if (!token || !form.first_name.trim() || !form.last_name.trim()) {
+      setFormError("First and last name are required.");
+      return;
+    }
+    setSaving(true);
+    setFormError("");
+
+    const payload: Record<string, unknown> = {
+      first_name: form.first_name,
+      last_name: form.last_name,
+      email: form.email,
+      phone: form.phone,
+      background_check_status: form.background_check_status,
+      background_check_date: form.background_check_date || undefined,
+      approved: form.approved,
+      is_active: form.is_active,
+      notes: form.notes,
+      classroom_ids: form.classroom_ids,
+    };
+    if (form.newPin) payload.pin = form.newPin;
+
     const url = editVol ? `/api/children-ministry/volunteers/${editVol.id}` : "/api/children-ministry/volunteers";
     const method = editVol ? "PATCH" : "POST";
-    const res = await fetch(url, { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify(payload) });
-    if (!res.ok) { const d = await res.json(); setVolError(d.error ?? "Error"); setSavingVol(false); return; }
-    setSavingVol(false); setShowVolModal(false); setEditVol(null);
-    await loadAll(token);
-  }
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
+      body: JSON.stringify(payload),
+    });
 
-  function openEditVol(v: Volunteer) { setEditVol(v); setVolForm({ first_name: v.first_name, last_name: v.last_name, email: v.email ?? "", phone: v.phone ?? "", roles: v.roles, background_check_status: v.background_check_status, background_check_date: v.background_check_date ?? "", notes: v.notes ?? "", approved: v.approved, newPin: "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }
-
-  async function saveEvent() {
-    if (!token || !eventForm.title.trim() || !eventForm.event_date) return;
-    setSavingEvent(true);
-    await fetch("/api/children-ministry/service-events", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify(eventForm) });
-    setSavingEvent(false); setShowEventModal(false); setEventForm({ title: "", event_date: "", start_time: "", end_time: "", notes: "" });
-    await loadAll(token);
-  }
-
-  async function assignVolunteer(eventId: string, volunteerId: string) {
-    if (!token || !assignRole) return;
-    setAssigning(volunteerId); setAssignWarning("");
-    const res = await fetch(`/api/children-ministry/service-events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify({ volunteer_id: volunteerId, role_name: assignRole }) });
-    const d = await res.json();
-    setAssigning(null);
-    if (!res.ok) { setAssignWarning(d.error ?? "Error"); return; }
-    if (d.availability_warning) setAssignWarning(`⚠️ ${d.availability_warning}`);
-    await loadAssignments(eventId);
-    await loadAll(token);
-  }
-
-  async function updateAssignment(eventId: string, assignmentId: string, updates: any) {
-    if (!token) return;
-    await fetch(`/api/children-ministry/service-events/${eventId}/assignments/${assignmentId}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify(updates) });
-    await loadAssignments(eventId);
-    if (updates.status === "no_show") await loadAll(token);
-  }
-
-  async function removeAssignment(eventId: string, assignmentId: string) {
-    if (!token || !confirm("Remove this volunteer?")) return;
-    await fetch(`/api/children-ministry/service-events/${eventId}/assignments/${assignmentId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}`, ...selectedChurchHeaders() } });
-    await loadAssignments(eventId);
-    await loadAll(token);
-  }
-
-  async function sendReminders(eventId: string) {
-    if (!token) return;
-    setSendingReminders(eventId);
-    const res = await fetch(`/api/children-ministry/service-events/${eventId}/send-reminders`, { method: "POST", headers: { Authorization: `Bearer ${token}`, ...selectedChurchHeaders() } });
-    const d = await res.json();
-    setSendingReminders(null);
-    setReminderMsg(m => ({ ...m, [eventId]: res.ok ? `✅ ${d.sent} reminders sent` : "Failed" }));
-    setTimeout(() => setReminderMsg(m => { const n = { ...m }; delete n[eventId]; return n; }), 4000);
-    if (res.ok) await loadAssignments(eventId);
-  }
-
-  async function saveRole() {
-    if (!token || !roleForm.name.trim()) return;
-    setSavingRole(true);
-    if (editRole) {
-      await fetch(`/api/children-ministry/volunteer-roles/${editRole.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify(roleForm) });
-    } else {
-      await fetch("/api/children-ministry/volunteer-roles", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify({ ...roleForm, sort_order: roles.length }) });
+    if (!res.ok) {
+      const d = await res.json();
+      setFormError(d.error ?? "Failed to save.");
+      setSaving(false);
+      return;
     }
-    setSavingRole(false); setShowRoleModal(false); setEditRole(null);
-    await loadAll(token);
+
+    setSaving(false);
+    setShowModal(false);
+    await loadData(token);
   }
 
-  async function markUnavailable() {
-    if (!token || !unavailVol || !unavailDate) return;
-    await fetch(`/api/children-ministry/volunteers/${unavailVol.id}/availability`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify({ unavailable_date: unavailDate }) });
-    setUnavailVol(null);
+  async function quickToggle(v: Volunteer, field: "approved" | "is_active", value: boolean) {
+    if (!token) return;
+    await fetch(`/api/children-ministry/volunteers/${v.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
+      body: JSON.stringify({ [field]: value }),
+    });
+    await loadData(token);
   }
 
-  const filteredMembers = useMemo(() =>
-    allMembers.filter(m => `${m.first_name} ${m.last_name} ${m.email ?? ""}`.toLowerCase().includes(volForm.memberSearch.toLowerCase())).slice(0, 6),
-    [allMembers, volForm.memberSearch]
-  );
+  // Summary cards
+  const stats = useMemo(() => {
+    const approved = volunteers.filter(v => v.is_active && v.approved && v.background_check_status === "cleared" && v.has_pin).length;
+    const expiring = volunteers.filter(v => v.background_check_status === "expired").length;
+    const coveredRooms = new Set(
+      volunteers
+        .filter(v => v.is_active && v.approved && v.background_check_status === "cleared")
+        .flatMap(v => v.classrooms.map(c => c.id))
+    ).size;
+    const signedIn = volunteers.filter(v => v.is_signed_in).length;
+    return { approved, expiring, coveredRooms, signedIn };
+  }, [volunteers]);
 
-  const filteredVols = useMemo(() =>
-    volunteers.filter(v => v.is_active && `${v.first_name} ${v.last_name}`.toLowerCase().includes(assignSearch.toLowerCase())),
-    [volunteers, assignSearch]
-  );
+  const accessReady = (v: Volunteer) =>
+    v.is_active && v.approved && v.background_check_status === "cleared" && v.has_pin && v.classrooms.length > 0;
 
-  const stats = { total: volunteers.length, active: volunteers.filter(v => v.is_active).length, cleared: volunteers.filter(v => v.background_check_status === "cleared").length, avgReliability: volunteers.length ? Math.round(volunteers.reduce((s, v) => s + v.reliability_score, 0) / volunteers.length) : 100 };
+  const missingRequirements = useMemo(() => {
+    if (!editVol) return [];
+    const missing: string[] = [];
+    if (!form.is_active) missing.push("Not active");
+    if (!form.approved) missing.push("Not approved");
+    if (form.background_check_status !== "cleared") missing.push(`Background check: ${BG_LABELS[form.background_check_status] ?? form.background_check_status}`);
+    if (!editVol.has_pin && !form.newPin) missing.push("No PIN configured");
+    if (form.classroom_ids.length === 0) missing.push("No classrooms assigned");
+    return missing;
+  }, [editVol, form]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>;
+  function toggleClassroom(roomId: string) {
+    setForm(f => ({
+      ...f,
+      classroom_ids: f.classroom_ids.includes(roomId)
+        ? f.classroom_ids.filter(id => id !== roomId)
+        : [...f.classroom_ids, roomId],
+    }));
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}>
+        <div style={{ color: "#D8D8E8" }}>Loading…</div>
+      </div>
+    );
+  }
+
+  const card = "rounded-2xl overflow-hidden";
+  const tableStyle = { background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" };
+  const thStyle = "text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider";
+  const thColor = { color: "#A9A9B8" };
+  const tdStyle = "px-4 py-3 text-sm";
+  const tdColor = { color: "#D8D8E8" };
+  const dimColor = { color: "#A9A9B8" };
+  const rowBorder = { borderBottom: "1px solid rgba(212,175,55,0.08)" };
 
   return (
     <AppShell navItems={[]}>
+      {/* Header */}
       <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
-        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
+        <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids — Check-In</p>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Volunteers</h1>
-          <Link href="/dashboard/children-ministry/volunteer-audit" className="px-4 py-2 rounded-xl text-sm font-bold shrink-0" style={{ backgroundColor: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }}>
+          <div>
+            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Volunteer Access</h1>
+            <p className="text-sm mt-1" style={{ color: "#A9A9B8" }}>Approve and manage volunteers who may securely access classrooms and child care information.</p>
+          </div>
+          <Link href="/dashboard/children-ministry/volunteer-audit" className="px-4 py-2 rounded-xl text-sm font-bold shrink-0"
+            style={{ backgroundColor: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }}>
             Audit Log →
           </Link>
         </div>
       </div>
 
-      {/* Sub-tabs */}
-      <div className="flex gap-1 px-8 pt-4 overflow-x-auto" style={{ backgroundColor: "#08060D", borderBottom: "1px solid rgba(212,175,55,0.2)" }}>
-        {["Volunteers", "Schedule", "Roles"].map(tab => (
-          <Link key={tab} href={`/dashboard/children-ministry/volunteers?tab=${tab.toLowerCase()}`} className="px-5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors"
-            style={{ borderColor: activeTab === tab.toLowerCase() ? ACCENT : "transparent", color: activeTab === tab.toLowerCase() ? ACCENT : "#A9A9B8" }}>
-            {tab}
-          </Link>
-        ))}
-      </div>
-
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
 
-        {/* ====== VOLUNTEERS TAB ====== */}
-        {activeTab === "volunteers" && <>
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            {[{ label: "Total", value: stats.total, emoji: "👥" }, { label: "Active", value: stats.active, emoji: "✅" }, { label: "BG Cleared", value: stats.cleared, emoji: "🛡️" }, { label: "Avg Reliability", value: `${stats.avgReliability}%`, emoji: "⭐" }].map(s => (
-              <div key={s.label} className="rounded-xl px-5 py-4 flex items-center gap-3" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: ACCENT + "22" }}>{s.emoji}</div>
-                <div><p className="text-xl font-bold" style={{ color: "#ffffff" }}>{s.value}</p><p className="text-xs" style={{ color: "#A9A9B8" }}>{s.label}</p></div>
-              </div>
-            ))}
-          </div>
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: "Approved Volunteers", value: stats.approved, sub: "Active · Approved · BG Cleared · PIN set", color: "#9D4EDD" },
+            { label: "BG Checks Expiring", value: stats.expiring, sub: "Status: expired", color: "#ef4444" },
+            { label: "Classrooms Covered", value: stats.coveredRooms, sub: "Rooms with approved volunteers", color: "#22c55e" },
+            { label: "Currently Signed In", value: stats.signedIn, sub: "Active sessions right now", color: "#3b82f6" },
+          ].map(s => (
+            <div key={s.label} className="rounded-xl px-5 py-4" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
+              <p className="text-2xl font-bold mb-0.5" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs font-semibold" style={{ color: "#ffffff" }}>{s.label}</p>
+              <p className="text-xs mt-0.5" style={{ color: "#A9A9B8" }}>{s.sub}</p>
+            </div>
+          ))}
+        </div>
 
-          <div className="flex justify-end mb-4">
-            <button onClick={() => { setEditVol(null); setVolForm({ first_name: "", last_name: "", email: "", phone: "", roles: [], background_check_status: "pending", background_check_date: "", notes: "", approved: false, newPin: "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ Add Volunteer</button>
-          </div>
+        {/* Add button */}
+        <div className="flex justify-end mb-4">
+          <button onClick={openAdd} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>
+            + Add Volunteer
+          </button>
+        </div>
 
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-            {volunteers.filter(v => v.is_active).length === 0 ? (
-              <div className="p-12 text-center"><div className="text-5xl mb-4">👥</div><p style={{ color: "#A9A9B8" }}>No volunteers yet. Add your first volunteer to get started.</p></div>
-            ) : (
+        {/* Volunteer table */}
+        <div className={card} style={tableStyle}>
+          {volunteers.length === 0 ? (
+            <div className="p-12 text-center">
+              <p style={{ color: "#A9A9B8" }}>No volunteers yet. Add your first volunteer to get started.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
               <table className="w-full">
-                <thead><tr style={{ borderBottom: "1px solid rgba(212,175,55,0.12)" }}>
-                  <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Volunteer</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest hidden md:table-cell" style={{ color: "#A9A9B8" }}>Roles</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>BG Check</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell" style={{ color: "#A9A9B8" }}>Vetted</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Reliability</th>
-                  <th className="px-4 py-3" />
-                </tr></thead>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(212,175,55,0.12)" }}>
+                    <th className={thStyle} style={thColor}>Volunteer</th>
+                    <th className={`${thStyle} hidden md:table-cell`} style={thColor}>Contact</th>
+                    <th className={thStyle} style={thColor}>Background Check</th>
+                    <th className={`${thStyle} hidden sm:table-cell`} style={thColor}>Approved Access</th>
+                    <th className={`${thStyle} hidden lg:table-cell`} style={thColor}>PIN</th>
+                    <th className={`${thStyle} hidden lg:table-cell`} style={thColor}>Classrooms</th>
+                    <th className={`${thStyle} hidden xl:table-cell`} style={thColor}>Current Status</th>
+                    <th className={`${thStyle} hidden xl:table-cell`} style={thColor}>Last Sign-In</th>
+                    <th className={thStyle} />
+                  </tr>
+                </thead>
                 <tbody>
-                  {volunteers.filter(v => v.is_active).map(v => (
-                    <tr key={v.id} style={{ borderBottom: "1px solid rgba(212,175,55,0.08)" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "rgba(123,44,191,0.1)"}
+                  {volunteers.map(v => (
+                    <tr key={v.id} style={rowBorder}
+                      onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "rgba(123,44,191,0.08)"}
                       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.backgroundColor = "transparent"}>
-                      <td className="px-6 py-4">
-                        <p className="font-medium" style={{ color: "#ffffff" }}>{v.first_name} {v.last_name}</p>
-                        {v.email && <p className="text-xs" style={{ color: "#A9A9B8" }}>{v.email}</p>}
-                        {v.assignment_count > 0 && <p className="text-xs" style={{ color: "#A9A9B8" }}>{v.assignment_count} times in 90d</p>}
-                      </td>
-                      <td className="px-4 py-4 hidden md:table-cell">
-                        <div className="flex flex-wrap gap-1">{v.roles.slice(0, 3).map(r => { const role = roles.find(ro => ro.name === r); return <span key={r} className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: role?.color ?? "#6366f1" }}>{r}</span>; })}</div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold text-white capitalize" style={{ backgroundColor: BG_STATUS[v.background_check_status] ?? "#9ca3af" }}>{v.background_check_status}</span>
-                      </td>
-                      <td className="px-4 py-4 hidden sm:table-cell">
-                        {v.approved && v.background_check_status === "cleared" && v.has_pin
-                          ? <span className="px-2.5 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: "#7B2CBF" }}>✓ Vetted</span>
-                          : <span className="text-xs" style={{ color: "#555577" }}>—</span>}
-                      </td>
-                      <td className="px-4 py-4">
+                      {/* Volunteer */}
+                      <td className={tdStyle}>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 rounded-full h-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-                            <div className="h-2 rounded-full" style={{ width: `${v.reliability_score}%`, backgroundColor: reliabilityColor(v.reliability_score) }} />
+                          <div>
+                            <p className="font-semibold" style={{ color: "#ffffff" }}>{v.first_name} {v.last_name}</p>
+                            {!v.is_active && (
+                              <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: "rgba(239,68,68,0.15)", color: "#f87171" }}>Inactive</span>
+                            )}
+                            {v.is_active && accessReady(v) && (
+                              <span className="text-xs px-1.5 py-0.5 rounded font-bold" style={{ background: "rgba(34,197,94,0.12)", color: "#4ade80" }}>Access Ready</span>
+                            )}
                           </div>
-                          <span className="text-xs font-bold" style={{ color: reliabilityColor(v.reliability_score) }}>{v.reliability_score}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex gap-2 justify-end">
-                          <button onClick={() => openEditVol(v)} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Edit</button>
-                          <button onClick={() => { setUnavailVol(v); setUnavailDate(new Date().toISOString().slice(0, 10)); }} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Unavail.</button>
+                      {/* Contact */}
+                      <td className={`${tdStyle} hidden md:table-cell`}>
+                        {v.phone && <p className="text-xs" style={dimColor}>{v.phone}</p>}
+                        {v.email && <p className="text-xs" style={dimColor}>{v.email}</p>}
+                        {!v.phone && !v.email && <span className="text-xs" style={dimColor}>—</span>}
+                      </td>
+                      {/* Background Check */}
+                      <td className={tdStyle}>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ backgroundColor: BG_COLORS[v.background_check_status] ?? "#9ca3af" }}>
+                          {BG_LABELS[v.background_check_status] ?? v.background_check_status}
+                        </span>
+                        {v.background_check_date && (
+                          <p className="text-xs mt-0.5" style={dimColor}>{new Date(v.background_check_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                        )}
+                      </td>
+                      {/* Approved Access */}
+                      <td className={`${tdStyle} hidden sm:table-cell`}>
+                        {v.approved
+                          ? <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: "rgba(123,44,191,0.2)", color: "#c084fc" }}>Approved</span>
+                          : <span className="text-xs" style={dimColor}>Not Approved</span>}
+                      </td>
+                      {/* PIN */}
+                      <td className={`${tdStyle} hidden lg:table-cell`}>
+                        {v.has_pin
+                          ? <span className="text-xs font-semibold" style={{ color: "#4ade80" }}>Configured</span>
+                          : <span className="text-xs" style={{ color: "#f87171" }}>Not Configured</span>}
+                      </td>
+                      {/* Classrooms */}
+                      <td className={`${tdStyle} hidden lg:table-cell`}>
+                        {v.classrooms.length > 0
+                          ? <div className="flex flex-wrap gap-1">{v.classrooms.map(c => <span key={c.id} className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(212,175,55,0.1)", color: "#D4AF37" }}>{c.name}</span>)}</div>
+                          : <span className="text-xs" style={dimColor}>—</span>}
+                      </td>
+                      {/* Current Status */}
+                      <td className={`${tdStyle} hidden xl:table-cell`}>
+                        {v.is_signed_in
+                          ? <span className="text-xs font-semibold" style={{ color: "#4ade80" }}>Signed In{v.current_room_name ? ` — ${v.current_room_name}` : ""}</span>
+                          : <span className="text-xs" style={dimColor}>Not Signed In</span>}
+                      </td>
+                      {/* Last Sign-In */}
+                      <td className={`${tdStyle} hidden xl:table-cell`}>
+                        {v.last_issued_at
+                          ? <span className="text-xs" style={dimColor}>{fmtDateTime(v.last_issued_at)}</span>
+                          : <span className="text-xs" style={dimColor}>Never</span>}
+                      </td>
+                      {/* Actions */}
+                      <td className={tdStyle}>
+                        <div className="flex flex-wrap gap-1.5 justify-end">
+                          <button onClick={() => openEdit(v)} className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>
+                            Edit Access
+                          </button>
+                          {v.approved
+                            ? <button onClick={() => quickToggle(v, "approved", false)} className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", background: "transparent" }}>Revoke</button>
+                            : <button onClick={() => quickToggle(v, "approved", true)} className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80", background: "transparent" }}>Approve</button>}
+                          {v.is_active
+                            ? <button onClick={() => quickToggle(v, "is_active", false)} className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(239,68,68,0.2)", color: "#9ca3af", background: "transparent" }}>Deactivate</button>
+                            : <button onClick={() => quickToggle(v, "is_active", true)} className="px-2.5 py-1 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(34,197,94,0.2)", color: "#4ade80", background: "transparent" }}>Reactivate</button>}
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
-        </>}
-
-        {/* ====== SCHEDULE TAB ====== */}
-        {activeTab === "schedule" && <>
-          <div className="flex justify-end mb-4">
-            <button onClick={() => setShowEventModal(true)} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ New Service Event</button>
-          </div>
-
-          {events.length === 0 ? (
-            <div className="rounded-2xl p-12 text-center" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}><div className="text-5xl mb-4">📅</div><p style={{ color: "#A9A9B8" }}>No service events yet.</p></div>
-          ) : (
-            <div className="space-y-3">
-              {events.map(e => {
-                const isOpen = expandedEvent === e.id;
-                const totalAssigned = e.assignment_count;
-                const staffColor = totalAssigned === 0 ? "#ef4444" : e.confirmed_count < totalAssigned ? "#f59e0b" : "#22c55e";
-                return (
-                  <div key={e.id} className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                    <div className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors" onClick={() => toggleEvent(e.id)}
-                      onMouseEnter={e2 => (e2.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(123,44,191,0.08)"}
-                      onMouseLeave={e2 => (e2.currentTarget as HTMLDivElement).style.backgroundColor = "transparent"}>
-                      <div className="w-1.5 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: staffColor }} />
-                      <div className="flex-shrink-0 text-center rounded-xl px-4 py-2 min-w-[60px]" style={{ background: "rgba(123,44,191,0.15)" }}>
-                        <p className="text-xs font-bold uppercase" style={{ color: "#c084fc" }}>{new Date(e.event_date + "T00:00:00").toLocaleDateString("en-US", { month: "short" })}</p>
-                        <p className="text-xl font-black" style={{ color: "#ffffff" }}>{new Date(e.event_date + "T00:00:00").getDate()}</p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold" style={{ color: "#ffffff" }}>{e.title}</p>
-                        <p className="text-xs" style={{ color: "#A9A9B8" }}>{[fmtTime(e.start_time), fmtTime(e.end_time)].filter(Boolean).join(" – ") || "Time TBD"}</p>
-                      </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm font-bold" style={{ color: staffColor }}>{totalAssigned} volunteer{totalAssigned !== 1 ? "s" : ""}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: e.status === "completed" ? "rgba(255,255,255,0.07)" : e.status === "cancelled" ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)", color: e.status === "completed" ? "#A9A9B8" : e.status === "cancelled" ? "#f87171" : "#4ade80" }}>{e.status}</span>
-                        <span style={{ color: "#A9A9B8" }}>{isOpen ? "▲" : "▼"}</span>
-                      </div>
-                    </div>
-
-                    {isOpen && (
-                      <div className="px-5 pb-5 pt-4" style={{ borderTop: "1px solid rgba(212,175,55,0.12)" }}>
-                        {/* Assignment table */}
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Volunteers</p>
-                          <div className="flex items-center gap-2">
-                            {reminderMsg[e.id] && <span className="text-xs font-medium" style={{ color: "#4ade80" }}>{reminderMsg[e.id]}</span>}
-                            <button onClick={() => sendReminders(e.id)} disabled={sendingReminders === e.id} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>
-                              {sendingReminders === e.id ? "Sending…" : "📧 Send Reminders"}
-                            </button>
-                            <button onClick={() => { setAssignEvent(e); setAssignSearch(""); setAssignRole(roles[0]?.name ?? ""); setAssignWarning(""); }} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: ACCENT }}>+ Assign</button>
-                          </div>
-                        </div>
-
-                        {(eventAssignments[e.id] ?? []).length === 0 ? (
-                          <p className="text-xs mb-3" style={{ color: "#A9A9B8" }}>No volunteers assigned yet.</p>
-                        ) : (
-                          <table className="w-full mb-3">
-                            <thead><tr style={{ borderBottom: "1px solid rgba(212,175,55,0.1)" }}><th className="text-left py-2 text-xs" style={{ color: "#A9A9B8" }}>Name</th><th className="text-left py-2 text-xs" style={{ color: "#A9A9B8" }}>Role</th><th className="text-left py-2 text-xs" style={{ color: "#A9A9B8" }}>Status</th><th className="py-2" /></tr></thead>
-                            <tbody>
-                              {(eventAssignments[e.id] ?? []).map(a => (
-                                <tr key={a.id} style={{ borderBottom: "1px solid rgba(212,175,55,0.06)" }}>
-                                  <td className="py-2 text-sm font-medium" style={{ color: "#ffffff" }}>{a.volunteer?.first_name} {a.volunteer?.last_name}
-                                    <span className="ml-2 text-xs" style={{ color: reliabilityColor(a.volunteer?.reliability_score ?? 100) }}>({a.volunteer?.reliability_score ?? 100})</span>
-                                  </td>
-                                  <td className="py-2 text-xs" style={{ color: "#A9A9B8" }}>{a.role_name}</td>
-                                  <td className="py-2">
-                                    <select value={a.status} onChange={ev => updateAssignment(e.id, a.id, { status: ev.target.value })} className="px-2 py-1 rounded-lg text-xs font-bold" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", color: STATUS_COLORS[a.status] ?? "#D8D8E8", outline: "none" }}>
-                                      {["assigned","confirmed","declined","no_show"].map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
-                                    </select>
-                                  </td>
-                                  <td className="py-2 text-right"><button onClick={() => removeAssignment(e.id, a.id)} className="text-xs" style={{ color: "#f87171" }}>Remove</button></td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        )}
-
-                        {/* Event status */}
-                        <div className="flex items-center gap-3 mt-2">
-                          <select value={e.status} onChange={async ev => { if (!token) return; await fetch(`/api/children-ministry/service-events/${e.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify({ status: ev.target.value }) }); await loadAll(token); }} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", color: "#D8D8E8", outline: "none" }}>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           )}
-        </>}
-
-        {/* ====== ROLES TAB ====== */}
-        {activeTab === "roles" && <>
-          <div className="flex justify-end mb-4">
-            <button onClick={() => { setEditRole(null); setRoleForm({ name: "", description: "", color: COLORS[roles.length % COLORS.length] }); setShowRoleModal(true); }} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ Add Role</button>
-          </div>
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-            {roles.length === 0 ? (
-              <div className="p-12 text-center"><div className="text-5xl mb-4">🎯</div><p style={{ color: "#A9A9B8" }}>No roles yet. Create roles like &quot;Teacher&quot;, &quot;Helper&quot;, &quot;Check-In&quot;.</p></div>
-            ) : (
-              <div>
-                {roles.map((role, idx) => {
-                  const volCount = volunteers.filter(v => v.roles.includes(role.name)).length;
-                  return (
-                    <div key={role.id} className="flex items-center gap-4 px-6 py-4" style={{ borderTop: idx > 0 ? "1px solid rgba(212,175,55,0.08)" : "none" }}>
-                      <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: role.color }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold" style={{ color: "#ffffff" }}>{role.name}</p>
-                        {role.description && <p className="text-xs" style={{ color: "#A9A9B8" }}>{role.description}</p>}
-                        <p className="text-xs" style={{ color: "#A9A9B8" }}>{volCount} volunteer{volCount !== 1 ? "s" : ""} can fill this role</p>
-                      </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button onClick={() => { if (idx > 0) { fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify({ sort_order: role.sort_order - 1 }) }).then(() => loadAll(token!)); } }} disabled={idx === 0} className="disabled:opacity-30 text-sm px-1" style={{ color: "#A9A9B8" }}>▲</button>
-                        <button onClick={() => { if (idx < roles.length - 1) { fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify({ sort_order: role.sort_order + 1 }) }).then(() => loadAll(token!)); } }} disabled={idx === roles.length - 1} className="disabled:opacity-30 text-sm px-1" style={{ color: "#A9A9B8" }}>▼</button>
-                        <button onClick={() => { setEditRole(role); setRoleForm({ name: role.name, description: role.description ?? "", color: role.color }); setShowRoleModal(true); }} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Edit</button>
-                        <button onClick={async () => { if (!confirm("Delete this role?") || !token) return; await fetch(`/api/children-ministry/volunteer-roles/${role.id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}`, ...selectedChurchHeaders() } }); await loadAll(token); }} className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", background: "transparent" }}>Delete</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </>}
+        </div>
       </div>
 
-      {/* ====== VOLUNTEER MODAL ====== */}
-      {showVolModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowVolModal(false)}>
-          <div className="rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
-            <div className="p-6 sticky top-0" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)", background: "#120A1F" }}>
-              <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>{editVol ? "Edit Volunteer" : "Add Volunteer"}</h2>
+      {/* Add / Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowModal(false)}>
+          <div className="rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
+            {/* Modal header */}
+            <div className="p-6 sticky top-0 z-10" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)", background: "#120A1F" }}>
+              <h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>
+                {editVol ? `Vetted Classroom Access — ${editVol.first_name} ${editVol.last_name}` : "Add Volunteer"}
+              </h2>
             </div>
-            <div className="p-6 space-y-4">
-              {!editVol && (
-                <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Search existing members</label>
-                  <input value={volForm.memberSearch} onChange={e => setVolForm(f => ({ ...f, memberSearch: e.target.value }))} placeholder="Name or email…" className="w-full px-3 py-2 rounded-lg text-sm mb-1" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
-                  {volForm.memberSearch && filteredMembers.length > 0 && (
-                    <div className="rounded-xl overflow-hidden max-h-36 overflow-y-auto mb-2" style={{ border: "1px solid rgba(212,175,55,0.2)" }}>
-                      {filteredMembers.map(m => (
-                        <button key={m.id} onClick={() => setVolForm(f => ({ ...f, first_name: m.first_name, last_name: m.last_name, email: m.email ?? "", phone: m.phone ?? "", memberSearch: "" }))} className="w-full text-left px-3 py-2 text-sm" style={{ color: "#D8D8E8", borderBottom: "1px solid rgba(212,175,55,0.08)" }}
-                          onMouseEnter={e2 => (e2.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(123,44,191,0.15)"}
-                          onMouseLeave={e2 => (e2.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"}>
-                          {m.first_name} {m.last_name} {m.email && <span className="text-xs" style={{ color: "#A9A9B8" }}>· {m.email}</span>}
-                        </button>
-                      ))}
-                    </div>
+
+            <div className="p-6 space-y-5">
+              {/* Access summary (edit only) */}
+              {editVol && (
+                <div className="rounded-xl p-4" style={{
+                  background: missingRequirements.length === 0 ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
+                  border: `1px solid ${missingRequirements.length === 0 ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.25)"}`,
+                }}>
+                  {missingRequirements.length === 0 ? (
+                    <p className="text-sm font-bold" style={{ color: "#4ade80" }}>Access Ready — this volunteer can sign into classrooms and scan child labels.</p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold mb-2" style={{ color: "#f87171" }}>Access not ready — missing:</p>
+                      <ul className="space-y-0.5">
+                        {missingRequirements.map(r => <li key={r} className="text-xs" style={{ color: "#f87171" }}>· {r}</li>)}
+                      </ul>
+                    </>
                   )}
                 </div>
               )}
+
+              {/* Name */}
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>First Name *</label><input value={volForm.first_name} onChange={e => setVolForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Last Name *</label><input value={volForm.last_name} onChange={e => setVolForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Email</label><input type="email" value={volForm.email} onChange={e => setVolForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Phone</label><input value={volForm.phone} onChange={e => setVolForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-2" style={{ color: "#A9A9B8" }}>Roles (can fill)</label>
-                <div className="flex flex-wrap gap-2">{roles.map(r => (
-                  <button key={r.id} onClick={() => setVolForm(f => ({ ...f, roles: f.roles.includes(r.name) ? f.roles.filter(x => x !== r.name) : [...f.roles, r.name] }))} className="px-3 py-1.5 rounded-full text-xs font-bold transition-all" style={{ backgroundColor: volForm.roles.includes(r.name) ? r.color : "rgba(255,255,255,0.07)", color: volForm.roles.includes(r.name) ? "white" : "#A9A9B8" }}>{r.name}</button>
-                ))}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check</label><select value={volForm.background_check_status} onChange={e => setVolForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}><option value="pending">Pending</option><option value="cleared">Cleared</option><option value="expired">Expired</option><option value="denied">Denied</option><option value="not_recorded">Not Recorded</option></select></div>
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Check Date</label><input type="date" value={volForm.background_check_date} onChange={e => setVolForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              </div>
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label><textarea value={volForm.notes} onChange={e => setVolForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(123,44,191,0.1)", border: "1px solid rgba(123,44,191,0.3)" }}>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#c084fc" }}>Vetted Access (Smart Label Scan)</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Approved to scan labels</p>
-                    <p className="text-xs" style={{ color: "#A9A9B8" }}>Requires BG check cleared + PIN set</p>
-                  </div>
-                  <button type="button" onClick={() => setVolForm(f => ({ ...f, approved: !f.approved }))} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" style={{ backgroundColor: volForm.approved ? "#7B2CBF" : "rgba(255,255,255,0.15)" }}>
-                    <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" style={{ transform: volForm.approved ? "translateX(1.375rem)" : "translateX(0.125rem)" }} />
-                  </button>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>First Name *</label>
+                  <input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
                 <div>
-                  {editVol?.has_pin && !volForm.newPin && (
-                    <p className="text-xs mb-1" style={{ color: "#4ade80" }}>✓ PIN configured</p>
-                  )}
-                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>
-                    {editVol?.has_pin ? "Set new PIN (leave blank to keep current)" : "PIN (4 digits)"}
-                  </label>
-                  <input type="password" inputMode="numeric" pattern="[0-9]*" maxLength={4} value={volForm.newPin} onChange={e => setVolForm(f => ({ ...f, newPin: e.target.value.replace(/\D/g, "").slice(0, 4) }))} placeholder="• • • •" className="w-32 px-3 py-2 rounded-lg text-sm text-center font-mono tracking-widest" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Last Name *</label>
+                  <input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
               </div>
-              {volError && <p className="text-sm" style={{ color: "#f87171" }}>{volError}</p>}
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowVolModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
-                <button onClick={saveVolunteer} disabled={savingVol} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{savingVol ? "Saving…" : "Save"}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ====== EVENT MODAL ====== */}
-      {showEventModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowEventModal(false)}>
-          <div className="rounded-2xl w-full max-w-sm" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
-            <div className="p-6" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>New Service Event</h2></div>
-            <div className="p-6 space-y-4">
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Title *</label><input value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))} placeholder="Sunday Morning Service" className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Date *</label><input type="date" value={eventForm.event_date} onChange={e => setEventForm(f => ({ ...f, event_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              {/* Contact */}
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Start Time</label><input type="time" value={eventForm.start_time} onChange={e => setEventForm(f => ({ ...f, start_time: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>End Time</label><input type="time" value={eventForm.end_time} onChange={e => setEventForm(f => ({ ...f, end_time: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Phone</label>
+                  <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Email</label>
+                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                </div>
               </div>
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label><textarea value={eventForm.notes} onChange={e => setEventForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowEventModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
-                <button onClick={saveEvent} disabled={savingEvent} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{savingEvent ? "Creating…" : "Create Event"}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ====== ASSIGN MODAL ====== */}
-      {assignEvent && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setAssignEvent(null)}>
-          <div className="rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
-            <div className="p-6 sticky top-0" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)", background: "#120A1F" }}>
-              <h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Assign Volunteer — {assignEvent.title}</h2>
-              <p className="text-xs mt-1" style={{ color: "#A9A9B8" }}>{fmtDate(assignEvent.event_date)}</p>
-            </div>
-            <div className="p-6">
-              <div className="mb-4">
-                <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Role *</label>
-                <select value={assignRole} onChange={e => setAssignRole(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}>
-                  {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
-                  {roles.length === 0 && <option value="Helper">Helper</option>}
-                </select>
+              {/* Active */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Active</p>
+                  <p className="text-xs" style={{ color: "#A9A9B8" }}>Inactive volunteers cannot sign into classrooms</p>
+                </div>
+                <button type="button" onClick={() => setForm(f => ({ ...f, is_active: !f.is_active }))} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0" style={{ backgroundColor: form.is_active ? ACCENT : "rgba(255,255,255,0.15)" }}>
+                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" style={{ transform: form.is_active ? "translateX(1.375rem)" : "translateX(0.125rem)" }} />
+                </button>
               </div>
-              <div className="mb-3">
-                <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Search volunteers</label>
-                <input value={assignSearch} onChange={e => setAssignSearch(e.target.value)} placeholder="Name…" className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
-              </div>
-              {assignWarning && <p className="text-xs mb-3" style={{ color: "#fbbf24" }}>{assignWarning}</p>}
-              <div className="space-y-2">
-                {filteredVols.map(v => {
-                  const alreadyAssigned = (eventAssignments[assignEvent.id] ?? []).some(a => a.volunteer_id === v.id);
-                  return (
-                    <div key={v.id} className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ border: `1px solid ${alreadyAssigned ? "rgba(34,197,94,0.3)" : "rgba(212,175,55,0.2)"}`, background: alreadyAssigned ? "rgba(34,197,94,0.08)" : "transparent" }}>
-                      <div>
-                        <p className="text-sm font-medium" style={{ color: "#ffffff" }}>{v.first_name} {v.last_name}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs" style={{ color: reliabilityColor(v.reliability_score) }}>⭐ {v.reliability_score}</span>
-                          <span className="text-xs px-1.5 py-0.5 rounded-full font-bold text-white" style={{ backgroundColor: BG_STATUS[v.background_check_status] ?? "#9ca3af" }}>{v.background_check_status}</span>
-                        </div>
-                      </div>
-                      {alreadyAssigned ? (
-                        <span className="text-xs font-bold" style={{ color: "#4ade80" }}>✓ Assigned</span>
-                      ) : (
-                        <button onClick={() => assignVolunteer(assignEvent.id, v.id)} disabled={assigning === v.id || !assignRole} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ backgroundColor: ACCENT }}>{assigning === v.id ? "…" : "Assign"}</button>
-                      )}
-                    </div>
-                  );
-                })}
-                {filteredVols.length === 0 && <p className="text-xs text-center py-4" style={{ color: "#A9A9B8" }}>No volunteers found.</p>}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ====== ROLE MODAL ====== */}
-      {showRoleModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setShowRoleModal(false)}>
-          <div className="rounded-2xl w-full max-w-sm" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
-            <div className="p-6" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}><h2 className="text-xl font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>{editRole ? "Edit Role" : "Add Role"}</h2></div>
-            <div className="p-6 space-y-4">
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Role Name *</label><input value={roleForm.name} onChange={e => setRoleForm(f => ({ ...f, name: e.target.value }))} placeholder="Teacher, Helper, Check-In…" className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Description</label><input value={roleForm.description} onChange={e => setRoleForm(f => ({ ...f, description: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              {/* Background Check */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check Status</label>
+                  <select value={form.background_check_status} onChange={e => setForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+                    <option value="not_recorded">Not Recorded</option>
+                    <option value="pending">Pending</option>
+                    <option value="cleared">Cleared</option>
+                    <option value="expired">Expired</option>
+                    <option value="denied">Denied</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check Date</label>
+                  <input type="date" value={form.background_check_date} onChange={e => setForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                </div>
+              </div>
+
+              {/* Approved for Classroom Access */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Approved for Classroom Access</p>
+                  <p className="text-xs" style={{ color: "#A9A9B8" }}>Grant access when background check is cleared and PIN is set</p>
+                </div>
+                <button type="button" onClick={() => setForm(f => ({ ...f, approved: !f.approved }))} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0" style={{ backgroundColor: form.approved ? "#22c55e" : "rgba(255,255,255,0.15)" }}>
+                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" style={{ transform: form.approved ? "translateX(1.375rem)" : "translateX(0.125rem)" }} />
+                </button>
+              </div>
+
+              {/* PIN */}
+              <div className="rounded-xl p-4" style={{ background: "rgba(123,44,191,0.08)", border: "1px solid rgba(123,44,191,0.25)" }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#c084fc" }}>PIN Configuration</p>
+                {editVol?.has_pin && !form.newPin && (
+                  <p className="text-xs mb-2" style={{ color: "#4ade80" }}>✓ PIN is configured</p>
+                )}
+                {editVol && !editVol.has_pin && !form.newPin && (
+                  <p className="text-xs mb-2" style={{ color: "#f87171" }}>No PIN configured — volunteer cannot sign in until a PIN is set</p>
+                )}
+                <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>
+                  {editVol?.has_pin ? "Set New PIN (leave blank to keep current)" : "Set 4-Digit PIN"}
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={form.newPin}
+                  onChange={e => setForm(f => ({ ...f, newPin: e.target.value.replace(/\D/g, "").slice(0, 4) }))}
+                  placeholder="• • • •"
+                  className="w-28 px-3 py-2 rounded-lg text-sm text-center font-mono tracking-widest"
+                  style={inputStyle}
+                />
+              </div>
+
+              {/* Classroom Assignments */}
               <div>
-                <label className="block text-xs font-medium mb-2" style={{ color: "#A9A9B8" }}>Color</label>
-                <div className="flex flex-wrap gap-2">{COLORS.map(c => <button key={c} onClick={() => setRoleForm(f => ({ ...f, color: c }))} className="w-8 h-8 rounded-full border-2 transition-all" style={{ backgroundColor: c, borderColor: roleForm.color === c ? "#ffffff" : "transparent" }} />)}</div>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#D4AF37" }}>Classroom Assignments</label>
+                {rooms.length === 0 ? (
+                  <p className="text-xs" style={{ color: "#A9A9B8" }}>No classrooms available. Add classrooms in Check-In Setup.</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {rooms.map(r => (
+                      <button key={r.id} type="button" onClick={() => toggleClassroom(r.id)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors" style={{
+                        border: form.classroom_ids.includes(r.id) ? "1px solid rgba(212,175,55,0.5)" : "1px solid rgba(212,175,55,0.2)",
+                        background: form.classroom_ids.includes(r.id) ? "rgba(212,175,55,0.1)" : "transparent",
+                        color: form.classroom_ids.includes(r.id) ? "#D4AF37" : "#A9A9B8",
+                      }}>
+                        <span className="w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center text-xs" style={{ borderColor: form.classroom_ids.includes(r.id) ? "#D4AF37" : "rgba(212,175,55,0.3)", background: form.classroom_ids.includes(r.id) ? "#D4AF37" : "transparent", color: "#000" }}>
+                          {form.classroom_ids.includes(r.id) ? "✓" : ""}
+                        </span>
+                        {r.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowRoleModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
-                <button onClick={saveRole} disabled={savingRole} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>{savingRole ? "Saving…" : "Save"}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ====== UNAVAILABILITY MODAL ====== */}
-      {unavailVol && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4" onClick={() => setUnavailVol(null)}>
-          <div className="rounded-2xl w-full max-w-sm" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.3)" }} onClick={e => e.stopPropagation()}>
-            <div className="p-6" style={{ borderBottom: "1px solid rgba(212,175,55,0.15)" }}><h2 className="text-lg font-bold" style={{ fontFamily: "Georgia, serif", color: "#ffffff" }}>Mark Unavailable</h2><p className="text-sm mt-1" style={{ color: "#A9A9B8" }}>{unavailVol.first_name} {unavailVol.last_name}</p></div>
-            <div className="p-6 space-y-4">
-              <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Date</label><input type="date" value={unavailDate} onChange={e => setUnavailDate(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label>
+                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={inputStyle} />
+              </div>
+
+              {formError && <p className="text-sm" style={{ color: "#f87171" }}>{formError}</p>}
+
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setUnavailVol(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
-                <button onClick={markUnavailable} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>Mark Unavailable</button>
+                <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
+                <button onClick={save} disabled={saving} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT }}>
+                  {saving ? "Saving…" : editVol ? "Save Changes" : "Add Volunteer"}
+                </button>
               </div>
             </div>
           </div>
@@ -618,7 +550,7 @@ function VolunteersPageContent() {
 export default function VolunteersPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#08060D" }}><div style={{ color: "#D8D8E8" }}>Loading…</div></div>}>
-      <VolunteersPageContent />
+      <VolunteerAccessContent />
     </Suspense>
   );
 }
