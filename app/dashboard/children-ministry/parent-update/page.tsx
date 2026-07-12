@@ -306,6 +306,18 @@ export default function ParentCommunicationPage() {
             >
               Children&apos;s Lesson Plan
             </Link>
+            <Link
+              href="/dashboard/children-ministry/family-safety-review"
+              style={{
+                flex: 1, textAlign: "center",
+                padding: "9px 16px", borderRadius: "8px",
+                fontSize: "13px", fontWeight: 400,
+                background: "transparent", color: "#A9A9B8",
+                textDecoration: "none", display: "block",
+              }}
+            >
+              Annual Safety Review
+            </Link>
           </div>
 
           {/* ── Main composer ── */}
@@ -534,43 +546,6 @@ export default function ParentCommunicationPage() {
                 {sendButtonLabel}
               </button>
             </div>
-          </div>
-
-          {/* ── Annual Family Safety Review — secondary link ── */}
-          <div
-            style={{
-              background: CARD,
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: "14px",
-              padding: "18px 22px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "16px",
-            }}
-          >
-            <div>
-              <p style={{ fontSize: "14px", fontWeight: 700, color: BODY, margin: "0 0 3px" }}>
-                Annual Family Safety Review
-              </p>
-              <p style={{ fontSize: "12px", color: MUTED, margin: 0 }}>
-                Send a secure family-information review link to selected families.
-              </p>
-            </div>
-            <Link
-              href="/dashboard/children-ministry/family-safety-review"
-              style={{
-                flexShrink: 0,
-                display: "inline-flex", alignItems: "center", gap: "4px",
-                fontSize: "12px", fontWeight: 600, color: BODY,
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: "8px", padding: "7px 14px",
-                textDecoration: "none",
-              }}
-            >
-              Open Safety Reviews →
-            </Link>
           </div>
 
         </div>
