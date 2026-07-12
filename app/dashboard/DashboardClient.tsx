@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { label: "🎉 Celebrations", href: "/dashboard/children-ministry/birthdays" },
   { label: "🎓 Certificates", href: "/dashboard/children-ministry/certificates/new" },
   { label: "⚙️ Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
+  { label: "👥 Volunteers", href: "/dashboard/children-ministry/volunteers" },
   { label: "Settings", href: "#", isSection: true },
   { label: "⚙️ Settings", href: "/dashboard/settings" },
   { label: "💳 Billing", href: "/dashboard/billing" },

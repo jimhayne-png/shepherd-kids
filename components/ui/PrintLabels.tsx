@@ -166,29 +166,19 @@ function ChildLabelLeft({ data }: { data: SharedLabelData }) {
         </div>
       )}
 
-      {/* Care info — directly below room, no boxes, single MEDICAL line */}
+      {/* Care indicator — exact details available via QR scan by verified volunteers */}
       {hasCare && (
         <div
           style={{
             marginTop: 8,
-            fontSize: 7.5,
-            lineHeight: 1.6,
+            fontSize: 8,
+            fontWeight: 900,
             color: "#000",
             flexShrink: 0,
+            letterSpacing: "0.03em",
           }}
         >
-          {data.allergies && (
-            <div>
-              <span style={{ fontWeight: 700 }}>⚠ ALLERGIES: </span>
-              {data.allergies}
-            </div>
-          )}
-          {combinedMedical && (
-            <div>
-              <span style={{ fontWeight: 700 }}>⚕ MEDICAL: </span>
-              {combinedMedical}
-            </div>
-          )}
+          ⚕ SEE MEDICAL NOTES
         </div>
       )}
     </div>
@@ -256,7 +246,7 @@ export function ChildClassicLabel({ data }: { data: SharedLabelData }) {
 export function ChildSmartLabel({ data }: { data: SharedLabelData }) {
   const qrUrl =
     data.qrToken && typeof window !== "undefined"
-      ? `${window.location.origin}/dashboard/children-ministry/scan/${data.qrToken}`
+      ? `${window.location.origin}/kiosk/scan/${data.qrToken}`
       : null;
   const showQr = !!(qrUrl && data.smartLabelQrEnabled);
 

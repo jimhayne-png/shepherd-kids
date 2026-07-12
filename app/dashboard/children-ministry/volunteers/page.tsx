@@ -12,13 +12,13 @@ const supabase = createClient();
 const ACCENT = "#7B2CBF";
 
 
-type Volunteer = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; roles: string[]; background_check_status: string; background_check_date: string | null; reliability_score: number; is_active: boolean; notes: string | null; assignment_count: number };
+type Volunteer = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; roles: string[]; background_check_status: string; background_check_date: string | null; reliability_score: number; is_active: boolean; notes: string | null; assignment_count: number; approved: boolean; has_pin: boolean };
 type Role = { id: string; name: string; color: string; sort_order: number; is_active: boolean; description: string | null };
 type ServiceEvent = { id: string; title: string; event_date: string; start_time: string | null; end_time: string | null; status: string; assignment_count: number; confirmed_count: number; notes: string | null };
 type Assignment = { id: string; volunteer_id: string; role_name: string; status: string; reminder_sent: boolean; volunteer: { first_name: string; last_name: string; email: string | null; reliability_score: number } | null };
 type AllMember = { id: string; first_name: string; last_name: string; email: string | null; phone: string | null };
 
-const BG_STATUS: Record<string, string> = { cleared: "#22c55e", pending: "#f59e0b", expired: "#ef4444", failed: "#ef4444" };
+const BG_STATUS: Record<string, string> = { cleared: "#22c55e", pending: "#f59e0b", expired: "#ef4444", denied: "#ef4444", not_recorded: "#9ca3af" };
 const STATUS_COLORS: Record<string, string> = { assigned: "#6366f1", confirmed: "#22c55e", declined: "#ef4444", no_show: "#9ca3af" };
 
 function reliabilityColor(score: number) { return score >= 80 ? "#22c55e" : score >= 50 ? "#f59e0b" : "#ef4444"; }
@@ -45,7 +45,7 @@ function VolunteersPageContent() {
   // Volunteer modal
   const [showVolModal, setShowVolModal] = useState(false);
   const [editVol, setEditVol] = useState<Volunteer | null>(null);
-  const [volForm, setVolForm] = useState({ first_name: "", last_name: "", email: "", phone: "", roles: [] as string[], background_check_status: "pending", background_check_date: "", notes: "", memberSearch: "" });
+  const [volForm, setVolForm] = useState({ first_name: "", last_name: "", email: "", phone: "", roles: [] as string[], background_check_status: "pending", background_check_date: "", notes: "", approved: false, newPin: "", memberSearch: "" });
   const [savingVol, setSavingVol] = useState(false);
   const [volError, setVolError] = useState("");
 
@@ -120,7 +120,8 @@ function VolunteersPageContent() {
   async function saveVolunteer() {
     if (!token || !volForm.first_name.trim() || !volForm.last_name.trim()) { setVolError("First and last name required"); return; }
     setSavingVol(true); setVolError("");
-    const payload = { first_name: volForm.first_name, last_name: volForm.last_name, email: volForm.email, phone: volForm.phone, roles: volForm.roles, background_check_status: volForm.background_check_status, background_check_date: volForm.background_check_date || undefined, notes: volForm.notes };
+    const payload: Record<string, unknown> = { first_name: volForm.first_name, last_name: volForm.last_name, email: volForm.email, phone: volForm.phone, roles: volForm.roles, background_check_status: volForm.background_check_status, background_check_date: volForm.background_check_date || undefined, notes: volForm.notes, approved: volForm.approved };
+    if (volForm.newPin) payload.pin = volForm.newPin;
     const url = editVol ? `/api/children-ministry/volunteers/${editVol.id}` : "/api/children-ministry/volunteers";
     const method = editVol ? "PATCH" : "POST";
     const res = await fetch(url, { method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() }, body: JSON.stringify(payload) });
@@ -129,7 +130,7 @@ function VolunteersPageContent() {
     await loadAll(token);
   }
 
-  function openEditVol(v: Volunteer) { setEditVol(v); setVolForm({ first_name: v.first_name, last_name: v.last_name, email: v.email ?? "", phone: v.phone ?? "", roles: v.roles, background_check_status: v.background_check_status, background_check_date: v.background_check_date ?? "", notes: v.notes ?? "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }
+  function openEditVol(v: Volunteer) { setEditVol(v); setVolForm({ first_name: v.first_name, last_name: v.last_name, email: v.email ?? "", phone: v.phone ?? "", roles: v.roles, background_check_status: v.background_check_status, background_check_date: v.background_check_date ?? "", notes: v.notes ?? "", approved: v.approved, newPin: "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }
 
   async function saveEvent() {
     if (!token || !eventForm.title.trim() || !eventForm.event_date) return;
@@ -212,7 +213,12 @@ function VolunteersPageContent() {
     <AppShell navItems={[]}>
       <div className="px-8 py-10" style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)" }}>
         <p className="text-sm mb-1" style={{ color: "#D4AF37" }}>ShepherdKids</p>
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Volunteers</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "Georgia, serif" }}>Volunteers</h1>
+          <Link href="/dashboard/children-ministry/volunteer-audit" className="px-4 py-2 rounded-xl text-sm font-bold shrink-0" style={{ backgroundColor: "rgba(212,175,55,0.12)", color: "#D4AF37", border: "1px solid rgba(212,175,55,0.3)" }}>
+            Audit Log →
+          </Link>
+        </div>
       </div>
 
       {/* Sub-tabs */}
@@ -240,7 +246,7 @@ function VolunteersPageContent() {
           </div>
 
           <div className="flex justify-end mb-4">
-            <button onClick={() => { setEditVol(null); setVolForm({ first_name: "", last_name: "", email: "", phone: "", roles: [], background_check_status: "pending", background_check_date: "", notes: "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ Add Volunteer</button>
+            <button onClick={() => { setEditVol(null); setVolForm({ first_name: "", last_name: "", email: "", phone: "", roles: [], background_check_status: "pending", background_check_date: "", notes: "", approved: false, newPin: "", memberSearch: "" }); setVolError(""); setShowVolModal(true); }} className="px-5 py-2.5 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: ACCENT }}>+ Add Volunteer</button>
           </div>
 
           <div className="rounded-2xl overflow-hidden" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
@@ -252,6 +258,7 @@ function VolunteersPageContent() {
                   <th className="text-left px-6 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Volunteer</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest hidden md:table-cell" style={{ color: "#A9A9B8" }}>Roles</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>BG Check</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest hidden sm:table-cell" style={{ color: "#A9A9B8" }}>Vetted</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-widest" style={{ color: "#A9A9B8" }}>Reliability</th>
                   <th className="px-4 py-3" />
                 </tr></thead>
@@ -270,6 +277,11 @@ function VolunteersPageContent() {
                       </td>
                       <td className="px-4 py-4">
                         <span className="px-2.5 py-1 rounded-full text-xs font-bold text-white capitalize" style={{ backgroundColor: BG_STATUS[v.background_check_status] ?? "#9ca3af" }}>{v.background_check_status}</span>
+                      </td>
+                      <td className="px-4 py-4 hidden sm:table-cell">
+                        {v.approved && v.background_check_status === "cleared" && v.has_pin
+                          ? <span className="px-2.5 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: "#7B2CBF" }}>✓ Vetted</span>
+                          : <span className="text-xs" style={{ color: "#555577" }}>—</span>}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
@@ -458,10 +470,31 @@ function VolunteersPageContent() {
                 ))}</div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check</label><select value={volForm.background_check_status} onChange={e => setVolForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}><option value="pending">Pending</option><option value="cleared">Cleared</option><option value="expired">Expired</option><option value="failed">Failed</option></select></div>
+                <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check</label><select value={volForm.background_check_status} onChange={e => setVolForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }}><option value="pending">Pending</option><option value="cleared">Cleared</option><option value="expired">Expired</option><option value="denied">Denied</option><option value="not_recorded">Not Recorded</option></select></div>
                 <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Check Date</label><input type="date" value={volForm.background_check_date} onChange={e => setVolForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
               </div>
               <div><label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label><textarea value={volForm.notes} onChange={e => setVolForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} /></div>
+              <div className="rounded-xl p-4 space-y-3" style={{ background: "rgba(123,44,191,0.1)", border: "1px solid rgba(123,44,191,0.3)" }}>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#c084fc" }}>Vetted Access (Smart Label Scan)</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Approved to scan labels</p>
+                    <p className="text-xs" style={{ color: "#A9A9B8" }}>Requires BG check cleared + PIN set</p>
+                  </div>
+                  <button type="button" onClick={() => setVolForm(f => ({ ...f, approved: !f.approved }))} className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" style={{ backgroundColor: volForm.approved ? "#7B2CBF" : "rgba(255,255,255,0.15)" }}>
+                    <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform" style={{ transform: volForm.approved ? "translateX(1.375rem)" : "translateX(0.125rem)" }} />
+                  </button>
+                </div>
+                <div>
+                  {editVol?.has_pin && !volForm.newPin && (
+                    <p className="text-xs mb-1" style={{ color: "#4ade80" }}>✓ PIN configured</p>
+                  )}
+                  <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>
+                    {editVol?.has_pin ? "Set new PIN (leave blank to keep current)" : "PIN (4 digits)"}
+                  </label>
+                  <input type="password" inputMode="numeric" pattern="[0-9]*" maxLength={4} value={volForm.newPin} onChange={e => setVolForm(f => ({ ...f, newPin: e.target.value.replace(/\D/g, "").slice(0, 4) }))} placeholder="• • • •" className="w-32 px-3 py-2 rounded-lg text-sm text-center font-mono tracking-widest" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", outline: "none" }} />
+                </div>
+              </div>
               {volError && <p className="text-sm" style={{ color: "#f87171" }}>{volError}</p>}
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setShowVolModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-medium" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>

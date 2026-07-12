@@ -1574,23 +1574,37 @@ export default function CheckinSetupPage() {
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}>
           <div style={{ backgroundColor: "#120A1F", border: "1px solid rgba(212,175,55,0.3)", borderRadius: 24, padding: 32, maxWidth: 360, width: "100%", textAlign: "center" }}>
             <h2 style={{ color: "#FFFFFF", fontSize: 20, fontWeight: 800, margin: "0 0 4px", fontFamily: "Georgia, serif" }}>{qrRoom.name}</h2>
-            <p style={{ color: "#A9A9B8", fontSize: 13, margin: "0 0 20px" }}>Scan to open Classroom View</p>
-            <div style={{ display: "inline-block", backgroundColor: "#FFFFFF", padding: 12, borderRadius: 12, marginBottom: 20 }}>
-              <QRCodeImage value={`${APP_URL}/classroom/${qrRoom.classroom_qr_token}`} size={220} />
+            <p style={{ color: "#A9A9B8", fontSize: 13, margin: "0 0 16px" }}>Classroom View</p>
+            <div style={{ display: "inline-block", backgroundColor: "#FFFFFF", padding: 12, borderRadius: 12, marginBottom: 12 }}>
+              <QRCodeImage value={`${APP_URL}/classroom/${qrRoom.classroom_qr_token}`} size={180} />
             </div>
-            <div style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: 10, padding: "8px 12px", marginBottom: 16 }}>
-              <code style={{ color: "#D4AF37", fontSize: 11, wordBreak: "break-all" }}>{APP_URL}/classroom/{qrRoom.classroom_qr_token}</code>
+            <div style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: 10, padding: "6px 12px", marginBottom: 12 }}>
+              <code style={{ color: "#D4AF37", fontSize: 10, wordBreak: "break-all" }}>{APP_URL}/classroom/{qrRoom.classroom_qr_token}</code>
+            </div>
+            <button
+              onClick={() => handleCopy(`${APP_URL}/classroom/${qrRoom.classroom_qr_token}`)}
+              style={{ width: "100%", marginBottom: 16, padding: "8px 0", borderRadius: 10, border: `1px solid ${ACCENT}`, backgroundColor: "transparent", color: ACCENT, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+            >
+              {copiedUrl === `${APP_URL}/classroom/${qrRoom.classroom_qr_token}` ? "Copied!" : "Copy Classroom URL"}
+            </button>
+            <div style={{ height: 1, backgroundColor: "rgba(212,175,55,0.2)", margin: "0 0 16px" }} />
+            <p style={{ color: "#c084fc", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 10px" }}>Vetted Volunteer Sign-In</p>
+            <div style={{ display: "inline-block", backgroundColor: "#FFFFFF", padding: 12, borderRadius: 12, marginBottom: 12 }}>
+              <QRCodeImage value={`${APP_URL}/kiosk/classroom/${qrRoom.classroom_qr_token}`} size={180} />
+            </div>
+            <div style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(123,44,191,0.3)", borderRadius: 10, padding: "6px 12px", marginBottom: 12 }}>
+              <code style={{ color: "#c084fc", fontSize: 10, wordBreak: "break-all" }}>{APP_URL}/kiosk/classroom/{qrRoom.classroom_qr_token}</code>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button
-                onClick={() => handleCopy(`${APP_URL}/classroom/${qrRoom.classroom_qr_token}`)}
-                style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: `1px solid ${ACCENT}`, backgroundColor: "transparent", color: ACCENT, fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                onClick={() => handleCopy(`${APP_URL}/kiosk/classroom/${qrRoom.classroom_qr_token}`)}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "1px solid rgba(123,44,191,0.5)", backgroundColor: "transparent", color: "#c084fc", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
               >
-                {copiedUrl === `${APP_URL}/classroom/${qrRoom.classroom_qr_token}` ? "Copied!" : "Copy URL"}
+                {copiedUrl === `${APP_URL}/kiosk/classroom/${qrRoom.classroom_qr_token}` ? "Copied!" : "Copy Volunteer URL"}
               </button>
               <button
                 onClick={() => setQrRoom(null)}
-                style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "1px solid rgba(212,175,55,0.25)", backgroundColor: "transparent", color: "#A9A9B8", fontWeight: 700, fontSize: 13, cursor: "pointer" }}
+                style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "1px solid rgba(212,175,55,0.25)", backgroundColor: "transparent", color: "#A9A9B8", fontWeight: 700, fontSize: 12, cursor: "pointer" }}
               >
                 Close
               </button>
