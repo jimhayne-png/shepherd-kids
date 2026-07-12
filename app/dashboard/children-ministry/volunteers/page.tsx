@@ -422,11 +422,11 @@ function VolunteerAccessContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>First Name *</label>
-                  <input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                  <input name="volunteer-first-name" autoComplete="off" value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Last Name *</label>
-                  <input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                  <input name="volunteer-last-name" autoComplete="off" value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
               </div>
 
@@ -434,11 +434,11 @@ function VolunteerAccessContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Phone</label>
-                  <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                  <input name="new-volunteer-contact-phone" autoComplete="off" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Email</label>
-                  <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                  <input type="email" name="new-volunteer-contact-email" autoComplete="off" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
               </div>
 
@@ -457,17 +457,17 @@ function VolunteerAccessContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check Status</label>
-                  <select value={form.background_check_status} onChange={e => setForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={selectStyle}>
-                    <option value="not_recorded">Not Recorded</option>
-                    <option value="pending">Pending</option>
-                    <option value="cleared">Cleared</option>
-                    <option value="expired">Expired</option>
-                    <option value="denied">Denied</option>
+                  <select value={form.background_check_status} onChange={e => setForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", color: "#ffffff", WebkitTextFillColor: "#ffffff", outline: "none" }}>
+                    <option value="not_recorded" style={{ backgroundColor: "#ffffff", color: "#111111" }}>Not Recorded</option>
+                    <option value="pending" style={{ backgroundColor: "#ffffff", color: "#111111" }}>Pending</option>
+                    <option value="cleared" style={{ backgroundColor: "#ffffff", color: "#111111" }}>Cleared</option>
+                    <option value="expired" style={{ backgroundColor: "#ffffff", color: "#111111" }}>Expired</option>
+                    <option value="denied" style={{ backgroundColor: "#ffffff", color: "#111111" }}>Denied</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check Date</label>
-                  <input type="date" value={form.background_check_date} onChange={e => setForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
+                  <input type="date" autoComplete="off" value={form.background_check_date} onChange={e => setForm(f => ({ ...f, background_check_date: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle} />
                 </div>
               </div>
 
@@ -496,6 +496,8 @@ function VolunteerAccessContent() {
                 </label>
                 <input
                   type="password"
+                  name="new-volunteer-personal-pin"
+                  autoComplete="new-password"
                   inputMode="numeric"
                   pattern="[0-9]*"
                   maxLength={4}
@@ -533,7 +535,7 @@ function VolunteerAccessContent() {
               {/* Notes */}
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Notes</label>
-                <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={inputStyle} />
+                <textarea autoComplete="off" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-lg text-sm resize-none" style={inputStyle} />
               </div>
 
               {formError && <p className="text-sm" style={{ color: "#f87171" }}>{formError}</p>}
