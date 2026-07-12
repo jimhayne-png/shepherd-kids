@@ -4,6 +4,12 @@ import { useState } from "react";
 
 const ACCENT = "#F28C28";
 
+// Smart Label sign-in for personal phones.
+// Authenticates a volunteer via phone number + Personal Volunteer PIN, which causes
+// the server to set an HttpOnly vk_session cookie on this device. The volunteer can
+// then scan children's Smart Label QR codes at /kiosk/scan/[token] to view
+// protected child care information on their personal phone.
+
 function Logo() {
   return (
     <div className="flex items-center justify-center gap-2">
@@ -50,7 +56,6 @@ export default function ClassroomSignIn({
         credentials: "same-origin",
         body: JSON.stringify({ phone: phone.trim(), pin, roomToken: roomQrToken }),
       });
-
       const data = await res.json();
 
       if (!res.ok) {
@@ -59,7 +64,7 @@ export default function ClassroomSignIn({
         return;
       }
 
-      // Session token is carried by the HttpOnly cookie set by the server.
+      // The server sets an HttpOnly vk_session cookie automatically.
       // No client-side storage is used.
       setSignedIn({
         volunteerName: data.volunteerName,
@@ -107,16 +112,24 @@ export default function ClassroomSignIn({
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="mb-3"><Logo /></div>
+          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: "#D4AF37" }}>
+            Smart Label Access
+          </p>
           <h1 className="text-2xl font-bold text-white mb-1">Volunteer Sign-In</h1>
           <p className="text-sm" style={{ color: "#A9A9B8" }}>
             {roomName} &middot; {churchName}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-2xl border p-8 space-y-5"
-          style={{ backgroundColor: "#1C0A30", borderColor: "rgba(123,44,191,0.4)" }}>
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl border p-8 space-y-5"
+          style={{ backgroundColor: "#1C0A30", borderColor: "rgba(123,44,191,0.4)" }}
+        >
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: "#D8D8E8" }}>Phone Number</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: "#D8D8E8" }}>
+              Phone Number
+            </label>
             <input
               type="tel"
               inputMode="tel"
@@ -126,11 +139,14 @@ export default function ClassroomSignIn({
               required
               className="w-full px-4 py-3 text-sm border-2 rounded-xl outline-none transition-colors"
               style={{ borderColor: "#4B3080", color: "#ffffff", backgroundColor: "#12051f", WebkitTextFillColor: "#ffffff" }}
+              autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: "#D8D8E8" }}>PIN</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: "#D8D8E8" }}>
+              Personal Volunteer PIN
+            </label>
             <input
               type="password"
               inputMode="numeric"

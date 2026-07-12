@@ -11,7 +11,7 @@ export default async function ClassroomPage({
 
   const { data: room } = await admin
     .from('cm_checkin_rooms')
-    .select('id, name, church_id')
+    .select('name, church_id')
     .eq('classroom_qr_token', roomQrToken)
     .maybeSingle();
 

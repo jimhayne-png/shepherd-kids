@@ -35,9 +35,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Check-In",
     children: [
-      { label: "Live Check-In",  href: "/dashboard/children-ministry/live-checkin" },
-      { label: "Check-In Setup", href: "/dashboard/children-ministry/checkin-setup" },
-      { label: "Print Station",  href: "/dashboard/children-ministry/print-station" },
+      { label: "Check-In Setup",   href: "/dashboard/children-ministry/checkin-setup" },
+      { label: "Live Check-In",    href: "/dashboard/children-ministry/live-checkin" },
+      { label: "Volunteer Access", href: "/dashboard/children-ministry/volunteers" },
+      { label: "Print Station",    href: "/dashboard/children-ministry/print-station" },
     ],
   },
   {

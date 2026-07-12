@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS public.cm_volunteer_sessions (
     REFERENCES public.cm_checkin_rooms(id) ON DELETE CASCADE,
   session_token_hash text        NOT NULL,
   issued_at          timestamptz NOT NULL DEFAULT now(),
-  expires_at         timestamptz NOT NULL DEFAULT (now() + interval '4 hours'),
+  expires_at         timestamptz NOT NULL DEFAULT (now() + interval '3 hours'),
   revoked_at         timestamptz NULL,
   created_at         timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT cm_volunteer_sessions_token_hash_key UNIQUE (session_token_hash)

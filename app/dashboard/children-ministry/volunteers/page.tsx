@@ -57,6 +57,11 @@ const inputStyle = {
   outline: "none",
 } as const;
 
+const selectStyle = {
+  ...inputStyle,
+  colorScheme: "dark",
+} as const;
+
 const defaultForm = {
   first_name: "", last_name: "", email: "", phone: "",
   background_check_status: "not_recorded", background_check_date: "",
@@ -452,7 +457,7 @@ function VolunteerAccessContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium mb-1" style={{ color: "#A9A9B8" }}>Background Check Status</label>
-                  <select value={form.background_check_status} onChange={e => setForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={inputStyle}>
+                  <select value={form.background_check_status} onChange={e => setForm(f => ({ ...f, background_check_status: e.target.value }))} className="w-full px-3 py-2 rounded-lg text-sm" style={selectStyle}>
                     <option value="not_recorded">Not Recorded</option>
                     <option value="pending">Pending</option>
                     <option value="cleared">Cleared</option>

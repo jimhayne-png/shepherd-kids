@@ -15,7 +15,7 @@ function buildSessionCookie(token: string): string {
     isProd ? 'Secure' : '',
     'SameSite=Strict',
     'Path=/',
-    'Max-Age=14400',
+    'Max-Age=10800',
   ].filter(Boolean);
   return parts.join('; ');
 }
@@ -77,9 +77,10 @@ export async function POST(
   const rawToken = generateSessionToken();
   const tokenHash = hashSessionToken(rawToken);
 
+  const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
   const { data: session, error: sessionError } = await admin
     .from('cm_volunteer_sessions')
-    .insert({ church_id: churchId, volunteer_id: matched.id, room_id: room.id, session_token_hash: tokenHash })
+    .insert({ church_id: churchId, volunteer_id: matched.id, room_id: room.id, session_token_hash: tokenHash, expires_at: expiresAt })
     .select('expires_at')
     .single();
 
