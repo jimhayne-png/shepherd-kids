@@ -1384,28 +1384,36 @@ export default function CheckinSetupPage() {
 
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", margin: "0 0 10px" }}>Label Mode</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px" }}>
-                <label
-                  style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderRadius: "12px", cursor: "pointer", border: `2px solid ${labelMode === "smart" ? ACCENT : "rgba(212,175,55,0.2)"}`, background: labelMode === "smart" ? "rgba(123,44,191,0.12)" : "transparent" }}
-                >
-                  <input type="radio" name="labelMode" value="smart" checked={labelMode === "smart"} onChange={() => setLabelMode("smart")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
-                  <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge instead of exposing sensitive care information on the label. Allergies, medical notes, special instructions, and authorized pickup details are securely available through QR access.
-                    </p>
-                  </div>
-                </label>
-                <label
-                  style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderRadius: "12px", cursor: "pointer", border: `2px solid ${labelMode === "classic" ? ACCENT : "rgba(212,175,55,0.2)"}`, background: labelMode === "classic" ? "rgba(123,44,191,0.12)" : "transparent" }}
-                >
-                  <input type="radio" name="labelMode" value="classic" checked={labelMode === "classic"} onChange={() => setLabelMode("classic")} style={{ marginTop: 2, accentColor: ACCENT, flexShrink: 0 }} />
-                  <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints care information directly on the child label, including allergies, medical notes, and special instructions, instead of protecting those details behind QR access.
-                    </p>
-                  </div>
-                </label>
+                {(["smart", "classic"] as const).map(mode => (
+                  <label
+                    key={mode}
+                    style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderRadius: "12px", cursor: "pointer", border: `2px solid ${labelMode === mode ? ACCENT : "rgba(212,175,55,0.2)"}`, background: labelMode === mode ? "rgba(123,44,191,0.12)" : "transparent" }}
+                  >
+                    {/* Hidden native radio keeps accessibility / form semantics */}
+                    <input type="radio" name="labelMode" value={mode} checked={labelMode === mode} onChange={() => setLabelMode(mode)} style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }} />
+                    {/* Custom indicator: filled only when selected */}
+                    <div aria-hidden="true" style={{ width: 16, height: 16, borderRadius: "50%", flexShrink: 0, marginTop: 2, border: `2px solid ${labelMode === mode ? ACCENT : "rgba(255,255,255,0.3)"}`, background: labelMode === mode ? ACCENT : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {labelMode === mode && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />}
+                    </div>
+                    <div>
+                      {mode === "smart" ? (
+                        <>
+                          <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
+                          <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
+                            Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge instead of exposing sensitive care information on the label. Allergies, medical notes, special instructions, and authorized pickup details are securely available through QR access.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
+                          <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
+                            Prints care information directly on the child label, including allergies, medical notes, and special instructions, instead of protecting those details behind QR access.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                ))}
               </div>
 
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.08em", margin: "0 0 12px" }}>QR Features</p>

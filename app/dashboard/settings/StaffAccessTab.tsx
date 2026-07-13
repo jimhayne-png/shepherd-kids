@@ -322,8 +322,11 @@ function TransferWizard({ members, subscription, churchId, token, currentUserId,
                     type="radio" name="newPrimary" value={m.userId}
                     checked={selectedUserId === m.userId}
                     onChange={() => setSelectedUserId(m.userId)}
-                    style={{ accentColor: GOLD, flexShrink: 0 }}
+                    style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }}
                   />
+                  <div aria-hidden="true" style={{ width: 16, height: 16, borderRadius: "50%", flexShrink: 0, border: `2px solid ${selectedUserId === m.userId ? GOLD : "rgba(255,255,255,0.3)"}`, background: selectedUserId === m.userId ? GOLD : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {selectedUserId === m.userId && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />}
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: TEXT }}>{m.displayName || m.email}</p>
                     <p style={{ margin: "2px 0 0", fontSize: 12, color: MUTED }}>{m.email}</p>
@@ -389,7 +392,10 @@ function TransferWizard({ members, subscription, churchId, token, currentUserId,
                   background: billingAction === opt ? "rgba(212,175,55,0.06)" : "rgba(255,255,255,0.02)",
                 }}
               >
-                <input type="radio" name="billing" value={opt} checked={billingAction === opt} onChange={() => setBillingAction(opt)} style={{ accentColor: GOLD, marginTop: 2, flexShrink: 0 }} />
+                <input type="radio" name="billing" value={opt} checked={billingAction === opt} onChange={() => setBillingAction(opt)} style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }} />
+                <div aria-hidden="true" style={{ width: 16, height: 16, borderRadius: "50%", flexShrink: 0, marginTop: 2, border: `2px solid ${billingAction === opt ? GOLD : "rgba(255,255,255,0.3)"}`, background: billingAction === opt ? GOLD : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {billingAction === opt && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff" }} />}
+                </div>
                 <div>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: TEXT }}>
                     {opt === "keep" ? "Keep Existing Payment Method" : "Update Payment Method After Transfer"}
