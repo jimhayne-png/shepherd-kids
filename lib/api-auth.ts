@@ -1,6 +1,7 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient as createSSRClient } from '@/lib/supabase/server';
 import { type NextRequest } from 'next/server';
+import { isPrimaryAdmin } from '@/lib/staff-permissions';
 
 const MASTER_ADMIN_EMAIL = 'jim@gratefulconsultinggroup.com';
 
@@ -75,4 +76,58 @@ export async function getAuthContext(request: NextRequest): Promise<AuthContext 
   if (!data?.church_id) return null;
 
   return { userId, churchId: data.church_id as string };
+}
+
+// ── Role-aware auth context ──────────────────────────────────────────────────
+
+export type AuthContextWithRole = AuthContext & { role: string };
+
+export async function getAuthContextWithRole(request: NextRequest): Promise<AuthContextWithRole | null> {
+  const admin = adminClient();
+  let userId: string | null = null;
+
+  const token = request.headers.get('authorization')?.replace('Bearer ', '');
+  if (token) {
+    const { data: { user } } = await admin.auth.getUser(token);
+    userId = user?.id ?? null;
+  }
+
+  if (!userId) {
+    const ssrClient = await createSSRClient();
+    const { data: { user } } = await ssrClient.auth.getUser();
+    userId = user?.id ?? null;
+  }
+
+  if (!userId) return null;
+
+  const selectedChurchId = request.headers.get('x-selected-church-id');
+
+  if (selectedChurchId) {
+    const { data: { user } } = await admin.auth.admin.getUserById(userId);
+    const email = user?.email ?? '';
+
+    if (email && isAllowedMasterAdmin(email)) {
+      const { data: church } = await admin
+        .from('churches')
+        .select('id')
+        .eq('id', selectedChurchId)
+        .maybeSingle();
+
+      if (church) {
+        return { userId, churchId: selectedChurchId, role: 'primary_admin' };
+      }
+    }
+  }
+
+  const { data } = await admin
+    .from('church_users')
+    .select('church_id, role')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!data?.church_id) return null;
+
+  type CU = { church_id: string; role: string };
+  const cu = data as unknown as CU;
+  return { userId, churchId: cu.church_id, role: cu.role ?? 'church_admin' };
 }

@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     .insert({
       church_id: church.id,
       user_id: user.id,
-      role: 'admin',
+      role: 'primary_admin',
     });
 
   if (memberError) {

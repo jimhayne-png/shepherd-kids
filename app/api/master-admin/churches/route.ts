@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
       .from("churches")
       .select("id, name, city, state, email, phone, subscription_status, trial_ends_at, created_at")
       .order("created_at", { ascending: false }),
-    admin.from("church_users").select("church_id, user_id, role, password_set").eq("role", "admin"),
+    admin.from("church_users").select("church_id, user_id, role, password_set").in("role", ["admin", "primary_admin"]),
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
   const { error: cuErr } = await admin.from("church_users").insert({
     church_id: church.id,
     user_id: userId,
-    role: "admin",
+    role: "primary_admin",
     password_set: false,
     setup_token: setupToken,
     setup_token_expires_at: null,
@@ -246,7 +246,9 @@ export async function PATCH(req: NextRequest) {
       .from("church_users")
       .select("user_id")
       .eq("church_id", churchId)
-      .eq("role", "admin")
+      .in("role", ["admin", "primary_admin"])
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (!cu?.user_id) {
@@ -275,7 +277,9 @@ export async function PATCH(req: NextRequest) {
       .from("church_users")
       .select("id, user_id, password_set")
       .eq("church_id", churchId)
-      .eq("role", "admin")
+      .in("role", ["admin", "primary_admin"])
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (!cu?.user_id) {
@@ -308,7 +312,9 @@ export async function PATCH(req: NextRequest) {
       .from("church_users")
       .select("id, user_id")
       .eq("church_id", churchId)
-      .eq("role", "admin")
+      .in("role", ["admin", "primary_admin"])
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (!cu?.user_id) {
@@ -346,7 +352,9 @@ export async function PATCH(req: NextRequest) {
       .from("church_users")
       .select("user_id")
       .eq("church_id", churchId)
-      .eq("role", "admin")
+      .in("role", ["admin", "primary_admin"])
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (!cu?.user_id) {

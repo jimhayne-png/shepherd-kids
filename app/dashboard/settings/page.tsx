@@ -6,6 +6,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell, { type NavItem } from "@/components/layout/AppShell";
 import { selectedChurchHeaders } from "@/lib/selected-church";
+import { isAdminRole } from "@/lib/staff-permissions";
+import StaffAccessTab from "./StaffAccessTab";
 
 const supabase = createClient();
 const navItems: NavItem[] = [];
@@ -20,11 +22,12 @@ const MUTED    = "rgba(255,255,255,0.5)";
 const INPUT_BG = "rgba(255,255,255,0.05)";
 const INPUT_BD = "rgba(255,255,255,0.12)";
 
-type Tab = "profile" | "church" | "platform" | "security" | "subscription";
+type Tab = "profile" | "church" | "platform" | "staff" | "security" | "subscription";
 const TABS: { id: Tab; label: string }[] = [
   { id: "profile",      label: "Profile" },
   { id: "church",       label: "Church" },
   { id: "platform",     label: "Platform" },
+  { id: "staff",        label: "Staff Access" },
   { id: "security",     label: "Security" },
   { id: "subscription", label: "Subscription" },
 ];
@@ -127,6 +130,7 @@ export default function SettingsPage() {
 
   const [tab, setTab]             = useState<Tab>("profile");
   const [userEmail, setUserEmail] = useState("");
+  const [userRole, setUserRole]   = useState<string>("");
   const [displayName, setDisplayName] = useState("");
   const [form, setForm]           = useState<ChurchForm>(EMPTY);
   const [billing, setBilling]     = useState<{ subscription_status?: string; subscription_tier?: string; trial_ends_at?: string }>({});
@@ -158,7 +162,8 @@ export default function SettingsPage() {
 
       const res = await fetch("/api/settings", { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } });
       if (res.ok) {
-        const { church, warnings: w } = await res.json();
+        const { church, userRole: role, warnings: w } = await res.json();
+        setUserRole(role ?? "");
         setWarnings(w ?? []);
         setForm({
           name:            church.name ?? "",
@@ -258,7 +263,7 @@ export default function SettingsPage() {
         </div>
 
         <div style={{ display: "flex", gap: 0, paddingLeft: 28, overflowX: "auto" }}>
-          {TABS.map(t => (
+          {TABS.filter(t => t.id !== "staff" || isAdminRole(userRole)).map(t => (
             <button
               key={t.id}
               onClick={() => { setTab(t.id); setMsg(null); }}
@@ -422,6 +427,17 @@ export default function SettingsPage() {
                 />
               </Card>
             </>
+          )}
+
+          {/* ── Staff Access ── */}
+          {tab === "staff" && (
+            isAdminRole(userRole)
+              ? <StaffAccessTab userRole={userRole} />
+              : (
+                <div style={{ padding: "24px 0", textAlign: "center" }}>
+                  <p style={{ fontSize: 14, color: MUTED }}>You do not have permission to view Staff Access settings.</p>
+                </div>
+              )
           )}
 
           {/* ── Security ── */}

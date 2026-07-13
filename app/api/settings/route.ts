@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { getAuthContext, adminClient } from '@/lib/api-auth';
+import { getAuthContextWithRole, adminClient } from '@/lib/api-auth';
 
 // Columns confirmed present in all production instances.
 const CORE_FIELDS = [
@@ -14,7 +14,7 @@ const CORE_FIELDS = [
 const PASTORAL_FIELDS = 'senior_pastor, children_pastor';
 
 export async function GET(req: NextRequest) {
-  const ctx = await getAuthContext(req);
+  const ctx = await getAuthContextWithRole(req);
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = adminClient();
@@ -55,12 +55,14 @@ export async function GET(req: NextRequest) {
 
   return Response.json({
     church: { ...(coreData as unknown as Record<string, unknown>), ...pastoral },
+    churchId: ctx.churchId,
+    userRole: ctx.role,
     warnings,
   });
 }
 
 export async function POST(req: NextRequest) {
-  const ctx = await getAuthContext(req);
+  const ctx = await getAuthContextWithRole(req);
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();

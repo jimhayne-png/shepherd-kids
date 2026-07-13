@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
   const { error: cuErr } = await admin.from("church_users").insert({
     church_id: church.id,
     user_id: userId,
-    role: "admin",
+    role: "primary_admin",
     password_set: true,
     setup_token: null,
   });
