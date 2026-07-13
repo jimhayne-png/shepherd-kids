@@ -680,7 +680,7 @@ export default function CheckinSetupPage() {
               </div>
             )}
 
-            {/* Volunteer Room View card */}
+            {/* Volunteer Classroom Tablet card */}
             {selectedChurchIdRef.current && APP_URL && (
               volunteerCheckinQrEnabled ? (
                 <div className="rounded-2xl shadow p-5 mb-6 border-2" style={{ backgroundColor: "#7c3aed0d", borderColor: "#7c3aed" }}>
@@ -1391,7 +1391,7 @@ export default function CheckinSetupPage() {
                   <div>
                     <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Smart Label <span style={{ fontWeight: 400, fontSize: "12px", color: "#D4AF37" }}>(recommended)</span></p>
                     <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge. Full allergy and medical details are accessed by scanning the QR code — not printed in plain sight.
+                      Prints a <strong style={{ color: "#D8D8E8" }}>⚠ SEE CARE NOTES</strong> badge instead of exposing sensitive care information on the label. Allergies, medical notes, special instructions, and authorized pickup details are securely available through QR access.
                     </p>
                   </div>
                 </label>
@@ -1402,7 +1402,7 @@ export default function CheckinSetupPage() {
                   <div>
                     <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Classic Label</p>
                     <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>
-                      Prints allergies, medical notes, and special instructions directly on child labels. QR code included if enabled below.
+                      Prints care information directly on the child label, including allergies, medical notes, and special instructions, instead of protecting those details behind QR access.
                     </p>
                   </div>
                 </label>
@@ -1428,8 +1428,8 @@ export default function CheckinSetupPage() {
                     </div>
                   </div>
                   <div>
-                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Volunteer Check-In QR <span style={{ fontWeight: 400, fontSize: "12px", color: volunteerCheckinQrEnabled ? "#4ade80" : "#6b7280" }}>{volunteerCheckinQrEnabled ? "ON" : "OFF"}</span></p>
-                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Enable classroom and volunteer QR check-in tools (Volunteer Room View, classroom tablet links).</p>
+                    <p style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "14px", margin: 0 }}>Volunteer Classroom QR Access <span style={{ fontWeight: 400, fontSize: "12px", color: volunteerCheckinQrEnabled ? "#4ade80" : "#6b7280" }}>{volunteerCheckinQrEnabled ? "ON" : "OFF"}</span></p>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.5 }}>Enable QR access for the Volunteer Classroom Tablet and Direct Classroom Tablet Links.</p>
                   </div>
                 </div>
               </div>
@@ -1477,6 +1477,10 @@ export default function CheckinSetupPage() {
                     </div>
                   ))}
                 </div>
+                <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 5px" }}>Setup Experience</p>
+                  <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>Best for a simple Wi-Fi or USB installation. Supports Wi-Fi Direct and WPS setup, although some networks may require Brother's setup software or a temporary USB connection. Ideal for most churches with one or two label-printing stations.</p>
+                </div>
               </div>
 
               {/* QL-820NWB */}
@@ -1510,17 +1514,38 @@ export default function CheckinSetupPage() {
                     <li key={item} style={{ fontSize: "12px", color: "#A9A9B8", lineHeight: 1.5 }}>{item}</li>
                   ))}
                 </ul>
+                <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 5px" }}>Setup Experience</p>
+                  <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>Best for churches needing additional connectivity. The built-in LCD makes printer configuration and troubleshooting easier, while Ethernet and Bluetooth provide greater flexibility for shared workstations and more complex network environments.</p>
+                </div>
               </div>
 
-              {/* Quick Recommendation */}
-              <div style={{ background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "10px", padding: "14px 16px", marginBottom: "20px" }}>
-                <p style={{ fontSize: "12px", fontWeight: 700, color: "#D4AF37", margin: "0 0 6px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Quick Recommendation</p>
-                <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "0 0 8px", lineHeight: 1.6 }}>
-                  <strong style={{ color: "#FFFFFF" }}>Most churches should purchase the Brother QL-810W.</strong>
-                </p>
-                <p style={{ fontSize: "13px", color: "#D8D8E8", margin: "0 0 8px", lineHeight: 1.6 }}>
-                  Upgrade to the <strong style={{ color: "#FFFFFF" }}>QL-820NWB only if your installation specifically requires Ethernet or Bluetooth.</strong> Aside from those two options, both printers provide the same excellent label printing experience.
-                </p>
+              {/* Shared hardware note */}
+              <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "0 0 16px", lineHeight: 1.6 }}>
+                Both printers use the same Brother DK label rolls and provide comparable high-speed label printing. The primary differences are connectivity and setup options.
+              </p>
+
+              {/* Which should I choose? */}
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "10px", padding: "16px 18px", marginBottom: "20px" }}>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#D4AF37", margin: "0 0 12px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Which should I choose?</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#c084fc", margin: "0 0 6px" }}>Choose the QL-810W if:</p>
+                    <ul style={{ margin: 0, padding: "0 0 0 14px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                      {["You need one or two printing stations", "You want the simplest setup", "Wi-Fi or USB meets your needs"].map(item => (
+                        <li key={item} style={{ fontSize: "12px", color: "#D8D8E8", lineHeight: 1.5 }}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#A9A9B8", margin: "0 0 6px" }}>Choose the QL-820NWB if:</p>
+                    <ul style={{ margin: 0, padding: "0 0 0 14px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                      {["You need Ethernet connectivity", "You want Bluetooth support", "Multiple staff members share the printer", "You want the convenience of the built-in LCD display"].map(item => (
+                        <li key={item} style={{ fontSize: "12px", color: "#D8D8E8", lineHeight: 1.5 }}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               {/* Comparison Table */}

@@ -293,7 +293,7 @@ export default function PrintStationPage() {
                 lineHeight: 1.5,
               }}
             >
-              <strong>Printer setup:</strong> Select the <strong>Brother QL-820NWB</strong> in the print dialog.
+              <strong>Printer setup:</strong> Select your installed Brother label printer. The <strong>Brother QL-810W</strong> is recommended for most churches. The <strong>Brother QL-820NWB</strong> is also fully supported for churches that need Ethernet or Bluetooth connectivity.
               Set paper size to <strong>4in × 2in</strong> (DK label size). Disable headers and footers.
             </div>
 
