@@ -5,7 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
-const DARK_GREEN = "#1A4A2E";
+
+const BG     = "#08060D";
+const CARD   = "#120A1F";
+const BORDER = "rgba(212,175,55,0.18)";
+const GOLD   = "#D4AF37";
+const PURPLE = "#7B2CBF";
+const TEXT   = "#ffffff";
+const MUTED  = "rgba(255,255,255,0.5)";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,11 +45,11 @@ function fmtDateTime(iso: string | null) {
 
 const TH: React.CSSProperties = {
   padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700,
-  color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em",
-  whiteSpace: "nowrap", backgroundColor: "#f9fafb", borderBottom: "1px solid #e5e7eb",
+  color: MUTED, textTransform: "uppercase", letterSpacing: "0.06em",
+  whiteSpace: "nowrap", backgroundColor: "rgba(0,0,0,0.3)", borderBottom: `1px solid ${BORDER}`,
 };
 const TD: React.CSSProperties = {
-  padding: "10px 12px", borderBottom: "1px solid #f3f4f6", fontSize: 13, verticalAlign: "middle",
+  padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 13, verticalAlign: "middle",
 };
 
 // ── Confirm delete modal ──────────────────────────────────────────────────────
@@ -173,10 +180,10 @@ export default function UserAuditPage() {
   if (!loading && accessDenied) {
     return (
       <AppShell navItems={[]}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", padding: 24 }}>
+        <div style={{ minHeight: "100vh", backgroundColor: BG, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 700, color: "#111827", margin: "0 0 10px" }}>Access Denied</h1>
-          <p style={{ color: "#6b7280", fontSize: 14 }}>This area is restricted to master administrators only.</p>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 700, color: TEXT, margin: "0 0 10px" }}>Access Denied</h1>
+          <p style={{ color: MUTED, fontSize: 14 }}>This area is restricted to master administrators only.</p>
         </div>
       </AppShell>
     );
@@ -187,49 +194,49 @@ export default function UserAuditPage() {
   return (
     <AppShell navItems={[]}>
       {/* Header */}
-      <div style={{ background: `linear-gradient(135deg, ${DARK_GREEN} 0%, #2D6B42 100%)`, padding: "32px 40px" }}>
-        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#86efac", margin: "0 0 6px" }}>
+      <div style={{ background: "linear-gradient(135deg, #0d0720 0%, #1a0f35 100%)", padding: "32px 40px", borderBottom: `1px solid ${BORDER}` }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: GOLD, margin: "0 0 6px", opacity: 0.8 }}>
           Master Admin
         </p>
-        <h1 style={{ color: "white", fontSize: 32, fontWeight: 700, fontFamily: "Georgia, serif", margin: "0 0 8px" }}>
+        <h1 style={{ color: TEXT, fontSize: 30, fontWeight: 700, fontFamily: "Georgia, serif", margin: "0 0 6px" }}>
           User Audit
         </h1>
-        <p style={{ color: "#bbf7d0", fontSize: 14, margin: 0 }}>
+        <p style={{ color: MUTED, fontSize: 14, margin: 0 }}>
           All Supabase auth users and their church assignments.
         </p>
       </div>
 
-      <div style={{ minHeight: "100vh", backgroundColor: "#f9fafb", padding: "28px 32px" }}>
+      <div style={{ minHeight: "100vh", backgroundColor: BG, padding: "28px 32px" }}>
         {/* Summary cards */}
         {!loading && !pageError && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
             {[
-              { label: "Total Users",    value: users.length,    icon: "👤", color: "#374151" },
-              { label: "Attached",       value: attached.length, icon: "🏛️", color: "#1d4ed8" },
-              { label: "Orphaned",       value: orphaned.length, icon: "⚠️", color: "#d97706" },
-              { label: "Master Admins",  value: users.filter((u) => u.is_master_admin).length, icon: "🛡️", color: "#7c3aed" },
+              { label: "Total Users",   value: users.length,    icon: "👤", color: TEXT },
+              { label: "Attached",      value: attached.length, icon: "🏛️", color: "#93c5fd" },
+              { label: "Orphaned",      value: orphaned.length, icon: "⚠️", color: "#fbbf24" },
+              { label: "Master Admins", value: users.filter((u) => u.is_master_admin).length, icon: "🛡️", color: "#c084fc" },
             ].map((c) => (
-              <div key={c.label} style={{ backgroundColor: "white", borderRadius: 12, border: "1px solid #e5e7eb", padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <div key={c.label} style={{ backgroundColor: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: "14px 18px" }}>
                 <div style={{ fontSize: 20, marginBottom: 4 }}>{c.icon}</div>
                 <div style={{ fontSize: 24, fontWeight: 900, color: c.color, lineHeight: 1 }}>{c.value}</div>
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>{c.label}</div>
+                <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{c.label}</div>
               </div>
             ))}
           </div>
         )}
 
-        {loading && <div style={{ textAlign: "center", padding: 64, color: "#9ca3af" }}>Loading…</div>}
+        {loading && <div style={{ textAlign: "center", padding: 64, color: MUTED }}>Loading…</div>}
 
         {pageError && !loading && (
-          <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: "14px 20px", color: "#dc2626", fontWeight: 500, marginBottom: 16 }}>
+          <div style={{ backgroundColor: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: 12, padding: "14px 20px", color: "#f87171", fontWeight: 500, marginBottom: 16 }}>
             {pageError}
           </div>
         )}
 
         {actionError && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff7ed", border: "1px solid #fdba74", borderRadius: 12, padding: "10px 16px", color: "#c2410c", fontSize: 13, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: 12, padding: "10px 16px", color: "#fbbf24", fontSize: 13, marginBottom: 16 }}>
             <span>{actionError}</span>
-            <button onClick={() => setActionError("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#c2410c", fontWeight: 700, fontSize: 16 }}>×</button>
+            <button onClick={() => setActionError("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#fbbf24", fontWeight: 700, fontSize: 16 }}>×</button>
           </div>
         )}
 
@@ -242,11 +249,11 @@ export default function UserAuditPage() {
                 placeholder="Search email or church…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ flex: 1, minWidth: 200, padding: "10px 16px", borderRadius: 10, border: "1px solid #e5e7eb", backgroundColor: "white", fontSize: 14, color: "#111827", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", outline: "none" }}
+                style={{ flex: 1, minWidth: 200, padding: "10px 16px", borderRadius: 10, border: `1px solid ${BORDER}`, backgroundColor: CARD, fontSize: 14, color: TEXT, outline: "none" }}
               />
 
               {/* Filter tabs */}
-              <div style={{ display: "flex", gap: 4, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, padding: 4, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <div style={{ display: "flex", gap: 4, backgroundColor: CARD, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 4 }}>
                 {(["all", "attached", "orphaned"] as Filter[]).map((f) => {
                   const labels: Record<Filter, string> = {
                     all:      `All (${users.length})`,
@@ -260,8 +267,12 @@ export default function UserAuditPage() {
                       onClick={() => setFilter(f)}
                       style={{
                         padding: "6px 14px", borderRadius: 7, border: "none", fontSize: 13, fontWeight: active ? 700 : 400, cursor: "pointer", whiteSpace: "nowrap",
-                        backgroundColor: active ? (f === "orphaned" ? "#fef3c7" : DARK_GREEN) : "transparent",
-                        color: active ? (f === "orphaned" ? "#92400e" : "white") : "#6b7280",
+                        backgroundColor: active
+                          ? (f === "orphaned" ? "rgba(251,191,36,0.15)" : `rgba(123,44,191,0.3)`)
+                          : "transparent",
+                        color: active
+                          ? (f === "orphaned" ? "#fbbf24" : TEXT)
+                          : MUTED,
                         transition: "all 0.15s",
                       }}
                     >
@@ -273,7 +284,7 @@ export default function UserAuditPage() {
             </div>
 
             {/* Table */}
-            <div style={{ backgroundColor: "white", borderRadius: 16, border: "1px solid #e5e7eb", overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+            <div style={{ backgroundColor: CARD, borderRadius: 16, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
@@ -286,7 +297,7 @@ export default function UserAuditPage() {
                   <tbody>
                     {displayed.length === 0 && (
                       <tr>
-                        <td colSpan={6} style={{ ...TD, textAlign: "center", padding: 48, color: "#9ca3af" }}>
+                        <td colSpan={6} style={{ ...TD, textAlign: "center", padding: 48, color: MUTED }}>
                           {users.length === 0 ? "No users found." : "No users match your filter."}
                         </td>
                       </tr>
@@ -294,34 +305,34 @@ export default function UserAuditPage() {
                     {displayed.map((u) => {
                       const isOrphaned = !u.church && !u.is_master_admin;
                       return (
-                        <tr key={u.id} style={{ backgroundColor: isOrphaned ? "#fffbeb" : "white" }}>
-                          <td style={{ ...TD, fontWeight: 500, color: "#111827" }}>
-                            {u.email ?? <span style={{ color: "#9ca3af", fontStyle: "italic" }}>no email</span>}
+                        <tr key={u.id} style={{ backgroundColor: isOrphaned ? "rgba(251,191,36,0.05)" : "transparent" }}>
+                          <td style={{ ...TD, fontWeight: 500, color: TEXT }}>
+                            {u.email ?? <span style={{ color: MUTED, fontStyle: "italic" }}>no email</span>}
                           </td>
-                          <td style={{ ...TD, color: "#6b7280", whiteSpace: "nowrap" }}>{fmtDate(u.created_at)}</td>
-                          <td style={{ ...TD, color: "#6b7280", whiteSpace: "nowrap", fontSize: 12 }}>{fmtDateTime(u.last_sign_in_at)}</td>
-                          <td style={{ ...TD, color: "#374151" }}>
+                          <td style={{ ...TD, color: MUTED, whiteSpace: "nowrap" }}>{fmtDate(u.created_at)}</td>
+                          <td style={{ ...TD, color: MUTED, whiteSpace: "nowrap", fontSize: 12 }}>{fmtDateTime(u.last_sign_in_at)}</td>
+                          <td style={{ ...TD, color: "rgba(255,255,255,0.8)" }}>
                             {u.church ? (
                               <span style={{ fontWeight: 500 }}>{u.church.name}</span>
                             ) : u.is_master_admin ? (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", backgroundColor: "#ede9fe", padding: "2px 8px", borderRadius: 9999 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#c084fc", backgroundColor: "rgba(123,44,191,0.15)", padding: "2px 8px", borderRadius: 9999 }}>
                                 Master Admin
                               </span>
                             ) : (
-                              <span style={{ color: "#9ca3af", fontStyle: "italic" }}>—</span>
+                              <span style={{ color: MUTED, fontStyle: "italic" }}>—</span>
                             )}
                           </td>
                           <td style={TD}>
                             {u.is_master_admin ? (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", backgroundColor: "#ede9fe", padding: "3px 10px", borderRadius: 9999, whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#c084fc", backgroundColor: "rgba(123,44,191,0.15)", padding: "3px 10px", borderRadius: 9999, whiteSpace: "nowrap" }}>
                                 System
                               </span>
                             ) : u.church ? (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", backgroundColor: "#dcfce7", padding: "3px 10px", borderRadius: 9999, whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#4ade80", backgroundColor: "rgba(22,163,74,0.15)", padding: "3px 10px", borderRadius: 9999, whiteSpace: "nowrap" }}>
                                 Active
                               </span>
                             ) : (
-                              <span style={{ fontSize: 11, fontWeight: 700, color: "#d97706", backgroundColor: "#fef3c7", padding: "3px 10px", borderRadius: 9999, whiteSpace: "nowrap" }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: "#fbbf24", backgroundColor: "rgba(251,191,36,0.12)", padding: "3px 10px", borderRadius: 9999, whiteSpace: "nowrap" }}>
                                 Orphaned
                               </span>
                             )}
@@ -330,7 +341,7 @@ export default function UserAuditPage() {
                             {isOrphaned && (
                               <button
                                 onClick={() => setConfirmDelete(u)}
-                                style={{ padding: "5px 12px", borderRadius: 7, border: "1px solid #fecaca", backgroundColor: "#fef2f2", fontSize: 12, fontWeight: 600, color: "#dc2626", cursor: "pointer", whiteSpace: "nowrap" }}
+                                style={{ padding: "5px 12px", borderRadius: 7, border: "1px solid rgba(220,38,38,0.3)", backgroundColor: "rgba(220,38,38,0.1)", fontSize: 12, fontWeight: 600, color: "#f87171", cursor: "pointer", whiteSpace: "nowrap" }}
                               >
                                 Delete
                               </button>
@@ -342,8 +353,8 @@ export default function UserAuditPage() {
                   </tbody>
                 </table>
               </div>
-              <div style={{ display: "flex", alignItems: "center", padding: "10px 14px", borderTop: "1px solid #f3f4f6", fontSize: 12, color: "#9ca3af" }}>
-                Showing <strong style={{ color: "#374151", margin: "0 4px" }}>{displayed.length}</strong> of <strong style={{ color: "#374151", margin: "0 4px" }}>{users.length}</strong> users
+              <div style={{ display: "flex", alignItems: "center", padding: "10px 14px", borderTop: `1px solid ${BORDER}`, fontSize: 12, color: MUTED }}>
+                Showing <strong style={{ color: TEXT, margin: "0 4px" }}>{displayed.length}</strong> of <strong style={{ color: TEXT, margin: "0 4px" }}>{users.length}</strong> users
               </div>
             </div>
           </>

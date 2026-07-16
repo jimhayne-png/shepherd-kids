@@ -761,14 +761,14 @@ export default function GettingStartedPage() {
                 {
                   name: "Brother QL-810W",
                   badge: "Most Popular",
-                  desc: "Wi-Fi + Wi-Fi Direct. Quiet, fast, and simple to set up. Works well for most Sunday morning check-in setups.",
-                  note: "Connect via Wi-Fi for shared access from multiple check-in stations.",
+                  desc: "Quiet, fast, and simple to set up. Works well for most Sunday morning check-in setups.",
+                  connections: ["Wi-Fi", "Wi-Fi Direct", "USB"],
                 },
                 {
                   name: "Brother QL-820NWB",
                   badge: "Full Featured",
-                  desc: "Wi-Fi + Wi-Fi Direct + Bluetooth + Ethernet. Best for large campuses or multi-printer setups.",
-                  note: "Ethernet port allows wired connection for maximum reliability.",
+                  desc: "Best for large campuses or multi-printer setups where wired reliability matters.",
+                  connections: ["Wi-Fi", "Wi-Fi Direct", "USB", "Ethernet", "Bluetooth"],
                 },
               ].map((printer) => (
                 <div key={printer.name} style={{ padding: "18px 20px", borderRadius: 12, border: `1px solid ${BORDER}`, background: "rgba(255,255,255,0.02)" }}>
@@ -779,8 +779,12 @@ export default function GettingStartedPage() {
                         <span style={{ color: TEXT, fontWeight: 700, fontSize: 15 }}>{printer.name}</span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: PURPLE, background: "rgba(123,44,191,0.15)", padding: "2px 8px", borderRadius: 20 }}>{printer.badge}</span>
                       </div>
-                      <p style={{ color: MUTED, fontSize: 13, margin: "0 0 6px", lineHeight: 1.5 }}>{printer.desc}</p>
-                      <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, margin: "0 0 10px" }}>{printer.note}</p>
+                      <p style={{ color: MUTED, fontSize: 13, margin: "0 0 8px", lineHeight: 1.5 }}>{printer.desc}</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                        {printer.connections.map((c) => (
+                          <span key={c} style={{ fontSize: 11, color: GOLD, background: "rgba(212,175,55,0.1)", border: `1px solid rgba(212,175,55,0.2)`, borderRadius: 6, padding: "2px 8px" }}>{c}</span>
+                        ))}
+                      </div>
                       <a
                         href="#"
                         onClick={(e) => e.preventDefault()}
@@ -799,10 +803,10 @@ export default function GettingStartedPage() {
             </p>
 
             <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>
-              You can continue without a printer now. Printer setup instructions are available in <strong style={{ color: TEXT }}>Check-In Setup → Label Printing</strong>.
+              Once your printer is connected through Wi-Fi, Wi-Fi Direct, USB, Ethernet, or Bluetooth, open <strong style={{ color: TEXT }}>Check-In Setup → Label Printing</strong> to choose your label settings, then use <strong style={{ color: TEXT }}>Print Station</strong> to print labels.
             </p>
 
-            <PrimaryBtn onClick={() => completeStep(6)}>Continue →</PrimaryBtn>
+            <PrimaryBtn onClick={() => completeStep(6)}>Got It, Continue →</PrimaryBtn>
           </div>
         );
 
@@ -955,7 +959,7 @@ export default function GettingStartedPage() {
           onClick={() => router.push("/dashboard")}
           style={{ background: "none", border: "none", color: MUTED, cursor: "pointer", fontSize: 13 }}
         >
-          Go to Dashboard →
+          Finish Later →
         </button>
       </div>
 

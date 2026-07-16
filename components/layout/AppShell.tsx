@@ -171,8 +171,8 @@ function masterAdminLinkStyle(active: boolean): React.CSSProperties {
     borderRadius: "8px",
     fontSize: "12px",
     fontWeight: 600,
-    color: active ? "#120A1F" : "#fcd34d",
-    backgroundColor: active ? "#f59e0b" : "rgba(245,158,11,0.12)",
+    color: active ? "#ffffff" : "#fcd34d",
+    backgroundColor: active ? "rgba(123,44,191,0.85)" : "rgba(245,158,11,0.10)",
     textDecoration: "none",
     transition: "background-color 0.15s",
   };

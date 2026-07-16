@@ -5,7 +5,15 @@ import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 
 const supabase = createClient();
-const DARK_GREEN = "#1A4A2E";
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+const BG     = "#08060D";
+const CARD   = "#120A1F";
+const BORDER = "rgba(212,175,55,0.18)";
+const GOLD   = "#D4AF37";
+const PURPLE = "#7B2CBF";
+const TEXT   = "#ffffff";
+const MUTED  = "rgba(255,255,255,0.5)";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,10 +39,10 @@ function fmtDate(iso: string | null) {
 
 function statusColor(status: string | null) {
   switch (status) {
-    case "active":    return { bg: "#dcfce7", color: "#16a34a" };
-    case "trial":     return { bg: "#dbeafe", color: "#1d4ed8" };
-    case "suspended": return { bg: "#fee2e2", color: "#dc2626" };
-    default:          return { bg: "#f3f4f6", color: "#6b7280" };
+    case "active":    return { bg: "rgba(22,163,74,0.15)",   color: "#4ade80" };
+    case "trial":     return { bg: "rgba(59,130,246,0.15)",  color: "#93c5fd" };
+    case "suspended": return { bg: "rgba(239,68,68,0.15)",   color: "#f87171" };
+    default:          return { bg: "rgba(107,114,128,0.15)", color: "#9ca3af" };
   }
 }
 
@@ -47,15 +55,29 @@ function StatusPill({ status }: { status: string | null }) {
   );
 }
 
-// ── Shared styles ─────────────────────────────────────────────────────────────
+// ── Shared table styles ───────────────────────────────────────────────────────
 
 const TH: React.CSSProperties = {
   padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700,
-  color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em",
-  whiteSpace: "nowrap", backgroundColor: "#f9fafb", borderBottom: "1px solid #e5e7eb",
+  color: MUTED, textTransform: "uppercase", letterSpacing: "0.06em",
+  whiteSpace: "nowrap", backgroundColor: "rgba(0,0,0,0.3)", borderBottom: `1px solid ${BORDER}`,
 };
 const TD: React.CSSProperties = {
-  padding: "10px 12px", borderBottom: "1px solid #f3f4f6", fontSize: 13, verticalAlign: "middle",
+  padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 13, verticalAlign: "middle",
+};
+
+// ── Modal shared styles ───────────────────────────────────────────────────────
+
+const MODAL_INPUT: React.CSSProperties = {
+  width: "100%", padding: "9px 12px", border: "1px solid #d1d5db",
+  borderRadius: 8, fontSize: 13, boxSizing: "border-box",
+  color: "#111827", backgroundColor: "white",
+};
+const MODAL_LABEL: React.CSSProperties = {
+  display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4,
+};
+const MODAL_SECTION: React.CSSProperties = {
+  fontSize: 11, fontWeight: 700, color: PURPLE, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 12px",
 };
 
 // ── Create Church Modal ───────────────────────────────────────────────────────
@@ -128,22 +150,13 @@ function CreateChurchModal({
     onCreated(newChurch, d.invite_link ?? null);
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "9px 12px", border: "1px solid #d1d5db",
-    borderRadius: 8, fontSize: 13, boxSizing: "border-box",
-    color: "#111827", backgroundColor: "white",
-  };
-  const labelStyle: React.CSSProperties = {
-    display: "block", fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4,
-  };
-
   return (
     <div
-      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={onClose}
     >
       <div
-        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 520, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}
+        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 520, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.4)", maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ fontFamily: "Georgia, serif", fontSize: 20, fontWeight: 700, color: "#111827", margin: "0 0 20px" }}>
@@ -158,48 +171,44 @@ function CreateChurchModal({
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: DARK_GREEN, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 12px" }}>
-              Church Info
-            </p>
+            <p style={MODAL_SECTION}>Church Info</p>
             <div style={{ marginBottom: 12 }}>
-              <label style={labelStyle}>Church Name *</label>
-              <input style={inputStyle} value={form.churchName} onChange={(e) => update("churchName", e.target.value)} placeholder="Grace Community Church" />
+              <label style={MODAL_LABEL}>Church Name *</label>
+              <input style={MODAL_INPUT} value={form.churchName} onChange={(e) => update("churchName", e.target.value)} placeholder="Grace Community Church" />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
-                <label style={labelStyle}>City</label>
-                <input style={inputStyle} value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="Nashville" />
+                <label style={MODAL_LABEL}>City</label>
+                <input style={MODAL_INPUT} value={form.city} onChange={(e) => update("city", e.target.value)} placeholder="Nashville" />
               </div>
               <div>
-                <label style={labelStyle}>State</label>
-                <input style={inputStyle} value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="TN" />
+                <label style={MODAL_LABEL}>State</label>
+                <input style={MODAL_INPUT} value={form.state} onChange={(e) => update("state", e.target.value)} placeholder="TN" />
               </div>
             </div>
             <div>
-              <label style={labelStyle}>Phone</label>
-              <input style={inputStyle} value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="(615) 555-0100" />
+              <label style={MODAL_LABEL}>Phone</label>
+              <input style={MODAL_INPUT} value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="(615) 555-0100" />
             </div>
           </div>
 
           <div style={{ height: 1, backgroundColor: "#f3f4f6", margin: "0 0 20px" }} />
 
           <div style={{ marginBottom: 24 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: DARK_GREEN, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 12px" }}>
-              Admin Account
-            </p>
+            <p style={MODAL_SECTION}>Admin Account</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
-                <label style={labelStyle}>First Name</label>
-                <input style={inputStyle} value={form.adminFirst} onChange={(e) => update("adminFirst", e.target.value)} placeholder="Sarah" />
+                <label style={MODAL_LABEL}>First Name</label>
+                <input style={MODAL_INPUT} value={form.adminFirst} onChange={(e) => update("adminFirst", e.target.value)} placeholder="Sarah" />
               </div>
               <div>
-                <label style={labelStyle}>Last Name</label>
-                <input style={inputStyle} value={form.adminLast} onChange={(e) => update("adminLast", e.target.value)} placeholder="Johnson" />
+                <label style={MODAL_LABEL}>Last Name</label>
+                <input style={MODAL_INPUT} value={form.adminLast} onChange={(e) => update("adminLast", e.target.value)} placeholder="Johnson" />
               </div>
             </div>
             <div>
-              <label style={labelStyle}>Admin Email *</label>
-              <input style={inputStyle} type="email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)} placeholder="sarah@gracecc.org" />
+              <label style={MODAL_LABEL}>Admin Email *</label>
+              <input style={MODAL_INPUT} type="email" value={form.adminEmail} onChange={(e) => update("adminEmail", e.target.value)} placeholder="sarah@gracecc.org" />
             </div>
           </div>
 
@@ -214,7 +223,7 @@ function CreateChurchModal({
             <button
               type="submit"
               disabled={saving}
-              style={{ flex: 2, padding: 11, borderRadius: 10, border: "none", backgroundColor: DARK_GREEN, color: "white", fontSize: 14, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}
+              style={{ flex: 2, padding: 11, borderRadius: 10, border: "none", background: `linear-gradient(135deg, ${PURPLE}, #9D4EDD)`, color: "white", fontSize: 14, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}
             >
               {saving ? "Creating…" : "Create Church"}
             </button>
@@ -225,7 +234,7 @@ function CreateChurchModal({
   );
 }
 
-// ── Invite Link Modal (shown after church creation) ────────────────────────────
+// ── Invite Link Modal ─────────────────────────────────────────────────────────
 
 function InviteLinkModal({ link, email, onClose }: { link: string; email: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -239,11 +248,11 @@ function InviteLinkModal({ link, email, onClose }: { link: string; email: string
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={onClose}
     >
       <div
-        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 480, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 480, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ fontSize: 36, marginBottom: 12 }}>🔗</div>
@@ -262,7 +271,7 @@ function InviteLinkModal({ link, email, onClose }: { link: string; email: string
         <div style={{ display: "flex", gap: 10 }}>
           <button
             onClick={copy}
-            style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", backgroundColor: copied ? "#16a34a" : DARK_GREEN, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background-color 0.2s" }}
+            style={{ flex: 1, padding: 11, borderRadius: 10, border: "none", background: copied ? "rgba(22,163,74,0.9)" : `linear-gradient(135deg, ${PURPLE}, #9D4EDD)`, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "background 0.2s" }}
           >
             {copied ? "✓ Copied!" : "Copy Link"}
           </button>
@@ -289,11 +298,11 @@ function ConfirmModal({
 }) {
   return (
     <div
-      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.6)", zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={onCancel}
     >
       <div
-        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 420, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+        style={{ backgroundColor: "white", borderRadius: 16, width: "100%", maxWidth: 420, padding: 32, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ fontSize: 36, marginBottom: 12 }}>{icon}</div>
@@ -331,7 +340,6 @@ export default function ChurchManagementPage() {
   const [actionError, setActionError] = useState("");
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  // Modals
   const [showCreate, setShowCreate] = useState(false);
   const [inviteModal, setInviteModal] = useState<{ link: string; email: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Church | null>(null);
@@ -444,10 +452,10 @@ export default function ChurchManagementPage() {
   if (!loading && accessDenied) {
     return (
       <AppShell navItems={[]}>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-6">
+        <div style={{ minHeight: "100vh", background: BG, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 700, color: "#111827", margin: "0 0 10px" }}>Access Denied</h1>
-          <p className="text-gray-500 text-sm text-center max-w-sm">This area is restricted to master administrators only.</p>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 700, color: TEXT, margin: "0 0 10px" }}>Access Denied</h1>
+          <p style={{ color: MUTED, fontSize: 14, textAlign: "center", maxWidth: 360 }}>This area is restricted to master administrators only.</p>
         </div>
       </AppShell>
     );
@@ -456,79 +464,78 @@ export default function ChurchManagementPage() {
   return (
     <AppShell navItems={[]}>
       {/* Header */}
-      <div style={{ background: `linear-gradient(135deg, ${DARK_GREEN} 0%, #2D6B42 100%)`, padding: "32px 40px" }}>
-        <p className="text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: "#86efac" }}>Master Admin</p>
-        <h1 style={{ color: "white", fontSize: 32, fontWeight: 700, fontFamily: "Georgia, serif", margin: "0 0 8px" }}>
+      <div style={{ background: "linear-gradient(135deg, #0d0720 0%, #1a0f35 100%)", padding: "32px 40px", borderBottom: `1px solid ${BORDER}` }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: GOLD, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px", opacity: 0.8 }}>Master Admin</p>
+        <h1 style={{ color: TEXT, fontSize: 30, fontWeight: 700, fontFamily: "Georgia, serif", margin: "0 0 6px" }}>
           Church Management
         </h1>
-        <p style={{ color: "#bbf7d0", fontSize: 14, margin: 0 }}>
+        <p style={{ color: MUTED, fontSize: 14, margin: 0 }}>
           Create and manage churches, admin accounts, and access.
         </p>
       </div>
 
-      <div className="min-h-screen bg-gray-50" style={{ padding: "28px 32px" }}>
+      <div style={{ minHeight: "100vh", background: BG, padding: "28px 32px" }}>
         {/* Summary cards */}
         {!loading && !pageError && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12, marginBottom: 24 }}>
             {[
-              { label: "Total Churches", value: churches.length, icon: "🏛️", color: "#374151" },
-              { label: "Active Trials",  value: activeTrials,    icon: "⏳", color: "#1d4ed8" },
-              { label: "Paid",           value: active,          icon: "✅", color: "#16a34a" },
-              { label: "Suspended",      value: suspended,       icon: "🚫", color: "#dc2626" },
+              { label: "Total Churches", value: churches.length, icon: "🏛️", color: TEXT },
+              { label: "Active Trials",  value: activeTrials,    icon: "⏳", color: "#93c5fd" },
+              { label: "Paid",           value: active,          icon: "✅", color: "#4ade80" },
+              { label: "Suspended",      value: suspended,       icon: "🚫", color: "#f87171" },
             ].map((c) => (
-              <div key={c.label} style={{ backgroundColor: "white", borderRadius: 12, border: "1px solid #e5e7eb", padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+              <div key={c.label} style={{ backgroundColor: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, padding: "14px 18px" }}>
                 <div style={{ fontSize: 20, marginBottom: 4 }}>{c.icon}</div>
                 <div style={{ fontSize: 24, fontWeight: 900, color: c.color, lineHeight: 1 }}>{c.value}</div>
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>{c.label}</div>
+                <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{c.label}</div>
               </div>
             ))}
           </div>
         )}
 
-        {loading && <div className="text-center py-16 text-gray-400">Loading…</div>}
+        {loading && <div style={{ textAlign: "center", padding: "64px 0", color: MUTED, fontSize: 14 }}>Loading…</div>}
 
         {pageError && !loading && (
-          <div className="rounded-xl border border-red-300 bg-red-50 text-red-700 font-medium" style={{ padding: "14px 20px", marginBottom: 16 }}>
+          <div style={{ borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", backgroundColor: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 500, padding: "14px 20px", marginBottom: 16, fontSize: 13 }}>
             {pageError}
           </div>
         )}
 
         {actionError && (
-          <div className="rounded-xl flex items-center justify-between" style={{ backgroundColor: "#fff7ed", border: "1px solid #fdba74", padding: "10px 16px", color: "#c2410c", fontSize: 13, marginBottom: 16 }}>
+          <div style={{ borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "rgba(251,146,60,0.1)", border: "1px solid rgba(251,146,60,0.3)", padding: "10px 16px", color: "#fb923c", fontSize: 13, marginBottom: 16 }}>
             <span>{actionError}</span>
-            <button onClick={() => setActionError("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#c2410c", fontWeight: 700, fontSize: 16 }}>×</button>
+            <button onClick={() => setActionError("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#fb923c", fontWeight: 700, fontSize: 16 }}>×</button>
           </div>
         )}
 
         {actionSuccess && (
-          <div className="rounded-xl flex items-center justify-between" style={{ backgroundColor: "#f0fdf4", border: "1px solid #86efac", padding: "10px 16px", color: "#15803d", fontSize: 13, marginBottom: 16 }}>
+          <div style={{ borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", backgroundColor: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.25)", padding: "10px 16px", color: "#4ade80", fontSize: 13, marginBottom: 16 }}>
             <span>{actionSuccess}</span>
-            <button onClick={() => setActionSuccess(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#15803d", fontWeight: 700, fontSize: 16 }}>×</button>
+            <button onClick={() => setActionSuccess(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#4ade80", fontWeight: 700, fontSize: 16 }}>×</button>
           </div>
         )}
 
         {!loading && !pageError && (
           <>
             {/* Toolbar */}
-            <div className="flex items-center gap-3 mb-4">
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               <input
                 type="text"
                 placeholder="Search churches, email…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-800"
-                style={{ padding: "10px 16px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: `1px solid ${BORDER}`, background: "rgba(255,255,255,0.05)", color: TEXT, fontSize: 13, outline: "none" }}
               />
               <button
                 onClick={() => setShowCreate(true)}
-                style={{ padding: "10px 20px", borderRadius: 10, border: "none", backgroundColor: DARK_GREEN, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
+                style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: `linear-gradient(135deg, ${PURPLE}, #9D4EDD)`, color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}
               >
                 + Create Church
               </button>
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-gray-200" style={{ overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
+            <div style={{ background: CARD, borderRadius: 16, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
@@ -541,7 +548,7 @@ export default function ChurchManagementPage() {
                   <tbody>
                     {displayed.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="text-center text-gray-400" style={{ ...TD, padding: 48 }}>
+                        <td colSpan={7} style={{ ...TD, padding: 48, textAlign: "center", color: MUTED, borderBottom: "none" }}>
                           {churches.length === 0 ? "No churches yet. Click + Create Church to add one." : "No churches match your search."}
                         </td>
                       </tr>
@@ -549,24 +556,24 @@ export default function ChurchManagementPage() {
                     {displayed.map((church) => {
                       const isActing = actionLoading === church.id;
                       return (
-                        <tr key={church.id} style={{ backgroundColor: isActing ? "#fafafa" : "white" }}>
-                          <td style={{ ...TD, fontWeight: 700, color: "#111827", whiteSpace: "nowrap" }}>{church.name}</td>
-                          <td style={{ ...TD, color: "#6b7280", whiteSpace: "nowrap" }}>
+                        <tr key={church.id} style={{ backgroundColor: isActing ? "rgba(255,255,255,0.03)" : "transparent" }}>
+                          <td style={{ ...TD, fontWeight: 700, color: TEXT, whiteSpace: "nowrap" }}>{church.name}</td>
+                          <td style={{ ...TD, color: MUTED, whiteSpace: "nowrap" }}>
                             {[church.city, church.state].filter(Boolean).join(", ") || "—"}
                           </td>
-                          <td style={{ ...TD, color: "#6b7280" }}>
+                          <td style={{ ...TD, color: MUTED }}>
                             {church.admin?.email ? (
-                              <a href={`mailto:${church.admin.email}`} style={{ color: "#2563eb", textDecoration: "none" }}>
+                              <a href={`mailto:${church.admin.email}`} style={{ color: GOLD, textDecoration: "none" }}>
                                 {church.admin.email}
                               </a>
                             ) : "—"}
                           </td>
                           <td style={TD}><StatusPill status={church.subscription_status} /></td>
-                          <td style={{ ...TD, color: "#6b7280", whiteSpace: "nowrap" }}>{fmtDate(church.trial_ends_at)}</td>
-                          <td style={{ ...TD, color: "#9ca3af", whiteSpace: "nowrap" }}>{fmtDate(church.created_at)}</td>
+                          <td style={{ ...TD, color: MUTED, whiteSpace: "nowrap" }}>{fmtDate(church.trial_ends_at)}</td>
+                          <td style={{ ...TD, color: "rgba(255,255,255,0.3)", whiteSpace: "nowrap" }}>{fmtDate(church.created_at)}</td>
                           <td style={TD}>
                             {isActing ? (
-                              <span style={{ color: "#9ca3af", fontSize: 12 }}>Working…</span>
+                              <span style={{ color: MUTED, fontSize: 12 }}>Working…</span>
                             ) : (
                               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                                 <button
@@ -574,7 +581,7 @@ export default function ChurchManagementPage() {
                                     localStorage.setItem("selected_church_id", church.id);
                                     window.location.href = `/dashboard?churchId=${church.id}`;
                                   }}
-                                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", backgroundColor: DARK_GREEN, color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}
+                                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: `linear-gradient(135deg, ${PURPLE}, #9D4EDD)`, color: "white", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}
                                 >
                                   View Church
                                 </button>
@@ -585,7 +592,7 @@ export default function ChurchManagementPage() {
                                     const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
                                     setOpenMenu({ id: church.id, right: window.innerWidth - rect.right, top: rect.bottom + 4 });
                                   }}
-                                  style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", backgroundColor: openMenu?.id === church.id ? "#f3f4f6" : "white", cursor: "pointer", fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap" }}
+                                  style={{ padding: "6px 12px", borderRadius: 8, border: `1px solid ${BORDER}`, backgroundColor: openMenu?.id === church.id ? "rgba(255,255,255,0.08)" : "transparent", cursor: "pointer", fontSize: 13, fontWeight: 500, color: MUTED, whiteSpace: "nowrap" }}
                                 >
                                   Actions ▾
                                 </button>
@@ -598,8 +605,8 @@ export default function ChurchManagementPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex items-center text-xs text-gray-400" style={{ padding: "10px 14px", borderTop: "1px solid #f3f4f6" }}>
-                Showing <strong className="text-gray-600 mx-1">{displayed.length}</strong> of <strong className="text-gray-600 mx-1">{churches.length}</strong> churches
+              <div style={{ display: "flex", alignItems: "center", fontSize: 12, color: MUTED, padding: "10px 14px", borderTop: `1px solid ${BORDER}` }}>
+                Showing <strong style={{ color: TEXT, margin: "0 4px" }}>{displayed.length}</strong> of <strong style={{ color: TEXT, margin: "0 4px" }}>{churches.length}</strong> churches
               </div>
             </div>
           </>
@@ -623,23 +630,23 @@ export default function ChurchManagementPage() {
           <>
             <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={() => setOpenMenu(null)} />
             <div
-              style={{ position: "fixed", right: openMenu.right, top: openMenu.top, zIndex: 9999, backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 220, overflow: "hidden" }}
+              style={{ position: "fixed", right: openMenu.right, top: openMenu.top, zIndex: 9999, backgroundColor: "#1a1030", border: `1px solid ${BORDER}`, borderRadius: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.5)", minWidth: 220, overflow: "hidden" }}
               onClick={(e) => e.stopPropagation()}
             >
               {items.map((item, i) => {
                 const isDeleteItem = item.action === "delete";
                 return (
                   <div key={i}>
-                    {isDeleteItem && <div style={{ height: 1, backgroundColor: "#e5e7eb", margin: "2px 0" }} />}
+                    {isDeleteItem && <div style={{ height: 1, backgroundColor: BORDER, margin: "2px 0" }} />}
                     <button
                       onClick={() => {
                         setOpenMenu(null);
                         if (item.action === "delete") setConfirmDelete(c);
                         else doAction(c.id, item.action);
                       }}
-                      style={{ width: "100%", padding: "10px 16px", textAlign: "left", fontSize: 13, border: "none", backgroundColor: "white", cursor: "pointer", color: item.destructive ? "#dc2626" : "#374151", fontWeight: item.destructive ? 600 : 400 }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
+                      style={{ width: "100%", padding: "10px 16px", textAlign: "left", fontSize: 13, border: "none", backgroundColor: "transparent", cursor: "pointer", color: item.destructive ? "#f87171" : TEXT, fontWeight: item.destructive ? 600 : 400 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.06)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
                       {item.label}
                     </button>
