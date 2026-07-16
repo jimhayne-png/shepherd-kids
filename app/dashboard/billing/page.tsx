@@ -276,7 +276,20 @@ function BillingContent() {
       const label = status === "past_due" ? "Update Payment Method" : "Manage Subscription";
       return <ActionButton onClick={handlePortal} disabled={working}>{working ? "Loading…" : label}</ActionButton>;
     }
-    return <ActionButton onClick={handleSubscribe} disabled={working}>{working ? "Loading…" : "Subscribe Now — $49 / month"}</ActionButton>;
+    const isDuringTrial = status === "trial";
+    const btnLabel = isDuringTrial ? "Add Payment Method" : "Subscribe Now — $49 / month";
+    return (
+      <div>
+        <ActionButton onClick={handleSubscribe} disabled={working}>
+          {working ? "Loading…" : btnLabel}
+        </ActionButton>
+        {isDuringTrial && !working && (
+          <p style={{ textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 8, marginBottom: 0 }}>
+            You won&apos;t be charged today.
+          </p>
+        )}
+      </div>
+    );
   }
 
   // ── render ──────────────────────────────────────────────────────────────────

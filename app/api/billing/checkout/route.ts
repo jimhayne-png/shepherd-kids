@@ -55,8 +55,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Map remaining app-trial time onto Stripe trial so the customer isn't
-  // charged until their original trial window ends.
+  // Map app-trial time onto Stripe trial.
+  // When an active trial exists, extend by 14 days so first charge falls on Day 28
+  // (14 days free trial + 14 days after payment method added). When the trial has
+  // already expired, give a standard 14-day Stripe trial for late subscribers.
   const now = new Date();
   const trialEnd = church.trial_ends_at ? new Date(church.trial_ends_at) : null;
   const hasActiveTrial = trialEnd && trialEnd > now;
@@ -69,9 +71,11 @@ export async function POST(request: NextRequest) {
   const subscriptionData: SubData = { metadata: { church_id: auth.churchId } };
 
   if (hasActiveTrial) {
-    subscriptionData.trial_end = Math.floor(trialEnd.getTime() / 1000);
+    // Add 14 days to the existing trial end → first charge on Day 28 from signup
+    const extendedEnd = new Date(trialEnd.getTime() + 14 * 24 * 60 * 60 * 1000);
+    subscriptionData.trial_end = Math.floor(extendedEnd.getTime() / 1000);
   } else {
-    // Trial already expired — give a 14-day Stripe trial for new subscribers
+    // Trial already expired — give a 14-day Stripe trial for late subscribers
     subscriptionData.trial_period_days = 14;
   }
 

@@ -10,6 +10,35 @@ function adminClient() {
   );
 }
 
+// ── Rate limiting (in-memory, per-instance) ───────────────────────────────────
+// Protects against burst abuse from a single IP. Resets per deployment instance.
+
+const rlMap = new Map<string, { count: number; resetAt: number }>();
+const RL_MAX    = 5;
+const RL_WINDOW = 15 * 60 * 1000; // 15 minutes
+
+function getIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+function isRateLimited(ip: string): boolean {
+  const now   = Date.now();
+  const entry = rlMap.get(ip);
+  if (!entry || entry.resetAt < now) {
+    rlMap.set(ip, { count: 1, resetAt: now + RL_WINDOW });
+    return false;
+  }
+  if (entry.count >= RL_MAX) return true;
+  entry.count++;
+  return false;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function slugify(text: string): string {
   return text.toLowerCase().trim()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -45,7 +74,22 @@ const DEFAULT_DEPARTMENTS = [
 ];
 
 export async function POST(req: NextRequest) {
+  // Rate limit by IP before doing any work
+  if (isRateLimited(getIp(req))) {
+    return Response.json(
+      { error: "Too many requests. Please wait a few minutes and try again." },
+      { status: 429 }
+    );
+  }
+
   const body = await req.json().catch(() => null);
+
+  // Honeypot: bots fill hidden fields, humans don't
+  const honeypot = typeof body?.website === "string" ? body.website : "";
+  if (honeypot) {
+    // Silently succeed — don't reveal detection to bots
+    return Response.json({ success: true });
+  }
 
   const churchName  = (typeof body?.churchName  === "string" ? body.churchName  : "").trim();
   const city        = (typeof body?.city        === "string" ? body.city        : "").trim();

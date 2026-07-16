@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/ministry-followup",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/trial-reminders",
+      "schedule": "30 9 * * *"
     }
   ]
 }

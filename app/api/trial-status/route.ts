@@ -67,7 +67,7 @@ export async function GET(_req: NextRequest) {
   if (sub?.admin_override_enabled) {
     const overrideUntil = sub.admin_override_until ? new Date(sub.admin_override_until) : null;
     if (!overrideUntil || overrideUntil > now) {
-      return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at });
+      return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at, source: 'override' });
     }
   }
 
@@ -75,12 +75,12 @@ export async function GET(_req: NextRequest) {
 
   // Stripe says active → allow.
   if (stripeStatus && ALLOWED_STATUSES.has(stripeStatus)) {
-    return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at });
+    return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at, source: 'stripe' });
   }
 
   // Stripe says explicitly bad → deny.
   if (stripeStatus && DENIED_STATUSES.has(stripeStatus)) {
-    return Response.json({ expired: true, is_owner: false, trial_ends_at: church.trial_ends_at });
+    return Response.json({ expired: true, is_owner: false, trial_ends_at: church.trial_ends_at, source: 'stripe' });
   }
 
   // Internal trial: churches.subscription_status='trial' with a future trial_ends_at
@@ -88,10 +88,10 @@ export async function GET(_req: NextRequest) {
   if (church.subscription_status === 'trial') {
     const trialEnd = church.trial_ends_at ? new Date(church.trial_ends_at) : null;
     if (trialEnd && trialEnd > now) {
-      return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at });
+      return Response.json({ expired: false, is_owner: false, trial_ends_at: church.trial_ends_at, source: 'trial' });
     }
   }
 
   // No valid trial and no active Stripe subscription → prompt billing setup.
-  return Response.json({ expired: false, needsBilling: true, is_owner: false, trial_ends_at: church.trial_ends_at });
+  return Response.json({ expired: false, needsBilling: true, is_owner: false, trial_ends_at: church.trial_ends_at, source: 'none' });
 }

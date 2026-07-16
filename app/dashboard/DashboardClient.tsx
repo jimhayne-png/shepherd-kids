@@ -138,6 +138,7 @@ export default function DashboardClient({
   const [stats, setStats] = useState<Stats>({ members: null, events: null, prayers: null, safetyReviewsDue: null, waitingVisitors: null });
   const [trialExpired, setTrialExpired] = useState(false);
   const [wizard, setWizard] = useState<WizardState | null>(null);
+  const [trialBanner, setTrialBanner] = useState<{ daysLeft: number } | null>(null);
 
   useEffect(() => {
     if (isPlatformAdmin && churchId) {
@@ -154,6 +155,14 @@ export default function DashboardClient({
           router.push("/dashboard/billing");
         } else if (d.expired) {
           setTrialExpired(true);
+        }
+        // Show banner for app-level trial with 7 or fewer days remaining
+        if (d.source === "trial" && d.trial_ends_at && !d.expired && !d.needsBilling) {
+          const msLeft  = new Date(d.trial_ends_at).getTime() - Date.now();
+          const daysLeft = Math.ceil(msLeft / 86_400_000);
+          if (daysLeft >= 0 && daysLeft <= 7) {
+            setTrialBanner({ daysLeft });
+          }
         }
       })
       .catch(() => {});
@@ -304,6 +313,43 @@ export default function DashboardClient({
       </div>
 
       <div className="px-8 py-8" style={{ backgroundColor: "#0A0814", minHeight: "100vh" }}>
+        {/* Trial expiry banner — shown days 7–14 of app trial */}
+        {trialBanner && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)",
+              borderRadius: 12, padding: "12px 20px", marginBottom: 16,
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <p style={{ color: "#fbbf24", fontWeight: 700, fontSize: 14, margin: 0 }}>
+                Your free trial ends in {trialBanner.daysLeft} day{trialBanner.daysLeft !== 1 ? "s" : ""}.
+              </p>
+              <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, margin: "2px 0 0" }}>
+                Add your payment method now. You won&apos;t be charged today.
+              </p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+              <a
+                href="/dashboard/billing"
+                style={{ padding: "7px 16px", borderRadius: 8, background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "#fff", fontWeight: 700, fontSize: 13, textDecoration: "none", whiteSpace: "nowrap" }}
+              >
+                Add Payment Method
+              </a>
+              <button
+                onClick={() => setTrialBanner(null)}
+                aria-label="Dismiss trial reminder"
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 20, padding: "0 4px", lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Setup wizard progress card — shown while wizard is incomplete */}
         {wizard && !wizard.is_complete && (
           <div
