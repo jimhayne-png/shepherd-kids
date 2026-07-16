@@ -26,7 +26,7 @@ const FEATURES = [
   { label: "Know Every Child",             desc: "Keep care notes, attendance, and family information organized." },
   { label: "Never Lose Track of Visitors", desc: "See who is new and know when follow-up is needed." },
   { label: "Equip Every Volunteer",        desc: "Give classroom volunteers simple, secure tools they can use confidently." },
-  { label: "Save Hours Every Week",        desc: "Replace scattered notes and manual processes with one organized platform." },
+  { label: "Spend More Time Ministering",   desc: "Replace scattered notes and manual processes with one organized ministry platform." },
   { label: "Shepherd Every Journey",       desc: "Track attendance, milestones, birthdays, and ongoing ministry care." },
 ];
 
@@ -176,11 +176,11 @@ export default function StartTrialPage() {
           Know Every Child.<br />
           Shepherd Every Journey.
         </h1>
-        <p style={{ fontSize: 15, color: MUTED, margin: "0 auto 10px", lineHeight: 1.75, maxWidth: 500 }}>
-          Everything your children's ministry needs to securely check in families, know every child, and shepherd every journey.
+        <p style={{ fontSize: 15, color: MUTED, margin: "0 auto 4px", lineHeight: 1.75, maxWidth: 500 }}>
+          Begin your ministry&apos;s free 14-day trial today.
         </p>
         <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", margin: 0 }}>
-          Start Your Free 14-Day Trial &middot; No credit card required &middot; $49/month after the free period.
+          No credit card required today.
         </p>
       </div>
 
@@ -201,15 +201,6 @@ export default function StartTrialPage() {
 
       {/* ── Form card ────────────────────────────────────────────────────── */}
       <div style={{ width: "100%", maxWidth: 580, backgroundColor: CARD, borderRadius: 20, border: `1px solid ${BORDER}`, padding: "36px 32px 40px" }}>
-
-        {/* Pricing notice */}
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>
-            <span style={{ color: "#4ade80", fontWeight: 700 }}>No credit card required</span>
-            {" · "}
-            <span style={{ color: TEXT }}>$49/month after your free trial</span>
-          </p>
-        </div>
 
         {/* Error message */}
         {errorMsg && (
@@ -268,15 +259,18 @@ export default function StartTrialPage() {
               <input id="phone" name="phone" style={INPUT} type="tel" placeholder="(615) 555-0100" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
             </div>
             <div>
-              <label htmlFor="churchEmail" style={LABEL}>Church Email</label>
+              <label htmlFor="churchEmail" style={LABEL}>Church Office Email</label>
               <input id="churchEmail" name="churchEmail" style={INPUT} type="email" placeholder="office@gracecc.org" value={form.churchEmail} onChange={(e) => set("churchEmail", e.target.value)} />
             </div>
           </div>
 
           <div style={DIVIDER} />
 
-          {/* Your Account */}
-          <p style={SECTION_LABEL}>Your Account</p>
+          {/* Primary Administrator */}
+          <p style={SECTION_LABEL}>Primary Administrator</p>
+          <p style={{ fontSize: 13, color: MUTED, margin: "-8px 0 16px", lineHeight: 1.65 }}>
+            This person will manage your ShepherdKids account. You can invite additional administrators and staff at any time.
+          </p>
 
           <div style={{ ...TWO_COL, marginBottom: 14 }}>
             <div>
@@ -291,7 +285,7 @@ export default function StartTrialPage() {
 
           <div style={{ marginBottom: 14 }}>
             <label htmlFor="adminEmail" style={LABEL}>
-              Admin Email <span style={{ color: "#f87171" }} aria-hidden="true">*</span>
+              Administrator Email <span style={{ color: "#f87171" }} aria-hidden="true">*</span>
             </label>
             <input
               id="adminEmail" name="adminEmail"
