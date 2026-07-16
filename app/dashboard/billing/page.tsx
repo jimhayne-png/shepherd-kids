@@ -278,6 +278,11 @@ function BillingContent() {
     }
     const isDuringTrial = status === "trial";
     const btnLabel = isDuringTrial ? "Add Payment Method" : "Subscribe Now — $49 / month";
+    // First charge = app trial end + 14 days (the Stripe trial extension in checkout)
+    const firstChargeDate = isDuringTrial && info?.trialEndsAt
+      ? new Date(new Date(info.trialEndsAt).getTime() + 14 * 24 * 60 * 60 * 1000)
+          .toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : null;
     return (
       <div>
         <ActionButton onClick={handleSubscribe} disabled={working}>
@@ -285,7 +290,9 @@ function BillingContent() {
         </ActionButton>
         {isDuringTrial && !working && (
           <p style={{ textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 8, marginBottom: 0 }}>
-            You won&apos;t be charged today.
+            {firstChargeDate
+              ? <>You won&apos;t be charged today. Your first $49 payment is scheduled for {firstChargeDate}.</>
+              : <>You won&apos;t be charged today.</>}
           </p>
         )}
       </div>

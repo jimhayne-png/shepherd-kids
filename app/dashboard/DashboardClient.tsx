@@ -326,11 +326,16 @@ export default function DashboardClient({
           >
             <div>
               <p style={{ color: "#fbbf24", fontWeight: 700, fontSize: 14, margin: 0 }}>
-                Your free trial ends in {trialBanner.daysLeft} day{trialBanner.daysLeft !== 1 ? "s" : ""}.
+                Keep ShepherdKids Ready for Your Ministry
               </p>
               <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, margin: "2px 0 0" }}>
-                Add your payment method now. You won&apos;t be charged today.
+                Finish setting up billing so your ministry can continue without interruption. You won&apos;t be charged today.
               </p>
+              {trialBanner.daysLeft > 0 && (
+                <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, margin: "4px 0 0" }}>
+                  {trialBanner.daysLeft} day{trialBanner.daysLeft !== 1 ? "s" : ""} remain in your initial free period.
+                </p>
+              )}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
               <a

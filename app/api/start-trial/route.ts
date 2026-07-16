@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { type NextRequest } from "next/server";
+import { sendEmail } from "@/lib/communications/email/resend";
 
 // Public endpoint — no auth required. Creates church + admin user in one shot.
 
@@ -54,6 +55,41 @@ async function uniqueSlug(admin: ReturnType<typeof adminClient>, base: string): 
   let n = 2;
   while (taken.has(`${base}-${n}`)) n++;
   return `${base}-${n}`;
+}
+
+function buildWelcomeEmail(churchName: string, wizardUrl: string): string {
+  return `
+<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1f2937;">
+  <div style="background:linear-gradient(135deg,#0d0720 0%,#1a0f35 100%);padding:28px 32px;border-radius:12px 12px 0 0;">
+    <h1 style="color:white;margin:0;font-size:20px;font-weight:600;">${churchName}</h1>
+    <p style="color:#D4AF37;margin:6px 0 0;font-size:13px;letter-spacing:0.05em;">ShepherdKids — Children's Ministry Platform</p>
+  </div>
+  <div style="background:white;padding:36px 32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
+    <h2 style="color:#7B2CBF;font-size:22px;font-weight:700;margin:0 0 16px;font-family:Georgia,serif;">
+      Welcome to ShepherdKids.
+    </h2>
+    <p style="color:#374151;font-size:15px;line-height:1.75;margin:0 0 16px;">
+      Your free 14-day period has started. ShepherdKids helps your ministry:
+    </p>
+    <ul style="padding:0 0 0 20px;margin:0 0 20px;color:#374151;font-size:15px;line-height:2.1;">
+      <li>Welcome every family safely</li>
+      <li>Know every child</li>
+      <li>Keep attendance organized</li>
+      <li>Follow up with families</li>
+      <li>Equip classroom volunteers</li>
+      <li>Shepherd every journey</li>
+    </ul>
+    <p style="color:#374151;font-size:15px;line-height:1.75;margin:0 0 24px;">
+      Begin with the Getting Started guide to prepare for your first service.
+    </p>
+    <a href="${wizardUrl}"
+       style="display:inline-block;background:linear-gradient(135deg,#7B2CBF,#9D4EDD);color:white;padding:13px 28px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;">
+      Open Getting Started &rarr;
+    </a>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 20px;" />
+    <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">Sent by ShepherdKids</p>
+  </div>
+</div>`.trim();
 }
 
 const DEFAULT_DEPARTMENTS = [
@@ -183,6 +219,22 @@ export async function POST(req: NextRequest) {
   await admin.from("departments").insert(
     DEFAULT_DEPARTMENTS.map((d) => ({ ...d, church_id: church.id }))
   );
+
+  // 6. Welcome email (non-fatal — signup succeeds regardless of delivery)
+  try {
+    const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://app.shepherdkidsapp.com").replace(/\/$/, "");
+    const from = process.env.RESEND_FROM_EMAIL
+      ? `ShepherdKids <${process.env.RESEND_FROM_EMAIL}>`
+      : "ShepherdKids <onboarding@resend.dev>";
+    await sendEmail({
+      to: adminEmail,
+      subject: "Welcome to ShepherdKids",
+      html: buildWelcomeEmail(churchName, `${baseUrl}/dashboard/setup-wizard`),
+      from,
+    });
+  } catch (err) {
+    console.error("[start-trial] Welcome email failed:", err);
+  }
 
   return Response.json({ success: true, church_id: church.id });
 }

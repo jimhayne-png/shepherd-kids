@@ -22,10 +22,12 @@ const US_STATES = [
 ];
 
 const FEATURES = [
-  { label: "Secure Check-In",           desc: "QR codes, label printing, and classroom tracking" },
-  { label: "Parent Communication",      desc: "Real-time alerts and weekly family updates" },
-  { label: "Attendance & Follow-Up",    desc: "Track visits and care for new families" },
-  { label: "Faith Journey Tracking",    desc: "Record decisions and spiritual milestones" },
+  { label: "Welcome Every Family Safely",  desc: "Create a secure and welcoming check-in experience from the first visit." },
+  { label: "Know Every Child",             desc: "Keep care notes, attendance, and family information organized." },
+  { label: "Never Lose Track of Visitors", desc: "See who is new and know when follow-up is needed." },
+  { label: "Equip Every Volunteer",        desc: "Give classroom volunteers simple, secure tools they can use confidently." },
+  { label: "Save Hours Every Week",        desc: "Replace scattered notes and manual processes with one organized platform." },
+  { label: "Shepherd Every Journey",       desc: "Track attendance, milestones, birthdays, and ongoing ministry care." },
 ];
 
 type FormState = {
@@ -170,18 +172,21 @@ export default function StartTrialPage() {
           style={{ width: 160, height: "auto", borderRadius: 12, marginBottom: 20, border: "2px solid rgba(212,175,55,0.5)" }}
         />
         <h1 style={{ fontFamily: "Georgia, serif", fontSize: 32, fontWeight: 700, color: TEXT, margin: "0 0 14px", lineHeight: 1.35 }}>
-          Welcome Every Family.<br />
+          Welcome Every Family Safely.<br />
           Know Every Child.<br />
           Shepherd Every Journey.
         </h1>
-        <p style={{ fontSize: 15, color: MUTED, margin: "0 auto", lineHeight: 1.75, maxWidth: 500 }}>
-          Everything your children's ministry needs to securely check children in, communicate with parents, track attendance, manage volunteers, and care for every family.
+        <p style={{ fontSize: 15, color: MUTED, margin: "0 auto 10px", lineHeight: 1.75, maxWidth: 500 }}>
+          Everything your children's ministry needs to securely check in families, know every child, and shepherd every journey.
+        </p>
+        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", margin: 0 }}>
+          Start Your Free 14-Day Trial &middot; No credit card required &middot; $49/month after the free period.
         </p>
       </div>
 
       {/* ── Feature cards ────────────────────────────────────────────────── */}
       <div style={{
-        width: "100%", maxWidth: 640, marginBottom: 32,
+        width: "100%", maxWidth: 720, marginBottom: 32,
         display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10,
       }}>
         {FEATURES.map((f) => (

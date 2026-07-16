@@ -2,9 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import { type NextRequest } from "next/server";
 import { Resend } from "resend";
 
-// Runs daily via Vercel cron. Sends reminder emails to churches whose
-// app-level trial ends in approximately 7, 3, 1, or 0 days.
-// Days are calculated via Math.round so each reminder fires once per church.
+// Runs daily via Vercel cron. Sends reminder emails on Day 10 (4 days remaining)
+// and Day 14 (trial ends today). Each reminder is sent at most once per church
+// via persistent tracking columns on the churches table.
 
 function adminClient() {
   return createClient(
@@ -21,38 +21,25 @@ type Reminder = {
   cta: string;
 };
 
+// daysLeft key = days remaining in the 14-day trial at time of sending
 const REMINDERS: Record<number, Reminder> = {
-  7: {
-    daysLeft: 7,
-    subject:  "Your ShepherdKids trial is going great!",
-    heading:  "You're halfway through your free trial.",
-    body: `Your ShepherdKids trial has been running for one week, and we hope your children's ministry team is already feeling the difference.<br><br>
-You have full access to everything during your trial — secure check-in, parent communication, attendance tracking, faith journey recording, and more.<br><br>
-To keep everything running without interruption, add your payment method before your trial ends. <strong>You won't be charged today.</strong>`,
-    cta: "Add Payment Method",
-  },
-  3: {
-    daysLeft: 3,
-    subject:  "Only a few days left in your free trial",
-    heading:  "Your trial ends in 3 days.",
-    body: `Keep your check-in records, family profiles, attendance history, and ministry data by adding your payment method today.<br><br>
-<strong>You won't be charged today.</strong> Your first charge occurs after your trial period ends.`,
-    cta: "Add Payment Method",
-  },
-  1: {
-    daysLeft: 1,
-    subject:  "Keep your ministry running without interruption",
-    heading:  "Your trial ends tomorrow.",
-    body: `Don't lose your family records, attendance data, and ministry history. Add your payment method today to keep everything running.<br><br>
-<strong>You won't be charged today.</strong>`,
-    cta: "Continue with ShepherdKids",
+  4: {
+    daysLeft: 4,
+    subject: "Keep ShepherdKids Ready for Your Ministry",
+    heading: "Four days remain in your initial free period.",
+    body: `Your ShepherdKids account has four days remaining in its initial free period.<br><br>
+Finish setting up billing now so your ministry can continue without interruption.<br><br>
+<strong>You will not be charged today.</strong> Once your payment method is added, your church will automatically receive additional time before the first $49 monthly payment.`,
+    cta: "Finish Billing Setup",
   },
   0: {
     daysLeft: 0,
-    subject:  "Add your payment method to continue your ministry",
-    heading:  "Your free trial ends today.",
-    body: `Add your payment method now to keep your ministry running without interruption. All your family records, attendance data, and history will be preserved.<br><br>
-<strong>You won't be charged until after your trial period ends.</strong>`,
+    subject: "Your ShepherdKids Free Period Ends Today",
+    heading: "Your initial free period ends today.",
+    body: `Your initial ShepherdKids free period ends today.<br><br>
+Add your payment method to keep your ministry active.<br><br>
+<strong>You will not be charged today</strong>, and your church will receive additional time before the first $49 monthly payment.<br><br>
+Your church information remains safe even if billing is not completed today.`,
     cta: "Add Payment Method",
   },
 };
@@ -73,7 +60,7 @@ function buildEmail(churchName: string, reminder: Reminder, billingUrl: string):
     </p>
     <a href="${billingUrl}"
        style="display:inline-block;background:linear-gradient(135deg,#7B2CBF,#9D4EDD);color:white;padding:13px 28px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;">
-      ${reminder.cta} →
+      ${reminder.cta} &rarr;
     </a>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 20px;" />
     <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0;">
@@ -84,10 +71,20 @@ function buildEmail(churchName: string, reminder: Reminder, billingUrl: string):
 </div>`.trim();
 }
 
+type ChurchRow = {
+  id: string;
+  name: string;
+  trial_ends_at: string;
+  trial_day10_email_sent_at: string | null;
+  trial_day14_email_sent_at: string | null;
+};
+
 async function processChurch(
   churchId: string,
   churchName: string,
   trialEndsAt: string,
+  day10SentAt: string | null,
+  day14SentAt: string | null,
   resend: Resend,
   baseUrl: string,
 ): Promise<boolean> {
@@ -99,23 +96,25 @@ async function processChurch(
     .select("status")
     .eq("church_id", churchId)
     .maybeSingle();
-
   if (sub?.status === "active" || sub?.status === "trialing") return false;
 
-  // Calculate days remaining (rounded to nearest integer for daily cron matching)
-  const msLeft   = new Date(trialEndsAt).getTime() - Date.now();
+  // Days remaining in the 14-day trial (rounded for daily cron matching)
+  const msLeft  = new Date(trialEndsAt).getTime() - Date.now();
   const daysLeft = Math.round(msLeft / 86_400_000);
   const reminder = REMINDERS[daysLeft];
   if (!reminder) return false;
 
-  // Get primary admin email
+  // Persistent deduplication — skip if this reminder was already delivered
+  if (daysLeft === 4 && day10SentAt) return false;
+  if (daysLeft === 0 && day14SentAt) return false;
+
+  // Primary admin email
   const { data: cu } = await admin
     .from("church_users")
     .select("user_id")
     .eq("church_id", churchId)
     .eq("role", "primary_admin")
     .maybeSingle();
-
   if (!cu?.user_id) return false;
 
   const { data: { user } } = await admin.auth.admin.getUserById(cu.user_id);
@@ -134,10 +133,19 @@ async function processChurch(
       subject: reminder.subject,
       html,
     });
-    return true;
-  } catch {
-    return false;
+  } catch (err) {
+    console.error(`[trial-reminders] Delivery failed for church ${churchId}:`, err);
+    return false; // Leave sent_at null so the next cron run retries
   }
+
+  // Mark as sent only after confirmed delivery
+  if (daysLeft === 4) {
+    await admin.from("churches").update({ trial_day10_email_sent_at: new Date().toISOString() }).eq("id", churchId);
+  } else {
+    await admin.from("churches").update({ trial_day14_email_sent_at: new Date().toISOString() }).eq("id", churchId);
+  }
+
+  return true;
 }
 
 export async function POST(request: NextRequest) {
@@ -153,21 +161,29 @@ export async function POST(request: NextRequest) {
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://app.shepherdkidsapp.com").replace(/\/$/, "");
   const admin   = adminClient();
 
-  // Fetch churches in the reminder window (trial ends within the next ~8 days or ended today)
+  // Window covers Day 14 (trial ends today, ±1d) and Day 10 (4 days left, up to 5.5d away)
   const windowStart = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-  const windowEnd   = new Date(Date.now() + 8 * 24 * 3600 * 1000).toISOString();
+  const windowEnd   = new Date(Date.now() + 6 * 24 * 3600 * 1000).toISOString();
 
   const { data: churches } = await admin
     .from("churches")
-    .select("id, name, trial_ends_at")
+    .select("id, name, trial_ends_at, trial_day10_email_sent_at, trial_day14_email_sent_at")
     .eq("subscription_status", "trial")
     .not("trial_ends_at", "is", null)
     .gte("trial_ends_at", windowStart)
     .lte("trial_ends_at", windowEnd);
 
   let sent = 0;
-  for (const church of churches ?? []) {
-    const ok = await processChurch(church.id, church.name, church.trial_ends_at, resend, baseUrl);
+  for (const church of (churches ?? []) as ChurchRow[]) {
+    const ok = await processChurch(
+      church.id,
+      church.name,
+      church.trial_ends_at,
+      church.trial_day10_email_sent_at,
+      church.trial_day14_email_sent_at,
+      resend,
+      baseUrl,
+    );
     if (ok) sent++;
   }
 

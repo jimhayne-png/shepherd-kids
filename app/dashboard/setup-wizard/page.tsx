@@ -935,9 +935,28 @@ export default function GettingStartedPage() {
               </div>
             </div>
 
-            <PrimaryBtn onClick={handleComplete} loading={saving}>
-              Go to Dashboard →
-            </PrimaryBtn>
+            <div style={{ background: "rgba(22,163,74,0.06)", border: "1px solid rgba(22,163,74,0.2)", borderRadius: 14, padding: "22px 24px" }}>
+              <p style={{ fontSize: 18, fontWeight: 700, color: "#4ade80", fontFamily: "Georgia, serif", margin: "0 0 8px" }}>
+                Your Ministry Is Ready
+              </p>
+              <p style={{ color: MUTED, fontSize: 14, lineHeight: 1.65, margin: "0 0 6px" }}>
+                You have completed the essential steps to begin using ShepherdKids. Finish setting up billing whenever you are ready to keep your ministry active without interruption.
+              </p>
+              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: 13, margin: "0 0 20px" }}>
+                You won&apos;t be charged today.
+              </p>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <PrimaryBtn onClick={handleComplete} loading={saving}>
+                  Go to Dashboard
+                </PrimaryBtn>
+                <a
+                  href="/dashboard/billing"
+                  style={{ padding: "12px 24px", borderRadius: 10, border: `1px solid ${BORDER}`, color: GOLD, fontSize: 15, fontWeight: 600, textDecoration: "none", display: "inline-block" }}
+                >
+                  Add Payment Method
+                </a>
+              </div>
+            </div>
           </div>
         );
       }
