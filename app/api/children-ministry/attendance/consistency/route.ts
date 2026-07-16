@@ -1,6 +1,23 @@
 import { type NextRequest } from 'next/server';
 import { getAuthContext, adminClient } from '@/lib/api-auth';
 
+// Category type — expand here when adding new tiers (e.g. 'excellent' | 'healthy' | 'watch' | 'follow_up' | 'missing')
+type Category = 'new_visitor' | 'regular' | 'inconsistent' | 'needs_attention';
+
+// Isolated so thresholds and tier names can be updated in one place
+function classifyAttendance(
+  totalPresent: number,
+  periodCount: number,
+  firstAttDate: string | null,
+  oldestPeriod: string,
+): Category {
+  if (firstAttDate && firstAttDate >= oldestPeriod) return 'new_visitor';
+  if (periodCount === 0) return 'needs_attention';
+  if (totalPresent >= 6) return 'regular';
+  if (totalPresent >= 3) return 'inconsistent';
+  return 'needs_attention';
+}
+
 type AttRow = { child_id: string; session_date: string; present: boolean };
 type AllAttRow = { child_id: string; session_date: string };
 type ChildRow = {
@@ -51,8 +68,32 @@ export async function GET(request: NextRequest) {
 
   const children = (childRows ?? []) as ChildRow[];
 
-  if (!children.length || !periods.length) {
+  // No children in the program at all
+  if (!children.length) {
     return Response.json({ periods, children: [] });
+  }
+
+  // Children exist but no attendance records yet — return children so UI can show the right message
+  if (!periods.length) {
+    const emptyChildren = children.map(c => ({
+      id: c.id,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      grade: c.grade,
+      date_of_birth: c.date_of_birth,
+      parent1_name: c.parent1_name,
+      parent1_phone: c.parent1_phone,
+      parent1_email: c.parent1_email,
+      parent2_name: c.parent2_name,
+      attendance: [] as boolean[],
+      total_present: 0,
+      pct: 0,
+      first_attendance_date: null as string | null,
+      last_attendance_date: null as string | null,
+      has_care_notes: !!(c.allergies || c.medical_notes),
+      category: 'needs_attention' as const,
+    }));
+    return Response.json({ periods: [], children: emptyChildren });
   }
 
   const childIds = children.map(c => c.id);
@@ -98,16 +139,7 @@ export async function GET(request: NextRequest) {
     const last_attendance_date = lastDate[c.id] ?? null;
     const has_care_notes = !!(c.allergies || c.medical_notes);
 
-    let category: 'new_visitor' | 'regular' | 'inconsistent' | 'needs_attention';
-    if (first_attendance_date && first_attendance_date >= oldestPeriod) {
-      category = 'new_visitor';
-    } else if (total_present >= 6) {
-      category = 'regular';
-    } else if (total_present >= 3) {
-      category = 'inconsistent';
-    } else {
-      category = 'needs_attention';
-    }
+    const category = classifyAttendance(total_present, periods.length, first_attendance_date, oldestPeriod);
 
     return {
       id: c.id,

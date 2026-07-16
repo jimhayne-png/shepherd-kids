@@ -167,7 +167,7 @@ export default function AttendancePage() {
   const [consistency, setConsistency] = useState<ConsistencyData | null>(null);
   const [loadingCons, setLoadingCons] = useState(false);
   const [consFetched, setConsFetched] = useState(false);
-  const [toggling,    setToggling]    = useState<string | null>(null);
+  const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [gradeFilter, setGradeFilter] = useState("");
   const [catFilter,   setCatFilter]   = useState("");
   const [search,      setSearch]      = useState("");
@@ -245,52 +245,6 @@ export default function AttendancePage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [drawer]);
-
-  // ── Toggle attendance cell ────────────────────────────────────────────────
-  async function toggleAttendance(childId: string, date: string, currently: boolean) {
-    if (!token || toggling) return;
-    setToggling(`${childId}:${date}`);
-
-    // Optimistic local update
-    setConsistency(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        children: prev.children.map(c => {
-          if (c.id !== childId) return c;
-          const idx = prev.periods.indexOf(date);
-          if (idx < 0) return c;
-          const att = [...c.attendance];
-          att[idx] = !currently;
-          const total_present = att.filter(Boolean).length;
-          const pct = prev.periods.length > 0 ? Math.round((total_present / prev.periods.length) * 100) : 0;
-          const oldest = prev.periods[prev.periods.length - 1] ?? "";
-          let category: Category;
-          if (c.first_attendance_date && c.first_attendance_date >= oldest) {
-            category = "new_visitor";
-          } else if (total_present >= 6) {
-            category = "regular";
-          } else if (total_present >= 3) {
-            category = "inconsistent";
-          } else {
-            category = "needs_attention";
-          }
-          return { ...c, attendance: att, total_present, pct, category };
-        }),
-      };
-    });
-
-    try {
-      await fetch("/api/children-ministry/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() },
-        body: JSON.stringify({ childId, sessionDate: date, present: !currently }),
-      });
-      await refreshConsistency(token, drawer?.id);
-    } finally {
-      setToggling(null);
-    }
-  }
 
   // ── CSV export ────────────────────────────────────────────────────────────
   function exportCSV() {
@@ -544,6 +498,65 @@ export default function AttendancePage() {
       );
     }
 
+    if (consistency.periods.length === 0) {
+      return (
+        <div style={{ maxWidth: 560 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: GOLD, margin: "0 0 14px" }}>
+            Attendance Consistency
+          </p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: TEXT, fontFamily: "Georgia, serif", margin: "0 0 16px", lineHeight: 1.4 }}>
+            Your attendance history begins with your first check-in session.
+          </h2>
+          <p style={{ fontSize: 14, color: MUTED, lineHeight: 1.75, margin: "0 0 10px" }}>
+            ShepherdKids automatically builds attendance consistency as your ministry checks children in each week.
+          </p>
+          <p style={{ fontSize: 14, color: MUTED, lineHeight: 1.75, margin: "0 0 16px" }}>
+            Once your first check-in session is complete, this page will begin helping you identify:
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <li style={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }}>🟢 Consistent attendance</li>
+            <li style={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }}>🟡 Children beginning to miss services</li>
+            <li style={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }}>🔴 Families who may benefit from follow-up</li>
+            <li style={{ fontSize: 14, color: "rgba(255,255,255,0.8)" }}>⭐ New visitors becoming regular attendees</li>
+          </ul>
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", margin: "0 0 28px" }}>
+            No additional setup is required.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-start" }}>
+            <Link
+              href="/dashboard/children-ministry/checkin-setup"
+              style={{
+                display: "inline-block", padding: "13px 28px", borderRadius: 10,
+                background: `linear-gradient(135deg, ${PURPLE}, #9D4EDD)`,
+                color: TEXT, fontSize: 14, fontWeight: 700, textDecoration: "none",
+              }}
+            >
+              Create Your First Session
+            </Link>
+            <button
+              onClick={() => setLearnMoreOpen(o => !o)}
+              style={{ background: "none", border: "none", color: GOLD, fontSize: 13, fontWeight: 600, cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 3 }}
+            >
+              {learnMoreOpen ? "Hide explanation ▲" : "Learn how Attendance Consistency works ▼"}
+            </button>
+            {learnMoreOpen && (
+              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: "18px 20px", maxWidth: 520 }}>
+                <p style={{ fontSize: 13, color: MUTED, lineHeight: 1.8, margin: "0 0 10px" }}>
+                  Attendance Consistency tracks how regularly each registered child attends over the last 8 sessions.
+                  Each week your ministry runs a check-in session, ShepherdKids records attendance and builds a picture
+                  of each child&apos;s engagement over time.
+                </p>
+                <p style={{ fontSize: 13, color: MUTED, lineHeight: 1.8, margin: 0 }}>
+                  Children are grouped into categories based on their attendance pattern, helping your team know
+                  who to celebrate and who may benefit from a personal follow-up.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     const periods = consistency.periods;
 
     return (
@@ -660,30 +673,21 @@ export default function AttendancePage() {
                         )}
                       </div>
                     </td>
-                    {/* Attendance dot cells */}
-                    {child.attendance.map((present, idx) => {
-                      const key = `${child.id}:${periods[idx]}`;
-                      return (
-                        <td key={periods[idx]} style={{ textAlign: "center", padding: "11px 8px" }}>
-                          <button
-                            onClick={e => { e.stopPropagation(); toggleAttendance(child.id, periods[idx], present); }}
-                            disabled={!!toggling}
-                            aria-label={`${child.first_name} ${child.last_name}, ${fmtShort(periods[idx])}: ${present ? "present — click to mark absent" : "absent — click to mark present"}`}
-                            aria-pressed={present}
-                            style={{
-                              width: 26, height: 26, borderRadius: "50%", border: "none",
-                              cursor: toggling ? "not-allowed" : "pointer",
-                              background: present ? PURPLE : "rgba(255,255,255,0.1)",
-                              opacity: toggling === key ? 0.4 : 1,
-                              display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto",
-                              transition: "background 0.15s, opacity 0.15s",
-                            }}
-                          >
-                            {present && <span style={{ color: TEXT, fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>}
-                          </button>
-                        </td>
-                      );
-                    })}
+                    {/* Attendance dot cells — read-only */}
+                    {child.attendance.map((present, idx) => (
+                      <td key={periods[idx]} style={{ textAlign: "center", padding: "11px 8px" }}>
+                        <div
+                          aria-label={`${child.first_name} ${child.last_name}, ${fmtShort(periods[idx])}: ${present ? "present" : "absent"}`}
+                          style={{
+                            width: 26, height: 26, borderRadius: "50%",
+                            background: present ? PURPLE : "rgba(255,255,255,0.1)",
+                            display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto",
+                          }}
+                        >
+                          {present && <span style={{ color: TEXT, fontSize: 11, fontWeight: 700, lineHeight: 1 }}>✓</span>}
+                        </div>
+                      </td>
+                    ))}
                     {/* Total */}
                     <td style={{ textAlign: "center", padding: "11px 10px" }}>
                       <span style={{
@@ -715,8 +719,7 @@ export default function AttendancePage() {
         )}
 
         <p style={{ fontSize: 12, color: MUTED, marginTop: 12 }}>
-          Showing {filteredChildren.length} of {consistency.children.length} children ·
-          Click a row to view details · Click a dot to mark attendance
+          Showing {filteredChildren.length} of {consistency.children.length} children · Click a row to view details
         </p>
       </>
     );
