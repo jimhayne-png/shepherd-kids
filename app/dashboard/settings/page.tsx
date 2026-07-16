@@ -488,8 +488,8 @@ export default function SettingsPage() {
 
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, padding: "16px 18px", background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER}`, borderRadius: 10 }}>
                   <div>
-                    <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 600, color: TEXT }}>Run Setup Wizard Again</p>
-                    <p style={{ margin: 0, fontSize: 12, color: MUTED }}>Restart the first-time setup wizard to reconfigure your church profile, classrooms, or service schedule.</p>
+                    <p style={{ margin: "0 0 3px", fontSize: 14, fontWeight: 600, color: TEXT }}>Return to Getting Started</p>
+                    <p style={{ margin: 0, fontSize: 12, color: MUTED }}>Return to Getting Started to review or update your church information, classrooms, and service setup.</p>
                   </div>
                   <button
                     onClick={async () => {
@@ -498,7 +498,7 @@ export default function SettingsPage() {
                     }}
                     style={{ padding: "9px 22px", flexShrink: 0, border: `1px solid ${BORDER}`, background: "none", color: GOLD, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
                   >
-                    Launch Wizard
+                    Open Getting Started
                   </button>
                 </div>
 

@@ -315,7 +315,7 @@ export default function DashboardClient({
           >
             <div style={{ flex: 1 }}>
               <p style={{ color: "#D4AF37", fontWeight: 700, fontSize: 14, margin: "0 0 4px" }}>
-                ⚙️ Setup Wizard — {wizard.completed_steps.length} of 8 steps complete
+                ⭐ Getting Started — {wizard.completed_steps.length} of 8 steps complete
               </p>
               <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 4, marginTop: 8 }}>
                 <div style={{ height: "100%", borderRadius: 4, background: "linear-gradient(90deg, #7B2CBF, #9D4EDD)", width: `${(wizard.completed_steps.length / 8) * 100}%`, transition: "width 0.4s ease" }} />
