@@ -4,7 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const ACCENT = "#F28C28";
+const BG     = "#08060D";
+const CARD   = "#120A1F";
+const BORDER = "rgba(212,175,55,0.18)";
+const GOLD   = "#D4AF37";
+const PURPLE = "#7B2CBF";
+const MUTED  = "rgba(255,255,255,0.5)";
 const supabase = createClient();
 
 type CheckinRecord = {
@@ -164,14 +169,14 @@ export default function ClassroomPage() {
   const checkedOutRecords = records.filter((r: CheckinRecord) => r.checked_out_at);
 
   if (loading) return (
-    <div style={{ minHeight: "100dvh", backgroundColor: "#1a2e1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "white", fontSize: 24, fontWeight: 600 }}>Loading…</div>
+    <div style={{ minHeight: "100dvh", backgroundColor: BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: MUTED, fontSize: 24, fontWeight: 600 }}>Loading…</div>
     </div>
   );
 
   if (error) return (
-    <div style={{ minHeight: "100dvh", backgroundColor: "#1a2e1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "white", textAlign: "center" }}>
+    <div style={{ minHeight: "100dvh", backgroundColor: BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "rgba(255,255,255,0.8)", textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
         <p style={{ fontSize: 20 }}>{error}</p>
       </div>
@@ -179,9 +184,9 @@ export default function ClassroomPage() {
   );
 
   return (
-    <div style={{ minHeight: "100dvh", backgroundColor: "#f3f4f6", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100dvh", backgroundColor: BG, display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div style={{ backgroundColor: "#1a2e1a", padding: "20px 28px" }}>
+      <div style={{ background: "linear-gradient(135deg, #08060D 0%, #1C0A30 100%)", padding: "20px 28px", borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <h1 style={{ color: "white", fontSize: 28, fontWeight: 800, margin: 0, fontFamily: "Georgia, serif" }}>{room?.name ?? "Classroom"}</h1>
@@ -205,15 +210,15 @@ export default function ClassroomPage() {
         {!session && (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>🕐</div>
-            <p style={{ fontSize: 20, color: "#6b7280", fontWeight: 600 }}>No open session</p>
-            <p style={{ fontSize: 15, color: "#9ca3af" }}>Check-in sessions will appear automatically when opened</p>
+            <p style={{ fontSize: 20, color: MUTED, fontWeight: 600 }}>No open session</p>
+            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.4)" }}>Check-in sessions will appear automatically when opened</p>
           </div>
         )}
 
         {/* Checked in */}
         {checkedInRecords.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
               Checked In ({checkedInRecords.length})
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
@@ -227,7 +232,7 @@ export default function ClassroomPage() {
         {/* Checked out */}
         {checkedOutRecords.length > 0 && (
           <div>
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
               Checked Out ({checkedOutRecords.length})
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
@@ -241,8 +246,8 @@ export default function ClassroomPage() {
         {session && records.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>👋</div>
-            <p style={{ fontSize: 20, color: "#6b7280", fontWeight: 600 }}>No children checked in yet</p>
-            <p style={{ fontSize: 15, color: "#9ca3af" }}>Children will appear here as they check in</p>
+            <p style={{ fontSize: 20, color: MUTED, fontWeight: 600 }}>No children checked in yet</p>
+            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.4)" }}>Children will appear here as they check in</p>
           </div>
         )}
       </div>
@@ -252,7 +257,7 @@ export default function ClassroomPage() {
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
           <div style={{ backgroundColor: "white", borderRadius: 24, padding: 36, width: "100%", maxWidth: 460, boxShadow: "0 24px 60px rgba(0,0,0,0.35)" }}>
             <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Check Out</h2>
-            <p style={{ fontSize: 18, color: ACCENT, fontWeight: 700, marginBottom: 20 }}>{checkoutRecord.child_name}</p>
+            <p style={{ fontSize: 18, color: PURPLE, fontWeight: 700, marginBottom: 20 }}>{checkoutRecord.child_name}</p>
 
             {checkoutStep === "enter" && (
               <>
@@ -286,7 +291,7 @@ export default function ClassroomPage() {
                   <button onClick={() => { setCheckoutRecord(null); setCheckoutInput(""); setCheckoutName(""); setCheckoutStep("enter"); setCheckoutError(""); }} style={{ flex: 1, padding: "16px", borderRadius: 14, border: "2px solid #e5e7eb", backgroundColor: "white", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
                     Cancel
                   </button>
-                  <button onClick={handleVerify} disabled={!checkoutInput.trim() || !checkoutName.trim() || checkingOut} style={{ flex: 2, padding: "16px", borderRadius: 14, border: "none", backgroundColor: ACCENT, color: "white", fontSize: 16, fontWeight: 800, cursor: "pointer", opacity: (!checkoutInput.trim() || !checkoutName.trim() || checkingOut) ? 0.5 : 1 }}>
+                  <button onClick={handleVerify} disabled={!checkoutInput.trim() || !checkoutName.trim() || checkingOut} style={{ flex: 2, padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "white", fontSize: 16, fontWeight: 800, cursor: "pointer", opacity: (!checkoutInput.trim() || !checkoutName.trim() || checkingOut) ? 0.5 : 1 }}>
                     {checkingOut ? "Verifying…" : "Verify →"}
                   </button>
                 </div>
@@ -344,33 +349,33 @@ function ChildCard({ record, onCheckout, checkedOut, requestState, onRequestPare
 
   return (
     <div style={{
-      backgroundColor: checkedOut ? "#f9fafb" : "white",
+      backgroundColor: checkedOut ? "rgba(255,255,255,0.03)" : CARD,
       borderRadius: 20,
       padding: "20px",
-      boxShadow: checkedOut ? "none" : "0 2px 12px rgba(0,0,0,0.07)",
-      border: `2px solid ${checkedOut ? "#e5e7eb" : "#f3f4f6"}`,
-      opacity: checkedOut ? 0.65 : 1,
+      boxShadow: checkedOut ? "none" : "0 2px 20px rgba(0,0,0,0.4)",
+      border: `1px solid ${checkedOut ? "rgba(255,255,255,0.08)" : BORDER}`,
+      opacity: checkedOut ? 0.6 : 1,
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: "#111827" }}>{record.child_name}</span>
+            <span style={{ fontSize: 22, fontWeight: 900, color: "#ffffff" }}>{record.child_name}</span>
             {record.is_new_visitor && !checkedOut && (
-              <span style={{ backgroundColor: ACCENT, color: "white", fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 16 }}>🆕 NEW</span>
+              <span style={{ backgroundColor: PURPLE, color: "white", fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 16 }}>🆕 NEW</span>
             )}
             {checkedOut && (
               <span style={{ backgroundColor: "#d1fae5", color: "#059669", fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 16 }}>✅ OUT</span>
             )}
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#374151", fontFamily: "monospace", letterSpacing: "0.12em" }}>{record.security_code}</div>
-          <div style={{ fontSize: 13, color: "#9ca3af", marginTop: 2 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "rgba(255,255,255,0.85)", fontFamily: "monospace", letterSpacing: "0.12em" }}>{record.security_code}</div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
             In: {fmtTime(record.checked_in_at)}{record.checked_out_at ? ` · Out: ${fmtTime(record.checked_out_at)}` : ""}
           </div>
         </div>
         {!checkedOut && onCheckout && (
           <button
             onClick={onCheckout}
-            style={{ backgroundColor: "#1a2e1a", color: "white", fontWeight: 700, fontSize: 14, padding: "10px 16px", borderRadius: 12, border: "none", cursor: "pointer", flexShrink: 0 }}
+            style={{ background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)", color: "white", fontWeight: 700, fontSize: 14, padding: "10px 16px", borderRadius: 12, border: "none", cursor: "pointer", flexShrink: 0 }}
           >
             Check Out →
           </button>
@@ -378,18 +383,18 @@ function ChildCard({ record, onCheckout, checkedOut, requestState, onRequestPare
       </div>
 
       {hasCareNotes && (
-        <div style={{ backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 12, padding: "10px 12px", marginTop: 10 }}>
-          <p style={{ fontSize: 10, fontWeight: 800, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Care Notes</p>
+        <div style={{ backgroundColor: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 12, padding: "10px 12px", marginTop: 10 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: "#fbbf24", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Care Notes</p>
           {hasAllergy && (
             <div style={{ backgroundColor: "#dc2626", color: "white", fontWeight: 800, fontSize: 13, padding: "6px 10px", borderRadius: 8, marginBottom: 4 }}>
               ALLERGY: {allergyText}
             </div>
           )}
           {record.medical_notes && (
-            <p style={{ fontSize: 13, color: "#92400e", margin: "4px 0 0" }}><strong>Medical:</strong> {record.medical_notes}</p>
+            <p style={{ fontSize: 13, color: "#fbbf24", margin: "4px 0 0" }}><strong>Medical:</strong> {record.medical_notes}</p>
           )}
           {record.special_instructions && (
-            <p style={{ fontSize: 13, color: "#92400e", margin: "4px 0 0" }}><strong>Instructions:</strong> {record.special_instructions}</p>
+            <p style={{ fontSize: 13, color: "#fbbf24", margin: "4px 0 0" }}><strong>Instructions:</strong> {record.special_instructions}</p>
           )}
         </div>
       )}
@@ -398,7 +403,7 @@ function ChildCard({ record, onCheckout, checkedOut, requestState, onRequestPare
         <button
           onClick={onRequestParent}
           disabled={requestState === "sending" || requestState === "sent"}
-          style={{ marginTop: 10, width: "100%", padding: "10px 14px", borderRadius: 12, border: "1px solid #4ade80", backgroundColor: requestState === "sent" ? "#f0fdf4" : "transparent", color: requestState === "error" ? "#dc2626" : "#16a34a", fontWeight: 700, fontSize: 13, cursor: requestState === "sending" || requestState === "sent" ? "default" : "pointer", opacity: requestState === "sending" ? 0.6 : 1 }}
+          style={{ marginTop: 10, width: "100%", padding: "10px 14px", borderRadius: 12, border: `1px solid rgba(212,175,55,0.4)`, backgroundColor: requestState === "sent" ? "rgba(74,222,128,0.08)" : "transparent", color: requestState === "error" ? "#f87171" : requestState === "sent" ? "#4ade80" : GOLD, fontWeight: 700, fontSize: 13, cursor: requestState === "sending" || requestState === "sent" ? "default" : "pointer", opacity: requestState === "sending" ? 0.6 : 1 }}
         >
           {requestState === "sending" ? "Sending text…" : requestState === "sent" ? "Text sent to parent ✓" : requestState === "error" ? "Failed — tap to retry" : "Request Parent"}
         </button>

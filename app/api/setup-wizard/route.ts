@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await admin
     .from('church_setup_wizard')
-    .select('current_step, completed_steps, is_complete')
+    .select('current_step, completed_steps, is_complete, dismissed_at')
     .eq('church_id', ctx.churchId)
     .single();
 
@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest) {
 
   const { data: current } = await admin
     .from('church_setup_wizard')
-    .select('current_step, completed_steps, is_complete')
+    .select('current_step, completed_steps, is_complete, dismissed_at')
     .eq('church_id', ctx.churchId)
     .single();
 
@@ -73,12 +73,15 @@ export async function PATCH(req: NextRequest) {
       current_step: 8,
       is_complete: true,
     };
+  } else if (action === 'dismiss') {
+    update = { ...update, dismissed_at: new Date().toISOString() };
   } else if (action === 'reset') {
     update = {
       ...update,
       current_step: 1,
       completed_steps: [],
       is_complete: false,
+      dismissed_at: null,
     };
   } else {
     return Response.json({ error: 'Invalid action' }, { status: 400 });
@@ -88,7 +91,7 @@ export async function PATCH(req: NextRequest) {
     .from('church_setup_wizard')
     .update(update)
     .eq('church_id', ctx.churchId)
-    .select('current_step, completed_steps, is_complete')
+    .select('current_step, completed_steps, is_complete, dismissed_at')
     .single();
 
   if (error) return Response.json({ error: error.message }, { status: 500 });

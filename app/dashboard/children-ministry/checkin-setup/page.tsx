@@ -130,6 +130,17 @@ export default function CheckinSetupPage() {
   const [letterSaved, setLetterSaved] = useState(false);
   const [letterLoaded, setLetterLoaded] = useState(false);
 
+  // Read ?tab= from URL on mount so deep links (e.g. from the wizard) open the correct tab.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    const valid: typeof tab[] = ["rooms", "templates", "sessions", "automation", "label-printing", "general", "locations"];
+    if (t && (valid as string[]).includes(t)) {
+      setTab(t as typeof tab);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (tab === "automation" && !loading && !letterLoaded) {
       loadLetterTemplate();

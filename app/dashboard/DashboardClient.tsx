@@ -115,7 +115,7 @@ type Stats = {
 
 type Church = { id: string; name: string };
 
-type WizardState = { current_step: number; completed_steps: number[]; is_complete: boolean };
+type WizardState = { current_step: number; completed_steps: number[]; is_complete: boolean; dismissed_at: string | null };
 
 type Props = {
   userId: string;
@@ -176,7 +176,7 @@ export default function DashboardClient({
       .then((d) => {
         if (!d?.wizard) return;
         setWizard(d.wizard);
-        if (!d.wizard.is_complete) {
+        if (!d.wizard.is_complete && !d.wizard.dismissed_at) {
           router.push("/dashboard/setup-wizard");
         }
       })

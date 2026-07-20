@@ -43,7 +43,7 @@ const TIMEZONES = [
 ];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type WizardState = { current_step: number; completed_steps: number[]; is_complete: boolean };
+type WizardState = { current_step: number; completed_steps: number[]; is_complete: boolean; dismissed_at: string | null };
 type Room = { id: string; name: string; min_age: number | null; max_age: number | null; is_active: boolean };
 
 // ── Shared UI helpers ─────────────────────────────────────────────────────────
@@ -685,7 +685,7 @@ export default function GettingStartedPage() {
             </p>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <GoldBtn href="/dashboard/children-ministry/checkin-setup">
+              <GoldBtn href="/dashboard/children-ministry/checkin-setup?tab=templates">
                 Create My First Template ↗
               </GoldBtn>
               <PrimaryBtn onClick={() => completeStep(4)}>
@@ -975,7 +975,10 @@ export default function GettingStartedPage() {
           <span style={{ color: TEXT, fontWeight: 700, fontSize: 16 }}>ShepherdKids — Getting Started</span>
         </div>
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={async () => {
+            await patchWizard({ action: "dismiss" });
+            router.push("/dashboard");
+          }}
           style={{ background: "none", border: "none", color: MUTED, cursor: "pointer", fontSize: 13 }}
         >
           Finish Later →
