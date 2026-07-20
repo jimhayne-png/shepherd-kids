@@ -61,7 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
     children: [
       { label: "Parents",                     href: "/dashboard/children-ministry/parents" },
       { label: "Parent Communication",        href: "/dashboard/children-ministry/parent-update" },
-      { label: "Household Records",           href: "/dashboard/children-ministry/visitors" },
+      { label: "Household Records",           href: "/dashboard/children-ministry/parents" },
       { label: "Annual Family Safety Review", href: "/dashboard/children-ministry/family-safety-review" },
     ],
   },
