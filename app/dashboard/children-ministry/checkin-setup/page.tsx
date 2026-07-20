@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
@@ -16,6 +16,9 @@ type Room = { id: string; name: string; min_age: number | null; max_age: number 
 type Template = { id: string; name: string; typical_day: string | null; typical_time: string | null; is_active: boolean };
 type Session = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string; kiosk_pin: string };
 type Token = { id: string; token: string; label: string; is_active: boolean };
+
+const VALID_TABS = ["rooms", "templates", "sessions", "automation", "label-printing", "general", "locations"] as const;
+type Tab = typeof VALID_TABS[number];
 
 const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -46,14 +49,16 @@ async function copyText(text: string) {
   await navigator.clipboard.writeText(text).catch(() => {});
 }
 
-export default function CheckinSetupPage() {
+function CheckinSetupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const selectedChurchIdRef = useRef<string | null>(null);
   function ch(): Record<string, string> {
     return selectedChurchIdRef.current ? { "x-selected-church-id": selectedChurchIdRef.current } : {};
   }
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"rooms" | "templates" | "sessions" | "automation" | "label-printing" | "general" | "locations">("rooms");
+  const requestedTab = searchParams.get("tab");
+  const [tab, setTab] = useState<Tab>("rooms");
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -130,16 +135,11 @@ export default function CheckinSetupPage() {
   const [letterSaved, setLetterSaved] = useState(false);
   const [letterLoaded, setLetterLoaded] = useState(false);
 
-  // Read ?tab= from URL on mount so deep links (e.g. from the wizard) open the correct tab.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("tab");
-    const valid: typeof tab[] = ["rooms", "templates", "sessions", "automation", "label-printing", "general", "locations"];
-    if (t && (valid as string[]).includes(t)) {
-      setTab(t as typeof tab);
+    if (requestedTab && VALID_TABS.includes(requestedTab as Tab)) {
+      setTab(requestedTab as Tab);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [requestedTab]);
 
   useEffect(() => {
     if (tab === "automation" && !loading && !letterLoaded) {
@@ -457,7 +457,7 @@ export default function CheckinSetupPage() {
         {/* Tabs */}
         <div className="flex gap-1 mb-8 w-fit flex-wrap" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)", borderRadius: "16px", padding: "6px" }}>
           {(["general", "rooms", "templates", "sessions", "automation", "label-printing", "locations"] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
+            <button key={t} onClick={() => { setTab(t); router.replace(`/dashboard/children-ministry/checkin-setup?tab=${t}`, { scroll: false }); }} className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors" style={{ backgroundColor: tab === t ? ACCENT : "transparent", color: tab === t ? "white" : "#A9A9B8" }}>
               {t === "general" ? "General" : t === "rooms" ? "Rooms" : t === "templates" ? "Templates" : t === "sessions" ? "Sessions" : t === "automation" ? "Automation" : t === "label-printing" ? "Label Printing" : "Check-In Locations"}
             </button>
           ))}
@@ -1704,5 +1704,13 @@ export default function CheckinSetupPage() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+export default function CheckinSetupPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckinSetupContent />
+    </Suspense>
   );
 }
