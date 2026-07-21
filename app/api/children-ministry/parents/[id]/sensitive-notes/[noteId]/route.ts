@@ -37,14 +37,16 @@ export async function PATCH(
     return Response.json({ error: 'No changes provided' }, { status: 400 });
   }
 
-  const { error } = await adminClient()
+  const { data, error } = await adminClient()
     .from('cm_family_sensitive_notes')
     .update(updateData)
     .eq('id', noteId)
     .eq('family_id', id)
-    .eq('church_id', auth.churchId);
+    .eq('church_id', auth.churchId)
+    .select('id');
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
+  if (!data || data.length === 0) return Response.json({ error: 'Not found' }, { status: 404 });
 
   await logChurchAudit({
     churchId: auth.churchId,

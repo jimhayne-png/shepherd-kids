@@ -106,9 +106,9 @@ function SectionCard({ title, icon, children }: { title: string; icon: string; c
   );
 }
 
-function AdultCard({ firstName, lastName, role, phone, email, isAuthorizedPickup }: {
+function AdultCard({ firstName, lastName, role, phone, email, isAuthorizedPickup, onEdit }: {
   firstName: string; lastName: string; role: string;
-  phone: string | null; email: string | null; isAuthorizedPickup?: boolean;
+  phone: string | null; email: string | null; isAuthorizedPickup?: boolean; onEdit?: () => void;
 }) {
   return (
     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.15)", borderRadius: "14px", padding: "18px 20px" }}>
@@ -121,8 +121,11 @@ function AdultCard({ firstName, lastName, role, phone, email, isAuthorizedPickup
         }}>
           {firstName[0]}{lastName[0]}
         </div>
-        <div>
-          <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "14px", margin: 0 }}>{firstName} {lastName}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+            <p style={{ fontWeight: 700, color: "#ffffff", fontSize: "14px", margin: 0 }}>{firstName} {lastName}</p>
+            {onEdit && <button onClick={onEdit} style={LINK_BTN}>Edit</button>}
+          </div>
           <div style={{ display: "flex", gap: "6px", marginTop: "3px", flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ fontSize: "11px", color: MUTED, fontWeight: 600 }}>{role}</span>
             {isAuthorizedPickup && (
@@ -203,6 +206,223 @@ function ChildCard({ child }: { child: VisitorChild }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+// ── Household Members ────────────────────────────────────────────────────────
+
+type HouseholdMember = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  relationship: "parent_guardian" | "grandparent" | "authorized_pickup" | "other_trusted_adult";
+  phone: string | null;
+  email: string | null;
+  authorized_pickup: boolean;
+  pickup_scope: "all_children" | "specific_children" | null;
+  emergency_contact: boolean;
+  notes: string | null;
+  created_by: string;
+  created_by_name: string | null;
+  created_at: string;
+  updated_at: string | null;
+  childIds: string[];
+};
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  parent_guardian: "Parent / Guardian",
+  grandparent: "Grandparent",
+  authorized_pickup: "Authorized Pickup",
+  other_trusted_adult: "Other Trusted Adult",
+};
+
+function HouseholdMemberModal({
+  familyId, token, member, childrenList, canRemove, onClose, onSaved, onRemoved,
+}: {
+  familyId: string; token: string; member: HouseholdMember | null;
+  childrenList: VisitorChild[]; canRemove: boolean; onClose: () => void;
+  onSaved: (member: HouseholdMember) => void; onRemoved: (memberId: string) => void;
+}) {
+  const isEdit = !!member;
+  const [firstName, setFirstName] = useState(member?.first_name ?? "");
+  const [lastName, setLastName] = useState(member?.last_name ?? "");
+  const [relationship, setRelationship] = useState(member?.relationship ?? "parent_guardian");
+  const [phone, setPhone] = useState(member?.phone ?? "");
+  const [email, setEmail] = useState(member?.email ?? "");
+  const [authorizedPickup, setAuthorizedPickup] = useState(member?.authorized_pickup ?? false);
+  const [pickupScope, setPickupScope] = useState(member?.pickup_scope ?? "all_children");
+  const [selectedChildIds, setSelectedChildIds] = useState<string[]>(member?.childIds ?? []);
+  const [emergencyContact, setEmergencyContact] = useState(member?.emergency_contact ?? false);
+  const [notes, setNotes] = useState(member?.notes ?? "");
+  const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [error, setError] = useState("");
+
+  function toggleChild(childId: string) {
+    setSelectedChildIds(ids => ids.includes(childId) ? ids.filter(c => c !== childId) : [...ids, childId]);
+  }
+
+  async function handleSave() {
+    if (saving) return;
+    if (!firstName.trim() || !lastName.trim()) { setError("First and last name are required."); return; }
+    if (authorizedPickup && pickupScope === "specific_children" && selectedChildIds.length === 0) {
+      setError('Select at least one child, or choose "All children".');
+      return;
+    }
+    setSaving(true);
+    setError("");
+    const body = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      relationship,
+      phone: phone.trim() || null,
+      email: email.trim() || null,
+      authorizedPickup,
+      pickupScope: authorizedPickup ? pickupScope : null,
+      childIds: authorizedPickup && pickupScope === "specific_children" ? selectedChildIds : [],
+      emergencyContact,
+      notes: notes.trim() || null,
+    };
+    const url = isEdit
+      ? `/api/children-ministry/parents/${familyId}/household-members/${member!.id}`
+      : `/api/children-ministry/parents/${familyId}/household-members`;
+    const res = await fetch(url, { method: isEdit ? "PATCH" : "POST", headers: authHeaders(token), body: JSON.stringify(body) });
+    if (res.ok) {
+      const data = await res.json();
+      onSaved(data.member);
+      onClose();
+    } else {
+      const errBody = await res.json().catch(() => null);
+      setError(errBody?.error ?? "Something went wrong. Please try again.");
+      setSaving(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (!member || removing || saving) return;
+    if (!confirm(`Remove ${member.first_name} ${member.last_name} from this household?`)) return;
+    setRemoving(true);
+    const res = await fetch(`/api/children-ministry/parents/${familyId}/household-members/${member.id}`, {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify({ archive: true }),
+    });
+    if (res.ok) {
+      onRemoved(member.id);
+      onClose();
+    } else {
+      const errBody = await res.json().catch(() => null);
+      setError(errBody?.error ?? "Could not remove this person. Please try again.");
+      setRemoving(false);
+    }
+  }
+
+  const fieldLabel: CSSProperties = { ...LABEL_STYLE, display: "block", marginBottom: "6px" };
+  const fieldInput: CSSProperties = { ...TEXTAREA_STYLE };
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}
+      onClick={saving || removing ? undefined : onClose}
+    >
+      <div
+        style={{ background: CARD, border: "1px solid rgba(212,175,55,0.3)", borderRadius: "16px", padding: "28px", maxWidth: "480px", width: "100%", maxHeight: "90vh", overflowY: "auto" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 20px", fontFamily: "Georgia, serif" }}>
+          {isEdit ? "Edit Household Member" : "Add Household Member"}
+        </h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ flex: 1 }}>
+              <label style={fieldLabel}>First Name</label>
+              <input value={firstName} onChange={e => setFirstName(e.target.value)} style={fieldInput} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={fieldLabel}>Last Name</label>
+              <input value={lastName} onChange={e => setLastName(e.target.value)} style={fieldInput} />
+            </div>
+          </div>
+
+          <div>
+            <label style={fieldLabel}>Relationship</label>
+            <select value={relationship} onChange={e => setRelationship(e.target.value as HouseholdMember["relationship"])} style={{ ...fieldInput, cursor: "pointer" }}>
+              {Object.entries(RELATIONSHIP_LABELS).map(([value, label]) => (
+                <option key={value} value={value} style={{ background: "#ffffff", color: "#000000" }}>{label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ flex: 1 }}>
+              <label style={fieldLabel}>Phone</label>
+              <input value={phone} onChange={e => setPhone(e.target.value)} style={fieldInput} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={fieldLabel}>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={fieldInput} />
+            </div>
+          </div>
+
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+            <input type="checkbox" checked={authorizedPickup} onChange={e => setAuthorizedPickup(e.target.checked)} />
+            <span style={{ fontSize: "13px", color: BODY }}>Authorized to pick up children</span>
+          </label>
+
+          {authorizedPickup && (
+            <div style={{ paddingLeft: "4px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <input type="radio" name="pickupScope" checked={pickupScope === "all_children"} onChange={() => setPickupScope("all_children")} />
+                <span style={{ fontSize: "13px", color: BODY }}>All children in this household</span>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <input type="radio" name="pickupScope" checked={pickupScope === "specific_children"} onChange={() => setPickupScope("specific_children")} />
+                <span style={{ fontSize: "13px", color: BODY }}>Specific children</span>
+              </label>
+              {pickupScope === "specific_children" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingLeft: "22px" }}>
+                  {childrenList.length === 0 ? (
+                    <p style={EMPTY_STYLE}>No children on this household yet.</p>
+                  ) : childrenList.map(c => (
+                    <label key={c.id} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                      <input type="checkbox" checked={selectedChildIds.includes(c.id)} onChange={() => toggleChild(c.id)} />
+                      <span style={{ fontSize: "13px", color: BODY }}>{c.first_name} {c.last_name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+            <input type="checkbox" checked={emergencyContact} onChange={e => setEmergencyContact(e.target.checked)} />
+            <span style={{ fontSize: "13px", color: BODY }}>Emergency contact</span>
+          </label>
+
+          <div>
+            <label style={fieldLabel}>Notes (optional)</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} style={fieldInput} />
+          </div>
+
+          {error && <p style={{ fontSize: "12px", color: "#f87171", margin: 0 }}>{error}</p>}
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "6px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={handleSave} disabled={saving || removing} style={{ ...PRIMARY_BTN, opacity: saving || removing ? 0.5 : 1 }}>
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button onClick={onClose} disabled={saving || removing} style={SECONDARY_BTN}>Cancel</button>
+            </div>
+            {isEdit && canRemove && (
+              <button onClick={handleRemove} disabled={saving || removing} style={{ ...LINK_BTN_MUTED, opacity: saving || removing ? 0.5 : 1 }}>
+                {removing ? "Removing…" : "Remove"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -584,6 +804,9 @@ export default function FamilyProfilePage() {
   const [leaderAssignment, setLeaderAssignment] = useState<LeaderAssignment | null>(null);
   const [eligibleStaff, setEligibleStaff] = useState<EligibleStaff[]>([]);
   const [sensitiveNotes, setSensitiveNotes] = useState<SensitiveNote[]>([]);
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
+  const [memberModalOpen, setMemberModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<HouseholdMember | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -597,11 +820,12 @@ export default function FamilyProfilePage() {
       const t = session.access_token;
       setToken(t);
       const headers = { Authorization: `Bearer ${t}` };
-      const [familyRes, careRes, prayerRes, leaderRes] = await Promise.all([
+      const [familyRes, careRes, prayerRes, leaderRes, membersRes] = await Promise.all([
         fetch(`/api/children-ministry/parents/${familyId}`, { headers }),
         fetch(`/api/children-ministry/parents/${familyId}/care-notes`, { headers }),
         fetch(`/api/children-ministry/parents/${familyId}/prayer-requests`, { headers }),
         fetch(`/api/children-ministry/parents/${familyId}/leader`, { headers }),
+        fetch(`/api/children-ministry/parents/${familyId}/household-members`, { headers }),
       ]);
       if (!familyRes.ok) { setLoading(false); return; }
       const d = await familyRes.json();
@@ -617,6 +841,7 @@ export default function FamilyProfilePage() {
         setLeaderAssignment(ld.assignment ?? null);
         setEligibleStaff(ld.eligibleStaff ?? []);
       }
+      if (membersRes.ok) setHouseholdMembers((await membersRes.json()).members ?? []);
       if (isAdminRole(role)) {
         const sensitiveRes = await fetch(`/api/children-ministry/parents/${familyId}/sensitive-notes`, { headers });
         if (sensitiveRes.ok) setSensitiveNotes((await sensitiveRes.json()).notes ?? []);
@@ -636,6 +861,17 @@ export default function FamilyProfilePage() {
     });
     setFamily(f => f ? { ...f, status: newStatus } : f);
     setSavingStatus(false);
+  }
+
+  function handleMemberSaved(member: HouseholdMember) {
+    setHouseholdMembers(ms => {
+      const exists = ms.some(m => m.id === member.id);
+      return exists ? ms.map(m => m.id === member.id ? member : m) : [...ms, member];
+    });
+  }
+
+  function handleMemberRemoved(memberId: string) {
+    setHouseholdMembers(ms => ms.filter(m => m.id !== memberId));
   }
 
   if (loading) return (
@@ -786,7 +1022,22 @@ export default function FamilyProfilePage() {
                   email={family.parent2_email}
                 />
               )}
-              <div
+              {householdMembers.map(member => (
+                <AdultCard
+                  key={member.id}
+                  firstName={member.first_name}
+                  lastName={member.last_name}
+                  role={RELATIONSHIP_LABELS[member.relationship] ?? member.relationship}
+                  phone={member.phone}
+                  email={member.email}
+                  isAuthorizedPickup={member.authorized_pickup}
+                  onEdit={() => { setEditingMember(member); setMemberModalOpen(true); }}
+                />
+              ))}
+              <button
+                type="button"
+                disabled={memberModalOpen}
+                onClick={() => { setEditingMember(null); setMemberModalOpen(true); }}
                 style={{
                   border: "1px dashed rgba(212,175,55,0.2)",
                   borderRadius: "14px",
@@ -796,19 +1047,38 @@ export default function FamilyProfilePage() {
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  cursor: "pointer",
+                  cursor: memberModalOpen ? "not-allowed" : "pointer",
                   minHeight: "120px",
+                  background: "transparent",
+                  width: "100%",
+                  font: "inherit",
+                  opacity: memberModalOpen ? 0.5 : 1,
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(123,44,191,0.5)"}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(212,175,55,0.2)"}
+                onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(123,44,191,0.5)"}
+                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(212,175,55,0.2)"}
+                onFocus={e => (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(123,44,191,0.5)"}
+                onBlur={e => (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(212,175,55,0.2)"}
               >
                 <span style={{ fontSize: "20px", color: MUTED }}>+</span>
                 <span style={{ fontSize: "12px", color: MUTED, textAlign: "center" }}>
                   Add Guardian, Grandparent,<br />or Authorized Pickup
                 </span>
-              </div>
+              </button>
             </div>
           </SectionCard>
+
+          {memberModalOpen && token && (
+            <HouseholdMemberModal
+              familyId={familyId}
+              token={token}
+              member={editingMember}
+              childrenList={children}
+              canRemove={isAdminRole(userRole)}
+              onClose={() => setMemberModalOpen(false)}
+              onSaved={handleMemberSaved}
+              onRemoved={handleMemberRemoved}
+            />
+          )}
 
           {/* Section 2: ShepherdKids */}
           <SectionCard title="ShepherdKids" icon="🧒">
