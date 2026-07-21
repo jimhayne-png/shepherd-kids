@@ -106,7 +106,7 @@ function DarkSelect({
           borderRadius: 8, padding: "9px 12px", fontSize: 14, color: TEXT, outline: "none",
         }}
       >
-        {options.map(o => <option key={o.value} value={o.value} style={{ background: CARD }}>{o.label}</option>)}
+        {options.map(o => <option key={o.value} value={o.value} style={{ background: "#ffffff", color: "#000000" }}>{o.label}</option>)}
       </select>
     </div>
   );

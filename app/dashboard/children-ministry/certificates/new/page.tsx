@@ -262,7 +262,7 @@ function CertificateCreatorInner() {
               <select value={certType} onChange={e => { setCertType(e.target.value); setBlessingPreset('none'); }}
                 style={{ ...inputStyle, cursor: "pointer" }}>
                 {Object.entries(CERT_TYPES).map(([key, ct]) => (
-                  <option key={key} value={key} style={{ background: "#120A1F" }}>
+                  <option key={key} value={key} style={{ background: "#ffffff", color: "#000000" }}>
                     {ct.icon} {ct.label}
                   </option>
                 ))}

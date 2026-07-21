@@ -10,8 +10,8 @@ const supabase = createClient();
 const ACCENT = "#7B2CBF";
 
 const OPTION_STYLE = {
-  backgroundColor: "#120A1F",
-  color: "#ffffff",
+  backgroundColor: "#ffffff",
+  color: "#000000",
 };
 
 type SessionOption = { id: string; service_name: string; date: string; scheduled_time: string | null; status: string };

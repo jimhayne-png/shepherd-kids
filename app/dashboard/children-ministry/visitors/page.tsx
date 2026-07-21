@@ -236,7 +236,7 @@ export default function VisitorsPage() {
 
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                         <select value={fam.status} onChange={e => updateStatus(fam.id, e.target.value)} style={{ padding: "7px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "8px", fontSize: "12px", fontWeight: 600, color: "#ffffff", outline: "none" }}>
-                          {["new", "contacted", "returning", "converted"].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                          {["new", "contacted", "returning", "converted"].map(s => <option key={s} value={s} style={{ background: "#ffffff", color: "#000000" }}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                         </select>
                         {fam.status !== "converted" && (
                           <button onClick={() => convertFamily(fam.id)} disabled={converting === fam.id} style={{ padding: "7px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: "rgba(34,197,94,0.85)", border: "none", cursor: "pointer" }}>

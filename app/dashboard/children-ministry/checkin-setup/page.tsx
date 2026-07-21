@@ -486,12 +486,12 @@ function CheckinSetupContent() {
                   onChange={e => setTimezone(e.target.value)}
                   style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "10px", color: "#FFFFFF", fontSize: "14px", outline: "none", appearance: "none", WebkitAppearance: "none", cursor: "pointer" }}
                 >
-                  <option value="America/Los_Angeles" style={{ background: "#120A1F" }}>Pacific Time — America/Los_Angeles</option>
-                  <option value="America/Denver" style={{ background: "#120A1F" }}>Mountain Time — America/Denver</option>
-                  <option value="America/Chicago" style={{ background: "#120A1F" }}>Central Time — America/Chicago</option>
-                  <option value="America/New_York" style={{ background: "#120A1F" }}>Eastern Time — America/New_York</option>
-                  <option value="America/Anchorage" style={{ background: "#120A1F" }}>Alaska Time — America/Anchorage</option>
-                  <option value="Pacific/Honolulu" style={{ background: "#120A1F" }}>Hawaii Time — Pacific/Honolulu</option>
+                  <option value="America/Los_Angeles" style={{ background: "#ffffff", color: "#000000" }}>Pacific Time — America/Los_Angeles</option>
+                  <option value="America/Denver" style={{ background: "#ffffff", color: "#000000" }}>Mountain Time — America/Denver</option>
+                  <option value="America/Chicago" style={{ background: "#ffffff", color: "#000000" }}>Central Time — America/Chicago</option>
+                  <option value="America/New_York" style={{ background: "#ffffff", color: "#000000" }}>Eastern Time — America/New_York</option>
+                  <option value="America/Anchorage" style={{ background: "#ffffff", color: "#000000" }}>Alaska Time — America/Anchorage</option>
+                  <option value="Pacific/Honolulu" style={{ background: "#ffffff", color: "#000000" }}>Hawaii Time — Pacific/Honolulu</option>
                 </select>
               </div>
 
@@ -1194,7 +1194,7 @@ function CheckinSetupContent() {
                     onChange={e => setCheckInOpensBefore(Number(e.target.value))}
                     style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
                   >
-                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} minutes</option>)}
+                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#ffffff", color: "#000000" }}>{m} minutes</option>)}
                   </select>
                 </div>
                 <div>
@@ -1206,7 +1206,7 @@ function CheckinSetupContent() {
                     onChange={e => setTypicalClassDuration(Number(e.target.value))}
                     style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
                   >
-                    {[45, 60, 75, 90, 120].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} minutes</option>)}
+                    {[45, 60, 75, 90, 120].map(m => <option key={m} value={m} style={{ background: "#ffffff", color: "#000000" }}>{m} minutes</option>)}
                   </select>
                 </div>
                 <div>
@@ -1218,7 +1218,7 @@ function CheckinSetupContent() {
                     onChange={e => setCheckInClosesAfter(Number(e.target.value))}
                     style={{ padding: "7px 12px", background: "#0E0C18", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "14px", fontWeight: 700, color: "#D4AF37", outline: "none", cursor: "pointer" }}
                   >
-                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#120A1F" }}>{m} minutes</option>)}
+                    {[15, 30, 45, 60, 90].map(m => <option key={m} value={m} style={{ background: "#ffffff", color: "#000000" }}>{m} minutes</option>)}
                   </select>
                 </div>
               </div>

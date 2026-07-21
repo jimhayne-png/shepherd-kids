@@ -440,8 +440,8 @@ export default function GettingStartedPage() {
               <div>
                 <FieldLabel>State</FieldLabel>
                 <select style={selectStyle} value={churchState} onChange={(e) => setChurchState(e.target.value)}>
-                  <option value="">—</option>
-                  {US_STATES.map((st) => <option key={st} value={st}>{st}</option>)}
+                  <option value="" style={{ background: "#ffffff", color: "#000000" }}>—</option>
+                  {US_STATES.map((st) => <option key={st} value={st} style={{ background: "#ffffff", color: "#000000" }}>{st}</option>)}
                 </select>
               </div>
               <div>
@@ -453,7 +453,7 @@ export default function GettingStartedPage() {
             <div style={{ marginBottom: 20 }}>
               <FieldLabel>Time Zone</FieldLabel>
               <select style={selectStyle} value={churchTimezone} onChange={(e) => setChurchTimezone(e.target.value)}>
-                {TIMEZONES.map((tz) => <option key={tz.value} value={tz.value}>{tz.label}</option>)}
+                {TIMEZONES.map((tz) => <option key={tz.value} value={tz.value} style={{ background: "#ffffff", color: "#000000" }}>{tz.label}</option>)}
               </select>
             </div>
 

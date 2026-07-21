@@ -465,10 +465,10 @@ export default function FamilyProfilePage() {
                     disabled={savingStatus}
                     style={{ width: "100%", padding: "7px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", cursor: "pointer" }}
                   >
-                    <option value="new">New</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="returning">Returning</option>
-                    <option value="converted">Converted</option>
+                    <option value="new" style={{ background: "#ffffff", color: "#000000" }}>New</option>
+                    <option value="contacted" style={{ background: "#ffffff", color: "#000000" }}>Contacted</option>
+                    <option value="returning" style={{ background: "#ffffff", color: "#000000" }}>Returning</option>
+                    <option value="converted" style={{ background: "#ffffff", color: "#000000" }}>Converted</option>
                   </select>
                 </div>
 

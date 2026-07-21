@@ -181,7 +181,7 @@ function InviteModal({ churchId, token, onClose, onSuccess }: {
         <div style={{ marginBottom: 20 }}>
           <label style={labelStyle()}>Role</label>
           <select value={role} onChange={e => setRole(e.target.value)} style={{ ...inputStyle(), cursor: "pointer" }}>
-            {INVITABLE_ROLES.map(r => <option key={r.value} value={r.value} style={{ background: CARD }}>{r.label}</option>)}
+            {INVITABLE_ROLES.map(r => <option key={r.value} value={r.value} style={{ background: "#ffffff", color: "#000000" }}>{r.label}</option>)}
           </select>
         </div>
         {error && <p style={{ margin: "0 0 14px", fontSize: 13, color: "#f87171" }}>⚠ {error}</p>}
@@ -729,7 +729,7 @@ export default function StaffAccessTab({ userRole }: { userRole: string }) {
                             onChange={e => setRoleInput(e.target.value)}
                             style={{ background: INPUT_BG, border: `1px solid ${INPUT_BD}`, borderRadius: 6, padding: "4px 8px", fontSize: 12, color: TEXT, outline: "none" }}
                           >
-                            {INVITABLE_ROLES.map(r => <option key={r.value} value={r.value} style={{ background: CARD }}>{r.label}</option>)}
+                            {INVITABLE_ROLES.map(r => <option key={r.value} value={r.value} style={{ background: "#ffffff", color: "#000000" }}>{r.label}</option>)}
                           </select>
                           <button onClick={() => handleRoleSave(m.userId)} disabled={roleSaving} style={{ padding: "4px 10px", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 6, fontSize: 11, fontWeight: 700, color: "#4ade80", cursor: "pointer" }}>
                             {roleSaving ? "…" : "Save"}

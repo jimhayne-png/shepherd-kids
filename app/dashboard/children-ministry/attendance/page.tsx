@@ -385,7 +385,7 @@ export default function AttendancePage() {
               style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT, fontSize: 14, padding: "9px 13px", minWidth: 280, outline: "none", cursor: "pointer" }}
             >
               {sessions.map(s => (
-                <option key={s.id} value={s.id}>
+                <option key={s.id} value={s.id} style={{ background: "#ffffff", color: "#000000" }}>
                   {fmtLong(s.date)} — {s.service_name}
                 </option>
               ))}
@@ -585,8 +585,8 @@ export default function AttendancePage() {
             aria-label="Filter by grade"
             style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT, fontSize: 13, padding: "7px 12px", outline: "none", cursor: "pointer" }}
           >
-            <option value="">All Grades</option>
-            {grades.map(g => <option key={g} value={g}>{g}</option>)}
+            <option value="" style={{ background: "#ffffff", color: "#000000" }}>All Grades</option>
+            {grades.map(g => <option key={g} value={g} style={{ background: "#ffffff", color: "#000000" }}>{g}</option>)}
           </select>
           <select
             value={catFilter}
@@ -594,11 +594,11 @@ export default function AttendancePage() {
             aria-label="Filter by category"
             style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT, fontSize: 13, padding: "7px 12px", outline: "none", cursor: "pointer" }}
           >
-            <option value="">All Categories</option>
-            <option value="needs_attention">Needs Attention</option>
-            <option value="inconsistent">Inconsistent</option>
-            <option value="new_visitor">New Visitor</option>
-            <option value="regular">Regular</option>
+            <option value="" style={{ background: "#ffffff", color: "#000000" }}>All Categories</option>
+            <option value="needs_attention" style={{ background: "#ffffff", color: "#000000" }}>Needs Attention</option>
+            <option value="inconsistent" style={{ background: "#ffffff", color: "#000000" }}>Inconsistent</option>
+            <option value="new_visitor" style={{ background: "#ffffff", color: "#000000" }}>New Visitor</option>
+            <option value="regular" style={{ background: "#ffffff", color: "#000000" }}>Regular</option>
           </select>
           <select
             value={sortBy}
@@ -606,9 +606,9 @@ export default function AttendancePage() {
             aria-label="Sort order"
             style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, color: TEXT, fontSize: 13, padding: "7px 12px", outline: "none", cursor: "pointer" }}
           >
-            <option value="attention">Needs Attention First</option>
-            <option value="pct">Lowest Attendance First</option>
-            <option value="name">Name (A–Z)</option>
+            <option value="attention" style={{ background: "#ffffff", color: "#000000" }}>Needs Attention First</option>
+            <option value="pct" style={{ background: "#ffffff", color: "#000000" }}>Lowest Attendance First</option>
+            <option value="name" style={{ background: "#ffffff", color: "#000000" }}>Name (A–Z)</option>
           </select>
           <button
             onClick={exportCSV}

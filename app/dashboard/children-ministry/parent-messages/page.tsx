@@ -268,7 +268,7 @@ export default function ParentMessagesPage() {
                     disabled={isAlreadySent}
                   >
                     {AUDIENCE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value} style={{ background: CARD }}>{o.label}</option>
+                      <option key={o.value} value={o.value} style={{ background: "#ffffff", color: "#000000" }}>{o.label}</option>
                     ))}
                   </select>
                 </div>
@@ -281,9 +281,9 @@ export default function ParentMessagesPage() {
                       onChange={(e) => set("room_id", e.target.value)}
                       disabled={isAlreadySent}
                     >
-                      <option value="" style={{ background: CARD }}>— Select a room —</option>
+                      <option value="" style={{ background: "#ffffff", color: "#000000" }}>— Select a room —</option>
                       {rooms.map((r) => (
-                        <option key={r.id} value={r.id} style={{ background: CARD }}>{r.name}</option>
+                        <option key={r.id} value={r.id} style={{ background: "#ffffff", color: "#000000" }}>{r.name}</option>
                       ))}
                     </select>
                   </div>

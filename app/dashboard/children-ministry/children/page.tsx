@@ -586,9 +586,9 @@ function ChildFields({ form, setForm }: {
           onChange={e => setForm(f => ({ ...f, photo_permission_status: e.target.value as typeof form.photo_permission_status }))}
           style={{ ...inputStyle, cursor: "pointer" }}
         >
-          <option value="not_reviewed">Not yet reviewed</option>
-          <option value="granted">Granted</option>
-          <option value="denied">Denied</option>
+          <option value="not_reviewed" style={{ background: "#ffffff", color: "#000000" }}>Not yet reviewed</option>
+          <option value="granted" style={{ background: "#ffffff", color: "#000000" }}>Granted</option>
+          <option value="denied" style={{ background: "#ffffff", color: "#000000" }}>Denied</option>
         </select>
       </div>
     </>

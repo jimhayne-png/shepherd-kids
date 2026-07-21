@@ -850,9 +850,9 @@ export default function LiveCheckinPage() {
                                   outline: "none",
                                 }}
                               >
-                                <option value="">— No Room —</option>
+                                <option value="" style={{ background: "#ffffff", color: "#000000" }}>— No Room —</option>
                                 {allRooms.map(r => (
-                                  <option key={r.id} value={r.id}>
+                                  <option key={r.id} value={r.id} style={{ background: "#ffffff", color: "#000000" }}>
                                     {r.name}
                                   </option>
                                 ))}
