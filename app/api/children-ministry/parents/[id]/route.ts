@@ -1,12 +1,12 @@
 import { type NextRequest } from 'next/server';
-import { getAuthContext, adminClient } from '@/lib/api-auth';
+import { getAuthContext, getAuthContextWithRole, adminClient } from '@/lib/api-auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const auth = await getAuthContext(request);
+  const auth = await getAuthContextWithRole(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const admin = adminClient();
@@ -59,7 +59,7 @@ export async function GET(
     }));
   }
 
-  return Response.json({ family, children: children ?? [], checkinHistory });
+  return Response.json({ family, children: children ?? [], checkinHistory, role: auth.role });
 }
 
 export async function PATCH(

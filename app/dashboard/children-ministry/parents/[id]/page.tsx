@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode, type CSSProperties } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { isAdminRole } from "@/lib/staff-permissions";
 
 const supabase = createClient();
 
@@ -14,6 +15,17 @@ const ACCENT2 = "#9D4EDD";
 const CARD = "#120A1F";
 const MUTED = "#A9A9B8";
 const BODY = "#D8D8E8";
+const WARN = "#fbbf24";
+
+const LABEL_STYLE: CSSProperties = { fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 };
+const EMPTY_STYLE: CSSProperties = { fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" };
+const TEXTAREA_STYLE: CSSProperties = { width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", resize: "vertical", boxSizing: "border-box" };
+const PRIMARY_BTN: CSSProperties = { padding: "6px 14px", borderRadius: "8px", border: "none", cursor: "pointer", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, color: "#ffffff", fontSize: "12px", fontWeight: 700 };
+const SECONDARY_BTN: CSSProperties = { padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", background: "transparent", color: MUTED, fontSize: "12px", fontWeight: 600 };
+const LINK_BTN: CSSProperties = { fontSize: "12px", color: ACCENT2, background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 600 };
+const LINK_BTN_MUTED: CSSProperties = { fontSize: "12px", color: MUTED, background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 600 };
+const ITEM_CARD: CSSProperties = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "10px", padding: "12px 14px" };
+const META_STYLE: CSSProperties = { fontSize: "11px", color: MUTED };
 
 const STATUS_META: Record<string, { label: string; bg: string; text: string }> = {
   new:       { label: "New",       bg: "rgba(59,130,246,0.15)",  text: "#60a5fa" },
@@ -194,6 +206,367 @@ function ChildCard({ child }: { child: VisitorChild }) {
   );
 }
 
+// ── Family Care sub-sections ─────────────────────────────────────────────────
+
+type CareNote = {
+  id: string; note_text: string; created_by: string; created_by_name: string | null;
+  created_at: string; updated_at: string | null;
+};
+
+type PrayerRequest = {
+  id: string; request_text: string; status: "active" | "answered" | "archived";
+  created_by: string; created_by_name: string | null;
+  created_at: string; updated_at: string | null; answered_at: string | null;
+};
+
+type LeaderAssignment = {
+  id: string; leader_user_id: string; leader_name: string | null;
+  assigned_by: string; assigned_by_name: string | null; assigned_at: string;
+};
+
+type EligibleStaff = { userId: string; name: string; role: string };
+
+function authHeaders(token: string) {
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
+
+function CareNotesSection({ familyId, token, initialNotes }: { familyId: string; token: string; initialNotes: CareNote[] }) {
+  const [notes, setNotes] = useState<CareNote[]>(initialNotes);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+
+  const base = `/api/children-ministry/parents/${familyId}/care-notes`;
+
+  async function handleAdd() {
+    if (!draft.trim()) return;
+    setSaving(true);
+    const res = await fetch(base, { method: "POST", headers: authHeaders(token), body: JSON.stringify({ noteText: draft.trim() }) });
+    if (res.ok) {
+      const { note } = await res.json();
+      setNotes(n => [note, ...n]);
+      setDraft("");
+      setAdding(false);
+    }
+    setSaving(false);
+  }
+
+  async function handleEdit(id: string) {
+    if (!editDraft.trim()) return;
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ noteText: editDraft.trim() }) });
+    if (res.ok) {
+      setNotes(ns => ns.map(n => n.id === id ? { ...n, note_text: editDraft.trim() } : n));
+      setEditingId(null);
+    }
+  }
+
+  async function handleArchive(id: string) {
+    if (!confirm("Archive this care note?")) return;
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ archive: true }) });
+    if (res.ok) setNotes(ns => ns.filter(n => n.id !== id));
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+        <p style={LABEL_STYLE}>Care Notes</p>
+        {!adding && <button onClick={() => setAdding(true)} style={LINK_BTN}>+ Add Care Note</button>}
+      </div>
+      {adding && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} placeholder="Add a care note…" style={TEXTAREA_STYLE} />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleAdd} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+            <button onClick={() => { setAdding(false); setDraft(""); }} style={SECONDARY_BTN}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {notes.length === 0 && !adding ? (
+        <p style={EMPTY_STYLE}>No care notes have been added.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {notes.map(note => (
+            <div key={note.id} style={ITEM_CARD}>
+              {editingId === note.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} rows={3} style={TEXTAREA_STYLE} />
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button onClick={() => handleEdit(note.id)} style={PRIMARY_BTN}>Save</button>
+                    <button onClick={() => setEditingId(null)} style={SECONDARY_BTN}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: "13px", color: BODY, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{note.note_text}</p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
+                    <span style={META_STYLE}>{note.created_by_name ?? "Unknown"} · {fmtDateTime(note.created_at)}</span>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button onClick={() => { setEditingId(note.id); setEditDraft(note.note_text); }} style={LINK_BTN}>Edit</button>
+                      <button onClick={() => handleArchive(note.id)} style={LINK_BTN_MUTED}>Archive</button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PRAYER_STATUS_META: Record<string, { label: string; bg: string; text: string }> = {
+  active:   { label: "Active",   bg: "rgba(157,78,221,0.2)",  text: "#c084fc" },
+  answered: { label: "Answered", bg: "rgba(34,197,94,0.15)",  text: "#4ade80" },
+  archived: { label: "Archived", bg: "rgba(255,255,255,0.08)", text: MUTED },
+};
+
+function PrayerRequestsSection({ familyId, token, initialRequests }: { familyId: string; token: string; initialRequests: PrayerRequest[] }) {
+  const [requests, setRequests] = useState<PrayerRequest[]>(initialRequests);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const base = `/api/children-ministry/parents/${familyId}/prayer-requests`;
+  const statusOrder: Record<string, number> = { active: 0, answered: 1, archived: 2 };
+  const sorted = [...requests].sort((a, b) => {
+    const so = statusOrder[a.status] - statusOrder[b.status];
+    return so !== 0 ? so : b.created_at.localeCompare(a.created_at);
+  });
+
+  async function handleAdd() {
+    if (!draft.trim()) return;
+    setSaving(true);
+    const res = await fetch(base, { method: "POST", headers: authHeaders(token), body: JSON.stringify({ requestText: draft.trim() }) });
+    if (res.ok) {
+      const { request } = await res.json();
+      setRequests(r => [request, ...r]);
+      setDraft("");
+      setAdding(false);
+    }
+    setSaving(false);
+  }
+
+  async function handleStatus(id: string, status: "answered" | "archived") {
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ status }) });
+    if (res.ok) {
+      setRequests(rs => rs.map(r => r.id === id ? { ...r, status, answered_at: status === "answered" ? new Date().toISOString() : r.answered_at } : r));
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+        <p style={LABEL_STYLE}>Prayer Requests</p>
+        {!adding && <button onClick={() => setAdding(true)} style={LINK_BTN}>+ Add Prayer Request</button>}
+      </div>
+      {adding && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} placeholder="Add a prayer request…" style={TEXTAREA_STYLE} />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleAdd} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+            <button onClick={() => { setAdding(false); setDraft(""); }} style={SECONDARY_BTN}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {requests.length === 0 && !adding ? (
+        <p style={EMPTY_STYLE}>No active prayer requests.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {sorted.map(reqItem => {
+            const sm = PRAYER_STATUS_META[reqItem.status];
+            return (
+              <div key={reqItem.id} style={ITEM_CARD}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ fontSize: "11px", padding: "2px 9px", borderRadius: "20px", fontWeight: 700, backgroundColor: sm.bg, color: sm.text }}>{sm.label}</span>
+                </div>
+                <p style={{ fontSize: "13px", color: BODY, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{reqItem.request_text}</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
+                  <span style={META_STYLE}>{reqItem.created_by_name ?? "Unknown"} · {fmtDateTime(reqItem.created_at)}</span>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    {reqItem.status === "active" && <button onClick={() => handleStatus(reqItem.id, "answered")} style={LINK_BTN}>Mark Answered</button>}
+                    {reqItem.status !== "archived" && <button onClick={() => handleStatus(reqItem.id, "archived")} style={LINK_BTN_MUTED}>Archive</button>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AssignedLeaderSection({
+  familyId, token, canAssign, initialAssignment, eligibleStaff,
+}: {
+  familyId: string; token: string; canAssign: boolean;
+  initialAssignment: LeaderAssignment | null; eligibleStaff: EligibleStaff[];
+}) {
+  const [assignment, setAssignment] = useState<LeaderAssignment | null>(initialAssignment);
+  const [picking, setPicking] = useState(false);
+  const [selected, setSelected] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const base = `/api/children-ministry/parents/${familyId}/leader`;
+
+  async function handleAssign() {
+    if (!selected) return;
+    setSaving(true);
+    const res = await fetch(base, { method: "PUT", headers: authHeaders(token), body: JSON.stringify({ leaderUserId: selected }) });
+    if (res.ok) {
+      const { assignment: a } = await res.json();
+      setAssignment(a);
+      setPicking(false);
+      setSelected("");
+    }
+    setSaving(false);
+  }
+
+  async function handleRemove() {
+    if (!confirm("Remove the assigned leader from this family?")) return;
+    const res = await fetch(base, { method: "DELETE", headers: authHeaders(token) });
+    if (res.ok) setAssignment(null);
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+        <p style={LABEL_STYLE}>Assigned Leader</p>
+        {canAssign && !picking && (
+          <button onClick={() => setPicking(true)} style={LINK_BTN}>{assignment ? "Change" : "Assign Leader"}</button>
+        )}
+      </div>
+      {picking && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
+          <select
+            value={selected}
+            onChange={e => setSelected(e.target.value)}
+            style={{ width: "100%", padding: "7px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none" }}
+          >
+            <option value="" style={{ background: "#ffffff", color: "#000000" }}>Select a ministry leader…</option>
+            {eligibleStaff.map(s => (
+              <option key={s.userId} value={s.userId} style={{ background: "#ffffff", color: "#000000" }}>{s.name}</option>
+            ))}
+          </select>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleAssign} disabled={saving || !selected} style={{ ...PRIMARY_BTN, opacity: saving || !selected ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+            <button onClick={() => { setPicking(false); setSelected(""); }} style={SECONDARY_BTN}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {!assignment && !picking ? (
+        <p style={EMPTY_STYLE}>No ministry leader assigned.</p>
+      ) : assignment && !picking ? (
+        <div style={ITEM_CARD}>
+          <p style={{ fontSize: "13px", color: BODY, margin: 0, fontWeight: 700 }}>{assignment.leader_name ?? "Unknown"}</p>
+          <p style={META_STYLE}>Assigned {fmtDateTime(assignment.assigned_at)}{assignment.assigned_by_name ? ` by ${assignment.assigned_by_name}` : ""}</p>
+          {canAssign && (
+            <button onClick={handleRemove} style={{ ...LINK_BTN_MUTED, marginTop: "8px" }}>Remove Assignment</button>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+type SensitiveNote = {
+  id: string; note_text: string; created_by: string; created_by_name: string | null;
+  created_at: string; updated_at: string | null;
+};
+
+function SensitiveNotesSection({ familyId, token, initialNotes }: { familyId: string; token: string; initialNotes: SensitiveNote[] }) {
+  const [notes, setNotes] = useState<SensitiveNote[]>(initialNotes);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+
+  const base = `/api/children-ministry/parents/${familyId}/sensitive-notes`;
+
+  async function handleAdd() {
+    if (!draft.trim()) return;
+    setSaving(true);
+    const res = await fetch(base, { method: "POST", headers: authHeaders(token), body: JSON.stringify({ noteText: draft.trim() }) });
+    if (res.ok) {
+      const { note } = await res.json();
+      setNotes(n => [note, ...n]);
+      setDraft("");
+      setAdding(false);
+    }
+    setSaving(false);
+  }
+
+  async function handleEdit(id: string) {
+    if (!editDraft.trim()) return;
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ noteText: editDraft.trim() }) });
+    if (res.ok) {
+      setNotes(ns => ns.map(n => n.id === id ? { ...n, note_text: editDraft.trim() } : n));
+      setEditingId(null);
+    }
+  }
+
+  async function handleArchive(id: string) {
+    if (!confirm("Archive this sensitive note?")) return;
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ archive: true }) });
+    if (res.ok) setNotes(ns => ns.filter(n => n.id !== id));
+  }
+
+  return (
+    <div style={{ border: "1px solid rgba(245,158,11,0.35)", borderRadius: "12px", padding: "14px", background: "rgba(245,158,11,0.04)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+        <p style={{ ...LABEL_STYLE, color: WARN }}>⚠️ Sensitive Family Notes</p>
+        {!adding && <button onClick={() => setAdding(true)} style={LINK_BTN}>+ Add Sensitive Note</button>}
+      </div>
+      <p style={{ fontSize: "11px", color: MUTED, margin: "0 0 10px", fontStyle: "italic" }}>
+        Visible only to Administrators. Never shown on kiosk, classroom, labels, or parent-facing screens.
+      </p>
+      {adding && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} placeholder="Add a sensitive note…" style={TEXTAREA_STYLE} />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleAdd} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+            <button onClick={() => { setAdding(false); setDraft(""); }} style={SECONDARY_BTN}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {notes.length === 0 && !adding ? (
+        <p style={EMPTY_STYLE}>No sensitive notes recorded.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {notes.map(note => (
+            <div key={note.id} style={{ ...ITEM_CARD, border: "1px solid rgba(245,158,11,0.2)" }}>
+              {editingId === note.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} rows={3} style={TEXTAREA_STYLE} />
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button onClick={() => handleEdit(note.id)} style={PRIMARY_BTN}>Save</button>
+                    <button onClick={() => setEditingId(null)} style={SECONDARY_BTN}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: "13px", color: BODY, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{note.note_text}</p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
+                    <span style={META_STYLE}>{note.created_by_name ?? "Unknown"} · {fmtDateTime(note.created_at)}</span>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button onClick={() => { setEditingId(note.id); setEditDraft(note.note_text); }} style={LINK_BTN}>Edit</button>
+                      <button onClick={() => handleArchive(note.id)} style={LINK_BTN_MUTED}>Archive</button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FamilyProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -204,10 +577,13 @@ export default function FamilyProfilePage() {
   const [family, setFamily] = useState<VisitorFamily | null>(null);
   const [children, setChildren] = useState<VisitorChild[]>([]);
   const [checkinHistory, setCheckinHistory] = useState<FamilyCheckin[]>([]);
-  const [editNotes, setEditNotes] = useState(false);
-  const [notesValue, setNotesValue] = useState("");
-  const [savingNotes, setSavingNotes] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [userRole, setUserRole] = useState("");
+  const [careNotes, setCareNotes] = useState<CareNote[]>([]);
+  const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([]);
+  const [leaderAssignment, setLeaderAssignment] = useState<LeaderAssignment | null>(null);
+  const [eligibleStaff, setEligibleStaff] = useState<EligibleStaff[]>([]);
+  const [sensitiveNotes, setSensitiveNotes] = useState<SensitiveNote[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -220,15 +596,31 @@ export default function FamilyProfilePage() {
       if (!session) return;
       const t = session.access_token;
       setToken(t);
-      const res = await fetch(`/api/children-ministry/parents/${familyId}`, {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      if (!res.ok) { setLoading(false); return; }
-      const d = await res.json();
+      const headers = { Authorization: `Bearer ${t}` };
+      const [familyRes, careRes, prayerRes, leaderRes] = await Promise.all([
+        fetch(`/api/children-ministry/parents/${familyId}`, { headers }),
+        fetch(`/api/children-ministry/parents/${familyId}/care-notes`, { headers }),
+        fetch(`/api/children-ministry/parents/${familyId}/prayer-requests`, { headers }),
+        fetch(`/api/children-ministry/parents/${familyId}/leader`, { headers }),
+      ]);
+      if (!familyRes.ok) { setLoading(false); return; }
+      const d = await familyRes.json();
       setFamily(d.family);
       setChildren(d.children ?? []);
       setCheckinHistory(d.checkinHistory ?? []);
-      setNotesValue(d.family?.notes ?? "");
+      const role = d.role ?? "";
+      setUserRole(role);
+      if (careRes.ok) setCareNotes((await careRes.json()).notes ?? []);
+      if (prayerRes.ok) setPrayerRequests((await prayerRes.json()).requests ?? []);
+      if (leaderRes.ok) {
+        const ld = await leaderRes.json();
+        setLeaderAssignment(ld.assignment ?? null);
+        setEligibleStaff(ld.eligibleStaff ?? []);
+      }
+      if (isAdminRole(role)) {
+        const sensitiveRes = await fetch(`/api/children-ministry/parents/${familyId}/sensitive-notes`, { headers });
+        if (sensitiveRes.ok) setSensitiveNotes((await sensitiveRes.json()).notes ?? []);
+      }
       setLoading(false);
     }
     init();
@@ -244,19 +636,6 @@ export default function FamilyProfilePage() {
     });
     setFamily(f => f ? { ...f, status: newStatus } : f);
     setSavingStatus(false);
-  }
-
-  async function handleSaveNotes() {
-    if (!token) return;
-    setSavingNotes(true);
-    await fetch(`/api/children-ministry/parents/${familyId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ notes: notesValue }),
-    });
-    setFamily(f => f ? { ...f, notes: notesValue } : f);
-    setEditNotes(false);
-    setSavingNotes(false);
   }
 
   if (loading) return (
@@ -473,67 +852,30 @@ export default function FamilyProfilePage() {
                 </div>
 
                 {/* Care Notes */}
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                    <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Care Notes</p>
-                    {!editNotes && (
-                      <button
-                        onClick={() => setEditNotes(true)}
-                        style={{ fontSize: "12px", color: ACCENT2, background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 600 }}
-                      >
-                        {family.notes ? "Edit" : "+ Add"}
-                      </button>
-                    )}
-                  </div>
-                  {editNotes ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <textarea
-                        value={notesValue}
-                        onChange={e => setNotesValue(e.target.value)}
-                        rows={4}
-                        placeholder="Add care notes about this family…"
-                        style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", resize: "vertical", boxSizing: "border-box" }}
-                      />
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <button
-                          onClick={handleSaveNotes}
-                          disabled={savingNotes}
-                          style={{ padding: "6px 14px", borderRadius: "8px", border: "none", cursor: savingNotes ? "not-allowed" : "pointer", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, color: "#ffffff", fontSize: "12px", fontWeight: 700, opacity: savingNotes ? 0.5 : 1 }}
-                        >
-                          {savingNotes ? "Saving…" : "Save"}
-                        </button>
-                        <button
-                          onClick={() => { setEditNotes(false); setNotesValue(family.notes ?? ""); }}
-                          style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", background: "transparent", color: MUTED, fontSize: "12px", fontWeight: 600 }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : family.notes ? (
-                    <p style={{ fontSize: "13px", color: BODY, margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{family.notes}</p>
-                  ) : (
-                    <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>No care notes added yet.</p>
-                  )}
-                </div>
+                {token && (
+                  <CareNotesSection familyId={familyId} token={token} initialNotes={careNotes} />
+                )}
 
                 {/* Prayer Requests */}
-                <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Prayer Requests</p>
-                  <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>Prayer requests will appear here.</p>
-                </div>
+                {token && (
+                  <PrayerRequestsSection familyId={familyId} token={token} initialRequests={prayerRequests} />
+                )}
 
                 {/* Assigned Leader */}
-                <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Assigned Leader</p>
-                  <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>No leader assigned.</p>
-                </div>
+                {token && (
+                  <AssignedLeaderSection
+                    familyId={familyId}
+                    token={token}
+                    canAssign={isAdminRole(userRole)}
+                    initialAssignment={leaderAssignment}
+                    eligibleStaff={eligibleStaff}
+                  />
+                )}
 
                 {/* Sensitive Notes */}
-                <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Sensitive Family Notes</p>
-                  <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>Sensitive notes for leaders only.</p>
-                </div>
+                {token && isAdminRole(userRole) && (
+                  <SensitiveNotesSection familyId={familyId} token={token} initialNotes={sensitiveNotes} />
+                )}
               </div>
             </div>
 
