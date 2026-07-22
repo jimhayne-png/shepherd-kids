@@ -1,5 +1,21 @@
 import { type NextRequest } from 'next/server';
-import { getAuthContext, getAuthContextWithRole, adminClient } from '@/lib/api-auth';
+import { getAuthContextWithRole, adminClient } from '@/lib/api-auth';
+import { can } from '@/lib/staff-permissions';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ZIP_RE = /^\d{5}(-\d{4})?$/;
+
+function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 7 && digits.length <= 15;
+}
+
+const STRING_FIELDS = [
+  'parent1_first_name', 'parent1_last_name', 'parent2_first_name', 'parent2_last_name',
+  'address', 'address_line2', 'city', 'state',
+] as const;
+const EMAIL_FIELDS = ['parent1_email', 'parent2_email'] as const;
+const PHONE_FIELDS = ['parent1_phone', 'parent2_phone'] as const;
 
 export async function GET(
   request: NextRequest,
@@ -67,24 +83,75 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const auth = await getAuthContext(request);
+  const auth = await getAuthContextWithRole(request);
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!can(auth.role, 'access_children_ministry')) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body) return Response.json({ error: 'Invalid body' }, { status: 400 });
   const admin = adminClient();
 
-  const updateData: Record<string, any> = {};
+  const updateData: Record<string, unknown> = {};
   if ('follow_up_sent' in body) updateData.follow_up_sent = body.follow_up_sent;
   if ('next_day_sent' in body) updateData.next_day_sent = body.next_day_sent;
   if ('status' in body) updateData.status = body.status;
   if ('notes' in body) updateData.notes = body.notes;
 
-  const { error } = await admin
+  for (const field of STRING_FIELDS) {
+    if (field in body) updateData[field] = body[field] ? String(body[field]).trim() : null;
+  }
+  for (const field of EMAIL_FIELDS) {
+    if (field in body) {
+      const value = body[field] ? String(body[field]).trim() : '';
+      if (value && !EMAIL_RE.test(value)) {
+        return Response.json({ error: `Invalid email for ${field}` }, { status: 400 });
+      }
+      updateData[field] = value || null;
+    }
+  }
+  for (const field of PHONE_FIELDS) {
+    if (field in body) {
+      const value = body[field] ? String(body[field]).trim() : '';
+      if (value && !isValidPhone(value)) {
+        return Response.json({ error: `Invalid phone for ${field}` }, { status: 400 });
+      }
+      updateData[field] = value || null;
+    }
+  }
+  if ('zip' in body) {
+    const value = body.zip ? String(body.zip).trim() : '';
+    if (value && !ZIP_RE.test(value)) {
+      return Response.json({ error: 'Invalid ZIP code' }, { status: 400 });
+    }
+    updateData.zip = value || null;
+  }
+  if ('preferred_language' in body) {
+    updateData.preferred_language = body.preferred_language ? String(body.preferred_language).trim() : null;
+  }
+
+  // The address editor always submits address/city/state/zip together, so any
+  // request touching one of these fields is treated as a full address write:
+  // line 1 is required whenever any of them is present, and city/state/zip
+  // are required whenever line 1 is present. This never fires for requests
+  // that don't touch address fields at all (e.g. parent-only edits).
+  const addressFieldsTouched = ['address', 'city', 'state', 'zip'].some(f => f in updateData);
+  if (addressFieldsTouched && !updateData.address) {
+    return Response.json({ error: 'Address line 1 is required' }, { status: 400 });
+  }
+  if (updateData.address && (!updateData.city || !updateData.state || !updateData.zip)) {
+    return Response.json({ error: 'City, state, and ZIP are required when an address is provided' }, { status: 400 });
+  }
+
+  const { data, error } = await admin
     .from('cm_visitor_families')
     .update(updateData)
     .eq('id', id)
-    .eq('church_id', auth.churchId);
+    .eq('church_id', auth.churchId)
+    .select('*')
+    .single();
 
   if (error) return Response.json({ error: error.message }, { status: 400 });
-  return Response.json({ ok: true });
+  return Response.json({ family: data });
 }

@@ -2,6 +2,8 @@ import { type NextRequest } from 'next/server';
 import { adminClient, getAuthContextWithRole } from '@/lib/api-auth';
 import { can } from '@/lib/staff-permissions';
 import { getFamilyForChurch, getActorName } from '@/lib/children-ministry/family-care';
+import { syncPickupForMember } from '@/lib/children-ministry/pickup-sync';
+import { setHouseholdEmergencyContact } from '@/lib/children-ministry/emergency-contact';
 
 const RELATIONSHIPS = ['parent_guardian', 'grandparent', 'authorized_pickup', 'other_trusted_adult'];
 const PICKUP_SCOPES = ['all_children', 'specific_children'];
@@ -140,6 +142,19 @@ export async function POST(
       childIds.map(childId => ({ church_id: auth.churchId, household_member_id: data.id, child_id: childId })),
     );
     resultChildIds = childIds;
+  }
+
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  if (authorizedPickup) {
+    await syncPickupForMember({
+      churchId: auth.churchId, familyId: id,
+      oldFullName: null, newFullName: fullName,
+      authorizedPickup, pickupScope: pickupScope as 'all_children' | 'specific_children' | null, childIds: resultChildIds,
+    });
+  }
+  if (emergencyContact) {
+    await setHouseholdEmergencyContact({ churchId: auth.churchId, familyId: id, name: fullName, phone, memberId: data.id });
   }
 
   return Response.json({ member: { ...data, childIds: resultChildIds } });

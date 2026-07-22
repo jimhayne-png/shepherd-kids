@@ -27,6 +27,22 @@ const LINK_BTN_MUTED: CSSProperties = { fontSize: "12px", color: MUTED, backgrou
 const ITEM_CARD: CSSProperties = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "10px", padding: "12px 14px" };
 const META_STYLE: CSSProperties = { fontSize: "11px", color: MUTED };
 
+const US_STATES = [
+  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+  "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
+  "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
+  "VA","WA","WV","WI","WY","DC",
+];
+
+function normalizeName(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function parsePickupNames(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw.split(",").map(s => s.trim()).filter(Boolean);
+}
+
 const STATUS_META: Record<string, { label: string; bg: string; text: string }> = {
   new:       { label: "New",       bg: "rgba(59,130,246,0.15)",  text: "#60a5fa" },
   contacted: { label: "Contacted", bg: "rgba(245,158,11,0.15)",  text: "#fbbf24" },
@@ -45,6 +61,11 @@ type VisitorFamily = {
   parent2_email: string | null;
   parent2_phone: string | null;
   address: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  preferred_language: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
   how_did_you_hear: string | null;
@@ -67,6 +88,7 @@ type VisitorChild = {
   allergies: string | null;
   medical_notes: string | null;
   special_instructions: string | null;
+  authorized_pickups: string | null;
 };
 
 type FamilyCheckin = {
@@ -365,10 +387,13 @@ function HouseholdMemberModal({
             </div>
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <input type="checkbox" checked={authorizedPickup} onChange={e => setAuthorizedPickup(e.target.checked)} />
-            <span style={{ fontSize: "13px", color: BODY }}>Authorized to pick up children</span>
-          </label>
+          <div>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <input type="checkbox" checked={authorizedPickup} onChange={e => setAuthorizedPickup(e.target.checked)} />
+              <span style={{ fontSize: "13px", color: BODY }}>Authorized to pick up children</span>
+            </label>
+            <p style={{ fontSize: "11px", color: MUTED, margin: "4px 0 0 24px", fontStyle: "italic" }}>This person will be recognized at classroom checkout.</p>
+          </div>
 
           {authorizedPickup && (
             <div style={{ paddingLeft: "4px", display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -395,10 +420,13 @@ function HouseholdMemberModal({
             </div>
           )}
 
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <input type="checkbox" checked={emergencyContact} onChange={e => setEmergencyContact(e.target.checked)} />
-            <span style={{ fontSize: "13px", color: BODY }}>Emergency contact</span>
-          </label>
+          <div>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <input type="checkbox" checked={emergencyContact} onChange={e => setEmergencyContact(e.target.checked)} />
+              <span style={{ fontSize: "13px", color: BODY }}>Emergency contact</span>
+            </label>
+            <p style={{ fontSize: "11px", color: MUTED, margin: "4px 0 0 24px", fontStyle: "italic" }}>This sets the household's single emergency contact, replacing any previous one.</p>
+          </div>
 
           <div>
             <label style={fieldLabel}>Notes (optional)</label>
@@ -787,6 +815,258 @@ function SensitiveNotesSection({ familyId, token, initialNotes }: { familyId: st
   );
 }
 
+// ── Parent editing, address, and emergency contact ───────────────────────────
+
+type ParentTarget = {
+  which: "parent1" | "parent2";
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  email: string | null;
+};
+
+function ModalShell({ onClose, disableClose, children }: { onClose: () => void; disableClose: boolean; children: ReactNode }) {
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}
+      onClick={disableClose ? undefined : onClose}
+    >
+      <div
+        style={{ background: CARD, border: "1px solid rgba(212,175,55,0.3)", borderRadius: "16px", padding: "28px", maxWidth: "480px", width: "100%", maxHeight: "90vh", overflowY: "auto" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ParentEditModal({
+  familyId, token, parent, onClose, onSaved,
+}: {
+  familyId: string; token: string; parent: ParentTarget; onClose: () => void; onSaved: (family: VisitorFamily) => void;
+}) {
+  const [firstName, setFirstName] = useState(parent.firstName);
+  const [lastName, setLastName] = useState(parent.lastName);
+  const [phone, setPhone] = useState(parent.phone ?? "");
+  const [email, setEmail] = useState(parent.email ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const fieldLabel: CSSProperties = { ...LABEL_STYLE, display: "block", marginBottom: "6px" };
+
+  async function handleSave() {
+    if (saving) return;
+    if (!firstName.trim() || !lastName.trim()) { setError("First and last name are required."); return; }
+    setSaving(true);
+    setError("");
+    const prefix = parent.which;
+    const body: Record<string, string | null> = {
+      [`${prefix}_first_name`]: firstName.trim(),
+      [`${prefix}_last_name`]: lastName.trim(),
+      [`${prefix}_phone`]: phone.trim() || null,
+      [`${prefix}_email`]: email.trim() || null,
+    };
+    const res = await fetch(`/api/children-ministry/parents/${familyId}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify(body) });
+    if (res.ok) {
+      const data = await res.json();
+      onSaved(data.family);
+      onClose();
+    } else {
+      const errBody = await res.json().catch(() => null);
+      setError(errBody?.error ?? "Something went wrong. Please try again.");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell onClose={onClose} disableClose={saving}>
+      <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 20px", fontFamily: "Georgia, serif" }}>Edit Parent</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ flex: 1 }}>
+            <label style={fieldLabel}>First Name</label>
+            <input value={firstName} onChange={e => setFirstName(e.target.value)} style={TEXTAREA_STYLE} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={fieldLabel}>Last Name</label>
+            <input value={lastName} onChange={e => setLastName(e.target.value)} style={TEXTAREA_STYLE} />
+          </div>
+        </div>
+        <div>
+          <label style={fieldLabel}>Relationship</label>
+          <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>Parent / Guardian</p>
+        </div>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ flex: 1 }}>
+            <label style={fieldLabel}>Phone</label>
+            <input value={phone} onChange={e => setPhone(e.target.value)} style={TEXTAREA_STYLE} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={fieldLabel}>Email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={TEXTAREA_STYLE} />
+          </div>
+        </div>
+        {error && <p style={{ fontSize: "12px", color: "#f87171", margin: 0 }}>{error}</p>}
+        <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+          <button onClick={handleSave} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancel</button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+function AddressModal({
+  familyId, token, family, onClose, onSaved,
+}: {
+  familyId: string; token: string; family: VisitorFamily; onClose: () => void; onSaved: (family: VisitorFamily) => void;
+}) {
+  const [line1, setLine1] = useState(family.address ?? "");
+  const [line2, setLine2] = useState(family.address_line2 ?? "");
+  const [city, setCity] = useState(family.city ?? "");
+  const [state, setState] = useState(family.state ?? "");
+  const [zip, setZip] = useState(family.zip ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const fieldLabel: CSSProperties = { ...LABEL_STYLE, display: "block", marginBottom: "6px" };
+
+  async function handleSave() {
+    if (saving) return;
+    if (!line1.trim()) { setError("Address Line 1 is required."); return; }
+    if (!city.trim() || !state.trim() || !zip.trim()) { setError("City, state, and ZIP are required."); return; }
+    if (!/^\d{5}(-\d{4})?$/.test(zip.trim())) { setError("Enter a valid ZIP code (e.g. 12345 or 12345-6789)."); return; }
+    setSaving(true);
+    setError("");
+    const res = await fetch(`/api/children-ministry/parents/${familyId}`, {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify({ address: line1.trim(), address_line2: line2.trim() || null, city: city.trim(), state: state.trim(), zip: zip.trim() }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      onSaved(data.family);
+      onClose();
+    } else {
+      const errBody = await res.json().catch(() => null);
+      setError(errBody?.error ?? "Something went wrong. Please try again.");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell onClose={onClose} disableClose={saving}>
+      <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 20px", fontFamily: "Georgia, serif" }}>
+        {family.address ? "Edit Address" : "Add Address"}
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div>
+          <label style={fieldLabel}>Address Line 1</label>
+          <input value={line1} onChange={e => setLine1(e.target.value)} style={TEXTAREA_STYLE} />
+        </div>
+        <div>
+          <label style={fieldLabel}>Address Line 2 (optional)</label>
+          <input value={line2} onChange={e => setLine2(e.target.value)} style={TEXTAREA_STYLE} />
+        </div>
+        <div>
+          <label style={fieldLabel}>City</label>
+          <input value={city} onChange={e => setCity(e.target.value)} style={TEXTAREA_STYLE} />
+        </div>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ flex: 1 }}>
+            <label style={fieldLabel}>State</label>
+            <select value={state} onChange={e => setState(e.target.value)} style={{ ...TEXTAREA_STYLE, cursor: "pointer" }}>
+              <option value="" style={{ background: "#ffffff", color: "#000000" }}>—</option>
+              {US_STATES.map(st => <option key={st} value={st} style={{ background: "#ffffff", color: "#000000" }}>{st}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={fieldLabel}>ZIP Code</label>
+            <input value={zip} onChange={e => setZip(e.target.value)} style={TEXTAREA_STYLE} />
+          </div>
+        </div>
+        {error && <p style={{ fontSize: "12px", color: "#f87171", margin: 0 }}>{error}</p>}
+        <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+          <button onClick={handleSave} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancel</button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+type EmergencyContactResult = { emergencyContactName: string | null; emergencyContactPhone: string | null; memberId: string | null };
+
+function EmergencyContactModal({
+  familyId, token, family, householdMembers, onClose, onSaved,
+}: {
+  familyId: string; token: string; family: VisitorFamily; householdMembers: HouseholdMember[];
+  onClose: () => void; onSaved: (result: EmergencyContactResult) => void;
+}) {
+  type Option = { key: string; label: string; sublabel: string; source: "parent1" | "parent2" | "member"; memberId?: string };
+
+  const options: Option[] = [
+    { key: "parent1", label: `${family.parent1_first_name} ${family.parent1_last_name}`, sublabel: "Parent / Guardian", source: "parent1" },
+    ...(family.parent2_first_name
+      ? [{ key: "parent2", label: `${family.parent2_first_name} ${family.parent2_last_name ?? ""}`.trim(), sublabel: "Parent / Guardian", source: "parent2" as const }]
+      : []),
+    ...householdMembers.map(m => ({
+      key: m.id, label: `${m.first_name} ${m.last_name}`, sublabel: RELATIONSHIP_LABELS[m.relationship] ?? m.relationship,
+      source: "member" as const, memberId: m.id,
+    })),
+  ];
+
+  const currentMember = householdMembers.find(m => m.emergency_contact);
+  const [selectedKey, setSelectedKey] = useState<string>(currentMember?.id ?? (family.emergency_contact_name ? "" : "clear"));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSave() {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    const opt = options.find(o => o.key === selectedKey);
+    const body = opt ? { source: opt.source, memberId: opt.memberId } : { source: "clear" };
+    const res = await fetch(`/api/children-ministry/parents/${familyId}/emergency-contact`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify(body) });
+    if (res.ok) {
+      const data = await res.json();
+      onSaved(data);
+      onClose();
+    } else {
+      const errBody = await res.json().catch(() => null);
+      setError(errBody?.error ?? "Something went wrong. Please try again.");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ModalShell onClose={onClose} disableClose={saving}>
+      <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 20px", fontFamily: "Georgia, serif" }}>Household Emergency Contact</h2>
+      <p style={{ fontSize: "12px", color: MUTED, margin: "0 0 16px" }}>Choose one person as the household's emergency contact. This replaces any previous selection.</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {options.map(opt => (
+          <label key={opt.key} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+            <input type="radio" name="emergencyContactOption" checked={selectedKey === opt.key} onChange={() => setSelectedKey(opt.key)} />
+            <span style={{ fontSize: "13px", color: BODY }}>{opt.label} <span style={{ color: MUTED }}>· {opt.sublabel}</span></span>
+          </label>
+        ))}
+        <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+          <input type="radio" name="emergencyContactOption" checked={selectedKey === "clear"} onChange={() => setSelectedKey("clear")} />
+          <span style={{ fontSize: "13px", color: MUTED }}>No emergency contact</span>
+        </label>
+
+        {error && <p style={{ fontSize: "12px", color: "#f87171", margin: 0 }}>{error}</p>}
+
+        <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+          <button onClick={handleSave} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+          <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancel</button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
 export default function FamilyProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -807,6 +1087,9 @@ export default function FamilyProfilePage() {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [memberModalOpen, setMemberModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<HouseholdMember | null>(null);
+  const [editingParent, setEditingParent] = useState<ParentTarget | null>(null);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [emergencyContactModalOpen, setEmergencyContactModalOpen] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -863,15 +1146,50 @@ export default function FamilyProfilePage() {
     setSavingStatus(false);
   }
 
+  async function refreshChildren() {
+    if (!token) return;
+    const res = await fetch(`/api/children-ministry/parents/${familyId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) setChildren((await res.json()).children ?? []);
+  }
+
   function handleMemberSaved(member: HouseholdMember) {
     setHouseholdMembers(ms => {
       const exists = ms.some(m => m.id === member.id);
-      return exists ? ms.map(m => m.id === member.id ? member : m) : [...ms, member];
+      const next = exists ? ms.map(m => m.id === member.id ? member : m) : [...ms, member];
+      return member.emergency_contact ? next.map(m => (m.id === member.id ? m : { ...m, emergency_contact: false })) : next;
     });
+    if (member.emergency_contact) {
+      const name = `${member.first_name} ${member.last_name}`.trim();
+      setFamily(f => f ? { ...f, emergency_contact_name: name, emergency_contact_phone: member.phone } : f);
+    } else {
+      setFamily(f => {
+        if (!f || !f.emergency_contact_name) return f;
+        const thisName = normalizeName(`${member.first_name} ${member.last_name}`);
+        if (normalizeName(f.emergency_contact_name) === thisName) {
+          return { ...f, emergency_contact_name: null, emergency_contact_phone: null };
+        }
+        return f;
+      });
+    }
+    void refreshChildren();
   }
 
   function handleMemberRemoved(memberId: string) {
+    const removed = householdMembers.find(m => m.id === memberId);
     setHouseholdMembers(ms => ms.filter(m => m.id !== memberId));
+    if (removed?.emergency_contact) {
+      setFamily(f => f ? { ...f, emergency_contact_name: null, emergency_contact_phone: null } : f);
+    }
+    if (removed?.authorized_pickup) void refreshChildren();
+  }
+
+  function handleFamilyUpdated(updated: VisitorFamily) {
+    setFamily(updated);
+  }
+
+  function handleEmergencyContactSaved(result: EmergencyContactResult) {
+    setFamily(f => f ? { ...f, emergency_contact_name: result.emergencyContactName, emergency_contact_phone: result.emergencyContactPhone } : f);
+    setHouseholdMembers(ms => ms.map(m => ({ ...m, emergency_contact: m.id === result.memberId })));
   }
 
   if (loading) return (
@@ -909,6 +1227,53 @@ export default function FamilyProfilePage() {
   const visitList = Object.entries(visitGroups)
     .sort(([a], [b]) => b.localeCompare(a))
     .slice(0, 12);
+
+  // Emergency contact: resolve which structured record (if any) matches the
+  // canonical family-level name/phone, so we can show a relationship label.
+  const emergencyContactMember = householdMembers.find(m => m.emergency_contact);
+  let emergencyContactDisplay: { name: string; phone: string | null; relationship: string | null } | null = null;
+  if (emergencyContactMember) {
+    emergencyContactDisplay = {
+      name: `${emergencyContactMember.first_name} ${emergencyContactMember.last_name}`.trim(),
+      phone: emergencyContactMember.phone,
+      relationship: RELATIONSHIP_LABELS[emergencyContactMember.relationship] ?? emergencyContactMember.relationship,
+    };
+  } else if (family.emergency_contact_name) {
+    const storedNorm = normalizeName(family.emergency_contact_name);
+    const p1Norm = normalizeName(`${family.parent1_first_name} ${family.parent1_last_name}`);
+    const p2Norm = family.parent2_first_name ? normalizeName(`${family.parent2_first_name} ${family.parent2_last_name ?? ""}`) : null;
+    const isParent = storedNorm === p1Norm || (p2Norm && storedNorm === p2Norm);
+    emergencyContactDisplay = {
+      name: family.emergency_contact_name,
+      phone: family.emergency_contact_phone,
+      relationship: isParent ? "Parent / Guardian" : null,
+    };
+  }
+
+  // Authorized pickups: adults with the structured flag, plus any legacy
+  // per-child text names that don't match one of them (preserved, not dropped).
+  const authorizedMembers = householdMembers.filter(m => m.authorized_pickup);
+  const authorizedMemberNormNames = new Set(authorizedMembers.map(m => normalizeName(`${m.first_name} ${m.last_name}`)));
+  const otherPickupNamesMap = new Map<string, string>();
+  for (const child of children) {
+    for (const name of parsePickupNames(child.authorized_pickups)) {
+      const norm = normalizeName(name);
+      if (!authorizedMemberNormNames.has(norm) && !otherPickupNamesMap.has(norm)) otherPickupNamesMap.set(norm, name);
+    }
+  }
+  const otherPickupNames = [...otherPickupNamesMap.values()];
+
+  function pickupScopeLabel(member: HouseholdMember): string {
+    if (member.pickup_scope === "all_children") return "Authorized for all children";
+    if (member.pickup_scope === "specific_children") {
+      const names = member.childIds
+        .map(cid => children.find(c => c.id === cid))
+        .filter((c): c is VisitorChild => !!c)
+        .map(c => c.first_name);
+      return names.length > 0 ? `Authorized for ${names.join(", ")}` : "Authorized for specific children";
+    }
+    return "";
+  }
 
   return (
     <AppShell navItems={[]}>
@@ -1012,6 +1377,10 @@ export default function FamilyProfilePage() {
                 role="Parent"
                 phone={family.parent1_phone}
                 email={family.parent1_email}
+                onEdit={() => setEditingParent({
+                  which: "parent1", firstName: family.parent1_first_name, lastName: family.parent1_last_name,
+                  phone: family.parent1_phone, email: family.parent1_email,
+                })}
               />
               {family.parent2_first_name && (
                 <AdultCard
@@ -1020,6 +1389,10 @@ export default function FamilyProfilePage() {
                   role="Parent"
                   phone={family.parent2_phone}
                   email={family.parent2_email}
+                  onEdit={() => setEditingParent({
+                    which: "parent2", firstName: family.parent2_first_name ?? "", lastName: family.parent2_last_name ?? "",
+                    phone: family.parent2_phone, email: family.parent2_email,
+                  })}
                 />
               )}
               {householdMembers.map(member => (
@@ -1077,6 +1450,37 @@ export default function FamilyProfilePage() {
               onClose={() => setMemberModalOpen(false)}
               onSaved={handleMemberSaved}
               onRemoved={handleMemberRemoved}
+            />
+          )}
+
+          {editingParent && token && (
+            <ParentEditModal
+              familyId={familyId}
+              token={token}
+              parent={editingParent}
+              onClose={() => setEditingParent(null)}
+              onSaved={handleFamilyUpdated}
+            />
+          )}
+
+          {addressModalOpen && token && (
+            <AddressModal
+              familyId={familyId}
+              token={token}
+              family={family}
+              onClose={() => setAddressModalOpen(false)}
+              onSaved={handleFamilyUpdated}
+            />
+          )}
+
+          {emergencyContactModalOpen && token && (
+            <EmergencyContactModal
+              familyId={familyId}
+              token={token}
+              family={family}
+              householdMembers={householdMembers}
+              onClose={() => setEmergencyContactModalOpen(false)}
+              onSaved={handleEmergencyContactSaved}
             />
           )}
 
@@ -1308,11 +1712,18 @@ export default function FamilyProfilePage() {
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 {/* Address */}
                 <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Address</p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <p style={LABEL_STYLE}>Address</p>
+                    <button onClick={() => setAddressModalOpen(true)} style={LINK_BTN}>{family.address ? "Edit Address" : "+ Add Address"}</button>
+                  </div>
                   {family.address ? (
-                    <p style={{ fontSize: "13px", color: BODY, margin: 0, lineHeight: 1.6 }}>{family.address}</p>
+                    <p style={{ fontSize: "13px", color: BODY, margin: 0, lineHeight: 1.6 }}>
+                      {family.address}
+                      {family.address_line2 && <><br />{family.address_line2}</>}
+                      <br />{[family.city, [family.state, family.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
+                    </p>
                   ) : (
-                    <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>No address on file.</p>
+                    <p style={EMPTY_STYLE}>No address on file.</p>
                   )}
                 </div>
 
@@ -1331,27 +1742,46 @@ export default function FamilyProfilePage() {
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 {/* Emergency Contact */}
                 <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Emergency Contact</p>
-                  {family.emergency_contact_name || family.emergency_contact_phone ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <p style={LABEL_STYLE}>Emergency Contact</p>
+                    <button onClick={() => setEmergencyContactModalOpen(true)} style={LINK_BTN}>{emergencyContactDisplay ? "Change" : "Assign"}</button>
+                  </div>
+                  {emergencyContactDisplay ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      {family.emergency_contact_name && (
-                        <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{family.emergency_contact_name}</p>
+                      <p style={{ fontSize: "13px", color: BODY, margin: 0, fontWeight: 700 }}>{emergencyContactDisplay.name}</p>
+                      {emergencyContactDisplay.phone && (
+                        <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{emergencyContactDisplay.phone}</p>
                       )}
-                      {family.emergency_contact_phone && (
-                        <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{family.emergency_contact_phone}</p>
+                      {emergencyContactDisplay.relationship && (
+                        <p style={META_STYLE}>{emergencyContactDisplay.relationship}</p>
                       )}
                     </div>
                   ) : (
-                    <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>No emergency contact provided</p>
+                    <p style={EMPTY_STYLE}>No emergency contact provided.</p>
                   )}
                 </div>
 
                 {/* Authorized Pickups */}
                 <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Authorized Pickups</p>
-                  <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>
-                    Additional authorized adults will appear here when added from Household Members.
-                  </p>
+                  <p style={LABEL_STYLE}>Authorized Pickups</p>
+                  {authorizedMembers.length === 0 && otherPickupNames.length === 0 ? (
+                    <p style={{ ...EMPTY_STYLE, marginTop: "6px" }}>No authorized pickups on file.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
+                      {authorizedMembers.map(member => (
+                        <div key={member.id}>
+                          <p style={{ fontSize: "13px", color: BODY, margin: 0, fontWeight: 700 }}>{member.first_name} {member.last_name}</p>
+                          <p style={META_STYLE}>{RELATIONSHIP_LABELS[member.relationship] ?? member.relationship} · {pickupScopeLabel(member)}</p>
+                        </div>
+                      ))}
+                      {otherPickupNames.length > 0 && (
+                        <div>
+                          <p style={{ ...META_STYLE, textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 4px" }}>Other authorized pickup names</p>
+                          <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>{otherPickupNames.join(", ")}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
