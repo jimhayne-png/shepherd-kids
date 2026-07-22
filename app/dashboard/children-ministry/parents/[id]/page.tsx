@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 import { isAdminRole } from "@/lib/staff-permissions";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 
@@ -475,7 +476,7 @@ type LeaderAssignment = {
 type EligibleStaff = { userId: string; name: string; role: string };
 
 function authHeaders(token: string) {
-  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() };
 }
 
 function CareNotesSection({ familyId, token, initialNotes }: { familyId: string; token: string; initialNotes: CareNote[] }) {
@@ -1159,7 +1160,7 @@ export default function FamilyProfilePage() {
       if (!session) return;
       const t = session.access_token;
       setToken(t);
-      const headers = { Authorization: `Bearer ${t}` };
+      const headers = { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() };
       const [familyRes, careRes, prayerRes, leaderRes, membersRes] = await Promise.all([
         fetch(`/api/children-ministry/parents/${familyId}`, { headers }),
         fetch(`/api/children-ministry/parents/${familyId}/care-notes`, { headers }),
@@ -1196,7 +1197,7 @@ export default function FamilyProfilePage() {
     setSavingStatus(true);
     await fetch(`/api/children-ministry/parents/${familyId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: authHeaders(token),
       body: JSON.stringify({ status: newStatus }),
     });
     setFamily(f => f ? { ...f, status: newStatus } : f);
@@ -1205,7 +1206,7 @@ export default function FamilyProfilePage() {
 
   async function refreshChildren() {
     if (!token) return;
-    const res = await fetch(`/api/children-ministry/parents/${familyId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/children-ministry/parents/${familyId}`, { headers: { Authorization: `Bearer ${token}`, ...selectedChurchHeaders() } });
     if (res.ok) setChildren((await res.json()).children ?? []);
   }
 

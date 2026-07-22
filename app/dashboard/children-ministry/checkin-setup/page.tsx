@@ -72,6 +72,7 @@ function CheckinSetupContent() {
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [roomForm, setRoomForm] = useState({ name: "", minAge: "", maxAge: "", capacity: "" });
   const [savingRoom, setSavingRoom] = useState(false);
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
 
   // Template form
   const [showAddTemplate, setShowAddTemplate] = useState(false);
@@ -302,17 +303,52 @@ function CheckinSetupContent() {
     init();
   }, [router]);
 
+  function startEditRoom(room: Room) {
+    setEditingRoomId(room.id);
+    setRoomForm({
+      name: room.name,
+      minAge: room.min_age === null ? "" : String(room.min_age),
+      maxAge: room.max_age === null ? "" : String(room.max_age),
+      capacity: room.capacity === null ? "" : String(room.capacity),
+    });
+    setShowAddRoom(true);
+  }
+
+  function cancelRoomForm() {
+    setShowAddRoom(false);
+    setEditingRoomId(null);
+    setRoomForm({ name: "", minAge: "", maxAge: "", capacity: "" });
+  }
+
   async function saveRoom() {
     if (!roomForm.name.trim()) return;
     setSavingRoom(true);
-    const res = await fetch("/api/checkin/rooms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...ch() },
-      credentials: "include",
-      body: JSON.stringify({ name: roomForm.name, minAge: roomForm.minAge ? parseInt(roomForm.minAge) : null, maxAge: roomForm.maxAge ? parseInt(roomForm.maxAge) : null, capacity: roomForm.capacity ? parseInt(roomForm.capacity) : null }),
-    });
-    if (res.ok) { const d = await res.json(); setRooms(r => [...r, d.room]); setRoomForm({ name: "", minAge: "", maxAge: "", capacity: "" }); setShowAddRoom(false); }
-    else { const errBody = await res.json().catch(() => ({})); console.log('[saveRoom] failed', res.status, errBody); }
+    const payload = {
+      name: roomForm.name,
+      minAge: roomForm.minAge ? parseInt(roomForm.minAge) : null,
+      maxAge: roomForm.maxAge ? parseInt(roomForm.maxAge) : null,
+      capacity: roomForm.capacity ? parseInt(roomForm.capacity) : null,
+    };
+    const res = editingRoomId
+      ? await fetch("/api/checkin/rooms", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", ...ch() },
+          credentials: "include",
+          body: JSON.stringify({ id: editingRoomId, ...payload }),
+        })
+      : await fetch("/api/checkin/rooms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...ch() },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+    if (res.ok) {
+      const d = await res.json();
+      setRooms(r => editingRoomId ? r.map(room => room.id === editingRoomId ? d.room : room) : [...r, d.room]);
+      cancelRoomForm();
+    } else {
+      const errBody = await res.json().catch(() => ({})); console.log('[saveRoom] failed', res.status, errBody);
+    }
     setSavingRoom(false);
   }
 
@@ -527,7 +563,7 @@ function CheckinSetupContent() {
 
             {showAddRoom && (
               <div className="rounded-2xl p-6 mb-6" style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.22)" }}>
-                <h3 className="font-bold mb-4" style={{ color: "#ffffff" }}>New Room</h3>
+                <h3 className="font-bold mb-4" style={{ color: "#ffffff" }}>{editingRoomId ? "Edit Room" : "New Room"}</h3>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-widest block mb-1" style={{ color: "#A9A9B8" }}>Room Name *</label>
@@ -547,8 +583,8 @@ function CheckinSetupContent() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={saveRoom} disabled={savingRoom || !roomForm.name.trim()} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: savingRoom ? 0.6 : 1 }}>{savingRoom ? "Saving…" : "Save Room"}</button>
-                  <button onClick={() => setShowAddRoom(false)} className="px-4 py-2.5 rounded-xl text-sm" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
+                  <button onClick={saveRoom} disabled={savingRoom || !roomForm.name.trim()} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style={{ backgroundColor: ACCENT, opacity: savingRoom ? 0.6 : 1 }}>{savingRoom ? "Saving…" : editingRoomId ? "Save Changes" : "Save Room"}</button>
+                  <button onClick={cancelRoomForm} className="px-4 py-2.5 rounded-xl text-sm" style={{ border: "1px solid rgba(212,175,55,0.3)", color: "#A9A9B8", background: "transparent" }}>Cancel</button>
                 </div>
               </div>
             )}
@@ -567,7 +603,10 @@ function CheckinSetupContent() {
                       </div>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${room.is_active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>{room.is_active ? "Active" : "Inactive"}</span>
                     </div>
-                    <div className="flex gap-2 mt-4">
+                    <div className="flex gap-2 mt-4 flex-wrap">
+                      <button onClick={() => startEditRoom(room)} className="py-2 px-3 rounded-xl text-xs font-bold" style={{ border: `1px solid ${ACCENT}`, color: ACCENT, backgroundColor: "transparent" }}>
+                        Edit
+                      </button>
                       <button onClick={() => toggleRoom(room)} className="flex-1 py-2 rounded-xl text-xs font-bold border" style={{ borderColor: ACCENT, color: room.is_active ? "#6b7280" : ACCENT, backgroundColor: room.is_active ? "transparent" : ACCENT + "11" }}>
                         {room.is_active ? "Deactivate" : "Activate"}
                       </button>

@@ -17,13 +17,39 @@ const STRING_FIELDS = [
 const EMAIL_FIELDS = ['parent1_email', 'parent2_email'] as const;
 const PHONE_FIELDS = ['parent1_phone', 'parent2_phone'] as const;
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
+// Diagnostic logging for church-context resolution failures. Logs only IDs
+// and role metadata — never family names, notes, or contact details.
+function viewingContextSource(request: NextRequest): 'master_admin_selected_church' | 'own_membership' {
+  return request.headers.get('x-selected-church-id') ? 'master_admin_selected_church' : 'own_membership';
+}
+
+async function diagnosticUserId(request: NextRequest): Promise<string | null> {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) return null;
+  const { data } = await adminClient().auth.getUser(token);
+  return data?.user?.id ?? null;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const auth = await getAuthContextWithRole(request);
-  if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!auth) {
+    const reason = request.headers.get('x-selected-church-id') ? 'CHURCH_CONTEXT_MISMATCH' : 'NO_CHURCH_MEMBERSHIP';
+    console.error('[household-record] auth resolution failed', {
+      requestedFamilyId: id,
+      authenticatedUserId: await diagnosticUserId(request),
+      viewingContextSource: viewingContextSource(request),
+      reason,
+    });
+    const body: Record<string, unknown> = { error: 'Unauthorized' };
+    if (IS_DEV) body.reason = reason;
+    return Response.json(body, { status: 401 });
+  }
 
   const admin = adminClient();
 
@@ -34,7 +60,19 @@ export async function GET(
     .eq('church_id', auth.churchId)
     .maybeSingle();
 
-  if (error || !family) return Response.json({ error: 'Not found' }, { status: 404 });
+  if (error || !family) {
+    console.error('[household-record] family not found', {
+      requestedFamilyId: id,
+      resolvedChurchId: auth.churchId,
+      authenticatedUserId: auth.userId,
+      role: auth.role,
+      viewingContextSource: viewingContextSource(request),
+      reason: 'FAMILY_NOT_FOUND',
+    });
+    const body: Record<string, unknown> = { error: 'Not found' };
+    if (IS_DEV) body.reason = 'FAMILY_NOT_FOUND';
+    return Response.json(body, { status: 404 });
+  }
 
   const { data: children } = await admin
     .from('cm_visitor_children')

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 import { isAdminRole } from "@/lib/staff-permissions";
+import { selectedChurchHeaders } from "@/lib/selected-church";
 
 const supabase = createClient();
 const ACCENT = "#7B2CBF";
@@ -13,7 +14,7 @@ const ACCENT2 = "#9D4EDD";
 const GOLD = "#D4AF37";
 
 function authHeaders(token: string) {
-  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...selectedChurchHeaders() };
 }
 
 function fmtDateTime(iso: string): string {
@@ -376,9 +377,9 @@ export default function ChildProfilePage() {
 
   const fetchProfile = useCallback(async (t: string) => {
     const [profileRes, milestonesRes, careNotesRes] = await Promise.all([
-      fetch(`/api/children-ministry/visitor-children/${childId}`, { headers: { Authorization: `Bearer ${t}` } }),
-      fetch(`/api/children-ministry/children/${childId}/milestones`, { headers: { Authorization: `Bearer ${t}` } }),
-      fetch(`/api/children-ministry/children/${childId}/care-notes`, { headers: { Authorization: `Bearer ${t}` } }),
+      fetch(`/api/children-ministry/visitor-children/${childId}`, { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
+      fetch(`/api/children-ministry/children/${childId}/milestones`, { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
+      fetch(`/api/children-ministry/children/${childId}/care-notes`, { headers: { Authorization: `Bearer ${t}`, ...selectedChurchHeaders() } }),
     ]);
     if (!profileRes.ok) { router.push("/dashboard/children-ministry/children"); return; }
     const profileData = await profileRes.json();
@@ -416,11 +417,11 @@ export default function ChildProfilePage() {
     setSaving(true);
     const res = await fetch(`/api/children-ministry/children/${childId}/milestones`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: authHeaders(token),
       body: JSON.stringify({ milestoneType: type, completedAt: editValue }),
     });
     if (res.ok && token) {
-      const milRes = await fetch(`/api/children-ministry/children/${childId}/milestones`, { headers: { Authorization: `Bearer ${token}` } });
+      const milRes = await fetch(`/api/children-ministry/children/${childId}/milestones`, { headers: { Authorization: `Bearer ${token}`, ...selectedChurchHeaders() } });
       if (milRes.ok) setMilestones((await milRes.json()).milestones ?? []);
       setEditField(null);
       setEditValue("");
@@ -896,16 +897,7 @@ export default function ChildProfilePage() {
               )}
             </div>
 
-            {/* Scripture Memory + Awards placeholders */}
             <div style={{ paddingTop: "14px", borderTop: "1px solid rgba(212,175,55,0.1)", display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "13px", color: "#4a4a65" }}>📖 Scripture Memory</span>
-                <span style={{ fontSize: "11px", color: "#4a4a65", fontStyle: "italic" }}>Coming soon</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "13px", color: "#4a4a65" }}>🏆 Awards & Certificates</span>
-                <span style={{ fontSize: "11px", color: "#4a4a65", fontStyle: "italic" }}>Coming soon</span>
-              </div>
               <Link
                 href={`/dashboard/children-ministry/certificates/new?childId=${childId}&childName=${encodeURIComponent(fullName)}`}
                 style={{ display: "block", width: "100%", marginTop: "4px", padding: "9px", borderRadius: "10px", fontSize: "12px", fontWeight: 700, color: "#ffffff", background: `linear-gradient(135deg, ${ACCENT}, #9D4EDD)`, textDecoration: "none", textAlign: "center", boxSizing: "border-box" as const }}
