@@ -842,22 +842,34 @@ function ModalShell({ onClose, disableClose, children }: { onClose: () => void; 
 }
 
 function ParentEditModal({
-  familyId, token, parent, onClose, onSaved,
+  familyId, token, parent, family, onClose, onSaved,
 }: {
-  familyId: string; token: string; parent: ParentTarget; onClose: () => void; onSaved: (family: VisitorFamily) => void;
+  familyId: string; token: string; parent: ParentTarget; family: VisitorFamily; onClose: () => void; onSaved: (family: VisitorFamily) => void;
 }) {
   const [firstName, setFirstName] = useState(parent.firstName);
   const [lastName, setLastName] = useState(parent.lastName);
   const [phone, setPhone] = useState(parent.phone ?? "");
   const [email, setEmail] = useState(parent.email ?? "");
+  const [line1, setLine1] = useState(family.address ?? "");
+  const [line2, setLine2] = useState(family.address_line2 ?? "");
+  const [city, setCity] = useState(family.city ?? "");
+  const [state, setState] = useState(family.state ?? "");
+  const [zip, setZip] = useState(family.zip ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const fieldLabel: CSSProperties = { ...LABEL_STYLE, display: "block", marginBottom: "6px" };
+  const sectionLabel: CSSProperties = { ...LABEL_STYLE, color: GOLD, margin: "0 0 12px" };
 
   async function handleSave() {
     if (saving) return;
     if (!firstName.trim() || !lastName.trim()) { setError("First and last name are required."); return; }
+    const hasAnyAddressInput = !!(line1.trim() || line2.trim() || city.trim() || state.trim() || zip.trim());
+    if (hasAnyAddressInput) {
+      if (!line1.trim()) { setError("Address Line 1 is required."); return; }
+      if (!city.trim() || !state.trim() || !zip.trim()) { setError("City, state, and ZIP are required."); return; }
+      if (!/^\d{5}(-\d{4})?$/.test(zip.trim())) { setError("Enter a valid ZIP code (e.g. 12345 or 12345-6789)."); return; }
+    }
     setSaving(true);
     setError("");
     const prefix = parent.which;
@@ -867,6 +879,13 @@ function ParentEditModal({
       [`${prefix}_phone`]: phone.trim() || null,
       [`${prefix}_email`]: email.trim() || null,
     };
+    if (hasAnyAddressInput) {
+      body.address = line1.trim();
+      body.address_line2 = line2.trim() || null;
+      body.city = city.trim();
+      body.state = state.trim();
+      body.zip = zip.trim();
+    }
     const res = await fetch(`/api/children-ministry/parents/${familyId}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify(body) });
     if (res.ok) {
       const data = await res.json();
@@ -882,33 +901,71 @@ function ParentEditModal({
   return (
     <ModalShell onClose={onClose} disableClose={saving}>
       <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", margin: "0 0 20px", fontFamily: "Georgia, serif" }}>Edit Parent</h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ flex: 1 }}>
-            <label style={fieldLabel}>First Name</label>
-            <input value={firstName} onChange={e => setFirstName(e.target.value)} style={TEXTAREA_STYLE} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={fieldLabel}>Last Name</label>
-            <input value={lastName} onChange={e => setLastName(e.target.value)} style={TEXTAREA_STYLE} />
-          </div>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         <div>
-          <label style={fieldLabel}>Relationship</label>
-          <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>Parent / Guardian</p>
-        </div>
-        <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ flex: 1 }}>
-            <label style={fieldLabel}>Phone</label>
-            <input value={phone} onChange={e => setPhone(e.target.value)} style={TEXTAREA_STYLE} />
+          <p style={sectionLabel}>Parent / Guardian Information</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabel}>First Name</label>
+                <input value={firstName} onChange={e => setFirstName(e.target.value)} style={TEXTAREA_STYLE} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabel}>Last Name</label>
+                <input value={lastName} onChange={e => setLastName(e.target.value)} style={TEXTAREA_STYLE} />
+              </div>
+            </div>
+            <div>
+              <label style={fieldLabel}>Relationship</label>
+              <p style={{ fontSize: "13px", color: BODY, margin: 0 }}>Parent / Guardian</p>
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabel}>Phone</label>
+                <input value={phone} onChange={e => setPhone(e.target.value)} style={TEXTAREA_STYLE} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabel}>Email</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={TEXTAREA_STYLE} />
+              </div>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={fieldLabel}>Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={TEXTAREA_STYLE} />
+        </div>
+
+        <div style={{ borderTop: "1px solid rgba(212,175,55,0.15)", paddingTop: "18px" }}>
+          <p style={sectionLabel}>Household Address</p>
+          <p style={{ fontSize: "11px", color: MUTED, margin: "-6px 0 12px", fontStyle: "italic" }}>This address applies to the entire household.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div>
+              <label style={fieldLabel}>Address Line 1</label>
+              <input value={line1} onChange={e => setLine1(e.target.value)} style={TEXTAREA_STYLE} />
+            </div>
+            <div>
+              <label style={fieldLabel}>Address Line 2 (optional)</label>
+              <input value={line2} onChange={e => setLine2(e.target.value)} style={TEXTAREA_STYLE} />
+            </div>
+            <div>
+              <label style={fieldLabel}>City</label>
+              <input value={city} onChange={e => setCity(e.target.value)} style={TEXTAREA_STYLE} />
+            </div>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabel}>State</label>
+                <select value={state} onChange={e => setState(e.target.value)} style={{ ...TEXTAREA_STYLE, cursor: "pointer" }}>
+                  <option value="" style={{ background: "#ffffff", color: "#000000" }}>—</option>
+                  {US_STATES.map(st => <option key={st} value={st} style={{ background: "#ffffff", color: "#000000" }}>{st}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={fieldLabel}>ZIP Code</label>
+                <input value={zip} onChange={e => setZip(e.target.value)} style={TEXTAREA_STYLE} />
+              </div>
+            </div>
           </div>
         </div>
+
         {error && <p style={{ fontSize: "12px", color: "#f87171", margin: 0 }}>{error}</p>}
-        <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+        <div style={{ display: "flex", gap: "8px" }}>
           <button onClick={handleSave} disabled={saving} style={{ ...PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
           <button onClick={onClose} disabled={saving} style={SECONDARY_BTN}>Cancel</button>
         </div>
@@ -1458,6 +1515,7 @@ export default function FamilyProfilePage() {
               familyId={familyId}
               token={token}
               parent={editingParent}
+              family={family}
               onClose={() => setEditingParent(null)}
               onSaved={handleFamilyUpdated}
             />
@@ -1594,12 +1652,6 @@ export default function FamilyProfilePage() {
                     <p style={{ fontSize: "12px", color: MUTED, margin: "3px 0 0" }}>This family has not been contacted yet.</p>
                   </div>
                 )}
-
-                {/* Last Newsletter */}
-                <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Last Newsletter</p>
-                  <p style={{ fontSize: "12px", color: MUTED, margin: 0, fontStyle: "italic" }}>Newsletter history coming soon.</p>
-                </div>
 
                 {/* How did you hear */}
                 {family.how_did_you_hear && (

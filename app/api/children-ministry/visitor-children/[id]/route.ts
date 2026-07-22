@@ -1,12 +1,12 @@
 import { type NextRequest } from 'next/server';
-import { getAuthContext, adminClient } from '@/lib/api-auth';
+import { getAuthContextWithRole, adminClient } from '@/lib/api-auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const ctx = await getAuthContext(request);
+  const ctx = await getAuthContextWithRole(request);
   if (!ctx) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { churchId } = ctx;
 
@@ -71,5 +71,6 @@ export async function GET(
     family: family ?? null,
     siblings: siblings ?? [],
     checkinHistory,
+    role: ctx.role,
   });
 }

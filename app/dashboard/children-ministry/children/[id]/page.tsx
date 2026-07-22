@@ -5,10 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
+import { isAdminRole } from "@/lib/staff-permissions";
 
 const supabase = createClient();
 const ACCENT = "#7B2CBF";
+const ACCENT2 = "#9D4EDD";
 const GOLD = "#D4AF37";
+
+function authHeaders(token: string) {
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
+
+function fmtDateTime(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -240,6 +250,108 @@ function DataRow({ label, value, placeholder }: { label: string; value?: string 
   );
 }
 
+// ── Ministry Care Notes (child-level) ───────────────────────────────────────
+
+type ChildCareNote = {
+  id: string; note_text: string; created_by: string; created_by_name: string | null;
+  created_at: string; updated_at: string | null;
+};
+
+const NOTE_TEXTAREA_STYLE: React.CSSProperties = { width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", resize: "vertical", boxSizing: "border-box" };
+const NOTE_PRIMARY_BTN: React.CSSProperties = { padding: "6px 14px", borderRadius: "8px", border: "none", cursor: "pointer", background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT2})`, color: "#ffffff", fontSize: "12px", fontWeight: 700 };
+const NOTE_SECONDARY_BTN: React.CSSProperties = { padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", background: "transparent", color: "#A9A9B8", fontSize: "12px", fontWeight: 600 };
+const NOTE_LINK_BTN: React.CSSProperties = { fontSize: "12px", color: ACCENT2, background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 600 };
+const NOTE_LINK_BTN_MUTED: React.CSSProperties = { fontSize: "12px", color: "#A9A9B8", background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 600 };
+
+function MinistryCareNotesSection({ childId, token, initialNotes, canArchive }: {
+  childId: string; token: string; initialNotes: ChildCareNote[]; canArchive: boolean;
+}) {
+  const [notes, setNotes] = useState<ChildCareNote[]>(initialNotes);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+
+  const base = `/api/children-ministry/children/${childId}/care-notes`;
+
+  async function handleAdd() {
+    if (!draft.trim()) return;
+    setSaving(true);
+    const res = await fetch(base, { method: "POST", headers: authHeaders(token), body: JSON.stringify({ noteText: draft.trim() }) });
+    if (res.ok) {
+      const { note } = await res.json();
+      setNotes(n => [note, ...n]);
+      setDraft("");
+      setAdding(false);
+    }
+    setSaving(false);
+  }
+
+  async function handleEdit(id: string) {
+    if (!editDraft.trim()) return;
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ noteText: editDraft.trim() }) });
+    if (res.ok) {
+      setNotes(ns => ns.map(n => n.id === id ? { ...n, note_text: editDraft.trim() } : n));
+      setEditingId(null);
+    }
+  }
+
+  async function handleArchive(id: string) {
+    if (!confirm("Archive this care note?")) return;
+    const res = await fetch(`${base}/${id}`, { method: "PATCH", headers: authHeaders(token), body: JSON.stringify({ archive: true }) });
+    if (res.ok) setNotes(ns => ns.filter(n => n.id !== id));
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+        <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Ministry Care Notes</p>
+        {!adding && <button onClick={() => setAdding(true)} style={NOTE_LINK_BTN}>+ Add Care Note</button>}
+      </div>
+      {adding && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "10px" }}>
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} placeholder="Add a ministry care note about this child…" style={NOTE_TEXTAREA_STYLE} />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={handleAdd} disabled={saving} style={{ ...NOTE_PRIMARY_BTN, opacity: saving ? 0.5 : 1 }}>{saving ? "Saving…" : "Save"}</button>
+            <button onClick={() => { setAdding(false); setDraft(""); }} style={NOTE_SECONDARY_BTN}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {notes.length === 0 && !adding ? (
+        <p style={{ fontSize: "12px", color: "#4a4a65", fontStyle: "italic", margin: 0 }}>No ministry care notes have been added for this child.</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {notes.map(note => (
+            <div key={note.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.12)", borderRadius: "10px", padding: "12px 14px" }}>
+              {editingId === note.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <textarea value={editDraft} onChange={e => setEditDraft(e.target.value)} rows={3} style={NOTE_TEXTAREA_STYLE} />
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button onClick={() => handleEdit(note.id)} style={NOTE_PRIMARY_BTN}>Save</button>
+                    <button onClick={() => setEditingId(null)} style={NOTE_SECONDARY_BTN}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: "13px", color: "#D8D8E8", margin: 0, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{note.note_text}</p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "8px" }}>
+                    <span style={{ fontSize: "11px", color: "#A9A9B8" }}>{note.created_by_name ?? "Unknown"} · {fmtDateTime(note.created_at)}</span>
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button onClick={() => { setEditingId(note.id); setEditDraft(note.note_text); }} style={NOTE_LINK_BTN}>Edit</button>
+                      {canArchive && <button onClick={() => handleArchive(note.id)} style={NOTE_LINK_BTN_MUTED}>Archive</button>}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ChildProfilePage() {
@@ -254,6 +366,8 @@ export default function ChildProfilePage() {
   const [siblings, setSiblings] = useState<Sibling[]>([]);
   const [checkinHistory, setCheckinHistory] = useState<CheckinRecord[]>([]);
   const [milestones, setMilestones] = useState<MilestoneRecord[]>([]);
+  const [userRole, setUserRole] = useState("");
+  const [careNotes, setCareNotes] = useState<ChildCareNote[]>([]);
 
   // Milestone editing
   const [editField, setEditField] = useState<"salvation" | "water_baptism" | null>(null);
@@ -261,9 +375,10 @@ export default function ChildProfilePage() {
   const [saving, setSaving] = useState(false);
 
   const fetchProfile = useCallback(async (t: string) => {
-    const [profileRes, milestonesRes] = await Promise.all([
+    const [profileRes, milestonesRes, careNotesRes] = await Promise.all([
       fetch(`/api/children-ministry/visitor-children/${childId}`, { headers: { Authorization: `Bearer ${t}` } }),
       fetch(`/api/children-ministry/children/${childId}/milestones`, { headers: { Authorization: `Bearer ${t}` } }),
+      fetch(`/api/children-ministry/children/${childId}/care-notes`, { headers: { Authorization: `Bearer ${t}` } }),
     ]);
     if (!profileRes.ok) { router.push("/dashboard/children-ministry/children"); return; }
     const profileData = await profileRes.json();
@@ -271,9 +386,14 @@ export default function ChildProfilePage() {
     setFamily(profileData.family ?? null);
     setSiblings(profileData.siblings ?? []);
     setCheckinHistory(profileData.checkinHistory ?? []);
+    setUserRole(profileData.role ?? "");
     if (milestonesRes.ok) {
       const milData = await milestonesRes.json();
       setMilestones(milData.milestones ?? []);
+    }
+    if (careNotesRes.ok) {
+      const careData = await careNotesRes.json();
+      setCareNotes(careData.notes ?? []);
     }
   }, [childId, router]);
 
@@ -726,10 +846,9 @@ export default function ChildProfilePage() {
               )}
             </div>
 
-            <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "6px" }}>Ministry Care Notes</p>
-              <p style={{ fontSize: "12px", color: "#4a4a65", fontStyle: "italic", margin: 0 }}>Coming soon — leadership notes</p>
-            </div>
+            {token && (
+              <MinistryCareNotesSection childId={childId} token={token} initialNotes={careNotes} canArchive={isAdminRole(userRole)} />
+            )}
           </SectionCard>
         </div>
 
