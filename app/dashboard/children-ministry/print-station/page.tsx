@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/layout/AppShell";
 import { PrintLabel, type SharedLabelData } from "@/components/ui/PrintLabels";
+import { printWithoutBranding } from "@/lib/print-without-branding";
 
 const supabase = createClient();
 const ACCENT = "#7B2CBF";
@@ -143,7 +144,7 @@ export default function PrintStationPage() {
 
   function handlePrintSelected() {
     if (selected.size === 0) return;
-    window.print();
+    printWithoutBranding(selectedJobs[0]?.church_name ?? null);
   }
 
   function toggleJob(id: string) {

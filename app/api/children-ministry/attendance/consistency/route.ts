@@ -53,10 +53,14 @@ export async function GET(request: NextRequest) {
   // Canonical children — cm_visitor_children is the source of truth for the
   // dashboard's child roster (see cm_visitor_children_safety_fields migration
   // notes); children_ministry_children is legacy-only and no longer written to.
+  // Only children expected to attend regularly are evaluated for consistency —
+  // visitors and inactive children keep their check-in history and can still
+  // check in, they're just excluded from missed-attendance calculations.
   const { data: childRows } = await admin
     .from('cm_visitor_children')
     .select('id, first_name, last_name, grade, date_of_birth, allergies, medical_notes, family_id')
     .eq('church_id', churchId)
+    .eq('attendance_status', 'regular')
     .order('last_name');
 
   const children = (childRows ?? []) as ChildRow[];

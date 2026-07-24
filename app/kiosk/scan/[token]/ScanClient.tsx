@@ -132,13 +132,6 @@ export default function ScanClient({ token }: { token: string }) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#08060D" }}>
       <div className="px-6 py-5" style={{ background: `linear-gradient(135deg, #1C0A30 0%, ${ACCENT} 100%)` }}>
-        <div className="flex items-center gap-2 mb-1 opacity-80">
-          <svg width="18" height="18" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-            <rect width="36" height="36" rx="8" fill="rgba(255,255,255,0.25)" />
-            <path d="M18 8 L18 28 M12 14 Q18 8 24 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
-          <span className="text-white text-xs font-semibold">ShepherdKids</span>
-        </div>
         <h1 className="text-2xl font-bold text-white mb-0.5">Child Information</h1>
         {child.roomName && <p className="text-orange-100 text-sm">{child.roomName}</p>}
       </div>

@@ -33,7 +33,32 @@ type VisitorChild = {
   medical_notes: string | null;
   special_instructions: string | null;
   family_id: string | null;
+  attendance_status: "regular" | "visitor" | "inactive";
   created_at: string;
+};
+
+const ATTENDANCE_STATUS_LABEL: Record<string, string> = {
+  regular: "Regular Attender",
+  visitor: "Visitor / Temporary",
+  inactive: "No Longer Attending",
+};
+
+const ATTENDANCE_STATUS_BADGE_LABEL: Record<string, string> = {
+  regular: "Regular",
+  visitor: "Visitor / Temporary",
+  inactive: "No Longer Attending",
+};
+
+const ATTENDANCE_STATUS_HELP: Record<string, string> = {
+  regular: "Included in Attendance Consistency and follow-up care.",
+  visitor: "Can check in normally but is not included in Attendance Consistency.",
+  inactive: "Historical attendance and ministry records are preserved, but the child is excluded from Attendance Consistency monitoring.",
+};
+
+const ATTENDANCE_STATUS_BADGE_COLOR: Record<string, { bg: string; text: string; border: string }> = {
+  regular:  { bg: "rgba(34,197,94,0.15)",  text: "#4ade80", border: "rgba(34,197,94,0.3)" },
+  visitor:  { bg: "rgba(59,130,246,0.15)", text: "#60a5fa", border: "rgba(59,130,246,0.3)" },
+  inactive: { bg: "rgba(255,255,255,0.08)", text: "#A9A9B8", border: "rgba(255,255,255,0.15)" },
 };
 
 type VisitorFamily = {
@@ -374,6 +399,8 @@ export default function ChildProfilePage() {
   const [editField, setEditField] = useState<"salvation" | "water_baptism" | null>(null);
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingAttendanceStatus, setSavingAttendanceStatus] = useState(false);
+  const [attendanceStatusError, setAttendanceStatusError] = useState("");
 
   const fetchProfile = useCallback(async (t: string) => {
     const [profileRes, milestonesRes, careNotesRes] = await Promise.all([
@@ -427,6 +454,25 @@ export default function ChildProfilePage() {
       setEditValue("");
     }
     setSaving(false);
+  }
+
+  async function handleAttendanceStatusChange(newStatus: string) {
+    if (!token) return;
+    setSavingAttendanceStatus(true);
+    setAttendanceStatusError("");
+    const res = await fetch(`/api/children-ministry/visitor-children/${childId}`, {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify({ attendanceStatus: newStatus }),
+    });
+    if (res.ok) {
+      const { child: updated } = await res.json();
+      setChild(updated);
+    } else {
+      const errBody = await res.json().catch(() => null);
+      setAttendanceStatusError(errBody?.error ?? "Could not update attendance status. Please try again.");
+    }
+    setSavingAttendanceStatus(false);
   }
 
   if (loading) {
@@ -504,6 +550,14 @@ export default function ChildProfilePage() {
 
             {/* Quick badges */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {(() => {
+                const statusColor = ATTENDANCE_STATUS_BADGE_COLOR[child.attendance_status] ?? ATTENDANCE_STATUS_BADGE_COLOR.regular;
+                return (
+                  <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "20px", background: statusColor.bg, color: statusColor.text, border: `1px solid ${statusColor.border}` }}>
+                    {ATTENDANCE_STATUS_BADGE_LABEL[child.attendance_status] ?? "Regular"}
+                  </span>
+                );
+              })()}
               {hasAllergy && (
                 <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "20px", background: "rgba(220,38,38,0.25)", color: "#fca5a5", border: "1px solid rgba(220,38,38,0.4)" }}>
                   🚨 Allergy
@@ -850,6 +904,26 @@ export default function ChildProfilePage() {
             {token && (
               <MinistryCareNotesSection childId={childId} token={token} initialNotes={careNotes} canArchive={isAdminRole(userRole)} />
             )}
+
+            <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(212,175,55,0.1)" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>Attendance Status</p>
+              <select
+                value={child.attendance_status}
+                onChange={e => handleAttendanceStatusChange(e.target.value)}
+                disabled={savingAttendanceStatus}
+                style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,175,55,0.3)", borderRadius: "8px", fontSize: "13px", color: "#ffffff", outline: "none", cursor: savingAttendanceStatus ? "not-allowed" : "pointer", opacity: savingAttendanceStatus ? 0.6 : 1 }}
+              >
+                <option value="regular" style={{ background: "#ffffff", color: "#000000" }}>{ATTENDANCE_STATUS_LABEL.regular}</option>
+                <option value="visitor" style={{ background: "#ffffff", color: "#000000" }}>{ATTENDANCE_STATUS_LABEL.visitor}</option>
+                <option value="inactive" style={{ background: "#ffffff", color: "#000000" }}>{ATTENDANCE_STATUS_LABEL.inactive}</option>
+              </select>
+              <p style={{ fontSize: "11px", color: "#4a4a65", marginTop: "8px", lineHeight: 1.6 }}>
+                {ATTENDANCE_STATUS_HELP[child.attendance_status]}
+              </p>
+              {attendanceStatusError && (
+                <p style={{ fontSize: "11px", color: "#f87171", marginTop: "6px" }}>{attendanceStatusError}</p>
+              )}
+            </div>
           </SectionCard>
         </div>
 

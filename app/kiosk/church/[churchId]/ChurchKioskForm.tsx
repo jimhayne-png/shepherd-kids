@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { PrintLabel } from "@/components/ui/PrintLabels";
+import { printWithoutBranding } from "@/lib/print-without-branding";
 
 type Session = { id: string; service_name: string; date: string; session_group: string | null };
 type Group = { name: string; sessions: Session[] };
@@ -787,7 +788,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             )}
             {labels.length > 0 && (
               <button
-                onClick={() => window.print()}
+                onClick={() => printWithoutBranding(churchName)}
                 className="w-full py-4 rounded-2xl text-lg font-bold mb-4"
                 style={{ backgroundColor: "#fff", color: "#000" }}
               >

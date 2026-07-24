@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PrintLabel } from "@/components/ui/PrintLabels";
+import { printWithoutBranding } from "@/lib/print-without-branding";
 
 const ACCENT = "#F28C28";
 
@@ -480,7 +481,7 @@ export default function KioskCheckInForm({
 
   function handlePrintLabels() {
     if (labels.length === 0) return;
-    window.print();
+    printWithoutBranding(churchName);
   }
 
   // ── SUCCESS ─────────────────────────────────────────────────────────────
@@ -522,7 +523,7 @@ if (step === "success") {
           </div>
 
           <button
-            onClick={() => window.print()}
+            onClick={() => printWithoutBranding(churchName)}
             className="w-full bg-white text-black text-3xl font-bold py-6 rounded-2xl mb-6"
           >
             🖨️ Print Labels
