@@ -1519,68 +1519,102 @@ function CheckinSetupContent() {
                 </div>
               </div>
 
-              {/* QL-810W */}
+              {/* QL-820NWB */}
               <div style={{ background: "rgba(123,44,191,0.1)", border: "2px solid rgba(123,44,191,0.4)", borderRadius: "12px", padding: "18px 20px", marginBottom: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "16px" }}>⭐</span>
-                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: 0, fontFamily: "Georgia, serif" }}>Brother QL-810W <span style={{ fontSize: "12px", fontWeight: 400, color: "#c084fc" }}>(Recommended)</span></h3>
+                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: 0, fontFamily: "Georgia, serif" }}>
+                    Brother QL-820NWB{" "}
+                    <span style={{ fontSize: "12px", fontWeight: 400, color: "#c084fc" }}>(Recommended)</span>
+                  </h3>
                 </div>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#D4AF37", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 10px" }}>
+                  ShepherdKids Preferred Hardware
+                </p>
                 <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 12px", lineHeight: 1.6 }}>
-                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-810W</strong> is the recommended label printer for most Shepherd Kids churches. For approximately <strong style={{ color: "#D4AF37" }}>90% of churches</strong>, this printer provides everything needed for child check-in labels.
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> is the recommended label printer for most ShepherdKids churches. It provides the greatest installation flexibility while allowing the Android tablet to remain connected to the church&apos;s Wi-Fi network. With USB, standard Wi-Fi, Ethernet, Bluetooth, and a built-in LCD display, it is the strongest choice for both single-station and multi-station check-in environments.
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-                  {["Wi-Fi Direct (no router needed)", "Wi-Fi connectivity", "USB connectivity", "Fast 4\" × 2\" label printing", "Simple setup", "Lower cost"].map(f => (
-                    <div key={f} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8" }}>
-                      <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span> {f}
+                  {[
+                    "Native USB printing (recommended)",
+                    "Standard Wi-Fi networking",
+                    "Ethernet connectivity",
+                    "Bluetooth connectivity",
+                    "Built-in LCD display",
+                    "Fast 4\" × 2\" label printing",
+                    "Brother DK continuous label rolls",
+                    "Single or multiple check-in stations",
+                  ].map(feature => (
+                    <div key={feature} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8" }}>
+                      <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span>
+                      {feature}
                     </div>
                   ))}
                 </div>
                 <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                   <p style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 5px" }}>Setup Experience</p>
-                  <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>Best for a simple Wi-Fi or USB installation. Supports Wi-Fi Direct and WPS setup, although some networks may require Brother's setup software or a temporary USB connection. Ideal for most churches with one or two label-printing stations.</p>
+                  <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>
+                    The built-in LCD display makes installation and troubleshooting significantly easier. Administrators can view network settings, change printer modes, verify connectivity, and diagnose common issues directly from the printer without connecting it to a computer. For churches that want the simplest installation and long-term maintenance experience, the QL-820NWB is the recommended choice.
+                  </p>
                 </div>
               </div>
 
-              {/* QL-820NWB */}
+              {/* QL-810W */}
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(212,175,55,0.2)", borderRadius: "12px", padding: "18px 20px", marginBottom: "20px" }}>
-                <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: "0 0 10px", fontFamily: "Georgia, serif" }}>Brother QL-820NWB <span style={{ fontSize: "12px", fontWeight: 400, color: "#A9A9B8" }}>(Advanced Installations)</span></h3>
-                <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 10px", lineHeight: 1.6 }}>
-                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-820NWB</strong> supports all the same printing capabilities as the QL-810W — including <strong style={{ color: "#D4AF37" }}>Wi-Fi Direct</strong> and standard Wi-Fi — and adds <strong style={{ color: "#D4AF37" }}>two additional connectivity options</strong> as the <strong style={{ color: "#FFFFFF" }}>primary differences</strong> between the two printers:
+                <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: "0 0 10px", fontFamily: "Georgia, serif" }}>
+                  Brother QL-810W{" "}
+                  <span style={{ fontSize: "12px", fontWeight: 400, color: "#A9A9B8" }}>(Budget Recommendation)</span>
+                </h3>
+                <p style={{ color: "#D8D8E8", fontSize: "13px", margin: "0 0 12px", lineHeight: 1.6 }}>
+                  The <strong style={{ color: "#FFFFFF" }}>Brother QL-810W</strong> is an excellent lower-cost choice for churches that want dependable USB label printing with one or two check-in stations. It delivers comparable print quality and speed but does not include Ethernet, Bluetooth, or the built-in LCD display found on the QL-820NWB.
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
-                    <span style={{ color: "#4ade80" }}>✅</span> Wi-Fi Direct (connect directly from any device — no router needed)
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
-                    <span style={{ color: "#4ade80" }}>✅</span> Wi-Fi connectivity
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
-                    <span style={{ color: "#4ade80" }}>✅</span> Ethernet (wired network connection)
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#D8D8E8", fontWeight: 600 }}>
-                    <span style={{ color: "#4ade80" }}>✅</span> Bluetooth connectivity
-                  </div>
-                </div>
-                <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "0 0 8px" }}>Recommended for churches that:</p>
-                <ul style={{ margin: 0, padding: "0 0 0 16px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                   {[
-                    "Have multiple check-in stations",
-                    "Want to place the printer on a wired network using Ethernet",
-                    "Need Bluetooth printing from tablets or mobile devices",
-                    "Require additional installation flexibility",
-                  ].map(item => (
-                    <li key={item} style={{ fontSize: "12px", color: "#A9A9B8", lineHeight: 1.5 }}>{item}</li>
+                    "Native USB printing",
+                    "Standard Wi-Fi networking",
+                    "Fast 4\" × 2\" label printing",
+                    "Brother DK continuous label rolls",
+                    "Lower equipment cost",
+                  ].map(feature => (
+                    <div key={feature} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8" }}>
+                      <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span>
+                      {feature}
+                    </div>
                   ))}
-                </ul>
+                </div>
                 <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                   <p style={{ fontSize: "11px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 5px" }}>Setup Experience</p>
-                  <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>Best for churches needing additional connectivity. The built-in LCD makes printer configuration and troubleshooting easier, while Ethernet and Bluetooth provide greater flexibility for shared workstations and more complex network environments.</p>
+                  <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>
+                    The QL-810W may require more effort during initial setup. Without a built-in LCD display, verifying printer settings, changing printer modes, or troubleshooting connectivity may require temporarily connecting the printer to a Windows or macOS computer and using Brother&apos;s setup software. Once configured, it performs exceptionally well and provides the same dependable ShepherdKids USB label-printing workflow.
+                  </p>
+                </div>
+              </div>
+
+              {/* ShepherdKids Certified Printing */}
+              <div style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "12px", padding: "18px 20px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "18px" }}>🟢</span>
+                  <h3 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "15px", margin: 0, fontFamily: "Georgia, serif" }}>ShepherdKids Certified Printing</h3>
+                </div>
+                <p style={{ color: "#D8D8E8", fontSize: "12px", margin: "0 0 12px", lineHeight: 1.6 }}>
+                  The Brother QL-820NWB is supported by the ShepherdKids Android Kiosk App and can print child and parent labels directly through USB without requiring a Windows computer or print server during normal operation.
+                </p>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#4ade80", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 8px" }}>Recommended Connection</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#D8D8E8", marginBottom: "12px" }}>
+                  <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span>
+                  USB direct printing from the ShepherdKids Android kiosk
+                </div>
+                <div style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)", borderRadius: "10px", padding: "12px 14px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#fbbf24", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 5px" }}>Wi-Fi Direct Is Not Recommended</p>
+                  <p style={{ color: "#D8D8E8", fontSize: "12px", margin: 0, lineHeight: 1.6 }}>
+                    When an Android tablet connects directly to the printer through Wi-Fi Direct, it may disconnect from the church&apos;s normal Wi-Fi network. ShepherdKids requires that network connection to communicate with the cloud, load check-in information, authenticate volunteers, and update the live dashboard. USB direct printing keeps the tablet connected to ShepherdKids and provides the most reliable experience.
+                  </p>
                 </div>
               </div>
 
               {/* Shared hardware note */}
               <p style={{ fontSize: "12px", color: "#A9A9B8", margin: "0 0 16px", lineHeight: 1.6 }}>
-                Both printers use the same Brother DK label rolls and provide comparable high-speed label printing. The primary differences are connectivity and setup options.
+                Both printers use the same Brother DK label rolls and provide comparable high-speed label printing. The primary differences are connectivity, setup visibility, and long-term troubleshooting convenience.
               </p>
 
               {/* Which should I choose? */}
@@ -1588,17 +1622,28 @@ function CheckinSetupContent() {
                 <p style={{ fontSize: "12px", fontWeight: 700, color: "#D4AF37", margin: "0 0 12px", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Which should I choose?</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#c084fc", margin: "0 0 6px" }}>Choose the QL-810W if:</p>
+                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#A9A9B8", margin: "0 0 6px" }}>Choose the QL-810W if:</p>
                     <ul style={{ margin: 0, padding: "0 0 0 14px", display: "flex", flexDirection: "column", gap: "3px" }}>
-                      {["You need one or two printing stations", "You want the simplest setup", "Wi-Fi or USB meets your needs"].map(item => (
+                      {[
+                        "You have one or two check-in stations",
+                        "You want the lowest equipment cost",
+                        "USB printing meets your needs",
+                        "You do not mind using a computer if configuration or troubleshooting is needed",
+                      ].map(item => (
                         <li key={item} style={{ fontSize: "12px", color: "#D8D8E8", lineHeight: 1.5 }}>{item}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#A9A9B8", margin: "0 0 6px" }}>Choose the QL-820NWB if:</p>
+                    <p style={{ fontSize: "12px", fontWeight: 700, color: "#c084fc", margin: "0 0 6px" }}>Choose the QL-820NWB if:</p>
                     <ul style={{ margin: 0, padding: "0 0 0 14px", display: "flex", flexDirection: "column", gap: "3px" }}>
-                      {["You need Ethernet connectivity", "You want Bluetooth support", "Multiple staff members share the printer", "You want the convenience of the built-in LCD display"].map(item => (
+                      {[
+                        "You want the easiest installation experience",
+                        "You prefer configuring the printer from its built-in LCD display",
+                        "You anticipate adding more check-in stations",
+                        "You want Ethernet or Bluetooth connectivity",
+                        "You want the printer ShepherdKids recommends for most churches",
+                      ].map(item => (
                         <li key={item} style={{ fontSize: "12px", color: "#D8D8E8", lineHeight: 1.5 }}>{item}</li>
                       ))}
                     </ul>
@@ -1613,18 +1658,20 @@ function CheckinSetupContent() {
                   <thead>
                     <tr>
                       <th style={{ textAlign: "left" as const, padding: "8px 12px", color: "#A9A9B8", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>Feature</th>
-                      <th style={{ textAlign: "center" as const, padding: "8px 12px", color: "#c084fc", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>QL-810W ⭐</th>
-                      <th style={{ textAlign: "center" as const, padding: "8px 12px", color: "#A9A9B8", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>QL-820NWB</th>
+                      <th style={{ textAlign: "center" as const, padding: "8px 12px", color: "#A9A9B8", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>QL-810W</th>
+                      <th style={{ textAlign: "center" as const, padding: "8px 12px", color: "#c084fc", fontWeight: 700, borderBottom: "1px solid rgba(212,175,55,0.2)", whiteSpace: "nowrap" as const }}>QL-820NWB ⭐</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[
-                      { feature: "Wi-Fi Direct (no router needed)", w810: "✅", w820: "✅", highlight: false },
-                      { feature: "Wi-Fi", w810: "✅", w820: "✅", highlight: false },
-                      { feature: "USB", w810: "✅", w820: "✅", highlight: false },
+                      { feature: "Native USB Printing", w810: "✅", w820: "✅", highlight: false },
+                      { feature: "Standard Wi-Fi", w810: "✅", w820: "✅", highlight: false },
                       { feature: "Ethernet", w810: "❌", w820: "✅", highlight: true },
                       { feature: "Bluetooth", w810: "❌", w820: "✅", highlight: true },
-                      { feature: "Recommended for Most Churches", w810: "⭐ Yes", w820: "Optional Upgrade", highlight: false },
+                      { feature: "Built-in LCD Display", w810: "❌", w820: "✅", highlight: true },
+                      { feature: "Easier Setup & Troubleshooting", w810: "May require a computer", w820: "✅", highlight: true },
+                      { feature: "Best for Multiple Check-In Stations", w810: "Limited", w820: "✅", highlight: true },
+                      { feature: "Recommendation", w810: "Budget Recommendation", w820: "⭐ Recommended", highlight: false },
                     ].map(({ feature, w810, w820, highlight }) => (
                       <tr key={feature} style={{ background: highlight ? "rgba(212,175,55,0.05)" : "transparent" }}>
                         <td style={{ padding: "8px 12px", color: highlight ? "#D4AF37" : "#D8D8E8", fontWeight: highlight ? 700 : 400, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>{feature}</td>
