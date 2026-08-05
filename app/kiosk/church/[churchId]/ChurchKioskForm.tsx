@@ -1,8 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, {
+  useRef,
+  useState,
+} from "react";
 import { PrintLabel } from "@/components/ui/PrintLabels";
 import { printWithoutBranding } from "@/lib/print-without-branding";
+
+import {
+  hasAndroidPrintBridge,
+  printLabelElementOnAndroid,
+} from "@/lib/android-label-print";
 
 type Session = { id: string; service_name: string; date: string; session_group: string | null };
 type Group = { name: string; sessions: Session[] };
@@ -131,6 +139,10 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
   const [securityCode, setSecurityCode] = useState<string | null>(null);
   const [resultChildren, setResultChildren] = useState<Array<{ name: string; room: string | null }>>([]);
   const [labels, setLabels] = useState<ImmediateLabel[]>([]);
+
+  const [printingLabels, setPrintingLabels] = useState(false);
+  const [labelPrintError, setLabelPrintError] = useState("");
+  const labelElementRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const currentGroup = selectedGroupIdx >= 0 ? displayGroups[selectedGroupIdx] : null;
   const roomMap = Object.fromEntries(rooms.map((r) => [r.id, r.name]));
@@ -267,6 +279,60 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
     setSubmitting(false);
   }
 
+  async function handlePrintLabels() {
+    if (labels.length === 0 || printingLabels) {
+      return;
+    }
+
+    /*
+     * Normal browsers and ministry laptops keep using the
+     * existing browser-print workflow.
+     */
+    if (!hasAndroidPrintBridge()) {
+      printWithoutBranding(churchName);
+      return;
+    }
+
+    setPrintingLabels(true);
+    setLabelPrintError("");
+
+    try {
+      /*
+       * Print sequentially so two labels never compete for
+       * the same Brother USB connection.
+       */
+      for (let index = 0; index < labels.length; index += 1) {
+        const label = labels[index];
+        const labelElement = labelElementRefs.current[index];
+
+        if (!labelElement) {
+          throw new Error(`Label ${index + 1} was not ready to print.`);
+        }
+
+        const randomPart =
+          typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `${Date.now()}-${index}`;
+
+        const jobId = `checkin-${label.labelType}-${randomPart}`;
+
+        await printLabelElementOnAndroid({
+          element: labelElement,
+          jobId,
+          labelType: label.labelType,
+        });
+      }
+    } catch (error) {
+      setLabelPrintError(
+        error instanceof Error
+          ? error.message
+          : "The labels could not be printed.",
+      );
+    } finally {
+      setPrintingLabels(false);
+    }
+  }
+
   function reset() {
     setStep(initialStep());
     setSelectedGroupIdx(initialGroupIdx());
@@ -282,6 +348,9 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
     setSecurityCode(null);
     setResultChildren([]);
     setLabels([]);
+    setLabelPrintError("");
+    setPrintingLabels(false);
+    labelElementRefs.current = [];
   }
 
   // ── pick-group ────────────────────────────────────────────────────────────
@@ -745,13 +814,27 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
       <>
         <style>{`
           @page { size: 4in 2in; margin: 0; }
+          .print-only {
+            position: fixed;
+            left: -10000px;
+            top: 0;
+            width: max-content;
+            pointer-events: none;
+            background: #fff;
+          }
           @media print {
             * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             body { background: #fff !important; color: #000 !important; }
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
+            .print-only {
+              position: static !important;
+              left: auto !important;
+              top: auto !important;
+              display: block !important;
+              width: auto !important;
+              pointer-events: auto !important;
+            }
           }
-          .print-only { display: none; }
         `}</style>
 
         {/* Screen UI */}
@@ -787,13 +870,27 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
               </div>
             )}
             {labels.length > 0 && (
-              <button
-                onClick={() => printWithoutBranding(churchName)}
-                className="w-full py-4 rounded-2xl text-lg font-bold mb-4"
-                style={{ backgroundColor: "#fff", color: "#000" }}
-              >
-                🖨️ Print Labels
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    void handlePrintLabels();
+                  }}
+                  disabled={printingLabels}
+                  className="w-full py-4 rounded-2xl text-lg font-bold mb-4 transition-opacity"
+                  style={{
+                    backgroundColor: "#fff",
+                    color: "#000",
+                    opacity: printingLabels ? 0.6 : 1,
+                  }}
+                >
+                  {printingLabels ? "Printing Labels…" : "🖨️ Print Labels"}
+                </button>
+                {labelPrintError && (
+                  <p className="text-red-400 text-sm text-center mb-4">
+                    {labelPrintError}
+                  </p>
+                )}
+              </>
             )}
             <button
               onClick={reset}
@@ -806,9 +903,16 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
         </div>
 
         {/* Print-only label area */}
-        <div className="print-only">
+        <div className="print-only" aria-hidden="true">
           {labels.map((label, i) => (
-            <PrintLabel key={i} data={label} />
+            <div
+              key={`${label.labelType}-${i}`}
+              ref={(element) => {
+                labelElementRefs.current[i] = element;
+              }}
+            >
+              <PrintLabel data={label} />
+            </div>
           ))}
         </div>
       </>
