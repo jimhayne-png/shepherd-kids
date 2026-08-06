@@ -1509,6 +1509,107 @@ function CheckinSetupContent() {
               </div>
             </div>
 
+            {/* ShepherdKids Android Kiosk App Download */}
+            <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px", marginBottom: "24px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", flex: 1, minWidth: "260px" }}>
+                  <span style={{ fontSize: "24px", lineHeight: 1 }}>📱</span>
+                  <div>
+                    <h2 style={{ color: "#FFFFFF", fontWeight: 700, fontSize: "16px", margin: 0, fontFamily: "Georgia, serif" }}>
+                      ShepherdKids Android Kiosk App
+                    </h2>
+                    <p style={{ color: "#A9A9B8", fontSize: "12px", margin: "4px 0 0", lineHeight: 1.6 }}>
+                      Install the official ShepherdKids Kiosk App on an Android tablet to enable protected full-screen kiosk access and direct USB label printing to supported Brother printers.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/api/kiosk-app/download"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    padding: "11px 18px",
+                    background: "linear-gradient(135deg, #7B2CBF, #9D4EDD)",
+                    color: "#FFFFFF",
+                    borderRadius: "10px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  ⬇ Download Android App
+                </a>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "18px" }}>
+                {[
+                  ["Version", "1.0"],
+                  ["Platform", "Android"],
+                  ["File", "ShepherdKids-Kiosk-v1.0.apk"],
+                  ["Supported Printers", "Brother QL-810W and QL-820NWB"],
+                ].map(([label, value]) => (
+                  <div key={label} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,175,55,0.14)", borderRadius: "10px", padding: "10px 12px" }}>
+                    <p style={{ fontSize: "10px", fontWeight: 700, color: "#A9A9B8", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 4px" }}>
+                      {label}
+                    </p>
+                    <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.5 }}>
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: "18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#D4AF37", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 8px" }}>
+                    Installation
+                  </p>
+                  <ol style={{ margin: 0, paddingLeft: "18px", display: "flex", flexDirection: "column", gap: "5px" }}>
+                    {[
+                      "Download the APK directly on the Android tablet.",
+                      "Open the downloaded file.",
+                      "Allow installation from this source if Android requests permission.",
+                      "Install and open ShepherdKids Kiosk.",
+                      "Enter the church kiosk URL and connect the Brother printer through USB.",
+                    ].map(step => (
+                      <li key={step} style={{ fontSize: "12px", color: "#D8D8E8", lineHeight: 1.5 }}>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <div>
+                  <p style={{ fontSize: "11px", fontWeight: 700, color: "#c084fc", textTransform: "uppercase" as const, letterSpacing: "0.07em", margin: "0 0 8px" }}>
+                    Included
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {[
+                      "Protected full-screen kiosk mode",
+                      "Direct Brother USB label printing",
+                      "Public reload control",
+                      "Administrator printer tools",
+                      "No Windows computer or print server required during normal use",
+                    ].map(feature => (
+                      <div key={feature} style={{ display: "flex", alignItems: "flex-start", gap: "6px", fontSize: "12px", color: "#D8D8E8", lineHeight: 1.5 }}>
+                        <span style={{ color: "#4ade80", flexShrink: 0 }}>✅</span>
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: "18px", padding: "12px 14px", background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.2)", borderRadius: "10px" }}>
+                <p style={{ fontSize: "12px", color: "#D8D8E8", margin: 0, lineHeight: 1.6 }}>
+                  🔒 Download the ShepherdKids Kiosk App only from inside your authenticated ShepherdKids account. Do not install copies received through email or third-party download sites.
+                </p>
+              </div>
+            </div>
+
             {/* Recommended Printer */}
             <div style={{ background: "#120A1F", border: "1px solid rgba(212,175,55,0.25)", borderRadius: "16px", padding: "24px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
