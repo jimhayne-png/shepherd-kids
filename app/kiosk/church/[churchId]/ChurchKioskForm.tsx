@@ -29,6 +29,7 @@ type ChildForm = {
   allergyOther: string;
   medicalNotes: string;
   specialInstructions: string;
+  notPottyTrained: boolean;
   authorizedPickups: string;
   checkedIn: boolean;
 };
@@ -49,7 +50,7 @@ type ImmediateLabel = {
   churchName: string;
   labelMode: "smart" | "classic";
   smartLabelQrEnabled: boolean;
- notPottyTrained: boolean;
+  notPottyTrained: boolean;
 };
 
 type Props = {
@@ -97,6 +98,7 @@ function emptyChild(): ChildForm {
     allergyOther: "",
     medicalNotes: "",
     specialInstructions: "",
+    notPottyTrained: false,
     authorizedPickups: "",
     checkedIn: true,
   };
@@ -187,6 +189,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             allergyOther?: string;
             medicalNotes?: string;
             specialInstructions?: string;
+            notPottyTrained?: boolean;
             authorizedPickups?: string;
             roomId?: string;
           };
@@ -203,6 +206,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
                 allergyOther: c.allergyOther ?? "",
                 medicalNotes: c.medicalNotes ?? "",
                 specialInstructions: c.specialInstructions ?? "",
+                notPottyTrained: c.notPottyTrained ?? false,
                 authorizedPickups: c.authorizedPickups ?? "",
                 roomId: c.roomId ?? "",
               };
@@ -255,6 +259,7 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             allergyOther: c.allergyOther || undefined,
             medicalNotes: c.medicalNotes.trim() || undefined,
             specialInstructions: c.specialInstructions.trim() || undefined,
+            notPottyTrained: c.notPottyTrained,
             authorizedPickups: c.authorizedPickups.trim() || undefined,
           })),
         }),
@@ -690,7 +695,8 @@ export default function ChurchKioskForm({ churchId, churchName, groups, ungroupe
             const hasCareNotes =
               (child.allergies.length > 0 && !child.allergies.every((a) => a === "No Known Allergies")) ||
               !!child.medicalNotes.trim() ||
-              !!child.specialInstructions.trim();
+              !!child.specialInstructions.trim() ||
+              child.notPottyTrained;
             return (
               <div
                 key={i}
@@ -1080,6 +1086,37 @@ function ChildCard({
           rows={2}
           className="w-full px-5 py-4 rounded-2xl bg-white/10 border border-purple-900 text-white placeholder-purple-400 focus:outline-none focus:border-purple-400 resize-none text-base"
         />
+      </div>
+
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => onChange({ ...child, notPottyTrained: !child.notPottyTrained })}
+          className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-left"
+          style={{
+            backgroundColor: child.notPottyTrained ? "#3D1080" : "rgba(255,255,255,0.05)",
+            border: `1.5px solid ${child.notPottyTrained ? PURPLE : "rgba(123,44,191,0.3)"}`,
+            color: child.notPottyTrained ? "#FFFFFF" : "#A9A9B8",
+          }}
+        >
+          <span
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 5,
+              border: `2px solid ${child.notPottyTrained ? PURPLE : "rgba(123,44,191,0.4)"}`,
+              backgroundColor: child.notPottyTrained ? PURPLE : "transparent",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 13,
+              flexShrink: 0,
+            }}
+          >
+            {child.notPottyTrained ? "✓" : ""}
+          </span>
+          <span className="font-semibold">Not potty trained</span>
+        </button>
       </div>
 
       <div>
