@@ -40,6 +40,7 @@ type LookupChild = {
   allergies: string | null;
   medicalNotes: string | null;
   specialInstructions: string | null;
+  notPottyTrained: boolean;
 };
 
 type AllergyState = {
@@ -47,6 +48,7 @@ type AllergyState = {
   allergyOther: string;
   medicalNotes: string;
   specialInstructions: string;
+  notPottyTrained: boolean;
 };
 
 type ExistingChildState = {
@@ -91,6 +93,7 @@ type ImmediateLabel = {
   churchName: string;
   labelMode: "smart" | "classic";
   smartLabelQrEnabled: boolean;
+  notPottyTrained: boolean;
 };
 
 function fmtDate(d: string) {
@@ -131,6 +134,7 @@ function emptyNewChild(): NewChildForm {
     allergyOther: "",
     medicalNotes: "",
     specialInstructions: "",
+    notPottyTrained: false,
   };
 }
 
@@ -309,6 +313,7 @@ export default function KioskCheckInForm({
             allergyOther,
             medicalNotes: c.medicalNotes ?? "",
             specialInstructions: c.specialInstructions ?? "",
+            notPottyTrained: c.notPottyTrained === true,
           };
         }),
       );
@@ -346,6 +351,7 @@ export default function KioskCheckInForm({
         allergyOther: c.allergyOther,
         medicalNotes: c.medicalNotes,
         specialInstructions: c.specialInstructions,
+        notPottyTrained: c.notPottyTrained,
       })),
       ...additions.map((c) => ({
         childName: `${c.firstName.trim()} ${c.lastName.trim()}`,
@@ -358,6 +364,7 @@ export default function KioskCheckInForm({
         allergyOther: c.allergyOther,
         medicalNotes: c.medicalNotes,
         specialInstructions: c.specialInstructions,
+        notPottyTrained: c.notPottyTrained,
       })),
     ];
 
@@ -413,6 +420,7 @@ export default function KioskCheckInForm({
       allergyOther: c.allergyOther,
       medicalNotes: c.medicalNotes,
       specialInstructions: c.specialInstructions,
+      notPottyTrained: c.notPottyTrained,
     }));
 
     const res = await fetch(`/api/kiosk/${sessionToken}/check-in`, {
@@ -490,7 +498,7 @@ if (step === "success") {
   return (
     <>
       <style>{`
-        @page { size: 4in 2in; margin: 0; }
+        @page { size: 2.4in 2in; margin: 0; }
         @media print {
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           body { background: #fff !important; color: #000 !important; }
@@ -891,6 +899,7 @@ if (step === "success") {
                       allergyOther: child.allergyOther,
                       medicalNotes: child.medicalNotes,
                       specialInstructions: child.specialInstructions,
+                      notPottyTrained: child.notPottyTrained,
                     }}
                     onChange={(patch) =>
                       setExistingChildren((cs) =>
@@ -1380,6 +1389,47 @@ function AllergySection({
         />
       )}
 
+      <button
+        type="button"
+        onClick={() => onChange({ notPottyTrained: !state.notPottyTrained })}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 14px",
+          marginBottom: 12,
+          borderRadius: 10,
+          border: `2px solid ${state.notPottyTrained ? ACCENT : "#e5e7eb"}`,
+          backgroundColor: state.notPottyTrained ? ACCENT + "18" : "white",
+          color: "#374151",
+          fontSize: 14,
+          fontWeight: 700,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <span
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 4,
+            border: `2px solid ${state.notPottyTrained ? ACCENT : "#d1d5db"}`,
+            backgroundColor: state.notPottyTrained ? ACCENT : "white",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            fontSize: 12,
+            color: "white",
+            fontWeight: 900,
+          }}
+        >
+          {state.notPottyTrained ? "✓" : ""}
+        </span>
+        My child is not potty trained
+      </button>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div>
           <label
@@ -1599,6 +1649,7 @@ function NewChildCard({
           allergyOther: child.allergyOther,
           medicalNotes: child.medicalNotes,
           specialInstructions: child.specialInstructions,
+          notPottyTrained: child.notPottyTrained,
         }}
         onChange={(patch) => onChange({ ...child, ...patch })}
       />

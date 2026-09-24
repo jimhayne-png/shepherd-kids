@@ -16,6 +16,7 @@ type ChildInput = {
   medicalNotes?: string;
   specialInstructions?: string;
   authorizedPickups?: string;
+  notPottyTrained?: boolean;
 };
 
 type RoomRow = {
@@ -35,6 +36,7 @@ type ImmediateLabel = {
   allergies: string | null;
   medicalNotes: string | null;
   specialInstructions: string | null;
+  notPottyTrained: boolean;
   visitNumber: number | null;
   qrToken: string | null;
   isFirstTime: boolean;
@@ -114,14 +116,21 @@ function errorDetails(err: unknown): string {
  */
 function calculateAge(dateOfBirth: string | null, today: string): number | null {
   if (!dateOfBirth) return null;
+
   try {
     const [birthYear, birthMonth, birthDay] = dateOfBirth.split('-').map(Number);
     const [todayYear, todayMonth, todayDay] = today.split('-').map(Number);
+
     let age = todayYear - birthYear;
+
     // Subtract 1 if the birthday hasn't occurred yet this year
-    if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) {
+    if (
+      todayMonth < birthMonth ||
+      (todayMonth === birthMonth && todayDay < birthDay)
+    ) {
       age--;
     }
+
     return age >= 0 ? age : null;
   } catch {
     return null;
@@ -136,7 +145,11 @@ function calculateAge(dateOfBirth: string | null, today: string): number | null 
  *      - Picks the narrowest age-range match, then alphabetical on ties.
  *   3. Returns null if no DOB and no valid override.
  */
-function findRoomForChild(child: ChildInput, rooms: RoomRow[], today: string): string | null {
+function findRoomForChild(
+  child: ChildInput,
+  rooms: RoomRow[],
+  today: string,
+): string | null {
   // Validated manual override
   if (child.roomId && rooms.find((r) => r.id === child.roomId)) {
     return child.roomId;
@@ -145,6 +158,7 @@ function findRoomForChild(child: ChildInput, rooms: RoomRow[], today: string): s
   // Age-based auto-placement
   const dob = childBirthDate(child);
   const age = calculateAge(dob, today);
+
   if (age === null) return null;
 
   const candidates = rooms.filter((r) => {
@@ -159,7 +173,9 @@ function findRoomForChild(child: ChildInput, rooms: RoomRow[], today: string): s
   candidates.sort((a, b) => {
     const rangeA = (a.max_age ?? 999) - (a.min_age ?? 0);
     const rangeB = (b.max_age ?? 999) - (b.min_age ?? 0);
+
     if (rangeA !== rangeB) return rangeA - rangeB;
+
     return a.name.localeCompare(b.name);
   });
 
@@ -213,17 +229,31 @@ export async function POST(
     .eq('id', churchId)
     .maybeSingle();
 
-  const cr = churchRow as { timezone?: string; label_mode?: string | null; smart_label_qr_enabled?: boolean | null; name?: string | null } | null;
+  const cr = churchRow as {
+    timezone?: string;
+    label_mode?: string | null;
+    smart_label_qr_enabled?: boolean | null;
+    name?: string | null;
+  } | null;
+
   const tz = cr?.timezone ?? 'America/Los_Angeles';
-  const labelMode: 'smart' | 'classic' = cr?.label_mode === 'classic' ? 'classic' : 'smart';
-  const smartLabelQrEnabled = cr?.smart_label_qr_enabled !== false;
+
+  const labelMode: 'smart' | 'classic' =
+    cr?.label_mode === 'classic' ? 'classic' : 'smart';
+
+  const smartLabelQrEnabled =
+    cr?.smart_label_qr_enabled !== false;
+
   const churchName = cr?.name ?? '';
 
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone: tz,
   }).format(new Date());
 
-  const [{ data: validSessions }, { data: activeRoomsRaw }] = await Promise.all([
+  const [
+    { data: validSessions },
+    { data: activeRoomsRaw },
+  ] = await Promise.all([
     admin
       .from('cm_checkin_sessions')
       .select('id')
@@ -231,6 +261,7 @@ export async function POST(
       .eq('date', today)
       .eq('status', 'open')
       .in('id', sessionIds),
+
     admin
       .from('cm_checkin_rooms')
       .select('id, name, min_age, max_age')
@@ -249,21 +280,35 @@ export async function POST(
 
   if (invalidIds.length) {
     return Response.json(
-      { error: 'One or more sessions are not valid for this church today' },
+      {
+        error:
+          'One or more sessions are not valid for this church today',
+      },
       { status: 400 },
     );
   }
 
-  function roomNameFor(roomId: string | null | undefined): string | null {
+  function roomNameFor(
+    roomId: string | null | undefined,
+  ): string | null {
     if (!roomId) return null;
+
     return activeRooms.find((r) => r.id === roomId)?.name ?? null;
   }
 
   const normalizedPhone = parentPhone.replace(/\D/g, '');
-  const parentName = `${clean(parentFirstName)} ${clean(parentLastName)}`.trim();
-  const securityCode = String(Math.floor(100000 + Math.random() * 900000));
 
-  const { data: existingFamily, error: existingFamilyError } = await admin
+  const parentName =
+    `${clean(parentFirstName)} ${clean(parentLastName)}`.trim();
+
+  const securityCode = String(
+    Math.floor(100000 + Math.random() * 900000),
+  );
+
+  const {
+    data: existingFamily,
+    error: existingFamilyError,
+  } = await admin
     .from('cm_visitor_families')
     .select('id')
     .eq('church_id', churchId)
@@ -271,7 +316,10 @@ export async function POST(
     .maybeSingle();
 
   if (existingFamilyError) {
-    return Response.json({ error: existingFamilyError.message }, { status: 500 });
+    return Response.json(
+      { error: existingFamilyError.message },
+      { status: 500 },
+    );
   }
 
   const isFirstTimeFamily = !existingFamily;
@@ -294,48 +342,85 @@ export async function POST(
     })),
   );
 
-  const { data: records, error: checkinError } = await admin
+  const {
+    data: records,
+    error: checkinError,
+  } = await admin
     .from('cm_checkin_records')
     .insert(checkinRows)
-    .select('id, child_name, room_id, security_code, session_id, qr_token');
+    .select(
+      'id, child_name, room_id, security_code, session_id, qr_token',
+    );
 
   if (checkinError) {
-    return Response.json({ error: checkinError.message }, { status: 400 });
+    return Response.json(
+      { error: checkinError.message },
+      { status: 400 },
+    );
   }
 
   const safeRecords = records ?? [];
-  const firstSessionRecords = safeRecords.slice(0, children.length);
 
-  const childLabels: ImmediateLabel[] = firstSessionRecords.map((record, i) => {
-    const child = children[i];
+  const firstSessionRecords = safeRecords.slice(
+    0,
+    children.length,
+  );
 
-    return {
-      labelType: 'child',
-      childName: record.child_name,
-      parentName,
-      parentPhone: normalizedPhone,
-      roomName: roomNameFor(record.room_id),
-      securityCode: record.security_code,
-      allergies: allergyLine(child?.allergies, child?.allergyOther),
-      medicalNotes: clean(child?.medicalNotes) || null,
-      specialInstructions: clean(child?.specialInstructions) || null,
-      visitNumber: null,
-      qrToken: (record as { qr_token?: string | null }).qr_token ?? null,
-      isFirstTime: isFirstTimeFamily,
-      churchName,
-      labelMode,
-      smartLabelQrEnabled,
-    };
-  });
+  const childLabels: ImmediateLabel[] =
+    firstSessionRecords.map((record, i) => {
+      const child = children[i];
+
+      return {
+        labelType: 'child',
+        childName: record.child_name,
+        parentName,
+        parentPhone: normalizedPhone,
+        roomName: roomNameFor(record.room_id),
+        securityCode: record.security_code,
+
+        allergies: allergyLine(
+          child?.allergies,
+          child?.allergyOther,
+        ),
+
+        medicalNotes:
+          clean(child?.medicalNotes) || null,
+
+        specialInstructions:
+          clean(child?.specialInstructions) || null,
+
+        notPottyTrained:
+          child?.notPottyTrained === true,
+
+        visitNumber: null,
+
+        qrToken:
+          (
+            record as {
+              qr_token?: string | null;
+            }
+          ).qr_token ?? null,
+
+        isFirstTime: isFirstTimeFamily,
+        churchName,
+        labelMode,
+        smartLabelQrEnabled,
+      };
+    });
 
   const parentLabel: ImmediateLabel = {
     labelType: 'parent',
+
     childName: firstSessionRecords
       .map((r) => {
         const rn = roomNameFor(r.room_id);
-        return rn ? `${r.child_name} (${rn})` : r.child_name;
+
+        return rn
+          ? `${r.child_name} (${rn})`
+          : r.child_name;
       })
       .join(', '),
+
     parentName,
     parentPhone: normalizedPhone,
     roomName: null,
@@ -343,6 +428,7 @@ export async function POST(
     allergies: null,
     medicalNotes: null,
     specialInstructions: null,
+    notPottyTrained: false,
     visitNumber: null,
     qrToken: null,
     isFirstTime: isFirstTimeFamily,
@@ -351,46 +437,75 @@ export async function POST(
     smartLabelQrEnabled,
   };
 
-  const labels: ImmediateLabel[] = [...childLabels, parentLabel];
+  const labels: ImmediateLabel[] = [
+    ...childLabels,
+    parentLabel,
+  ];
 
   try {
     const firstRecord = safeRecords[0];
 
-    const childJobs = firstSessionRecords.map((record, i) => {
-      const child = children[i];
+    const childJobs = firstSessionRecords.map(
+      (record, i) => {
+        const child = children[i];
 
-      return {
-        church_id: churchId,
-        session_id: record.session_id,
-        checkin_record_id: record.id,
-        child_name: record.child_name,
-        parent_name: parentName,
-        parent_phone: normalizedPhone,
-        room_id: record.room_id ?? null,
-        security_code: record.security_code,
-        allergies: allergyLine(child?.allergies, child?.allergyOther),
-        medical_notes: clean(child?.medicalNotes) || null,
-        special_instructions: clean(child?.specialInstructions) || null,
-        label_type: 'child',
-        label_mode: labelMode,
-        smart_label_qr_enabled: smartLabelQrEnabled,
-        status: 'pending',
-        qr_token: (record as { qr_token?: string | null }).qr_token ?? null,
-        is_first_time: isFirstTimeFamily,
-      };
-    });
+        return {
+          church_id: churchId,
+          session_id: record.session_id,
+          checkin_record_id: record.id,
+          child_name: record.child_name,
+          parent_name: parentName,
+          parent_phone: normalizedPhone,
+          room_id: record.room_id ?? null,
+          security_code: record.security_code,
+
+          allergies: allergyLine(
+            child?.allergies,
+            child?.allergyOther,
+          ),
+
+          medical_notes:
+            clean(child?.medicalNotes) || null,
+
+          special_instructions:
+            clean(child?.specialInstructions) || null,
+
+          not_potty_trained:
+            child?.notPottyTrained === true,
+
+          label_type: 'child',
+          label_mode: labelMode,
+          smart_label_qr_enabled: smartLabelQrEnabled,
+          status: 'pending',
+
+          qr_token:
+            (
+              record as {
+                qr_token?: string | null;
+              }
+            ).qr_token ?? null,
+
+          is_first_time: isFirstTimeFamily,
+        };
+      },
+    );
 
     const parentJob = firstRecord
       ? {
           church_id: churchId,
           session_id: firstRecord.session_id,
           checkin_record_id: firstRecord.id,
+
           child_name: firstSessionRecords
             .map((r) => {
               const rn = roomNameFor(r.room_id);
-              return rn ? `${r.child_name} (${rn})` : r.child_name;
+
+              return rn
+                ? `${r.child_name} (${rn})`
+                : r.child_name;
             })
             .join(', '),
+
           parent_name: parentName,
           parent_phone: normalizedPhone,
           room_id: null,
@@ -398,6 +513,7 @@ export async function POST(
           allergies: null,
           medical_notes: null,
           special_instructions: null,
+          not_potty_trained: false,
           label_type: 'parent',
           label_mode: labelMode,
           smart_label_qr_enabled: smartLabelQrEnabled,
@@ -406,18 +522,28 @@ export async function POST(
         }
       : null;
 
-    const printJobs = parentJob ? [...childJobs, parentJob] : childJobs;
+    const printJobs = parentJob
+      ? [...childJobs, parentJob]
+      : childJobs;
 
-    await admin.from('cm_label_print_jobs').insert(printJobs);
+    await admin
+      .from('cm_label_print_jobs')
+      .insert(printJobs);
   } catch (err) {
-    console.error('Label print job creation failed:', errorDetails(err));
+    console.error(
+      'Label print job creation failed:',
+      errorDetails(err),
+    );
   }
 
   try {
     let familyId: string;
 
     if (!existingFamily) {
-      const { data: newFamily, error: familyInsertError } = await admin
+      const {
+        data: newFamily,
+        error: familyInsertError,
+      } = await admin
         .from('cm_visitor_families')
         .insert({
           church_id: churchId,
@@ -433,12 +559,25 @@ export async function POST(
         .select('id')
         .single();
 
-      if (familyInsertError) throw familyInsertError;
-      if (!newFamily) throw new Error('Failed to insert visitor family');
+      if (familyInsertError) {
+        throw familyInsertError;
+      }
 
-      familyId = (newFamily as { id: string }).id;
+      if (!newFamily) {
+        throw new Error(
+          'Failed to insert visitor family',
+        );
+      }
 
-      const { error: childrenInsertError } = await admin
+      familyId = (
+        newFamily as {
+          id: string;
+        }
+      ).id;
+
+      const {
+        error: childrenInsertError,
+      } = await admin
         .from('cm_visitor_children')
         .insert(
           children.map((child) => ({
@@ -447,18 +586,37 @@ export async function POST(
             first_name: childFirstName(child),
             last_name: childLastName(child),
             date_of_birth: childBirthDate(child),
-            allergies: allergyProfileValue(child),
-            medical_notes: clean(child.medicalNotes) || null,
-            special_instructions: clean(child.specialInstructions) || null,
-            authorized_pickups: clean(child.authorizedPickups) || null,
+
+            allergies:
+              allergyProfileValue(child),
+
+            medical_notes:
+              clean(child.medicalNotes) || null,
+
+            special_instructions:
+              clean(child.specialInstructions) || null,
+
+            authorized_pickups:
+              clean(child.authorizedPickups) || null,
+
+            not_potty_trained:
+              child.notPottyTrained === true,
           })),
         );
 
-      if (childrenInsertError) throw childrenInsertError;
+      if (childrenInsertError) {
+        throw childrenInsertError;
+      }
     } else {
-      familyId = (existingFamily as { id: string }).id;
+      familyId = (
+        existingFamily as {
+          id: string;
+        }
+      ).id;
 
-      const { error: familyUpdateError } = await admin
+      const {
+        error: familyUpdateError,
+      } = await admin
         .from('cm_visitor_families')
         .update({
           visit_date: today,
@@ -469,99 +627,217 @@ export async function POST(
         })
         .eq('id', familyId);
 
-      if (familyUpdateError) throw familyUpdateError;
+      if (familyUpdateError) {
+        throw familyUpdateError;
+      }
 
-      const { data: existingChildren, error: existingChildrenError } =
-        await admin
-          .from('cm_visitor_children')
-          .select('id, first_name, last_name')
-          .eq('family_id', familyId);
+      const {
+        data: existingChildren,
+        error: existingChildrenError,
+      } = await admin
+        .from('cm_visitor_children')
+        .select(
+          'id, first_name, last_name',
+        )
+        .eq('family_id', familyId);
 
-      if (existingChildrenError) throw existingChildrenError;
+      if (existingChildrenError) {
+        throw existingChildrenError;
+      }
 
-      const existingRows = (existingChildren ?? []) as {
-        id: string;
-        first_name: string;
-        last_name: string;
-      }[];
+      const existingRows =
+        (existingChildren ?? []) as {
+          id: string;
+          first_name: string;
+          last_name: string;
+        }[];
 
-      const existingIdSet = new Set(existingRows.map((c) => c.id));
+      const existingIdSet =
+        new Set(
+          existingRows.map(
+            (c) => c.id,
+          ),
+        );
 
-      const existingNameMap = new Map(
-        existingRows.map((c) => [
-          `${clean(c.first_name)}|${clean(c.last_name)}`.toLowerCase(),
-          c.id,
-        ]),
-      );
+      const existingNameMap =
+        new Map(
+          existingRows.map((c) => [
+            `${clean(c.first_name)}|${clean(c.last_name)}`.toLowerCase(),
+            c.id,
+          ]),
+        );
 
       for (const child of children) {
-        const firstName = childFirstName(child);
-        const lastName = childLastName(child);
-        const nameKey = `${firstName}|${lastName}`.toLowerCase();
+        const firstName =
+          childFirstName(child);
+
+        const lastName =
+          childLastName(child);
+
+        const nameKey =
+          `${firstName}|${lastName}`.toLowerCase();
 
         const matchedChildId =
-          child.childId && existingIdSet.has(child.childId)
+          child.childId &&
+          existingIdSet.has(
+            child.childId,
+          )
             ? child.childId
-            : existingNameMap.get(nameKey);
+            : existingNameMap.get(
+                nameKey,
+              );
 
-        const medNotes = clean(child.medicalNotes);
-        const specInstr = clean(child.specialInstructions);
+        const medNotes =
+          clean(child.medicalNotes);
 
-        console.log('[check-in:visitor-child]', {
-          name: `${firstName} ${lastName}`,
-          hasSpecialInstructions: specInstr.length > 0,
-          specialInstructionsLength: specInstr.length,
-          hasMedicalNotes: medNotes.length > 0,
-          matched: !!matchedChildId,
-        });
+        const specInstr =
+          clean(
+            child.specialInstructions,
+          );
+
+        console.log(
+          '[check-in:visitor-child]',
+          {
+            name:
+              `${firstName} ${lastName}`,
+
+            hasSpecialInstructions:
+              specInstr.length > 0,
+
+            specialInstructionsLength:
+              specInstr.length,
+
+            hasMedicalNotes:
+              medNotes.length > 0,
+
+            notPottyTrained:
+              child.notPottyTrained ===
+              true,
+
+            matched:
+              !!matchedChildId,
+          },
+        );
 
         if (matchedChildId) {
-          // UPDATE: always refresh DOB and allergies.
-          // Only write notes fields when a non-empty value was submitted —
-          // an empty value means the field wasn't shown/edited this visit,
-          // not that the parent intentionally cleared it.
-          const updatePayload: Record<string, unknown> = {
-            date_of_birth: childBirthDate(child),
-            allergies: allergyProfileValue(child),
+          // UPDATE:
+          // Always refresh DOB, allergies, and potty-training status.
+          //
+          // Medical notes, special instructions, and authorized pickups
+          // preserve the existing behavior: an empty value does not
+          // automatically erase a previously saved value.
+          const updatePayload: Record<
+            string,
+            unknown
+          > = {
+            date_of_birth:
+              childBirthDate(child),
+
+            allergies:
+              allergyProfileValue(
+                child,
+              ),
+
+            not_potty_trained:
+              child.notPottyTrained ===
+              true,
           };
-          if (medNotes) updatePayload.medical_notes = medNotes;
-          if (specInstr) updatePayload.special_instructions = specInstr;
-          const authPickups = clean(child.authorizedPickups);
-          if (authPickups) updatePayload.authorized_pickups = authPickups;
 
-          const { error: childUpdateError } = await admin
-            .from('cm_visitor_children')
-            .update(updatePayload)
-            .eq('id', matchedChildId);
+          if (medNotes) {
+            updatePayload.medical_notes =
+              medNotes;
+          }
 
-          if (childUpdateError) throw childUpdateError;
+          if (specInstr) {
+            updatePayload.special_instructions =
+              specInstr;
+          }
+
+          const authPickups =
+            clean(
+              child.authorizedPickups,
+            );
+
+          if (authPickups) {
+            updatePayload.authorized_pickups =
+              authPickups;
+          }
+
+          const {
+            error: childUpdateError,
+          } = await admin
+            .from(
+              'cm_visitor_children',
+            )
+            .update(
+              updatePayload,
+            )
+            .eq(
+              'id',
+              matchedChildId,
+            );
+
+          if (childUpdateError) {
+            throw childUpdateError;
+          }
         } else {
           // INSERT: include all fields; null is correct for an empty new row.
-          const { error: childInsertError } = await admin
-            .from('cm_visitor_children')
+          const {
+            error: childInsertError,
+          } = await admin
+            .from(
+              'cm_visitor_children',
+            )
             .insert({
               church_id: churchId,
               family_id: familyId,
               first_name: firstName,
               last_name: lastName,
-              date_of_birth: childBirthDate(child),
-              allergies: allergyProfileValue(child),
-              medical_notes: medNotes || null,
-              special_instructions: specInstr || null,
-              authorized_pickups: clean(child.authorizedPickups) || null,
+
+              date_of_birth:
+                childBirthDate(child),
+
+              allergies:
+                allergyProfileValue(
+                  child,
+                ),
+
+              medical_notes:
+                medNotes || null,
+
+              special_instructions:
+                specInstr || null,
+
+              authorized_pickups:
+                clean(
+                  child.authorizedPickups,
+                ) || null,
+
+              not_potty_trained:
+                child.notPottyTrained ===
+                true,
             });
 
-          if (childInsertError) throw childInsertError;
+          if (childInsertError) {
+            throw childInsertError;
+          }
         }
       }
     }
   } catch (err) {
-    const details = errorDetails(err);
-    console.error('Visitor tracking update failed:', details);
+    const details =
+      errorDetails(err);
+
+    console.error(
+      'Visitor tracking update failed:',
+      details,
+    );
 
     return Response.json(
       {
-        error: 'Check-in saved, but visitor profile update failed',
+        error:
+          'Check-in saved, but visitor profile update failed',
+
         details,
       },
       { status: 500 },
@@ -571,7 +847,9 @@ export async function POST(
   return Response.json({
     success: true,
     securityCode,
-    checkedIntoCount: sessionIds.length * children.length,
+    checkedIntoCount:
+      sessionIds.length *
+      children.length,
     labels,
   });
 }

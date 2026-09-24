@@ -12,6 +12,7 @@ export type SharedLabelData = {
   allergies: string | null;
   medicalNotes: string | null;
   specialInstructions: string | null;
+  notPottyTrained: boolean;
   isFirstTime: boolean;
   churchName: string;
   qrToken: string | null;
@@ -118,6 +119,24 @@ function CareLine({
       <span style={{ fontWeight: 700 }}>
         {value!.trim()}
       </span>
+    </div>
+  );
+}
+
+function PottyTrainingLine() {
+  return (
+    <div
+      style={{
+        fontSize: 7,
+        lineHeight: 1.18,
+        color: "#000",
+        marginTop: 2,
+        fontWeight: 900,
+        textTransform: "uppercase",
+        overflowWrap: "anywhere",
+      }}
+    >
+      NOT POTTY TRAINED
     </div>
   );
 }
@@ -259,7 +278,8 @@ export function ChildClassicLabel({
   const hasCare =
     hasText(data.allergies) ||
     hasText(data.medicalNotes) ||
-    hasText(data.specialInstructions);
+    hasText(data.specialInstructions) ||
+    data.notPottyTrained;
 
   return (
     <div className="label-wrap" style={LABEL_WRAP}>
@@ -315,6 +335,10 @@ export function ChildClassicLabel({
                 label="SPECIAL"
                 value={data.specialInstructions}
               />
+
+              {data.notPottyTrained && (
+                <PottyTrainingLine />
+              )}
             </div>
           )}
         </div>
@@ -361,7 +385,8 @@ export function ChildSmartLabel({
   const hasCare =
     hasText(data.allergies) ||
     hasText(data.medicalNotes) ||
-    hasText(data.specialInstructions);
+    hasText(data.specialInstructions) ||
+    data.notPottyTrained;
 
   return (
     <div className="label-wrap" style={LABEL_WRAP}>

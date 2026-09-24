@@ -25,6 +25,7 @@ type PrintJob = {
   allergies: string | null;
   medical_notes: string | null;
   special_instructions: string | null;
+  not_potty_trained: boolean | null;
   label_type: "child" | "parent";
   label_mode: string | null;
   smart_label_qr_enabled: boolean | null;
@@ -41,9 +42,10 @@ function jobToLabelData(job: PrintJob): SharedLabelData {
     parentName: job.parent_name,
     roomName: job.room_name,
     securityCode: job.security_code,
-    allergies: job.allergies,
+     allergies: job.allergies,
     medicalNotes: job.medical_notes,
     specialInstructions: job.special_instructions,
+    notPottyTrained: job.not_potty_trained ?? false,
     isFirstTime: job.is_first_time ?? false,
     churchName: job.church_name,
     qrToken: job.qr_token,

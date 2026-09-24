@@ -10,7 +10,10 @@ export async function POST(
   const { parentPhone } = body as { parentPhone?: string };
 
   if (!parentPhone) {
-    return Response.json({ error: 'parentPhone is required' }, { status: 400 });
+    return Response.json(
+      { error: 'parentPhone is required' },
+      { status: 400 },
+    );
   }
 
   const admin = adminClient();
@@ -23,13 +26,26 @@ export async function POST(
     .eq('id', sessionToken)
     .maybeSingle();
 
-  if (!session) return Response.json({ error: 'Session not found' }, { status: 404 });
-  if (session.status !== 'open') return Response.json({ error: 'Session is closed' }, { status: 400 });
+  if (!session) {
+    return Response.json(
+      { error: 'Session not found' },
+      { status: 404 },
+    );
+  }
+
+  if (session.status !== 'open') {
+    return Response.json(
+      { error: 'Session is closed' },
+      { status: 400 },
+    );
+  }
 
   // Search visitor families by parent1_phone or parent2_phone
   const { data: families } = await admin
     .from('cm_visitor_families')
-    .select('id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, parent2_first_name, parent2_last_name, parent2_phone, parent2_email')
+    .select(
+      'id, parent1_first_name, parent1_last_name, parent1_phone, parent1_email, parent2_first_name, parent2_last_name, parent2_phone, parent2_email',
+    )
     .eq('church_id', session.church_id)
     .or(`parent1_phone.eq.${phone},parent2_phone.eq.${phone}`)
     .limit(1);
@@ -37,25 +53,34 @@ export async function POST(
   const family = families?.[0] ?? null;
 
   if (!family) {
-    return Response.json({ found: false, family: null, children: [] });
+    return Response.json({
+      found: false,
+      family: null,
+      children: [],
+    });
   }
 
   // Determine which parent matched
   const matchedParent1 = family.parent1_phone === phone;
+
   const parentFirstName = matchedParent1
     ? family.parent1_first_name
     : (family.parent2_first_name ?? family.parent1_first_name);
+
   const parentLastName = matchedParent1
     ? family.parent1_last_name
     : (family.parent2_last_name ?? family.parent1_last_name);
+
   const parentEmail = matchedParent1
     ? (family.parent1_email ?? null)
     : (family.parent2_email ?? family.parent1_email ?? null);
 
-  // Get saved children with birthday
+  // Get saved children with birthday and care information.
   const { data: vcChildren } = await admin
     .from('cm_visitor_children')
-    .select('id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions')
+    .select(
+      'id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions, not_potty_trained',
+    )
     .eq('family_id', family.id)
     .order('created_at');
 
@@ -67,6 +92,7 @@ export async function POST(
     allergies: c.allergies ?? null,
     medicalNotes: c.medical_notes ?? null,
     specialInstructions: c.special_instructions ?? null,
+    notPottyTrained: c.not_potty_trained === true,
   }));
 
   return Response.json({

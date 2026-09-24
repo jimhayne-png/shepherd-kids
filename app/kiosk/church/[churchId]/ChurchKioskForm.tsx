@@ -49,6 +49,7 @@ type ImmediateLabel = {
   churchName: string;
   labelMode: "smart" | "classic";
   smartLabelQrEnabled: boolean;
+ notPottyTrained: boolean;
 };
 
 type Props = {
