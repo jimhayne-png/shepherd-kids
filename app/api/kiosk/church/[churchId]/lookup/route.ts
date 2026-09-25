@@ -18,6 +18,7 @@ type VisitorChildRow = {
   medical_notes: string | null;
   special_instructions: string | null;
   authorized_pickups: string | null; // canonical source (migration 20260709); cm_checkin_records is fallback
+  not_potty_trained: boolean | null;
   // allergy_other does NOT exist — detail is baked into the allergies JSON array
 };
 
@@ -31,6 +32,7 @@ type CheckinSupplementRow = {
   medical_notes: string | null;
   // date_of_birth does NOT exist (migration not applied)
   // special_instructions does NOT exist (migration not applied)
+  // not_potty_trained does NOT exist here — cm_visitor_children is authoritative
 };
 
 function parseAllergies(raw: string | null): string[] {
@@ -159,7 +161,9 @@ export async function GET(
     ] = await Promise.all([
       admin
         .from('cm_visitor_children')
-        .select('id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions, authorized_pickups')
+        .select(
+          'id, first_name, last_name, date_of_birth, allergies, medical_notes, special_instructions, authorized_pickups, not_potty_trained',
+        )
         .eq('family_id', f.id)
         .order('created_at', { ascending: true }),
       admin
@@ -172,7 +176,12 @@ export async function GET(
     ]);
 
     if (childrenError) console.error('[lookup] cm_visitor_children error:', childrenError.message);
-    console.log('[lookup] visitor children:', visitorChildren?.length ?? 0, 'checkin records:', recentCheckins?.length ?? 0);
+    console.log(
+      '[lookup] visitor children:',
+      visitorChildren?.length ?? 0,
+      'checkin records:',
+      recentCheckins?.length ?? 0,
+    );
 
     if (visitorChildren?.length) {
       // Group ALL check-in records per child (most-recent first from query ordering).
@@ -240,6 +249,7 @@ export async function GET(
           medicalNotes,
           specialInstructions,
           authorizedPickups,
+          notPottyTrained: c.not_potty_trained === true,
           roomId,
         };
       });
@@ -250,7 +260,17 @@ export async function GET(
         parentLastName: f.parent1_last_name,
         parentPhone: f.parent1_phone,
         children,
-        ...(debug ? { _debug: { source: 'cm_visitor_families', familyId: f.id, childCount: children.length, today, tz } } : {}),
+        ...(debug
+          ? {
+              _debug: {
+                source: 'cm_visitor_families',
+                familyId: f.id,
+                childCount: children.length,
+                today,
+                tz,
+              },
+            }
+          : {}),
       });
     }
   }
@@ -259,28 +279,51 @@ export async function GET(
 
   const { data: records, error: recordsError } = await admin
     .from('cm_checkin_records')
-    .select('parent_name, parent_phone, child_name, room_id, allergies, allergy_other, authorized_pickups, medical_notes')
+    .select(
+      'parent_name, parent_phone, child_name, room_id, allergies, allergy_other, authorized_pickups, medical_notes',
+    )
     .eq('church_id', churchId)
     .eq('parent_phone', normalizedPhone)
     .order('checked_in_at', { ascending: false })
     .limit(50);
 
-  if (recordsError) console.error('[lookup] cm_checkin_records fallback error:', recordsError.message);
-  console.log('[lookup] checkin records fallback count:', records?.length ?? 0);
+  if (recordsError) {
+    console.error(
+      '[lookup] cm_checkin_records fallback error:',
+      recordsError.message,
+    );
+  }
+
+  console.log(
+    '[lookup] checkin records fallback count:',
+    records?.length ?? 0,
+  );
 
   if (!records?.length) {
     return Response.json({
       found: false,
-      ...(debug ? { _debug: { familyError: familyError?.message, recordsError: recordsError?.message } } : {}),
+      ...(debug
+        ? {
+            _debug: {
+              familyError: familyError?.message,
+              recordsError: recordsError?.message,
+            },
+          }
+        : {}),
     });
   }
 
-  type FallbackRow = CheckinSupplementRow & { parent_name: string | null; parent_phone: string | null };
+  type FallbackRow = CheckinSupplementRow & {
+    parent_name: string | null;
+    parent_phone: string | null;
+  };
+
   const checkinRecords = records as FallbackRow[];
   const first = checkinRecords[0];
   const parts = (first.parent_name ?? '').trim().split(/\s+/);
 
   const seen = new Set<string>();
+
   const children: {
     name: string;
     firstName: string;
@@ -291,14 +334,18 @@ export async function GET(
     medicalNotes: string;
     specialInstructions: string;
     authorizedPickups: string;
+    notPottyTrained: boolean;
     roomId: string;
   }[] = [];
 
   for (const r of checkinRecords) {
     const childName = (r.child_name ?? '').trim();
     if (!childName || seen.has(childName)) continue;
+
     seen.add(childName);
+
     const childParts = childName.split(/\s+/);
+
     children.push({
       name: childName,
       firstName: childParts[0] ?? '',
@@ -309,6 +356,7 @@ export async function GET(
       medicalNotes: r.medical_notes ?? '',
       specialInstructions: '',
       authorizedPickups: r.authorized_pickups ?? '',
+      notPottyTrained: false,
       roomId: r.room_id ?? '',
     });
   }
@@ -319,6 +367,13 @@ export async function GET(
     parentLastName: parts.slice(1).join(' '),
     parentPhone: first.parent_phone,
     children,
-    ...(debug ? { _debug: { source: 'cm_checkin_records', childCount: children.length } } : {}),
+    ...(debug
+      ? {
+          _debug: {
+            source: 'cm_checkin_records',
+            childCount: children.length,
+          },
+        }
+      : {}),
   });
 }
