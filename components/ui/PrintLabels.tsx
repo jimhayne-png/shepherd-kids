@@ -255,7 +255,7 @@ function PickupCode({
 
       <div
         style={{
-          fontSize: compact ? 24 : 28,
+          fontSize: compact ? 20 : 22,
           fontWeight: 900,
           fontFamily: "monospace",
           letterSpacing: "0.03em",
